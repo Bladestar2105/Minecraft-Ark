@@ -22,7 +22,7 @@ class SetupTests(unittest.TestCase):
             with contextlib.redirect_stdout(output):
                 initialize(root)
             credentials = json.loads((root / "secrets/panel.json").read_text())
-            password = (root / "secrets/panel-login.txt").read_text().split("Passwort: ")[1].strip()
+            password = (root / "secrets/panel-login.txt").read_text().split("Password: ")[1].strip()
             self.assertNotIn(password, output.getvalue())
             method, salt, digest = credentials["password_hash"].split("$")
             self.assertEqual(method, "scrypt:32768:8:1")

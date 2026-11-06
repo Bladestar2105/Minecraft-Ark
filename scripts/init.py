@@ -29,7 +29,7 @@ def initialize(root=ROOT):
         credentials = {"username": "admin", "password_hash": f"scrypt:32768:8:1${salt}${digest}",
                        "session_secret": secrets.token_hex(32)}
         (private / "panel.json").write_text(json.dumps(credentials) + "\n")
-        (private / "panel-login.txt").write_text("Benutzer: admin\nPasswort: " + password + "\n")
+        (private / "panel-login.txt").write_text("Username: admin\nPassword: " + password + "\n")
         rcon = secrets.token_urlsafe(32)
         (private / "rcon-password").write_text(rcon + "\n")
         properties.write_text("level-name=ark\nonline-mode=true\nenforce-secure-profile=false\n"

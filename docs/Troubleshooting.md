@@ -1,36 +1,39 @@
-# Probleme lösen
+# Troubleshooting
 
-**Server startet nicht:** Erst EULA, freien Speicher und `docker compose logs minecraft`
-prüfen. Java 25 und Minecraft/Paper 26.3 verwenden. Keine ältere Serverversion über
-die Welt schreiben. Die erste Ausführung lädt Serverdateien und kann länger dauern.
+**Server does not start:** Check EULA acceptance, free disk space and
+`docker compose logs minecraft`. Use Java 25 and Minecraft/Paper 26.3. Never write
+an older server version over this world. First startup downloads server files and
+may take several minutes, especially while legacy item support initializes.
 
-**Build-/Downloadfehler:** Internetzugriff auf offizielle Quellen prüfen. Der Installer
-bricht bei fehlenden exakten Versionen oder falschen Prüfsummen ab. Keine ungeprüfte
-Ersatz-JAR verwenden. Parties 3.2.18 stammt aus dem versiongeprüften Spiget-Artefakt;
-wenn dessen wechselnde CDN-Datei nicht mehr zum Hash passt, die exakte Version über
-[Parties](https://alessiodp.com/parties) beschaffen und denselben Hash prüfen.
-Das veröffentlichte `dependencies-runtime.json` nennt den erwarteten Wert.
+**Build/download failure:** Check access to official sources. Downloads fail if an
+exact artifact is unavailable or its hash differs. Do not substitute an unverified
+JAR. Parties 3.2.18 uses a version-checked Spiget artifact. If its changing CDN file
+no longer matches the pin, obtain the exact version from
+[Parties](https://alessiodp.com/parties) and check the same expected hash in
+`dependencies-runtime.json`.
 
-**Datapack fehlt:** Dungeons and Taverns 6.1.0 und Geophilic 3.7 vor dem ersten
-Start mit dem Installer beziehen. Sie sind wegen ihrer eigenen Lizenz nicht im
-Weltarchiv. Keine Warnung über fehlende Weltgenerierungsdaten ignorieren.
+**Missing datapack:** Install Dungeons and Taverns 6.1.0 and Geophilic 3.7 with the
+installer before first startup. They are not bundled because they retain their own
+licenses. Do not ignore missing world-generation data warnings. Keep their exact
+filenames: `Dungeons and Taverns v6.1.0.zip` and `Geophilic v3.7.dp.zip`.
 
-**Kreativtor/Inventartrennung fehlt:** Server für Spieler schließen. Vollständigen
-Weltordner und Multiverse-Konfigurationen wiederherstellen. `plugins` in RCON muss
-alle drei Multiverse-Erweiterungen aktiv zeigen. Keine neuen Kreativwelten unter
-ähnlichen Namen erzeugen und Inventargruppen nicht nachträglich pauschal ersetzen.
+**Creative portal/inventory separation is missing:** Close the server to players.
+Restore the complete world and Multiverse configuration. RCON `plugins` must show
+all three Multiverse extensions enabled. Do not create similarly named replacement
+worlds or overwrite inventory groups after players have started using the server.
 
-**Bedrock kann nicht verbinden:** Geyser/Floodgate-Status, passende Clientversion,
-Port 19132 und Firewall prüfen. Java-Onlineprüfung aktiviert lassen. Konsolen bieten
-teilweise keine freie Adresseingabe; eigene Konsolenlösung nach offizieller Geyser-
-Anleitung wählen. Die interne/öffentliche Serveradresse deiner Umgebung verwenden.
+**Bedrock cannot connect:** Check Geyser/Floodgate, client compatibility, port 19132
+and firewall rules. Keep Java online verification enabled. Some consoles lack
+arbitrary server entry; follow official Geyser guidance for your own console
+solution. Use your own internal or public server address.
 
-**Panel 400/403:** Über `localhost:8090` öffnen und `PANEL_TRUSTED_HOSTS` kontrollieren.
-**Panel kann nichts speichern/Docker nicht erreichen:** UID-1000-Dateirechte und
-Docker-Socket-Gruppe prüfen. `/state` muss dauerhaft schreibbar sein.
-**DNS-Seite fehlt:** AdGuard ist im Basisstack nicht enthalten.
-**Browserkarte leer:** BlueMap rendert die neue lokale Webkarte erst aus den
-vorhandenen Chunks; in Logs und dem internen BlueMap-Status den Fortschritt prüfen.
+**Panel 400/403:** Open `localhost:8090` and check `PANEL_TRUSTED_HOSTS`.
+**Panel cannot save/reach Docker:** Check UID-1000 write permissions and the Docker
+socket group. `/state` must be writable and persistent.
+**DNS page unavailable:** AdGuard is not included in the base stack.
+**Browser map is empty:** BlueMap builds the local web map from saved chunks. Check
+logs and its internal status for rendering progress.
 
-Bei einem Issue Versionen, Fehlermeldung und Schritte angeben. Kennwörter, Schlüssel,
-Konten, Spielerprofile, private Adressen und vollständige private Logs vorher entfernen.
+For an issue, provide versions, the relevant error and reproduction steps. Remove
+passwords, keys, account information, player profiles, private addresses and
+unrelated private log content before sharing it.

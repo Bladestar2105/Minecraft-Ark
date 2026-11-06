@@ -1,58 +1,59 @@
 # Administration
 
-Das Panel ist optional. Erst das Spiel installieren und die lokalen Geheimnisse
-mit `python3 scripts/init.py` erzeugen. Es gibt kein gemeinsames Standardkennwort.
-Das erste Kennwort steht privat in `secrets/panel-login.txt`; Benutzer ist `admin`.
+The panel is optional. First install the game and generate local secrets with
+`python3 scripts/init.py`. There is no shared default password. The initial
+password is stored privately in `secrets/panel-login.txt`; the username is `admin`.
+The current panel interface is primarily German.
 
-Auf Linux benötigt der Panelprozess UID 1000 Schreibrechte auf `panel-state` und
-`data`. Die Docker-Socket-Gruppe in `.env` einstellen:
+On Linux, the panel process (UID 1000) needs write access to `panel-state` and
+`data`. Configure its Docker socket group in `.env`:
 
 ```sh
 stat -c %g /var/run/docker.sock
-# Ergebnis als DOCKER_SOCKET_GID in .env eintragen.
+# Put the resulting group ID in DOCKER_SOCKET_GID in .env.
 sudo chown -R 1000:1000 panel-state data
 docker compose --profile admin up -d --build
 ```
 
-[Panel öffnen](http://localhost:8090). Der Port bindet nur an Loopback.
-Fernzugriff beispielsweise über einen eigenen SSH-Tunnel:
+[Open the panel](http://localhost:8090). Its published port binds only to loopback.
+For remote access, use your own SSH tunnel, for example:
 
 ```sh
-ssh -L 8090:127.0.0.1:8090 dein-benutzer@dein-server
+ssh -L 8090:127.0.0.1:8090 your-user@your-server
 ```
 
-Dann lokal `http://localhost:8090` öffnen. Bei einem bewusst eingerichteten anderen
-Hostnamen `PANEL_TRUSTED_HOSTS` passend setzen. Das Panel besitzt über den Docker-
-Socket weitreichende Hostrechte; Zugang wie einen Serveradministrator behandeln.
-RCON wird nicht am Host veröffentlicht. Das DNS-Menü benötigt einen separat
-betriebenen AdGuard-Dienst; der öffentliche Basisstack enthält diesen nicht.
+Then open `http://localhost:8090` locally. If you intentionally use another
+hostname, set `PANEL_TRUSTED_HOSTS` accordingly. Docker socket access gives the
+panel extensive host privileges; protect its account like a server administrator.
+RCON is not published on the host. The DNS menu requires a separately operated
+AdGuard service; it is not included in the public base stack.
 
-Das Panel kann Status, Dienstaktionen, Konsole, Einstellungen und Karten anzeigen.
-Passwörter im Bereich Konto ändern; die aktuellen Anmeldedaten werden unter
-`panel-state` gespeichert, die Bootstrap-Datei bleibt unverändert. Bestehende
-Anmeldecookies gelten fest 30 Tage. Nach einer Passwortänderung bleibt der aktuelle
-Browser angemeldet; alle anderen bisherigen Anmeldecookies werden ungültig. Persistenten Zustand nach
-Updates erhalten und niemals in öffentliche Fehlerberichte hochladen.
+The panel provides status, service actions, console, settings and maps. Change
+the password in its account area. Current credentials persist in `panel-state`;
+the bootstrap file stays unchanged. Login cookies have a fixed **30-day lifetime**.
+After a password change, the current browser remains signed in and all other
+previous login cookies are revoked. Preserve this state across updates and never
+attach it to public issue reports.
 
-## Sichern und aktualisieren
+## Backups and updates
 
-Vor Updates Spieler informieren und die betroffenen Dienste geordnet stoppen.
-`data`, `panel-state`, `secrets`, `.env` und Compose gemeinsam privat sichern;
-das Archiv enthält Konten, Schlüssel und weitere vertrauliche Daten. Anschließend
-wieder starten. Ein öffentlich bereinigter Release ersetzt kein vollständiges Backup.
+Before updates, inform players and stop affected services cleanly. Back up
+`data`, `panel-state`, `secrets`, `.env` and Compose together, privately, to separate
+storage. Backups contain accounts, keys and other confidential data. A sanitized
+public release is not a complete private backup.
 
 ```sh
 docker compose stop
-# hier private Sicherung auf ein getrenntes Medium erstellen
+# Create a private backup on separate storage here.
 docker compose --profile admin up -d
 ```
 
-Versionen sind bewusst festgelegt. Ein Wechsel der Minecraft-Version braucht vorher
-Plugin-/Datapack-Prüfung und eine rückspielbare Sicherung. Dieser öffentliche
-Basisstack installiert keinen automatischen Update-Timer. Spieleinstellungen werden
-in `data/server.properties` erhalten (`OVERRIDE_SERVER_PROPERTIES=FALSE`). Neue
-Passwörter nie in `.env`, Compose, Issues oder Screenshots eintragen.
+Versions are intentionally pinned. A Minecraft version upgrade needs plugin/
+datapack compatibility checks and a restorable backup first. This public base
+stack does not install an automatic update timer. Game settings persist in
+`data/server.properties` through `OVERRIDE_SERVER_PROPERTIES=FALSE`. Never put
+passwords in `.env`, Compose, issues or screenshots.
 
-Vor Freigabe mit frischem Nicht-OP-Konto Portalwechsel, Inventartrennung,
-Gebietsschutz, Atlas, Dinozähmung und eine Quest prüfen. Die historischen Prüfungen
-der Originalinstanz ersetzen diese Prüfung auf eigener Hardware nicht.
+Before inviting players, use a fresh non-operator account to check portals,
+inventory separation, protection, atlas, dinosaur taming and one quest. Historical
+checks on the original server do not replace verification on your own hardware.

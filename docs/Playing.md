@@ -1,53 +1,54 @@
-# Spielen
+# Player guide
 
-Java 26.3 verbindet sich mit der eigenen Serveradresse auf Port 25565; Bedrock mit
-Port 19132. Auf PS5/Switch ist eine eigene unterstützte Konsolen-Verbindungslösung
-nötig, falls keine freie Serveradresse eingegeben werden kann. Diese Vorlage
-enthält keinen öffentlichen DNS-Dienst. Auf Konsolen wurden nicht alle Wege unabhängig geprüft.
+Connect Java 26.3 to your own server address on port 25565, or Bedrock on port
+19132. PS5/Switch may require a separate supported connection solution when direct
+server entry is unavailable. The template does not include public DNS. Not every
+console connection path has been independently tested.
 
-Neue Spieler starten am geschützten Heimathafen bei **−479,5 / 114 / −346,5**.
-Die Survival-Welt misst 20.480 × 20.480 Blöcke. Beim Tod fallen Gegenstände herunter.
-Keine Clientmods oder zusätzlichen Ressourcenpakete erforderlich.
+**In-game text and the panel are currently primarily German.** Commands below are
+kept exactly as implemented. New players start at the protected harbor at
+**−479.5 / 114 / −346.5**. Survival covers 20,480 × 20,480 blocks. Items drop on
+death. No client mods or additional resource packs are required.
 
-## Atlas, Dörfer und Abenteuer
+## Atlas, villages and adventures
 
-Beim ersten Survival-Besuch gibt es einen ARK-Atlas. Ersatz: `/karte` bei freiem
-Inventarplatz. Benutzen/Rechtsklick wechselt Welt-, Regions- und Nahansicht.
-Der Atlas zeigt 55 Orte; auf Bedrock fehlen Ortsnamen an Symbolen.
+An ARK atlas is issued on the first survival visit. Use `/karte` with a free
+inventory slot for a replacement. Use/right-click cycles world, region and local
+views. It contains 55 locations; Bedrock does not show location names at markers.
 
-16 Dörfer mit 64 Häusern verteilen sich über die Welt: neun erlauben normale
-Plünderer-Raids, sieben bleiben sicher. In Raid-Dörfern können Bewohner sterben.
-Es gibt keine automatisch endlosen Raids. Dazu kommen acht Händlerlager sowie
-je sechs Hexenlager, Piratencamps und Bossarenen. Die Anfängerzone rund um den
-Spawn schützt vor feindlichen Kreaturen; Kampforte liegen weit außerhalb.
+There are 16 villages with 64 houses: nine support normal pillager raids and seven
+remain safe. Villagers can die in raid villages. Raids do not run automatically or
+endlessly. There are also eight trader camps and six each of witch camps, pirate
+camps and boss arenas. The beginner area around spawn protects against hostile
+creatures; combat locations are farther away.
 
-## Dinos
+## Dinosaurs
 
-In zwölf Revieren leben 24 besondere Sniffer/Ravager mit Standardmodellen.
-**Fackelliliensamen + Benutzen** zähmt ein freies Tier; ein Samen wird verbraucht.
-**Schleichen + Benutzen** schaltet beim eigenen Tier Folgen/Warten um.
-Gezähmte Ravager greifen Spieler nicht an. Tiere folgen innerhalb derselben Welt
-bis 48 Blöcke und laden keine entfernten Chunks. Reiten ist nicht enthalten.
+Twelve habitats contain 24 special sniffers/ravagers using vanilla models.
+**Torchflower seeds + use** tames an unowned animal and consumes one seed.
+**Sneak + use** switches your own animal between following and staying.
+Tamed ravagers do not attack players. Animals follow within the same world up to
+48 blocks and do not load distant chunks. Riding is not included.
 
-## Grundstücke, Quests und Gruppen
+## Claims, quests and groups
 
-Mit einer Goldschaufel zwei gegenüberliegende Ecken markieren; ein Stock zeigt
-Ansprüche. `/claimslist`, `/trust Name`, `/untrust Name`, `/trustlist` und
-`/abandonclaim` verwalten das eigene Land. Startbudget: 1.000 Blöcke, Zuwachs
-100 pro aktiver Stunde bis 10.000. Öffentliche Bauten sind separat geschützt.
+Use a golden shovel to select opposite corners of a claim. A stick shows existing
+claims. Manage your land with `/claimslist`, `/trust Name`, `/untrust Name`,
+`/trustlist` and `/abandonclaim`. Starting budget: 1,000 blocks, increasing by 100
+per active hour up to 10,000. Public structures have separate protection.
 
-`/quests list` zeigt zehn Quests. Beispiel: `/quests take Werkzeugmacher`, dann
-mit `Ja` bestätigen. Gruppen: `/party create Name`, `/party invite Name`,
-`/party accept`. Jedes Gruppenmitglied nimmt dieselbe Mission selbst an;
-Kreativaktionen zählen nicht. Parties muss erfolgreich installiert sein.
+`/quests list` shows ten quests. Example: `/quests take Werkzeugmacher`, then
+confirm with `Ja` (German for yes). Parties: `/party create Name`, `/party invite Name`,
+`/party accept`. Every member must accept the same quest individually. Creative
+actions do not count. Parties must be installed successfully for group commands.
 
-`/trigger rang` zeigt Abenteuerpunkte: Quests, Entdeckungen und erste Boss-Siege
-zählen einmalig. Ränge sind Neuankömmling, Kundschafter, Abenteurer, Veteran und
-ARK-Legende. Sie verleihen keine Kampfwerteboni.
+`/trigger rang` shows adventure points. Quests, discoveries and first boss wins
+count once. German rank names are Neuankömmling, Kundschafter, Abenteurer, Veteran
+and ARK-Legende. Ranks do not grant combat-stat bonuses.
 
-## Kreativwelt
+## Creative world
 
-Das Tor am Spawn führt in die getrennte flache Kreativwelt mit Rücktor.
-Inventar, Rüstung, Nebenhand, Endertruhe und Erfahrung bleiben in ihrer Weltgruppe.
-Fahrzeuge, Kreaturen und weggeworfene Gegenstände passieren das Tor nicht.
-Der Pavillon ist geschützt; außerhalb ist Bauen möglich.
+The spawn portal leads to the separate flat creative world with a return portal.
+Inventory, armor, offhand, ender chest and experience stay in their world group.
+Vehicles, creatures and dropped items cannot use these portals. The arrival
+pavilion is protected; building is allowed outside it.

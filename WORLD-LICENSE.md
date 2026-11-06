@@ -1,18 +1,18 @@
-# Welt und eigene Bauten: CC BY 4.0
+# Original world content: CC BY 4.0
 
-© 2026 Bladestar2105. Die eigenen Bauten, gestalteten Orte und schöpferischen
-Inhalte der veröffentlichten Minecraft-ARK-Welt stehen unter der
-[Creative Commons Namensnennung 4.0 International](https://creativecommons.org/licenses/by/4.0/).
-Der verbindliche [vollständige Lizenztext](https://creativecommons.org/licenses/by/4.0/legalcode.de)
-ist Bestandteil dieser Lizenzvergabe durch Verweis.
+© 2026 Bladestar2105. Original builds, designed locations and creative content in
+the published Minecraft ARK world are licensed under
+[Creative Commons Attribution 4.0 International](https://creativecommons.org/licenses/by/4.0/).
+The binding [full legal code](https://creativecommons.org/licenses/by/4.0/legalcode.en)
+is incorporated into this license grant by reference.
 
-Teilen, bearbeiten und kommerziell verwenden ist mit Namensnennung erlaubt.
-Änderungen kenntlich machen, Quelle und Lizenz verlinken; keine Unterstützung
-durch den ursprünglichen Autor suggerieren. Empfohlener Quellenhinweis:
+Sharing, adaptation and commercial use are permitted with attribution. Identify
+changes and link to the source and license. Do not imply endorsement by the
+original author. Suggested attribution:
 
-> Minecraft ARK – Bladestar2105 (2026), https://github.com/Bladestar2105/Minecraft-Ark,
-> CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ . Änderungen: [beschreiben].
+> Minecraft ARK — Bladestar2105 (2026), https://github.com/Bladestar2105/Minecraft-Ark,
+> CC BY 4.0, https://creativecommons.org/licenses/by/4.0/ . Changes: [describe changes].
 
-Minecraft selbst, Marken, Texturen sowie fremde Plugins und Datapacks werden
-hierdurch nicht neu lizenziert. Für sie gelten ihre eigenen Bedingungen;
-siehe THIRD_PARTY.md. Eigener Quellcode steht unter MIT (LICENSE).
+Minecraft itself, trademarks, textures and third-party plugins/datapacks are not
+relicensed by this notice. Their own terms apply; see THIRD_PARTY.md.
+Original source code is licensed under MIT; see LICENSE.
