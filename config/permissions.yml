@@ -1,0 +1,30 @@
+# Bukkit-Standardrechte für alle Spieler; keine OP-/Adminrechte.
+ark.missions.player:
+  description: Missionen und selbst gebildete Gruppen verwenden
+  default: true
+  children:
+    quests.quests: true
+    quests.quest: true
+    quests.questinfo: true
+    quests.list: true
+    quests.take: true
+    quests.quit: true
+    quests.stats: true
+    quests.choice: true
+    parties.user.help: true
+    parties.user.create: true
+    parties.user.invite: true
+    parties.user.accept: true
+    parties.user.deny: true
+    parties.user.leave: true
+    parties.user.info: true
+ark.worlds.player:
+  description: Öffentliche Portale und eigene Grundstücke verwenden
+  default: true
+  children:
+    multiverse.portal.access.ark_to_creative: true
+    multiverse.portal.access.creative_to_ark: true
+    multiverse.portal.access.ark_to_exploration: true
+    multiverse.portal.access.exploration_to_ark: true
+    griefprevention.claims: true
+    griefprevention.createclaims: true

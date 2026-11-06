@@ -1,0 +1,63 @@
+name: minecraft-ark
+services:
+  minecraft:
+    image: itzg/minecraft-server:java25@sha256:f7f2222512810f0f0e85133913622cf639be77a5dd1d4b11f24ab675da6ba742
+    container_name: minecraft-ark
+    restart: unless-stopped
+    mem_limit: 5g
+    stop_grace_period: 2m
+    environment:
+      EULA: ${EULA:-FALSE}
+      TYPE: PAPER
+      VERSION: "26.3"
+      PAPER_BUILD: "241"
+      INIT_MEMORY: 512M
+      MAX_MEMORY: 4G
+      LEVEL: ark
+      ONLINE_MODE: "TRUE"
+      ENFORCE_SECURE_PROFILE: "FALSE"
+      ENABLE_RCON: "TRUE"
+      RCON_PASSWORD_FILE: /run/secrets/rcon-password
+      OVERRIDE_SERVER_PROPERTIES: "FALSE"
+      TZ: Europe/Berlin
+    ports:
+      - "${JAVA_PORT:-25565}:25565/tcp"
+      - "${BEDROCK_PORT:-19132}:19132/tcp"
+      - "${BEDROCK_PORT:-19132}:19132/udp"
+    volumes:
+      - ./data:/data
+    secrets: [rcon-password]
+    logging:
+      options: {max-size: 10m, max-file: "3"}
+  panel:
+    profiles: [admin]
+    build: ./panel
+    container_name: minecraft-panel
+    restart: unless-stopped
+    mem_limit: 256m
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    group_add: ["${DOCKER_SOCKET_GID:-0}"]
+    tmpfs: ["/tmp:rw,nosuid,noexec,size=16m,mode=1777"]
+    environment:
+      DATA_DIR: /game
+      STATE_DIR: /state
+      PANEL_CREDENTIALS_FILE: /run/secrets/panel.json
+      PANEL_TRUSTED_HOSTS: ${PANEL_TRUSTED_HOSTS:-localhost,127.0.0.1}
+      MAP_BASE_URL: http://minecraft-ark:8100
+    ports: ["127.0.0.1:8090:8090/tcp"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/game
+      - ./panel-state:/state
+    secrets:
+      - source: panel-bootstrap
+        target: panel.json
+    logging:
+      options: {max-size: 5m, max-file: "2"}
+secrets:
+  rcon-password:
+    file: ./secrets/rcon-password
+  panel-bootstrap:
+    file: ./secrets/panel.json

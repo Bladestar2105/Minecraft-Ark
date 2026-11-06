@@ -1,0 +1,21 @@
+name: ArkAtlas
+version: 1.0.0
+main: de.ark.atlas.ArkAtlas
+api-version: '26.3'
+author: ARK
+description: Native in-game terrain atlas for the Survival world ark.
+softdepend: [Multiverse-Core, Multiverse-Inventories]
+commands:
+  karte:
+    description: ARK-Weltatlas in Survival erhalten
+    usage: /karte
+    permission: arkatlas.use
+  arkatlas:
+    description: Atlas aus lokalen Dateien neu laden
+    usage: /arkatlas reload
+    permission: arkatlas.admin
+permissions:
+  arkatlas.use:
+    default: true
+  arkatlas.admin:
+    default: op

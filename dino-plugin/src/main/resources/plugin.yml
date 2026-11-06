@@ -1,0 +1,6 @@
+name: ArkDinos
+version: 1.0.0
+main: de.ark.dinos.ArkDinos
+api-version: '26.3'
+description: Persistent ownership and follow/stay for tagged ARK Sniffers and Ravagers.
+author: ARK

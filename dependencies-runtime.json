@@ -1,0 +1,112 @@
+[
+  {
+    "project": "multiverse-core",
+    "name": "multiverse-core-5.8.2.jar",
+    "version_id": "de7TbcZG",
+    "version": "5.8.2",
+    "url": "https://cdn.modrinth.com/data/3wmN97b8/versions/de7TbcZG/multiverse-core-5.8.2.jar",
+    "sha512": "1165c96755229583477d120485b49ddf731f44a97e17b99f955892e8e90d1f6b24d2e06bd15b6fc4240197c32970592a2af2febe31044afed949dc2d722d17a8",
+    "kind": "plugin"
+  },
+  {
+    "project": "multiverse-portals",
+    "name": "multiverse-portals-5.3.0.jar",
+    "version_id": "otf0vOqh",
+    "version": "5.3.0",
+    "url": "https://cdn.modrinth.com/data/8VMk6P0I/versions/otf0vOqh/multiverse-portals-5.3.0.jar",
+    "sha512": "7314d9f7c14fa4706b1283c80a1b3baf2c113f299510d98033be201c07979b283c637d1cc29a2a3f026779b7e70cc7ca53c92649af215a0f887acd803991f8e3",
+    "kind": "plugin"
+  },
+  {
+    "project": "multiverse-inventories",
+    "name": "multiverse-inventories-5.3.6.jar",
+    "version_id": "86s1EwyC",
+    "version": "5.3.6",
+    "url": "https://cdn.modrinth.com/data/qvdtDX3s/versions/86s1EwyC/multiverse-inventories-5.3.6.jar",
+    "sha512": "e587c873e1a01a48d79dabadc629113d68fe11240b85c970f481b62ebfcf5f8c3adffa9c5a5c601db0437b5c873312a02492a191ac8504a66ce4fed48a0d7438",
+    "kind": "plugin"
+  },
+  {
+    "project": "worldedit",
+    "name": "worldedit-bukkit-7.4.6.jar",
+    "version_id": "YFnqiUlL",
+    "version": "7.4.6",
+    "url": "https://cdn.modrinth.com/data/1u6JkXh5/versions/YFnqiUlL/worldedit-bukkit-7.4.6.jar",
+    "sha512": "1fe3975132857093f971fed9efc601299bfa76fa7885f52a542fee41e7a0165ca9cb3cbcf5ae244474887d774d650b0db6f8f79aa80f98b245dea44f1c1b4152",
+    "kind": "plugin"
+  },
+  {
+    "project": "worldguard",
+    "name": "worldguard-bukkit-7.0.20.jar",
+    "version_id": "9YdeGXiK",
+    "version": "7.0.20",
+    "url": "https://cdn.modrinth.com/data/DKY9btbd/versions/9YdeGXiK/worldguard-bukkit-7.0.20.jar",
+    "sha512": "d7ad3f8b14c57deceb409dc8997fe3d7f0a98dd4158c52648111bfbe6934ca9be53fa42ece4d60d9c2d9da33f7d6ecf597117991bd3b8e7afbf308cd925e409c",
+    "kind": "plugin"
+  },
+  {
+    "project": "griefprevention",
+    "name": "GriefPrevention.jar",
+    "version_id": "dGfCZHqk",
+    "version": "16.18.7",
+    "url": "https://cdn.modrinth.com/data/O4o4mKaq/versions/dGfCZHqk/GriefPrevention.jar",
+    "sha512": "c9bc692253ba3860327e5c38767ce3dc66c798264fe650a08b4ae888337ff75bc16e9bd1db7b39a514a275bf2cc2a3f1f8cd95cf080b89ae42a0f684fc2bfc66",
+    "kind": "plugin"
+  },
+  {
+    "project": "quests",
+    "name": "Quests-5.3.2.jar",
+    "version_id": "fD1cWOQu",
+    "version": "5.3.2",
+    "url": "https://cdn.modrinth.com/data/T8iZG3U1/versions/fD1cWOQu/Quests-5.3.2.jar",
+    "sha512": "9e901852419a3a1ac3fbcd120022d27936f35bece7692a5895e958e64ad844e75bb7d41edd139769a0e71f2800d7dfd5d3c623b17fcbbc6e3a6a126dc1265d71",
+    "kind": "plugin"
+  },
+  {
+    "project": "bluemap",
+    "name": "bluemap-5.29-paper.jar",
+    "version_id": "uHQIrUdf",
+    "version": "5.29-paper",
+    "url": "https://cdn.modrinth.com/data/swbUV1cr/versions/uHQIrUdf/bluemap-5.29-paper.jar",
+    "sha512": "e936198eaf7ea83429e1d08b8e2a5447dd359c0252e3410cb3cc101860c933abcc055462a11b034a4dd77b699da54017412ac73728860fd8b68a672c32d9926c",
+    "kind": "plugin"
+  },
+  {
+    "project": "dungeons-and-taverns",
+    "name": "Dungeons and Taverns v6.1.0.zip",
+    "version_id": "B1bgkN74",
+    "version": "6.1.0",
+    "url": "https://cdn.modrinth.com/data/tpehi7ww/versions/B1bgkN74/Dungeons%20and%20Taverns%20v6.1.0.zip",
+    "sha512": "04ce962d540aec13f25c1fb56dc305d4caa515b9245b0b801d235aaf0fe9e1d1dbc6b4c5764c5e64c2587fabff6dfbd6708095532e2dbf187d0d27079a9c637a",
+    "kind": "datapack"
+  },
+  {
+    "project": "geophilic",
+    "name": "Geophilic v3.7.dp.zip",
+    "version_id": "SVRy1ecx",
+    "version": "3.7",
+    "url": "https://cdn.modrinth.com/data/hl5OLM95/versions/SVRy1ecx/Geophilic%20v3.7.dp.zip",
+    "sha512": "7a361ddcc8d82a3d7a50611a8eb548f88e781fb856097ace222304558ccf06efcf99814872f2af3a0747b105467839ef6c557557c01caece2678ef4cf060161b",
+    "kind": "datapack"
+  },
+  {
+    "project": "geyser",
+    "name": "Geyser-Spigot.jar",
+    "version": "2.12.1-b1284",
+    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1284/downloads/spigot",
+    "sha256": "2a8af1fc256864f4d76af219366bf28efa1558cacb6bb06cf0b1639c4c3e241d",
+    "kind": "plugin"
+  },
+  {
+    "name": "floodgate-spigot-2.2.5-b141.jar",
+    "url": "https://download.geysermc.org/v2/projects/floodgate/versions/2.2.5/builds/141/downloads/spigot",
+    "sha256": "21570aff9ce17d6983928e8552777760e1ede5050026b04c686b0ae112e6fd7e",
+    "kind": "plugin"
+  },
+  {
+    "name": "Parties-3.2.18.jar",
+    "url": "https://cdn.spiget.org/file/spiget-resources/3709.jar",
+    "sha256": "6e399cc16a16e677a74b98c2585d9b4c092cf7bb97f58ce99fdfc269f42ee10d",
+    "kind": "plugin"
+  }
+]

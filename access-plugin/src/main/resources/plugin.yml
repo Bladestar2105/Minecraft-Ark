@@ -1,0 +1,14 @@
+name: ArkAccessBridge
+version: 1.1.0
+main: de.ark.access.ArkAccessBridge
+api-version: '26.3'
+softdepend: [AuthMe, packetevents, floodgate]
+description: Preserves reserved ARK identities and authenticates verified Floodgate connections through AuthMe.
+commands:
+  arkaccess:
+    description: Shows the authentication guard status.
+    usage: /arkaccess status
+    permission: arkaccess.admin
+permissions:
+  arkaccess.admin:
+    default: op

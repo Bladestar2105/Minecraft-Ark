@@ -1,0 +1,4 @@
+# Coordinates refer to the actual ark terrain. Add the generated manifest sites.
+world: ark
+extent: 10240
+sites: []

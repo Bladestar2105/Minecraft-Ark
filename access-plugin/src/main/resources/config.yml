@@ -1,0 +1,4 @@
+bedrock-prefix: '.'
+# Populate canonical names and their existing Mojang UUIDs before deployment.
+# Corresponding AuthMe accounts must already be registered with private passwords.
+legacy-identities: {}

@@ -1,0 +1,267 @@
+# UTF-8; PikaMug Quests 5.3.2, nicht LMBishop Quests.
+# Ohne planner/redo-delay bleibt jede abgeschlossene Mission einmalig.
+# Gruppen teilen nur innerhalb derselben Welt; positive Distanz erzwingt dies in Quests.
+quests:
+  werkzeugmacher:
+    name: Werkzeugmacher
+    ask-message: 'Persönlich: Stelle je eine Steinspitzhacke, Steinaxt und ein Steinschwert her. Bereits vorhandene Werkzeuge zählen nicht.'
+    finish-message: 'Deine erste Steinausrüstung ist fertig. Du erhältst 50 Erfahrungspunkte und 16 Fackeln.'
+    options:
+      use-parties-plugin: false
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          items-to-craft:
+          - ==: org.bukkit.inventory.ItemStack
+            type: STONE_PICKAXE
+            amount: 1
+          - ==: org.bukkit.inventory.ItemStack
+            type: STONE_AXE
+            amount: 1
+          - ==: org.bukkit.inventory.ItemStack
+            type: STONE_SWORD
+            amount: 1
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_werkzeugmacher'
+      exp: 50
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: TORCH
+        amount: 16
+  eisenzeit:
+    name: Eisenzeit
+    ask-message: 'Persönlich: Schmilz 8 Eisenbarren und nimm sie selbst aus dem Ofenausgabefach. Trichterentnahme zählt nicht.'
+    finish-message: 'Die Eisenzeit beginnt. Du erhältst 100 Erfahrungspunkte und 4 Brote.'
+    requirements:
+      quests: [werkzeugmacher]
+      fail-requirement-message: 'Schließe zuerst Werkzeugmacher ab.'
+    options:
+      use-parties-plugin: false
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          items-to-smelt:
+          - ==: org.bukkit.inventory.ItemStack
+            type: IRON_INGOT
+            amount: 8
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_eisenzeit'
+      exp: 100
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: BREAD
+        amount: 4
+  treuer_begleiter:
+    name: Ein treuer Begleiter
+    ask-message: 'Persönlich: Zähme einen Wolf mit Knochen. Bereits gezähmte Wölfe zählen nicht.'
+    finish-message: 'Du hast einen treuen Begleiter. Du erhältst 100 Erfahrungspunkte und 8 gebratene Rindfleischstücke.'
+    requirements:
+      quests: [werkzeugmacher]
+      fail-requirement-message: 'Schließe zuerst Werkzeugmacher ab.'
+    options:
+      use-parties-plugin: false
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          mobs-to-tame: [WOLF]
+          mob-tame-amounts: [1]
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_treuer_begleiter'
+      exp: 100
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: COOKED_BEEF
+        amount: 8
+  kundschafter:
+    name: Kundschafter
+    ask-message: 'Persönlich: Betritt den Nether und bewege dich dort mindestens einen Block. Falls du schon dort bist, genügt ein weiterer Schritt.'
+    finish-message: 'Du hast den Nether erreicht. Du erhältst 150 Erfahrungspunkte und 4 goldene Karotten.'
+    requirements:
+      quests: [eisenzeit]
+      fail-requirement-message: 'Schließe zuerst Eisenzeit ab.'
+    options:
+      use-parties-plugin: false
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          # shortcut: Ortsziel umfasst die Vanilla-Weltgrenze; bei größerer Grenze anpassen.
+          locations-to-reach: ['ark_nether 0 64 0']
+          reach-location-radii: [60000000]
+          reach-location-names: [Nether]
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_kundschafter'
+      exp: 150
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: GOLDEN_CARROT
+        amount: 4
+  lagermaterial:
+    name: Material fürs Lager
+    ask-message: 'Gruppe: Baut 32 Eichenstämme und 64 normale Steinblöcke ohne Behutsamkeit ab. Alle nehmen die Mission vorher selbst an; die Materialien bleiben bei euch.'
+    finish-message: 'Das Lager hat Baumaterial. Du erhältst 100 Erfahrungspunkte und 8 Brote.'
+    options:
+      use-parties-plugin: true
+      share-progress-level: 1
+      same-quest-only: true
+      share-distance: 60000000.0
+      handle-offline-players: false
+      ignore-block-replace: true
+      ignore-silk-touch: true
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          break-block-names: [OAK_LOG, STONE]
+          break-block-amounts: [32, 64]
+          break-block-durability: [0, 0]
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_lagermaterial'
+      exp: 100
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: BREAD
+        amount: 8
+  nachtwache:
+    name: Nachtwache
+    ask-message: 'Gruppe: Besiegt 8 Zombies und 8 Skelette. Alle nehmen die Mission vor dem Kampf an; nur von Spielern getötete Gegner zählen.'
+    finish-message: 'Die Nachtwache war erfolgreich. Du erhältst 150 Erfahrungspunkte und 16 Pfeile.'
+    requirements:
+      quests: [lagermaterial]
+      fail-requirement-message: 'Schließe zuerst Material fürs Lager ab.'
+    options:
+      use-parties-plugin: true
+      share-progress-level: 1
+      same-quest-only: true
+      share-distance: 60000000.0
+      handle-offline-players: false
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          mobs-to-kill: [ZOMBIE, SKELETON]
+          mob-amounts: [8, 8]
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_nachtwache'
+      exp: 150
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: ARROW
+        amount: 16
+  nether_vorstoss:
+    name: Nether-Vorstoß
+    ask-message: 'Gruppe: Besiegt 6 Lohen. Alle nehmen die Mission vorher selbst an.'
+    finish-message: 'Der Nether-Vorstoß ist gelungen. Du erhältst 200 Erfahrungspunkte und einen Eisenhelm.'
+    requirements:
+      quests: [kundschafter, nachtwache]
+      fail-requirement-message: 'Schließe zuerst Kundschafter und Nachtwache ab.'
+    options:
+      use-parties-plugin: true
+      share-progress-level: 1
+      same-quest-only: true
+      share-distance: 60000000.0
+      handle-offline-players: false
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          mobs-to-kill: [BLAZE]
+          mob-amounts: [6]
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_nether_vorstoss'
+      exp: 200
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: IRON_HELMET
+        amount: 1
+  gefaehrliche_expedition:
+    name: Gefährliche Expedition
+    ask-message: 'Gruppe: Besiegt 6 Wither-Skelette. Schädelbeute ist für diese Mission nicht erforderlich.'
+    finish-message: 'Ihr habt die Festung erkundet. Du erhältst 300 Erfahrungspunkte und 8 goldene Karotten.'
+    requirements:
+      quests: [nether_vorstoss]
+      fail-requirement-message: 'Schließe zuerst Nether-Vorstoß ab.'
+    options:
+      use-parties-plugin: true
+      share-progress-level: 1
+      same-quest-only: true
+      share-distance: 60000000.0
+      handle-offline-players: false
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          mobs-to-kill: [WITHER_SKELETON]
+          mob-amounts: [6]
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_gefaehrliche_expedition'
+      exp: 300
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: GOLDEN_CARROT
+        amount: 8
+  bossauftrag:
+    name: Bossauftrag
+    ask-message: 'Gruppe: Besiegt einen Wither. Ein Spieler muss den tödlichen Treffer erzielen; alle nehmen die Mission vorher an.'
+    finish-message: 'Der Wither ist besiegt. Du erhältst 500 Erfahrungspunkte und 2 Diamanten.'
+    requirements:
+      quests: [gefaehrliche_expedition]
+      fail-requirement-message: 'Schließe zuerst Gefährliche Expedition ab.'
+    options:
+      use-parties-plugin: true
+      share-progress-level: 1
+      same-quest-only: true
+      share-distance: 60000000.0
+      handle-offline-players: false
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          mobs-to-kill: [WITHER]
+          mob-amounts: [1]
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_bossauftrag'
+      exp: 500
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: DIAMOND
+        amount: 2
+  letztes_artefakt:
+    name: Das letzte Artefakt
+    ask-message: 'Gruppe: Besiegt den Enderdrachen. Ein Spieler muss den tödlichen Treffer erzielen; alle nehmen die Mission vorher an.'
+    finish-message: 'Der Enderdrache ist besiegt. Du erhältst 750 Erfahrungspunkte und 4 Diamanten.'
+    requirements:
+      quests: [bossauftrag]
+      fail-requirement-message: 'Schließe zuerst Bossauftrag ab.'
+    options:
+      use-parties-plugin: true
+      share-progress-level: 1
+      same-quest-only: true
+      share-distance: 60000000.0
+      handle-offline-players: false
+    stages:
+      ordered:
+        '1':
+          condition: ArkSurvival
+          mobs-to-kill: [ENDER_DRAGON]
+          mob-amounts: [1]
+    rewards:
+      commands:
+      - 'execute as @a[name="<player>",limit=1] run function ark_ranks:quest_letztes_artefakt'
+      exp: 750
+      items:
+      - ==: org.bukkit.inventory.ItemStack
+        type: DIAMOND
+        amount: 4

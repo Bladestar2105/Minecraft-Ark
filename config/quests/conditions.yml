@@ -1,0 +1,9 @@
+# Quests pause outside the survival worlds; creative actions grant no progress.
+conditions:
+  ArkSurvival:
+    fail-quest: false
+    stay-within-world:
+    - ark
+    - ark_nether
+    - ark_the_end
+    - ark_exploration

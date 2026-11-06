@@ -1,0 +1,15 @@
+bedrock:
+  address: 0.0.0.0
+  port: 19132
+  transport: nethernet
+  signaling:
+    mode: builtin
+java:
+  auth-type: floodgate
+motd:
+  # shortcut: Geyser b1280 lacks Paper's socket-address method, remove after a compatible Geyser update.
+  integrated-ping-passthrough: false
+config-version: 12
+gameplay:
+  force-resource-packs: false
+  enable-integrated-pack: false

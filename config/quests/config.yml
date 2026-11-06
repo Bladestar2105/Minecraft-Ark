@@ -1,0 +1,16 @@
+# PikaMug Quests 5.3.2: übrige Werte bleiben bei den Plugin-Standards.
+allow-command-questing: true
+allow-command-quests-with-npcs: false
+clickable-prompts: false
+confirm-accept: true
+confirm-abandon: true
+generate-files-on-join: true
+give-journal-item: false
+language: de-DE
+language-override-client: true
+translate-subcommands: false
+max-quests: 3
+prevent-exploit: true
+storage-method:
+  player-data: yaml
+trial-save: false

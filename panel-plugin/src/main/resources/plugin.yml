@@ -1,0 +1,8 @@
+name: ArkPanelBridge
+version: 1.0.0
+main: de.ark.panel.ArkPanelBridge
+api-version: '26.3'
+description: Console-only native completion and metadata for the authenticated admin panel.
+permissions:
+  arkpanel.admin:
+    default: op

@@ -1,0 +1,11 @@
+/.env
+/secrets/
+/data/
+/panel-state/
+/.deps/
+/.venv/
+**/__pycache__/
+**/build/
+*.tar*
+*.part-*
+.DS_Store
