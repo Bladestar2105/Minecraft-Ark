@@ -46,7 +46,7 @@ def build():
              "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest", "PortalInfoTest"],
              "wardrobe": ["WardrobeTest", "SignersTest", "CommandPolicyTest", "WardrobeRoutesTest"],
              "support": ["SupportTest", "SupportRoutesTest", "SupportDeleteTest"]}
-    versions = {"dino": "ArkDinos-1.0.0", "atlas": "ArkAtlas-1.0.0",
+    versions = {"dino": "ArkDinos-1.0.0", "atlas": "ArkAtlas-1.0.1",
                 "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.2",
                 "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.1"}
     packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",

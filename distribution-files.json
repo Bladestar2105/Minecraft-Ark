@@ -46,6 +46,8 @@
   "accounts-plugin/src/test/java/de/ark/accounts/TestSupport.java",
   "atlas-plugin/src/main/java/de/ark/atlas/ArkAtlas.java",
   "atlas-plugin/src/main/java/de/ark/atlas/AtlasRules.java",
+  "atlas-plugin/src/main/java/de/ark/atlas/LeaderboardRules.java",
+  "atlas-plugin/src/main/java/de/ark/atlas/SpawnLeaderboard.java",
   "atlas-plugin/src/main/resources/config.yml",
   "atlas-plugin/src/main/resources/plugin.yml",
   "atlas-plugin/src/main/resources/sites.yml",

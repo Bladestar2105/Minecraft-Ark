@@ -23,6 +23,14 @@ endlessly. There are also eight trader camps and six each of witch camps, pirate
 camps and boss arenas. The beginner area around spawn protects against hostile
 creatures; combat locations are farther away.
 
+## Leaderboard
+
+A floating, colored top-ten adventure-points leaderboard sits at the Survival
+spawn. It refreshes every five seconds and includes offline players. Everyone
+can use **`/leaderboard`** or **`/rangliste`** in any world to see the top ten
+and their own position in chat. **`/trigger rang`** still shows personal rank
+progress and points needed for the next rank.
+
 ## Dinosaurs
 
 Twelve habitats contain 24 special sniffers/ravagers using vanilla models.

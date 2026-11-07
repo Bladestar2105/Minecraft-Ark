@@ -12,6 +12,14 @@ Beim ersten Survivalbesuch erhältst du einen Atlas. `/atlas` gibt bei freiem In
 
 Die Welt enthält 16 Dörfer mit 64 Häusern: neun mit normalen Plündererüberfällen und sieben geschützte Dörfer. Dorfbewohner können in Überfalldörfern sterben. Überfälle laufen nicht endlos automatisch. Es gibt acht Händlerlager sowie je sechs Hexenlager, Piratenlager und Bossarenen. Das Anfängergebiet schützt vor feindlichen Kreaturen.
 
+## Rangliste
+
+Am Survival-Spawn schwebt eine farbige Top-10-Rangliste nach Abenteuerpunkten.
+Sie wird alle fünf Sekunden aktualisiert und berücksichtigt auch Offline-Spieler.
+Mit **`/rangliste`** oder **`/leaderboard`** zeigt jeder Spieler dieselbe Top 10
+und den eigenen Platz im Chat, auch in anderen Welten. **`/trigger rang`** zeigt
+weiterhin den persönlichen Rang und die fehlenden Punkte zum nächsten Rang.
+
 ## Dinos
 
 Zwölf Habitate enthalten 24 besondere Sniffer/Ravager mit Vanilla-Modellen. **Fackelliliensamen + Benutzen** zähmt ein unbesessenes Tier und verbraucht einen Samen. **Schleichen + Benutzen** schaltet eigene Tiere zwischen Folgen/Bleiben um. Gezähmte Ravager greifen Spieler nicht an. Tiere folgen in derselben Welt bis 48 Blöcke und laden keine entfernten Chunks.
