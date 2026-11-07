@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import json
+import os
 from pathlib import Path
 import tempfile
 import time
@@ -56,6 +57,19 @@ class AccountTests(unittest.TestCase):
             self.assertTrue(restarted.get("/api/session").json["authenticated"])
         with patch("itsdangerous.timed.TimestampSigner.get_timestamp", return_value=now + 31 * 86400):
             self.assertFalse(restarted.get("/api/session").json["authenticated"])
+
+    def test_secure_cookie_is_opt_in_with_exact_environment_value(self):
+        for value, secure in ((None, False), ("1", True), ("0", False), ("true", False), ("false", False), ("", False)):
+            with self.subTest(value=value), patch.dict("os.environ"):
+                os.environ.pop("PANEL_COOKIE_SECURE", None)
+                if value is not None:
+                    os.environ["PANEL_COOKIE_SECURE"] = value
+                client = create_app(self.options).test_client()
+                origin = "https://localhost" if secure else "http://localhost"
+                response = client.post("/api/login", base_url=origin,
+                    json={"username": "admin", "password": self.password}, headers={"Origin": origin})
+                self.assertEqual(response.status_code, 200, response.json)
+                self.assertEqual(client.get_cookie("ark_panel_session").secure, secure)
 
     def test_password_change_persists_only_hash_and_revokes_other_existing_cookies(self):
         csrf = self.login().json["csrf"]

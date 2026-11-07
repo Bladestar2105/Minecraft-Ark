@@ -7,7 +7,7 @@ Für den Quellcodebau werden Docker mit Compose v2, Python 3.10+ und **JDK 25** 
 ## Neuer Quellcode-Checkout
 
 ```sh
-git clone --branch app-2026-11-07-photo-preview https://github.com/Bladestar2105/Minecraft-Ark.git
+git clone --branch app-2026-11-07-https-preview https://github.com/Bladestar2105/Minecraft-Ark.git
 cd Minecraft-Ark
 # JAVA_HOME auf JDK 25 setzen, falls PATH ein anderes JDK verwendet.
 python3 scripts/build_plugins.py
@@ -33,6 +33,19 @@ docker compose exec minecraft rcon-cli plugins
 Die erzeugte Konfiguration aktiviert Verwaltung und Spieleranwendung mit `COMPOSE_PROFILES=admin`. Das Panel liegt unter `http://localhost:8090`, das Spielerportal unter `/play/`. Der erste lokale Adminzugang steht in `secrets/panel-login.txt`; lies ihn privat. Mit leerem `COMPOSE_PROFILES` startet nur der Spielserver.
 
 Der neue Stack verwendet Java-`online-mode=true` und Floodgate für Bedrock; AuthMe/ArkAccessBridge werden nicht standardmäßig installiert. Bestehende Offline-/AuthMe-Server benötigen eine getrennte Identitätsmigration. Ändere den Identitätsmodus eines aktiven Servers nicht beiläufig und übernimm keine privaten Kontoverknüpfungen in öffentliche Pakete.
+
+## Öffentlicher HTTPS-Zugang
+
+Für eine öffentliche Adresse wie `https://mc.example.org` übernimmt Caddy HTTPS und leitet den gesamten Hostnamen an den privaten HTTP-Port 8090 des Panels weiter. Erhalte den ursprünglichen `Host` und leite `X-Forwarded-Proto` weiter. Verwaltung unter `/` und Spielerportal unter `/play/` verwenden denselben Ursprung; Port 8091 bleibt intern. Läuft Caddy auf einem anderen Host, binde 8090 an eine bestimmte private Schnittstelle und erlaube in der Firewall nur den Proxy; die voreingestellte Loopback-Bindung ist ausschließlich lokal erreichbar.
+
+Setze diese Werte in der **Umgebung des jeweiligen Compose-Dienstes** und erstelle die Dienste neu; zusätzliche `.env`-Werte ohne entsprechende Compose-Weitergabe reichen nicht:
+
+- `panel`: `PANEL_COOKIE_SECURE=1`, `PANEL_TRUSTED_HOSTS=mc.example.org`, `FORWARDED_ALLOW_IPS=192.0.2.10`.
+- `players`: `PLAYER_COOKIE_SECURE=1`, `PLAYER_TRUST_PROXY=1`, `PLAYER_TRUSTED_HOSTS=mc.example.org`.
+
+Ersetze den Beispielhostnamen in beiden Zulassungslisten. Die reine Dokumentationsadresse `192.0.2.10` steht für die nach gegebenenfalls vorhandener Container-Netzwerkübersetzung bei Gunicorn geprüfte Proxy-Gegenstelle; verwende genau diese vertrauenswürdige Adresse, niemals `*`. Gunicorn vertraut dadurch dem weitergeleiteten HTTPS-Schema. Die Secure-Cookie-Einstellungen greifen nur beim exakten Wert `1`; `PANEL_COOKIE_SECURE` ist sonst standardmäßig deaktiviert. Melde dich danach über HTTPS an: Einfaches LAN-HTTP behält diese Anmeldecookies nicht. Setze auch `portal-url` von ArkAccounts auf `https://mc.example.org/play/`.
+
+Der HTTPS-Proxy ersetzt keine vorhandenen Spielport-Weiterleitungen: Behalte Java TCP 25565 und Bedrock TCP/UDP 19132 für die aktuelle Geyser-/NetherNet-Konfiguration bei. Weder PROXY-Protokoll noch Änderungen an Caddy Layer 4 sind nötig. Betreibst du bereits privates Konsolen-DNS, bleiben TCP/UDP 53 auf dessen vorgesehene Clients begrenzt.
 
 ## Vor der Einladung von Spielern
 

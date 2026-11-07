@@ -366,6 +366,7 @@ def create_app(test_config=None):
         TRUSTED_HOSTS=[host.strip() for host in os.environ.get("PANEL_TRUSTED_HOSTS", "127.0.0.1,localhost").split(",") if host.strip()],
         MAX_CONTENT_LENGTH=1024 * 1024, MAX_FORM_MEMORY_SIZE=256 * 1024, MAX_FORM_PARTS=20,
         SESSION_COOKIE_NAME="ark_panel_session", SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SECURE=os.environ.get("PANEL_COOKIE_SECURE") == "1",
         SESSION_COOKIE_SAMESITE="Strict", PERMANENT_SESSION_LIFETIME=timedelta(days=30),
         SESSION_REFRESH_EACH_REQUEST=False,
     )
