@@ -1,0 +1,13 @@
+name: ArkAccounts
+version: 1.0.2
+main: de.ark.accounts.ArkAccounts
+api-version: '26.3'
+softdepend: [AuthMe, floodgate]
+description: Canonical server accounts and private role-separated portal API
+commands:
+  web:
+    description: Pair your game identity with the webinterface
+    usage: /web [logout]
+  account:
+    description: Open a private shared-password dialog
+    usage: /account

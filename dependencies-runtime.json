@@ -92,9 +92,9 @@
   {
     "project": "geyser",
     "name": "Geyser-Spigot.jar",
-    "version": "2.12.1-b1284",
-    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1284/downloads/spigot",
-    "sha256": "2a8af1fc256864f4d76af219366bf28efa1558cacb6bb06cf0b1639c4c3e241d",
+    "version": "2.12.1-b1295",
+    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1295/downloads/spigot",
+    "sha256": "b60ff8f9a007f30823cf40173532a0390e6150cdfc577551f6f37bdd5ccd1528",
     "kind": "plugin"
   },
   {
@@ -104,9 +104,25 @@
     "kind": "plugin"
   },
   {
+    "project": "floodgatedb",
+    "name": "floodgate-sqlite-database.jar",
+    "version": "2.2.5-b138",
+    "url": "https://download.geysermc.org/v2/projects/floodgatedb/versions/2.2.5/builds/138/downloads/sqlite",
+    "sha256": "df4ae91e452f7124f11b97d625357b00b13208c056e68c5473e1599b1e443317",
+    "kind": "floodgate-extension"
+  },
+  {
     "name": "Parties-3.2.18.jar",
     "url": "https://cdn.spiget.org/file/spiget-resources/3709.jar",
     "sha256": "6e399cc16a16e677a74b98c2585d9b4c092cf7bb97f58ce99fdfc269f42ee10d",
+    "kind": "plugin"
+  },
+  {
+    "project": "skinsrestorer",
+    "name": "SkinsRestorer-15.12.6.jar",
+    "version": "15.12.6",
+    "url": "https://github.com/SkinsRestorer/SkinsRestorer/releases/download/15.12.6/SkinsRestorer.jar",
+    "sha256": "a85b4a370f988741c9a38f4d0498262edacbf3220314790ac1c127461996359c",
     "kind": "plugin"
   }
 ]

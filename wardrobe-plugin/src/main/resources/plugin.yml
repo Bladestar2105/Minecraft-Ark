@@ -1,0 +1,13 @@
+name: ArkWardrobe
+version: 1.0.0
+main: de.ark.wardrobe.ArkWardrobe
+api-version: '26.3'
+depend: [ArkAccounts, SkinsRestorer]
+description: Personal skin library, editor backing store and signing providers
+commands:
+  wardrobe:
+    description: List and wear your personal skins
+    usage: /wardrobe [list|wear <name>]
+permissions:
+  arkwardrobe.admin:
+    default: op

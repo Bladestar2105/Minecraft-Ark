@@ -3,6 +3,9 @@
 /data/
 /panel-state/
 /.deps/
+/.cache/
+/dist/
+/own-plugins.json
 /.venv/
 **/__pycache__/
 **/build/

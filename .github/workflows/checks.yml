@@ -13,6 +13,25 @@ jobs:
       - run: pip install -r panel/requirements.txt
       - run: python -m unittest discover -s panel -p 'test_*.py'
       - run: python -m unittest discover -s scripts -p 'test_*.py'
+      - run: docker build -t minecraft-ark-panel:ci panel
+  javascript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node panel/test_skin_editor.mjs
+      - run: node panel/test_photo_skin.mjs
+      - run: node panel/test_ui.mjs
+      - run: npm install --no-save --prefix /tmp/ark-browser-check playwright@1.65.0-alpha-2026-10-30
+      - run: /tmp/ark-browser-check/node_modules/.bin/playwright install --with-deps chromium
+      - run: node panel/test_unified_ui.mjs
+        env:
+          PLAYWRIGHT_MODULE: /tmp/ark-browser-check/node_modules/playwright/index.mjs
+      - run: node panel/test_support_ui.mjs
+        env:
+          PLAYWRIGHT_MODULE: /tmp/ark-browser-check/node_modules/playwright/index.mjs
   plugins:
     runs-on: ubuntu-latest
     steps:
@@ -22,3 +41,10 @@ jobs:
           distribution: temurin
           java-version: '25'
       - run: python3 scripts/build_plugins.py
+      - run: python3 scripts/package.py --version "app-${{ github.sha }}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: minecraft-ark-app-${{ github.sha }}
+          path: dist/app-${{ github.sha }}/*
+          if-no-files-found: error
+          retention-days: 14

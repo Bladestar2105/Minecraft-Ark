@@ -1,6 +1,7 @@
 import hashlib
 import base64
 import hmac
+import http.client
 import json
 import math
 import os
@@ -12,25 +13,34 @@ import threading
 import time
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
+from http.cookies import SimpleCookie
 from pathlib import Path
 from urllib.parse import quote, urlsplit
 
 import docker
 import requests
 import yaml
-from flask import Flask, jsonify, redirect, render_template, request, send_file, session, stream_with_context
+from itsdangerous import BadData
+from flask import Flask, g, jsonify, redirect, render_template, request, send_file, session, stream_with_context
+from flask.sessions import SecureCookieSessionInterface
 from werkzeug.exceptions import HTTPException
 from werkzeug.security import check_password_hash, generate_password_hash
 from yaml.events import AliasEvent
 
 if __package__:
-    from .catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field
+    from .catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field, validate_portal_url
     from .config_content import PROTECTED, redact_content, restore_content, validate_json
+    from .rate_limit import ApiRateLimiter, RateLimitError, client_address
     from .rcon_client import command as rcon_command, RconError
+    from .i18n import locale, translate, WIKI_BASE
+    from .wardrobe_client import configured_client, fixed_origin, MAX_RESPONSE, signing_connection, signing_settings, WardrobeError, allowed_player_path, account_list, password_reset_payload, support_payload, support_response, module_status, operator_login_payload, operator_identity, read_secret
 else:
-    from catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field
+    from catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field, validate_portal_url
     from config_content import PROTECTED, redact_content, restore_content, validate_json
+    from rate_limit import ApiRateLimiter, RateLimitError, client_address
     from rcon_client import command as rcon_command, RconError
+    from i18n import locale, translate, WIKI_BASE
+    from wardrobe_client import configured_client, fixed_origin, MAX_RESPONSE, signing_connection, signing_settings, WardrobeError, allowed_player_path, account_list, password_reset_payload, support_payload, support_response, module_status, operator_login_payload, operator_identity, read_secret
 
 
 SERVICES = {"minecraft": "minecraft-ark", "dns": "minecraft-dns"}
@@ -65,6 +75,13 @@ MAX_OUTPUT = 128 * 1024
 HOP_HEADERS = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"}
 
 
+class PanelSessionInterface(SecureCookieSessionInterface):
+    def get_expiration_time(self, app, session):
+        if session.get("auth_type") == "operator":
+            return datetime.fromtimestamp(session["operator_expires_at"], timezone.utc)
+        return super().get_expiration_time(app, session)
+
+
 def output_text(content):
     decoded = (content or b"")[-MAX_OUTPUT:].decode("utf-8", "replace")
     return decoded.encode("utf-8")[-MAX_OUTPUT:].decode("utf-8", "ignore")
@@ -94,7 +111,7 @@ def parse_player_locations(positions, dimensions):
 
 class PanelError(Exception):
     def __init__(self, message, status=400):
-        self.message, self.status = message, status
+        self.message, self.status = translate(message), status
 
 
 class ConfigLoader(yaml.SafeLoader):
@@ -139,6 +156,16 @@ def validate_yaml(config_id, content):
         bedrock = value.get("bedrock")
         if not isinstance(bedrock, dict) or not isinstance(value.get("java"), dict) or type(bedrock.get("port")) is not int or not 1 <= bedrock["port"] <= 65535:
             raise PanelError("Geyser benötigt bedrock.port (1–65535) und einen java-Abschnitt.")
+    elif config_id == "ark-accounts":
+        try:
+            validate_portal_url(value.get("portal-url"))
+        except ValueError as error:
+            raise PanelError(str(error)) from None
+        interval = value.get("portal-announcement-seconds", 300)
+        if type(interval) is not int or interval != 0 and not 30 <= interval <= 86400:
+            raise PanelError("portal-announcement-seconds muss 0 oder eine ganze Zahl von 30 bis 86400 sein.")
+        if type(value.get("portal-spawn-display", True)) is not bool:
+            raise PanelError("portal-spawn-display muss true oder false sein.")
     elif config_id == "quests":
         quests = value.get("quests")
         if not isinstance(quests, dict) or not quests:
@@ -200,7 +227,7 @@ def validate_plugin_settings(plugin, changes):
             if valid:
                 value.encode("utf-8")
         if not valid:
-            raise PanelError("Ungültiger Wert für " + key + ". Für eigene Sonderwerte den erweiterten Editor verwenden.")
+            raise PanelError(translate("Ungültiger Wert für {key}. Für eigene Sonderwerte den erweiterten Editor verwenden.", key=key))
 
 
 def edit_plugin_scalar(text, field, value):
@@ -341,13 +368,20 @@ def properties_content(original, submitted=None):
 
 def create_app(test_config=None):
     app = Flask(__name__)
+    app.session_interface = PanelSessionInterface()
     app.config.update(
         DATA_DIR=os.environ.get("DATA_DIR", "/game"), STATE_DIR=os.environ.get("STATE_DIR", "/state"),
         AGH_BASE_URL=os.environ.get("AGH_BASE_URL", "http://dns:3000"),
         MAP_BASE_URL=os.environ.get("MAP_BASE_URL", "http://minecraft-ark:8100"),
+        PLAYER_BASE_URL=os.environ.get("PLAYER_BASE_URL", "http://players:8091"),
+        PLAYER_CREDENTIALS_FILE=os.environ.get("PLAYER_CREDENTIALS_FILE", "/run/secrets/player.json"),
+        TRUSTED_PROXY_IPS=os.environ.get("FORWARDED_ALLOW_IPS", "").split(","),
+        WARDROBE_BASE_URL=os.environ.get("WARDROBE_BASE_URL", "http://minecraft-ark:8101"),
+        WARDROBE_ADMIN_TOKEN_FILE=os.environ.get("WARDROBE_ADMIN_TOKEN_FILE"),
         TRUSTED_HOSTS=[host.strip() for host in os.environ.get("PANEL_TRUSTED_HOSTS", "127.0.0.1,localhost").split(",") if host.strip()],
         MAX_CONTENT_LENGTH=1024 * 1024, MAX_FORM_MEMORY_SIZE=256 * 1024, MAX_FORM_PARTS=20,
         SESSION_COOKIE_NAME="ark_panel_session", SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SECURE=os.environ.get("PANEL_COOKIE_SECURE") == "1",
         SESSION_COOKIE_SAMESITE="Strict", PERMANENT_SESSION_LIFETIME=timedelta(days=30),
         SESSION_REFRESH_EACH_REQUEST=False,
     )
@@ -371,6 +405,49 @@ def create_app(test_config=None):
     if (parsed_map.scheme not in ["http", "https"] or not parsed_map.hostname or parsed_map.username
             or parsed_map.password or parsed_map.path or parsed_map.query or parsed_map.fragment):
         raise RuntimeError("Ungültiges internes Kartenziel.")
+    parsed_player = fixed_origin(app.config["PLAYER_BASE_URL"])
+    player_key = app.config.get("PLAYER_SESSION_SECRET")
+    if player_key is None:
+        try:
+            credentials = json.loads(read_secret(app.config["PLAYER_CREDENTIALS_FILE"]))
+            player_key = credentials["session_secret"] if set(credentials) == {"session_secret"} else None
+        except (RuntimeError, ValueError, KeyError, TypeError):
+            player_key = None
+    player_serializer = None
+    if isinstance(player_key, str) and len(player_key) >= 32:
+        cookie_app = Flask("ark-player-cookie")
+        cookie_app.secret_key = player_key
+        player_serializer = SecureCookieSessionInterface().get_signing_serializer(cookie_app)
+    api_budget = app.config.get("API_RATE_LIMITER") or ApiRateLimiter()
+
+    def clear_player_cookies(response):
+        for path in ("/", "/play/"):
+            response.delete_cookie("ark_player_session", path=path, secure=app.config["SESSION_COOKIE_SECURE"], httponly=True, samesite="Strict")
+        return response
+
+    def player_identity(cookie):
+        if player_serializer is None or not isinstance(cookie, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,4096}", cookie):
+            raise WardrobeError("unauthorized", 401)
+        try:
+            value = player_serializer.loads(cookie, max_age=30 * 86400)
+        except BadData:
+            raise WardrobeError("unauthorized", 401) from None
+        if (not isinstance(value, dict) or not isinstance(value.get("player_token"), str)
+                or not re.fullmatch(r"[A-Za-z0-9._~-]{16,512}", value["player_token"])
+                or type(value.get("expires_at")) not in (int, float) or not math.isfinite(value["expires_at"])
+                or value["expires_at"] <= time.time() or not isinstance(value.get("csrf"), str)
+                or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", value["csrf"])):
+            raise WardrobeError("unauthorized", 401)
+        # A signed player cookie proves identity; only the native server can grant OP access.
+        native = configured_client(app.config, admin=True).request("POST", "/v1/admin/auth/player-check",
+            payload={"token": value["player_token"]}, admin=True)
+        identity = operator_identity(native)
+        if identity["uuid"] != value.get("uuid"):
+            raise WardrobeError("unauthorized", 401)
+        if type(native.get("is_op")) is not bool:
+            raise WardrobeError("upstream_invalid", 502)
+        return dict(authenticated=True, csrf=value["csrf"], username=identity["name"], uuid=identity["uuid"],
+                    auth_type="player", is_admin=native["is_op"], is_player=True)
     data_dir = Path(app.config["DATA_DIR"]).resolve()
     state_dir = Path(app.config["STATE_DIR"])
     client = app.config.get("DOCKER_CLIENT")
@@ -428,12 +505,13 @@ def create_app(test_config=None):
         session.clear()
         session.permanent = True
         session["authenticated"] = True
+        session["auth_type"] = "local"
         session["credential_revision"] = credential_revision(password_hash)
         session["csrf"] = secrets.token_urlsafe(32)
-        return jsonify(ok=True, csrf=session["csrf"], username=app.config["AUTH_USERNAME"])
+        return clear_player_cookies(jsonify(ok=True, authenticated=True, csrf=session["csrf"], username=app.config["AUTH_USERNAME"], auth_type="local", is_admin=True, is_player=False))
 
     def login_attempt():
-        address = request.remote_addr or "unknown"
+        address = client_address(request.environ, app.config["TRUSTED_PROXY_IPS"])
         now = time.monotonic()
         for key in list(failures):
             failures[key] = [attempt for attempt in failures[key] if now - attempt < 60]
@@ -499,7 +577,7 @@ def create_app(test_config=None):
     def runtime_settings(component):
         observed = observed_at()
         unavailable = dict(available=False, observed_at=observed, settings={}, scopes={},
-                           message="Live-Werte derzeit nicht verfügbar.")
+                           message=translate("Live-Werte derzeit nicht verfügbar."))
         try:
             snapshot = bridge("settings").get(component)
         except (PanelError, docker.errors.DockerException):
@@ -541,7 +619,7 @@ def create_app(test_config=None):
                    r"(?:integer|double|float) must not\b|this teleport (?:would be|is) unsafe\b|"
                    r"the new spawn location is unsafe\b)")
         if re.search(failure, plain):
-            raise PanelError("Minecraft hat die Änderung abgelehnt: " + plain.strip()[:600], 422)
+            raise PanelError(translate("Minecraft hat die Änderung abgelehnt: {output}", output=plain.strip()[:600]), 422)
         return plain.strip()
 
     def world_name(world):
@@ -594,56 +672,108 @@ def create_app(test_config=None):
 
     @app.before_request
     def protect():
-        if session.get("authenticated"):
-            revision = session.get("credential_revision")
-            if not isinstance(revision, str) or not hmac.compare_digest(revision.encode("utf-8"), credential_revision(auth_hash()).encode("utf-8")):
-                session.clear()
-        private = ((request.path.startswith("/api/") and request.path not in ["/api/session", "/api/login"])
+        if request.path.startswith(("/api/", "/play/api/")):
+            api_budget.check(client_address(request.environ, app.config["TRUSTED_PROXY_IPS"]))
+        personal = (request.path == "/play" or request.path.startswith("/play/")
+                    or request.path.startswith("/api/player/") or request.path == "/api/recover")
+        if personal:
+            if request.method not in ["GET", "HEAD", "OPTIONS"] and request.headers.get("Origin") != request.host_url.rstrip("/"):
+                raise PanelError("Die Anfrage stammt nicht von dieser Seite.", 403)
+            return
+        public_api = ("/api/session", "/api/login", "/api/operator/login")
+        private = ((request.path.startswith("/api/") and request.path not in public_api)
                    or request.path in ["/dns", "/map"] or request.path.startswith(("/dns/", "/map/")))
-        if private and not session.get("authenticated"):
+        if (private or request.path == "/api/session") and request.cookies.get("ark_player_session"):
+            try:
+                g.player_identity = player_identity(request.cookies["ark_player_session"])
+            except WardrobeError as error:
+                if error.status == 401 and request.path == "/api/session":
+                    g.expire_player_cookie = True
+                else:
+                    raise
+            if private and getattr(g, "player_identity", None):
+                if request.path != "/api/logout" and not g.player_identity["is_admin"]:
+                    return jsonify(error=translate("Administratorrechte sind erforderlich."), code="admin_required"), 403
+                g.admin_identity = dict(name=g.player_identity["username"], uuid=g.player_identity["uuid"])
+        elif session.get("authenticated") and (private or request.path == "/api/session"):
+            if session.get("auth_type") == "operator":
+                try:
+                    expiry, token = session.get("operator_expires_at"), session.get("operator_token")
+                    if type(expiry) not in (int, float) or expiry <= time.time() or not isinstance(token, str):
+                        raise WardrobeError("unauthorized", 401)
+                    identity = operator_identity(configured_client(app.config, admin=True).request("POST", "/v1/admin/auth/check", payload={"token": token}, admin=True))
+                    if identity["uuid"] != session.get("operator_uuid"):
+                        raise WardrobeError("unauthorized", 401)
+                    g.admin_identity = identity
+                except WardrobeError:
+                    session.clear()
+                    raise
+            elif session.get("auth_type") in (None, "local"):
+                revision = session.get("credential_revision")
+                if not isinstance(revision, str) or not hmac.compare_digest(revision.encode("utf-8"), credential_revision(auth_hash()).encode("utf-8")):
+                    session.clear()
+            else:
+                session.clear()
+                raise WardrobeError("unauthorized", 401)
+        if private and not (getattr(g, "player_identity", None) or session.get("authenticated")):
             raise PanelError("Bitte zuerst anmelden.", 401)
         if request.method not in ["GET", "HEAD", "OPTIONS"]:
             if request.headers.get("Origin") != request.host_url.rstrip("/"):
                 raise PanelError("Die Anfrage stammt nicht von dieser Verwaltungsseite.", 403)
-            if request.path.startswith("/api/") and request.path != "/api/login":
-                expected = session.get("csrf", "")
+            if request.path.startswith("/api/") and request.path not in ("/api/login", "/api/operator/login"):
+                identity = getattr(g, "player_identity", None)
+                expected = identity["csrf"] if identity else session.get("csrf", "")
                 supplied = request.headers.get("X-CSRF-Token", "")
                 if not expected or not hmac.compare_digest(expected.encode("utf-8"), supplied.encode("utf-8")):
                     raise PanelError("Sicherheitsprüfung fehlgeschlagen. Bitte neu anmelden.", 403)
 
     @app.after_request
     def headers(response):
+        if response.status_code == 429:
+            response.headers.setdefault("Retry-After", "60")
+        if getattr(g, "expire_player_cookie", False):
+            clear_player_cookies(response)
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "same-origin"
         response.headers["X-Frame-Options"] = "SAMEORIGIN"
+        response.headers["Content-Language"] = locale()
         return response
 
     @app.errorhandler(PanelError)
     def panel_error(error):
-        return jsonify(error=error.message), error.status
+        return jsonify(error=error.message, code="invalid_request" if error.status == 400 else "request_failed"), error.status
+
+    @app.errorhandler(RateLimitError)
+    def rate_limit_error(error):
+        return jsonify(error=translate("Zu viele Anfragen. Bitte später erneut versuchen."), code="rate_limited"), 429, {"Retry-After": str(error.retry_after)}
+
+    @app.errorhandler(WardrobeError)
+    def wardrobe_error(error):
+        headers = {"Retry-After": str(error.retry_after or 60)} if error.status == 429 else {}
+        return jsonify(error=error.message, code=error.code), error.status, headers
 
     @app.errorhandler(HTTPException)
     def http_error(error):
         messages = {400: "Ungültige Anfrage oder nicht erlaubter Host.", 404: "Nicht gefunden.", 405: "Methode nicht erlaubt.", 413: "Die Anfrage ist zu groß."}
-        return jsonify(error=messages.get(error.code, "Die Anfrage konnte nicht verarbeitet werden.")), error.code
+        return jsonify(error=translate(messages.get(error.code, "Die Anfrage konnte nicht verarbeitet werden."))), error.code
 
     @app.errorhandler(docker.errors.DockerException)
     def docker_error(error):
-        return jsonify(error="Der Containerdienst ist derzeit nicht verfügbar."), 503
+        return jsonify(error=translate("Der Containerdienst ist derzeit nicht verfügbar.")), 503
 
     @app.errorhandler(UnicodeError)
     def unicode_error(error):
-        return jsonify(error="Der Text muss gültige Unicode-Zeichen enthalten."), 400
+        return jsonify(error=translate("Der Text muss gültige Unicode-Zeichen enthalten.")), 400
 
     @app.errorhandler(Exception)
     def internal_error(error):
         app.logger.error("Interner Verwaltungsfehler; keine Anfragedaten protokolliert.")
-        return jsonify(error="Die Aktion konnte nicht sicher abgeschlossen werden."), 500
+        return jsonify(error=translate("Die Aktion konnte nicht sicher abgeschlossen werden.")), 500
 
     @app.get("/")
     def index():
-        return render_template("index.html")
+        return render_template("index.html", language=locale(), wiki_base=WIKI_BASE)
 
     @app.get("/healthz")
     def health():
@@ -651,27 +781,87 @@ def create_app(test_config=None):
 
     @app.get("/api/session")
     def session_info():
-        authenticated = bool(session.get("authenticated"))
-        return jsonify(authenticated=authenticated, csrf=session.get("csrf") if authenticated else None, username=app.config["AUTH_USERNAME"] if authenticated else None)
+        identity = getattr(g, "player_identity", None)
+        if identity:
+            return jsonify(**{key: value for key, value in identity.items() if key != "uuid"}, language=locale(), wiki_base=WIKI_BASE)
+        authenticated = bool(session.get("authenticated")) and not getattr(g, "expire_player_cookie", False)
+        operator = authenticated and session.get("auth_type") == "operator"
+        return jsonify(authenticated=authenticated, csrf=session.get("csrf") if authenticated else None,
+                       username=g.admin_identity["name"] if operator else app.config["AUTH_USERNAME"] if authenticated else None,
+                       auth_type="operator" if operator else "local" if authenticated else None,
+                       is_admin=authenticated, is_player=False, language=locale(), wiki_base=WIKI_BASE)
 
     @app.post("/api/login")
     def login():
         value = payload()
+        credentials = set(value) == {"username", "password"}
+        if not credentials and set(value) != {"code"}:
+            raise PanelError("Benutzername oder Passwort sind ungültig.")
         username, password = value.get("username"), value.get("password")
-        if not isinstance(username, str) or not isinstance(password, str) or len(username) > 128 or len(password) > 1024:
+        if credentials and (not isinstance(username, str) or not isinstance(password, str) or len(username) > 128 or len(password) > 1024):
             raise PanelError("Benutzername oder Passwort sind ungültig.")
         with login_lock:
             address, now = login_attempt()
-            password_hash = auth_hash()
-            valid_password = check_password_hash(password_hash, password)
-            if not hmac.compare_digest(username.encode("utf-8"), app.config["AUTH_USERNAME"].encode("utf-8")) or not valid_password:
-                failed_attempt(address, now)
-                raise PanelError("Benutzername oder Passwort stimmen nicht.", 401)
-            failures.pop(address, None)
-            return signed_in(password_hash)
+            if credentials:
+                password_hash = auth_hash()
+                valid_password = check_password_hash(password_hash, password)
+                if hmac.compare_digest(username.encode("utf-8"), app.config["AUTH_USERNAME"].encode("utf-8")) and valid_password:
+                    failures.pop(address, None)
+                    return signed_in(password_hash)
+            failed_attempt(address, now)
+        if player_serializer is None:
+            raise PanelError("Benutzername oder Passwort stimmen nicht.", 401)
+        response = proxy_player("api/login")
+        if response.status_code != 200:
+            return response
+        cookie = None
+        for header in response.headers.getlist("Set-Cookie"):
+            parsed = SimpleCookie()
+            parsed.load(header)
+            candidate = parsed.get("ark_player_session")
+            if candidate and candidate["path"] == "/" and candidate.value:
+                cookie = candidate
+        if cookie is None:
+            raise WardrobeError("upstream_invalid", 502)
+        identity = player_identity(cookie.value)
+        session.clear()
+        with login_lock:
+            attempts = failures.get(address, [])
+            if now in attempts:
+                attempts.remove(now)
+            if not attempts:
+                failures.pop(address, None)
+        response.set_data(json.dumps({key: value for key, value in identity.items() if key != "uuid"} | {"ok": True}))
+        response.content_type = "application/json"
+        return response
+
+    @app.post("/api/recover")
+    def recover_player():
+        return proxy_player("api/recover")
+
+    @app.post("/api/operator/login")
+    def operator_login():
+        body = operator_login_payload(payload())
+        with login_lock:
+            address, now = login_attempt()
+            failed_attempt(address, now)
+        identity = operator_identity(configured_client(app.config, admin=True).request("POST", "/v1/admin/auth/login", payload=body, admin=True), token=True)
+        with login_lock:
+            attempts = failures.get(address, [])
+            if now in attempts:
+                attempts.remove(now)
+            if not attempts:
+                failures.pop(address, None)
+        session.clear()
+        session.permanent = True
+        session.update(authenticated=True, auth_type="operator", operator_token=identity["token"], operator_uuid=identity["uuid"],
+                       operator_expires_at=min(identity["expires_at"], time.time() + 8 * 3600), csrf=secrets.token_urlsafe(32))
+        return jsonify(ok=True, csrf=session["csrf"], username=identity["name"], auth_type="operator")
 
     @app.post("/api/password")
     def change_password():
+        if getattr(g, "player_identity", None) or session.get("auth_type") == "operator":
+            raise WardrobeError("operator_local_password_denied", 403)
         value = payload()
         current, new, confirmation = value.get("current_password"), value.get("new_password"), value.get("confirm_password")
         if not isinstance(current, str) or not 1 <= len(current) <= 1024:
@@ -696,8 +886,18 @@ def create_app(test_config=None):
 
     @app.post("/api/logout")
     def logout():
-        session.clear()
-        return jsonify(ok=True)
+        if getattr(g, "player_identity", None):
+            response = proxy_player("api/logout")
+            session.clear()
+            return response
+        operator = session.get("auth_type") == "operator"
+        username = g.admin_identity["name"] if operator else app.config["AUTH_USERNAME"]
+        try:
+            if operator:
+                configured_client(app.config, admin=True).request("POST", "/v1/admin/auth/logout", payload={"token": session["operator_token"]}, admin=True)
+        finally:
+            session.clear()
+        return clear_player_cookies(jsonify(ok=True, auth_type="operator" if operator else "local", username=username))
 
     @app.get("/api/status")
     def status():
@@ -712,12 +912,12 @@ def create_app(test_config=None):
                     minecraft_running = item.status == "running"
             except (docker.errors.DockerException, PanelError):
                 services.append(dict(id=service_id, name=name, state="unavailable", health=None, started_at=None, restart_count=0))
-        players = "Minecraft ist derzeit offline oder nicht erreichbar."
+        players = translate("Minecraft ist derzeit offline oder nicht erreichbar.")
         if minecraft_running:
             try:
                 players = rcon("list")
             except (docker.errors.DockerException, PanelError):
-                players = "Spielerliste derzeit nicht erreichbar."
+                players = translate("Spielerliste derzeit nicht erreichbar.")
         return jsonify(services=services, players=players)
 
     def map_metadata():
@@ -735,7 +935,7 @@ def create_app(test_config=None):
         def date(value):
             return value if isinstance(value, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}(?:T[0-9:.+Z-]+)?", value) else None
 
-        worlds = {key: dict(id=key, name=name, terrain=False, min_x=-10240, max_x=10240, min_z=-10240, max_z=10240)
+        worlds = {key: dict(id=key, name=translate(name), terrain=False, min_x=-10240, max_x=10240, min_z=-10240, max_z=10240)
                   for key, name in [("minecraft:overworld", "ARK Survival"), ("minecraft:ark_creative", "Kreativwelt"),
                                     ("minecraft:ark_exploration", "Erkundungswelt")]}
         document = {}
@@ -790,13 +990,13 @@ def create_app(test_config=None):
                 names = {world["id"]: world["name"] for world in worlds}
                 names.update({"minecraft:the_nether": "Nether", "minecraft:the_end": "End"})
                 for player in players:
-                    player["world"] = names.get(player["dimension"], "Unbekannte Dimension")
+                    player["world"] = names.get(player["dimension"], translate("Unbekannte Dimension"))
                 result = dict(online=True, players=players, worlds=worlds, updated_at=time.time(), terrain_updated_at=terrain_updated)
                 map_cache.update(data=result, expires=now + 2.5)
             except (docker.errors.DockerException, PanelError) as error:
                 map_cache.update(data=None, expires=0)
                 result = dict(online=False, players=[], worlds=worlds, updated_at=time.time(), terrain_updated_at=terrain_updated,
-                              error=error.message if isinstance(error, PanelError) else "Minecraft ist derzeit nicht erreichbar.")
+                              error=error.message if isinstance(error, PanelError) else translate("Minecraft ist derzeit nicht erreichbar."))
         return jsonify(result)
 
     @app.post("/api/services/<service_id>/<action>")
@@ -890,7 +1090,8 @@ def create_app(test_config=None):
                 available = True
             except PanelError:
                 available = False
-            entries.append(dict(id=key, available=available, description=config_description(key), **{field: value for field, value in metadata.items() if field not in ["path", "description"]}))
+            entries.append(dict(id=key, available=available, description=config_description(key),
+                **{field: translate(value) if field in ("name", "group", "protected_note") else value for field, value in metadata.items() if field not in ["path", "description"]}))
         return jsonify(configs=entries)
 
     @app.route("/api/settings/<plugin>", methods=["GET", "PUT"])
@@ -970,7 +1171,7 @@ def create_app(test_config=None):
                     property_records(text)
                 if request.method == "GET":
                     content = properties_content(text) if kind == "properties" else redact_content(kind, config_id, text)
-                    return jsonify(id=config_id, name=metadata["name"], content=content, version=version, format=kind)
+                    return jsonify(id=config_id, name=translate(metadata["name"]), content=content, version=version, format=kind)
                 content = body.get("content")
                 if not isinstance(content, str):
                     raise PanelError("Konfiguration muss Text enthalten.")
@@ -1015,7 +1216,7 @@ def create_app(test_config=None):
                 return jsonify(available=False, ready=True, suggestions=[], message=error.message)
             raise
         if result.get("ready") is False:
-            return jsonify(available=False, ready=True, suggestions=[], message="Die Vorschläge brauchen noch einen Moment.")
+            return jsonify(available=False, ready=True, suggestions=[], message=translate("Die Vorschläge brauchen noch einen Moment."))
         start, end = result.get("start"), result.get("end")
         if type(start) is not int or type(end) is not int or not 0 <= start <= end <= len(encoded) // 2:
             raise PanelError("Ungültiger Ersetzungsbereich der Befehlsvorschläge.", 502)
@@ -1146,6 +1347,136 @@ def create_app(test_config=None):
             output = native(command)
         return jsonify(ok=True, output=output)
 
+    @app.route("/api/settings/wardrobe", methods=["GET", "PUT"])
+    def wardrobe_settings():
+        body = payload() if request.method == "PUT" else None
+        if body is not None:
+            if (set(body) - {"provider", "client_id", "mineskin_api_key", "clear_mineskin_api_key"} or
+                    body.get("provider") not in ("mineskin", "selfhosted") or
+                    not isinstance(body.get("client_id"), str) or not re.fullmatch(r"[A-Za-z0-9-]{0,128}", body["client_id"]) or
+                    "mineskin_api_key" in body and (not isinstance(body["mineskin_api_key"], str) or len(body["mineskin_api_key"]) > 512 or
+                        any(ord(c) < 33 or ord(c) > 126 for c in body["mineskin_api_key"])) or
+                    "clear_mineskin_api_key" in body and type(body["clear_mineskin_api_key"]) is not bool):
+                raise WardrobeError("invalid_request", 400)
+        value = configured_client(app.config, admin=True).request(request.method, "/v1/admin/signing", payload=body, admin=True)
+        return jsonify(signing_settings(value))
+
+    @app.get("/api/modules")
+    def modules():
+        value = configured_client(app.config, admin=True).request("GET", "/v1/admin/modules", admin=True)
+        return jsonify(module_status(value))
+
+    @app.get("/api/player-accounts")
+    def player_accounts():
+        value = configured_client(app.config, admin=True).request("GET", "/v1/admin/accounts", admin=True)
+        return jsonify(account_list(value))
+
+    @app.post("/api/player-accounts/password")
+    def player_password():
+        body = password_reset_payload(payload())
+        configured_client(app.config, admin=True).request("POST", "/v1/admin/accounts/password", payload=body, admin=True)
+        return jsonify(ok=True)
+
+    @app.get("/api/support")
+    def support():
+        value = configured_client(app.config, admin=True).request("GET", "/v1/admin/support", admin=True)
+        return jsonify(dict(support_response(value, listing=True), delete_closed=value.get("delete_closed") is True))
+
+    @app.get("/api/support/<ticket_id>")
+    @app.delete("/api/support/<ticket_id>")
+    @app.post("/api/support/<ticket_id>/reply")
+    @app.put("/api/support/<ticket_id>/status")
+    def support_detail(ticket_id):
+        if not re.fullmatch(r"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}", ticket_id):
+            raise WardrobeError("invalid_request", 400)
+        action = "reply" if request.method == "POST" else "status" if request.method == "PUT" else "delete" if request.method == "DELETE" else None
+        body = support_payload(payload(), action) if action else None
+        value = configured_client(app.config, admin=True).request(request.method, "/v1/admin/support/" + ticket_id + ("/" + action if action in ("reply", "status") else ""), payload=body, admin=True)
+        if request.method == "DELETE":
+            if not isinstance(value, dict) or value.get("ok") is not True:
+                raise WardrobeError("upstream_invalid", 502)
+            return jsonify(ok=True)
+        return jsonify(support_response(value))
+
+    @app.post("/api/wardrobe/connect")
+    @app.post("/api/wardrobe/disconnect")
+    def wardrobe_account():
+        if payload():
+            raise WardrobeError("invalid_request", 400)
+        connecting = request.path.endswith("/connect")
+        value = configured_client(app.config, admin=True).request("POST", "/v1/admin/signing/" + ("connect" if connecting else "disconnect"), payload={}, admin=True)
+        return jsonify(signing_connection(value) if connecting else {"ok": True})
+
+    @app.get("/play")
+    @app.get("/play/")
+    def player_redirect():
+        return redirect("/")
+
+    @app.route("/api/player/<path:path>", methods=["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def personal_proxy(path):
+        if path in ("login", "logout", "session", "recover"):
+            raise WardrobeError("not_found", 404)
+        return proxy_player("api/" + path)
+
+    def proxy_player(path):
+        if (any(ord(c) < 32 for c in path) or any(c in path for c in ("\\", "%")) or
+                any(part in (".", "..") for part in path.split("/"))):
+            raise PanelError("Ungültiger Spielerbereich-Pfad.")
+        if not allowed_player_path(request.method, "/" + path):
+            raise WardrobeError("not_found", 404)
+        target = "/" + quote(path, safe="/")
+        if request.query_string:
+            target += "?" + request.query_string.decode("ascii")
+        allowed = {"accept", "accept-language", "content-type", "origin", "x-csrf-token", "if-none-match", "if-modified-since"}
+        outgoing = {key: value for key, value in request.headers if key.lower() in allowed}
+        if session.get("authenticated") and session.get("csrf") == request.headers.get("X-CSRF-Token"):
+            outgoing = {key: value for key, value in outgoing.items() if key.lower() != "x-csrf-token"}
+        outgoing.update({"Accept-Encoding": "identity", "Host": request.host,
+                         "X-Forwarded-Host": request.host, "X-Forwarded-Proto": request.scheme,
+                         "X-Forwarded-For": client_address(request.environ, app.config["TRUSTED_PROXY_IPS"])})
+        player_cookie = request.cookies.get("ark_player_session")
+        if player_cookie and re.fullmatch(r"[A-Za-z0-9._-]{1,4096}", player_cookie):
+            outgoing["Cookie"] = "ark_player_session=" + player_cookie
+        language_cookie = request.cookies.get("ark_language")
+        if language_cookie in ("de", "en"):
+            outgoing["Cookie"] = (outgoing.get("Cookie", "") + "; " if outgoing.get("Cookie") else "") + "ark_language=" + language_cookie
+        cls = http.client.HTTPSConnection if parsed_player.scheme == "https" else http.client.HTTPConnection
+        connection = cls(parsed_player.hostname, parsed_player.port, timeout=15)
+        try:
+            connection.request(request.method, target, body=request.get_data(), headers=outgoing)
+            remote = connection.getresponse()
+            content = remote.read(MAX_RESPONSE + 1)
+            if len(content) > MAX_RESPONSE:
+                raise WardrobeError("upstream_invalid", 502)
+            remote_headers = remote.getheaders()
+            blocked = HOP_HEADERS | {"content-length", "content-encoding", "set-cookie", "location"}
+            for key, value in remote_headers:
+                if key.lower() == "connection":
+                    blocked |= {part.strip().lower() for part in value.split(",")}
+            response = app.response_class(content if request.method != "HEAD" else b"", status=remote.status)
+            for key, value in remote_headers:
+                if key.lower() == "location":
+                    destination = urlsplit(value)
+                    if destination.netloc or destination.scheme or any(c in destination.path for c in ("\\", "%")) or ".." in destination.path.split("/"):
+                        raise WardrobeError("upstream_invalid", 502)
+                    response.headers["Location"] = "/" + destination.path.lstrip("/") + ("?" + destination.query if destination.query else "")
+                elif key.lower() == "set-cookie":
+                    parsed = SimpleCookie()
+                    parsed.load(value)
+                    cookie = parsed.get("ark_player_session")
+                    if cookie:
+                        response.set_cookie("ark_player_session", cookie.value, path="/", httponly=True,
+                            samesite="Strict", secure=bool(cookie["secure"]), expires=cookie["expires"] or None,
+                            max_age=cookie["max-age"] or None)
+                        response.delete_cookie("ark_player_session", path="/play/", httponly=True, samesite="Strict", secure=bool(cookie["secure"]))
+                elif key.lower() not in blocked:
+                    response.headers[key] = value
+            return response
+        except (OSError, http.client.HTTPException, TimeoutError):
+            raise WardrobeError("upstream_unavailable", 502) from None
+        finally:
+            connection.close()
+
     @app.get("/api/map/viewer")
     def map_viewer():
         upstream = requests.Session()
@@ -1161,8 +1492,8 @@ def create_app(test_config=None):
                 remote.close()
             upstream.close()
         return jsonify(available=available, url="/map/", provider="BlueMap", status="online" if available else "preparing",
-                       notice="Gespeicherte Bauänderungen erscheinen nach der Kartenberechnung. Neue Gebiete können länger dauern."
-                       if available else "Die 2D-Karte wird vorbereitet oder ist gerade nicht erreichbar.")
+                       notice=translate("Gespeicherte Bauänderungen erscheinen nach der Kartenberechnung. Neue Gebiete können länger dauern."
+                       if available else "Die 2D-Karte wird vorbereitet oder ist gerade nicht erreichbar."))
 
     @app.get("/map")
     def map_redirect():

@@ -1,0 +1,11 @@
+# Keep this internal listener private; never publish it as a host port.
+bind: 0.0.0.0
+port: 8101
+player-token-file: /run/secrets/wardrobe_player_token
+admin-token-file: /run/secrets/wardrobe_admin_token
+portal-url: http://localhost:8090/
+# ARK_ACCOUNTS_PLAYER_URL, when set, overrides portal-url. Restart after changes.
+# Periodic DE/EN chat notice: 0 disables, otherwise 30..86400 seconds.
+portal-announcement-seconds: 300
+# Bilingual non-colliding text at the main world's current spawn; no block edits.
+portal-spawn-display: true

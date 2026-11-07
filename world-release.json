@@ -1,0 +1,47 @@
+{
+  "release_tag": "world-2026-11-06",
+  "base_url": "https://github.com/Bladestar2105/Minecraft-Ark/releases/download/world-2026-11-06/",
+  "archive": {
+    "sha256_concatenated": "9d3539c0115440a14e5bcff978978e495419c2fabe5e8eb4f2b815a89ef8e602",
+    "compressed_bytes": 12555565183,
+    "expanded_bytes": 17092079344,
+    "file_count": 5459,
+    "parts": [
+      {
+        "filename": "minecraft-ark-world-2026-11-06.tar.gz.part-000",
+        "bytes": 1887436800,
+        "sha256": "cfb411ecbcf80ced5fb533a7775c5eb8ba37f4ec0f3fc64ec9feadaa2db99de3"
+      },
+      {
+        "filename": "minecraft-ark-world-2026-11-06.tar.gz.part-001",
+        "bytes": 1887436800,
+        "sha256": "66a32753363aec19954df7868714b57d0f13b4f64a83e1e653cef7b41e1154e6"
+      },
+      {
+        "filename": "minecraft-ark-world-2026-11-06.tar.gz.part-002",
+        "bytes": 1887436800,
+        "sha256": "d803660f0dbe7ab6d5e8401a87fde230933d571e742af6c5f5c5cfc26c426b91"
+      },
+      {
+        "filename": "minecraft-ark-world-2026-11-06.tar.gz.part-003",
+        "bytes": 1887436800,
+        "sha256": "8170e737f7208dbfe4b8dd2f598478d73ec67e3d60955147d2ee89adc6c21db8"
+      },
+      {
+        "filename": "minecraft-ark-world-2026-11-06.tar.gz.part-004",
+        "bytes": 1887436800,
+        "sha256": "4b4115fef91fa8270b1e88a57a8bbff2fdc75d2a3a9cedb00d6e8388e953c007"
+      },
+      {
+        "filename": "minecraft-ark-world-2026-11-06.tar.gz.part-005",
+        "bytes": 1887436800,
+        "sha256": "32eee031837e9e0dc52ed8a3935c51b5611e604e1a36173c8a37c760b4324acc"
+      },
+      {
+        "filename": "minecraft-ark-world-2026-11-06.tar.gz.part-006",
+        "bytes": 1230944383,
+        "sha256": "921b3ff10f1d5a73e6e79221a109ca37a9c7c839a1e7ee6379bc4e135b78d4b8"
+      }
+    ]
+  }
+}

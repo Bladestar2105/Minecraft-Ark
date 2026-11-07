@@ -47,7 +47,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class ArkAtlas extends JavaPlugin implements Listener {
     private static final String WORLD = "ark";
     private static final String LOCAL_STARTER = "ark_local_map";
-    private static final String PREPARING = "Der Weltatlas wird vorbereitet. Versuche /karte später erneut.";
+    private static final String PREPARING = "Der Weltatlas wird vorbereitet. Versuche /atlas später erneut.";
     private static final String LEGEND = "Legende: Ziel = Spawn, Haus = Dorf, Rot = Dino, Blau = Händler, Rotes Kreuz = Abenteuer, Pfeil = du.";
     private final Map<UUID, ViewState> states = new HashMap<>();
     private NamespacedKey atlasKey;
@@ -191,7 +191,7 @@ public final class ArkAtlas extends JavaPlugin implements Listener {
                 Component.text("20.480 / 5.120 / 2.560 Blöcke · Norden oben", NamedTextColor.GRAY),
                 Component.text(LEGEND, NamedTextColor.GRAY),
                 Component.text("Bedrock zeigt keine Ortsnamen an Symbolen.", NamedTextColor.GRAY),
-                Component.text("Ersatz in Survival: /karte", NamedTextColor.GRAY)));
+                Component.text("Ersatz in Survival: /atlas", NamedTextColor.GRAY)));
         meta.getPersistentDataContainer().set(atlasKey, PersistentDataType.BYTE, (byte) 1);
         item.setItemMeta(meta);
         return item;
@@ -261,7 +261,7 @@ public final class ArkAtlas extends JavaPlugin implements Listener {
                 player.addScoreboardTag(LOCAL_STARTER);
                 player.sendMessage(Component.text("Umgebungskarte vorhanden; der Weltatlas wird vorbereitet.", NamedTextColor.YELLOW));
             }
-            case WAIT -> player.sendMessage(Component.text("Bitte mache einen Inventarplatz frei und verwende /karte erneut.", NamedTextColor.YELLOW));
+            case WAIT -> player.sendMessage(Component.text("Bitte mache einen Inventarplatz frei und verwende /atlas erneut.", NamedTextColor.YELLOW));
             case NONE -> { }
         }
     }
@@ -302,7 +302,7 @@ public final class ArkAtlas extends JavaPlugin implements Listener {
             }
             return true;
         }
-        if (!(sender instanceof Player player)) { sender.sendMessage(Component.text("/karte ist für Spieler.")); return true; }
+        if (!(sender instanceof Player player)) { sender.sendMessage(Component.text("/atlas ist für Spieler.")); return true; }
         if (!AtlasRules.canRequest(isArk(player), player.getGameMode() == GameMode.SURVIVAL)) { player.sendMessage(Component.text("Den Weltatlas erhältst du im Survival-Modus in ark.", NamedTextColor.YELLOW)); return true; }
         if (hasAtlas(player)) applyGrant(player, AtlasRules.Grant.RECORD);
         else applyGrant(player, AtlasRules.autoGrant(true, false, !ready() && hasAnyMap(player), ready(), player.getInventory().firstEmpty() >= 0));

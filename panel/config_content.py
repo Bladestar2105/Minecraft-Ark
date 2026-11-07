@@ -19,6 +19,7 @@ _IDENTITIES = {
     "geyser": ("java.auth-type", "java.address", "java.port", "bedrock.address", "bedrock.port", "bedrock.transport", "bedrock.signaling.mode", "bedrock.signaling.advertise-addresses", "advanced.floodgate-key-file"),
     "floodgate": ("key-file", "username-prefix", "replace-spaces", "player-link.allowed"),
     "ark-atlas": ("map-id",),
+    "ark-accounts": ("bind", "port"),
     "bluemap-core": ("data",),
     "bluemap-webserver": ("ip", "port", "webroot"),
     "bluemap-webapp": ("webroot", "map-data-root", "live-data-root"),

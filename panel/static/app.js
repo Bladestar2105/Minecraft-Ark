@@ -11,9 +11,14 @@ function completionChoices(data, input) {
 }
 
 
-(() => {
+(async () => {
+  if (window.ArkI18n) await ArkI18n.ready;
+  const t = (text, vars) => window.ArkI18n ? ArkI18n.t(text, vars) : String(text);
+  const confirmText = text => window.confirm(t(text));
+  for (const id of ["console-output", "logs-output", "players-output"]) document.getElementById(id).dataset.i18nSkip = "";
   const $ = (id) => document.getElementById(id);
-  const state = { authenticated: false, csrf: null, view: "overview", loaded: new Set(), services: [], configs: [], mission: null, geyserOriginal: null, missionOriginal: null, settingsOriginal: null, pluginOriginals: { geyser: null, quests: null }, editorBusy: new Set(), configVersions: {}, advanced: null, advancedOriginal: null, allConfigs: [], worlds: [], currentWorld: null, formVersions: {}, sessionSerial: 0, worldBusy: false };
+  const state = { authenticated: false, modules: null, csrf: null, view: "overview", loaded: new Set(), services: [], configs: [], mission: null, geyserOriginal: null, missionOriginal: null, settingsOriginal: null, pluginOriginals: { geyser: null, quests: null }, editorBusy: new Set(), configVersions: {}, advanced: null, advancedOriginal: null, allConfigs: [], worlds: [], currentWorld: null, formVersions: {}, sessionSerial: 0, worldBusy: false };
+  const supportUI = ArkSupport.mount($("admin-support"), { api: (path, ...args) => api("/api/" + path, ...args), admin: true, authenticated: () => state.authenticated && state.modules?.support === true, onActivity: notify });
   let mapRequest = null;
   let mapData = null;
   let viewerRequest = null;
@@ -27,7 +32,7 @@ function completionChoices(data, input) {
   let pollBusy = false;
   const formRequests = { minecraft: 0, geyser: 0, quests: 0 };
   const rawRequests = { geyser: 0, mission: 0, advanced: 0 };
-  const titles = { map: "Karte", overview: "Übersicht", minecraft: "Minecraft", geyser: "Geyser", missions: "Missionen", dns: "DNS", worlds: "Welten & Regeln", players: "Spielerverwaltung", configs: "Weitere Einstellungen" };
+  const titles = { map: "Karte", overview: "Übersicht", minecraft: "Minecraft", geyser: "Geyser", missions: "Missionen", dns: "DNS", worlds: "Welten & Regeln", players: "Spielerverwaltung", configs: "Weitere Einstellungen", support: "Support" };
   const descriptions = {
     quests: "Die Missionen selbst: Ziele, Belohnungen sowie Einzel- und Gruppenfortschritt. Nach dem Speichern Quests neu laden.",
     "quest-settings": "Allgemeine Quest-Einstellungen. Nach dem Speichern Quests neu laden. Einzelne Plugin-Optionen können einen Minecraft-Neustart benötigen.",
@@ -45,7 +50,7 @@ function completionChoices(data, input) {
   }
 
   function message(element, text, error = false) {
-    const value = displayText(text);
+    const value = t(displayText(text));
     if (element.textContent !== value) element.textContent = value;
     element.classList.toggle("error", error);
   }
@@ -55,8 +60,11 @@ function completionChoices(data, input) {
     $("notification").hidden = false;
   }
 
-  function showLogin(text = "") {
-    state.authenticated = false;
+  function clearAdmin() {
+    state.authenticated = false; state.modules = null;
+    supportUI.clear();
+    $("reset-player-form").reset(); $("reset-player-names").replaceChildren(); message($("reset-player-message"), "");
+    state.authenticated = false; state.modules = null;
     state.sessionSerial++;
     state.formVersions = {};
     state.csrf = null;
@@ -76,19 +84,26 @@ function completionChoices(data, input) {
     $("console-command").value = ""; $("console-output").textContent = $("logs-output").textContent = "";
     delete $("console-output").dataset.history;
     $("world-controls").replaceChildren(); $("world-rules").replaceChildren(); $("players-table").replaceChildren();
-    $("app-view").hidden = true;
-    $("login-view").hidden = false;
-    $("login-button").disabled = false;
+    document.querySelectorAll(".view").forEach(section => section.hidden = true);
+    document.querySelectorAll(".view form").forEach(form => form.reset());
+    document.querySelectorAll(".view .setting-state, .view .config-status, .view .form-message, .service-details dd, .service-state").forEach(node => node.textContent = "");
+    state.loaded.clear(); state.services = []; state.configs = []; state.allConfigs = []; state.advanced = state.mission = null;
+    for (const id of ["players-output", "whitelist-players", "banned-players", "player-names", "minecraft-dynamic-fields", "mission-config", "advanced-config"]) {
+      $(id).replaceChildren();
+    }
+    document.documentElement.dataset.arkWardrobe = "false";
+    window.dispatchEvent(new CustomEvent("ark:modules"));
+    $("notification").textContent = ""; $("notification").hidden = true;
     $("dns-frame").removeAttribute("src");
-    $("password").value = "";
     $("password-dialog").close();
     $("password-form").reset();
     message($("password-message"), "");
-    message($("login-message"), text);
   }
 
   async function api(path, method = "GET", body, signal) {
-    const headers = { Accept: "application/json" };
+    if (!state.authenticated) throw new Error("Keine Verwaltungsberechtigung.");
+    const serial = state.sessionSerial;
+    const headers = { Accept: "application/json", "Accept-Language": window.ArkI18n?.language || "de" };
     if (method !== "GET") {
       headers["Content-Type"] = "application/json";
       if (state.csrf) headers["X-CSRF-Token"] = state.csrf;
@@ -102,9 +117,12 @@ function completionChoices(data, input) {
     }
     let data;
     try { data = await response.json(); } catch { data = {}; }
+    if (!state.authenticated || serial !== state.sessionSerial) throw new DOMException("Verwaltungsberechtigung geändert.", "AbortError");
     if (!response.ok) {
-      if (response.status === 401 && path !== "/api/login") showLogin("Deine Sitzung ist abgelaufen. Bitte erneut anmelden.");
-      throw new Error(typeof data.error === "string" ? data.error : `Die Anfrage ist fehlgeschlagen (HTTP ${response.status}).`);
+      if (response.status === 401 || (response.status === 403 && ["admin_required", "operator_required"].includes(data.code))) { clearAdmin(); window.dispatchEvent(new Event("ark:session-refresh")); }
+      const error = new Error(typeof data.error === "string" ? data.error : `Die Anfrage ist fehlgeschlagen (HTTP ${response.status}).`);
+      error.status = response.status;
+      throw error;
     }
     return data;
   }
@@ -133,7 +151,7 @@ function completionChoices(data, input) {
   const pluginDirty = (target) => state.pluginOriginals[target] !== null && JSON.stringify(pluginFormValues(target)) !== state.pluginOriginals[target];
   const advancedDirty = () => state.advancedOriginal !== null && $("advanced-content").value !== state.advancedOriginal;
   const worldDirty = () => [...$("view-worlds").querySelectorAll("[data-saved-value]")].some((input) => JSON.stringify(inputValue(input)) !== input.dataset.savedValue);
-  const anyDirty = () => advancedDirty() || worldDirty() || geyserDirty() || missionDirty() || settingsDirty() || pluginDirty("geyser") || pluginDirty("quests");
+  const anyDirty = () => supportUI.hasDirty() || advancedDirty() || worldDirty() || geyserDirty() || missionDirty() || settingsDirty() || pluginDirty("geyser") || pluginDirty("quests");
   const pluginForConfig = (id) => id === "geyser" ? "geyser" : id === "quest-settings" ? "quests" : null;
   const rawPrefixForPlugin = (target) => target === "geyser" ? "geyser" : state.mission?.id === "quest-settings" ? "mission" : null;
   const rawDirtyForPlugin = (target) => (state.advanced?.reload_target === target && advancedDirty()) || (target === "geyser" ? geyserDirty() : state.mission?.id === "quest-settings" && missionDirty());
@@ -172,7 +190,7 @@ function completionChoices(data, input) {
 
   function readTime(value) {
     const date = new Date(value);
-    return value && !Number.isNaN(date.getTime()) ? date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+    return value && !Number.isNaN(date.getTime()) ? date.toLocaleTimeString(window.ArkI18n?.language || "de", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
   }
 
   function settingStates(target, data) {
@@ -210,7 +228,7 @@ function completionChoices(data, input) {
   }
 
   async function loadPluginSettings(target, discard = false, background = false) {
-    if (!background && !discard && pluginDirty(target) && !window.confirm("Ungespeicherte Formulareinstellungen verwerfen und erneut laden?")) return;
+    if (!background && !discard && pluginDirty(target) && !confirmText("Ungespeicherte Formulareinstellungen verwerfen und erneut laden?")) return;
     const serial = ++formRequests[target], session = state.sessionSerial, view = state.view;
     try {
       const data = await api(`/api/settings/${target}`);
@@ -234,7 +252,7 @@ function completionChoices(data, input) {
   }
 
   async function savePluginSettings(target) {
-    if (rawDirtyForPlugin(target) && !window.confirm("Ungespeicherte YAML-Änderungen verwerfen und die Formulareinstellungen speichern?")) return;
+    if (rawDirtyForPlugin(target) && !confirmText("Ungespeicherte YAML-Änderungen verwerfen und die Formulareinstellungen speichern?")) return;
     const prefix = rawPrefixForPlugin(target);
     const settings = pluginFormValues(target);
     try {
@@ -268,7 +286,7 @@ function completionChoices(data, input) {
       content.disabled = busy || original === null;
       $(`save-${prefix}`).disabled = busy || original === null || $(`save-${prefix}`).hasAttribute("aria-busy");
       $(`refresh-${prefix}`).disabled = busy || $(`refresh-${prefix}`).hasAttribute("aria-busy") || (prefix === "mission" && !state.configs.length);
-      $(`${prefix}-counter`).textContent = original === null ? "YAML" : `${dirty ? "Ungespeichert · " : ""}${content.value.length.toLocaleString("de-DE")} Zeichen`;
+      $(`${prefix}-counter`).textContent = original === null ? "YAML" : `${dirty ? "Ungespeichert · " : ""}${content.value.length.toLocaleString(window.ArkI18n?.language || "de")} Zeichen`;
       const plugin = prefix === "geyser" ? "geyser" : state.mission?.reload_target;
       $(`reload-${prefix}`).disabled = busy || $(`reload-${prefix}`).hasAttribute("aria-busy") || original === null || dirty || Boolean(plugin && pluginDirty(plugin));
     }
@@ -283,6 +301,24 @@ function completionChoices(data, input) {
     }
   }
 
+  async function loadModules() {
+    const session = state.sessionSerial;
+    try {
+      const modules = await api("/api/modules");
+      if (modules.accounts !== true || typeof modules.wardrobe !== "boolean" || typeof modules.support !== "boolean") throw new Error(t("Modulstatus nicht verfügbar. Bitte den Status erneut aktualisieren."));
+      if (!state.authenticated || session !== state.sessionSerial) return;
+      state.modules = modules;
+    } catch (error) { if (!state.authenticated || session !== state.sessionSerial) return; state.modules = null; notify(error.message, true); }
+    const modules = state.modules;
+    document.querySelector('[data-view="support"]').hidden = modules?.support === false;
+    $("admin-support").hidden = modules?.support === false;
+    $("signing-open").hidden = modules?.wardrobe === false;
+    $("signing-open").setAttribute("aria-disabled", String(modules?.wardrobe !== true));
+    document.documentElement.dataset.arkWardrobe = modules?.wardrobe === true ? "true" : modules?.wardrobe === false ? "false" : "unknown";
+    supportUI.updateAvailability();
+    window.dispatchEvent(new CustomEvent("ark:modules"));
+    if (modules?.support) supportUI.refresh({ silent: true });
+  }
   async function refreshStatus() {
     const data = await api("/api/status");
     state.services = data.services;
@@ -296,7 +332,7 @@ function completionChoices(data, input) {
       const health = { healthy: "Gesund", unhealthy: "Fehler", starting: "Startet", none: "Kein Healthcheck" };
       card.querySelector(".service-health").textContent = health[service.health] || service.health || "Kein Healthcheck";
       const date = service.started_at && new Date(service.started_at);
-      card.querySelector(".service-started").textContent = date && !Number.isNaN(date.getTime()) && date.getFullYear() > 1970 ? date.toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
+      card.querySelector(".service-started").textContent = date && !Number.isNaN(date.getTime()) && date.getFullYear() > 1970 ? date.toLocaleString(window.ArkI18n?.language || "de", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
       card.querySelector(".service-restarts").textContent = service.restart_count ?? "—";
       updateServiceControls(card, service.state);
     }
@@ -308,7 +344,7 @@ function completionChoices(data, input) {
     $("map-players").replaceChildren();
     for (const player of mapData?.players || []) {
       const item = document.createElement("li");
-      const name = document.createElement("strong"); name.textContent = player.name;
+      const name = document.createElement("strong"); name.dataset.i18nSkip = ""; name.textContent = player.name;
       const place = document.createElement("span");
       place.textContent = `${player.world} · X ${Number(player.x).toFixed(1)} · Y ${Number(player.y).toFixed(1)} · Z ${Number(player.z).toFixed(1)}`;
       item.append(name, place); $("map-players").append(item);
@@ -366,7 +402,7 @@ function completionChoices(data, input) {
     const name = id === "minecraft" ? "Minecraft" : "DNS";
     if (action !== "start") {
       const impact = id === "minecraft" ? "Alle Spieler werden getrennt." : "Die DNS-Auflösung wird kurz unterbrochen.";
-      if (!window.confirm(`${name} jetzt ${action === "stop" ? "stoppen" : "neu starten"}? ${impact}`)) return;
+      if (!confirmText(`${name} jetzt ${action === "stop" ? "stoppen" : "neu starten"}? ${impact}`)) return;
     }
     const card = document.querySelector(`.service-card[data-service="${id}"]`);
     card.setAttribute("aria-busy", "true");
@@ -387,7 +423,7 @@ function completionChoices(data, input) {
     const input = document.createElement(field.type === "choice" ? "select" : "input");
     input.id = `${prefix}-${++fieldSerial}`; input.name = field.key;
     if (field.type === "choice") for (const option of field.options || []) {
-      const item = document.createElement("option"); item.value = typeof option === "object" ? option.value : option; item.textContent = typeof option === "object" ? option.label || option.value : valueText(option, field.key); input.append(item);
+      const item = document.createElement("option"); item.value = typeof option === "object" ? option.value : option; item.textContent = typeof option === "object" ? option.label || option.value : valueText(option, field.key); if (field.originalOptions) item.dataset.i18nSkip = ""; input.append(item);
     }
     else input.type = field.type === "boolean" ? "checkbox" : ["integer", "number", "double"].includes(field.type) ? "number" : "text";
     if (input.type === "checkbox") input.checked = Boolean(value);
@@ -402,7 +438,7 @@ function completionChoices(data, input) {
   }
 
   async function loadSettings({ background = false } = {}) {
-    if (!background && settingsDirty() && !window.confirm("Ungespeicherte Spieleinstellungen verwerfen und erneut laden?")) return;
+    if (!background && settingsDirty() && !confirmText("Ungespeicherte Spieleinstellungen verwerfen und erneut laden?")) return;
     if (!background) $("minecraft-fields").disabled = true;
     const serial = ++formRequests.minecraft, session = state.sessionSerial, view = state.view;
     try {
@@ -449,7 +485,7 @@ function completionChoices(data, input) {
 
   async function loadConfig(id, prefix, discard = false, background = false) {
     const dirty = prefix === "geyser" ? geyserDirty() : missionDirty();
-    if (!background && !discard && dirty && !window.confirm("Ungespeicherte Änderungen verwerfen und die Datei laden?")) return false;
+    if (!background && !discard && dirty && !confirmText("Ungespeicherte Änderungen verwerfen und die Datei laden?")) return false;
     const serial = ++rawRequests[prefix], session = state.sessionSerial;
     try {
       const data = await api(`/api/configs/${encodeURIComponent(id)}`);
@@ -493,9 +529,9 @@ function completionChoices(data, input) {
   }
 
   async function saveConfig(id, prefix) {
-    if (state.advanced?.id === id && advancedDirty() && !window.confirm("Ungespeicherte Änderungen im erweiterten Editor verwerfen und diese Datei speichern?")) return;
+    if (state.advanced?.id === id && advancedDirty() && !confirmText("Ungespeicherte Änderungen im erweiterten Editor verwerfen und diese Datei speichern?")) return;
     const plugin = pluginForConfig(id);
-    if (plugin && pluginDirty(plugin) && !window.confirm("Ungespeicherte Formulareinstellungen verwerfen und die YAML-Datei speichern?")) return;
+    if (plugin && pluginDirty(plugin) && !confirmText("Ungespeicherte Formulareinstellungen verwerfen und die YAML-Datei speichern?")) return;
     const content = $(`${prefix}-content`).value;
     if (new TextEncoder().encode(content).length > 256 * 1024) throw new Error("Die Datei darf höchstens 256 KiB groß sein.");
     try {
@@ -517,14 +553,15 @@ function completionChoices(data, input) {
 
   async function reload(target) {
     if (dirtyForReload(target)) { notify("Die Änderungen zuerst speichern und anschließend neu laden.", true); return; }
-    if (target === "geyser" && !window.confirm("Geyser jetzt neu laden? Alle Bedrock-Spieler werden getrennt und müssen erneut beitreten.")) return;
+    if (target === "geyser" && !confirmText("Geyser jetzt neu laden? Alle Bedrock-Spieler werden getrennt und müssen erneut beitreten.")) return;
     const data = await api(`/api/reload/${target}`, "POST", {});
-    notify(`Neuladen von ${target === "geyser" ? "Geyser" : "Quests"} angefordert.${data.output ? `\n${data.output}` : ""}`);
+    notify(t("Neuladen von {plugin} angefordert.", { plugin: target === "geyser" ? "Geyser" : "Quests" }) + (data.output ? `\n${data.output}` : ""));
     await loadPluginSettings(target, true);
   }
 
   async function navigate(view) {
-    if (!Object.hasOwn(titles, view)) view = "overview";
+    if (!state.authenticated || !Object.hasOwn(titles, view)) return;
+    if (view === "support" && state.modules?.support === false) view = "overview";
     const serial = ++navigationRequest;
     state.view = view;
     if (view !== "map") { mapRequest?.abort(); mapRequest = null; viewerRequest?.abort(); viewerRequest = null; }
@@ -535,14 +572,15 @@ function completionChoices(data, input) {
       else link.removeAttribute("aria-current");
     });
     $("page-title").textContent = titles[view];
-    document.title = `${titles[view]} · ARK Expedition`;
+    document.title = `${t(titles[view])} · ARK Expedition`;
     if (view === "map") { await Promise.allSettled([refreshMap(), refreshMapViewer()]); return; }
+    if (view === "support") { await supportUI.refresh(); return; }
     if (state.loaded.has(view)) { await refreshVisibleSettings(true); return; }
     try {
       if (view === "overview") await refreshStatus();
       if (view === "minecraft") await loadSettings();
       if (view === "worlds") await loadWorlds();
-      if (view === "players") await loadPlayers();
+      if (view === "players") await Promise.allSettled([loadPlayers(), loadResetAccounts()]);
       if (view === "configs") await loadAdvancedConfigs();
       if (view === "geyser" || view === "missions") {
         const target = view === "geyser" ? "geyser" : "quests";
@@ -580,9 +618,7 @@ function completionChoices(data, input) {
     state.pluginOriginals = { geyser: null, quests: null };
     $("notification").hidden = true;
     $("signed-in-user").textContent = data.username;
-    $("password").value = "";
-    $("login-view").hidden = true;
-    $("app-view").hidden = false;
+    await loadModules();
     await navigate(location.hash.slice(1) || "overview");
   }
 
@@ -595,7 +631,7 @@ function completionChoices(data, input) {
     $("advanced-config").disabled = busy || !state.allConfigs.length;
     $("save-advanced").disabled = busy || state.advancedOriginal === null || !canSave;
     $("refresh-advanced").disabled = busy || !(selected || $("advanced-config").value);
-    $("advanced-counter").textContent = state.advancedOriginal === null ? "" : `${advancedDirty() ? "Ungespeichert · " : ""}${$("advanced-content").value.length.toLocaleString("de-DE")} Zeichen`;
+    $("advanced-counter").textContent = state.advancedOriginal === null ? "" : `${advancedDirty() ? "Ungespeichert · " : ""}${$("advanced-content").value.length.toLocaleString(window.ArkI18n?.language || "de")} Zeichen`;
   }
 
   async function loadAdvancedConfigs() {
@@ -615,7 +651,7 @@ function completionChoices(data, input) {
   }
 
   async function loadAdvancedConfig(id, discard = false, background = false) {
-    if (!background && !discard && advancedDirty() && !window.confirm("Ungespeicherte Dateiänderungen verwerfen?")) return false;
+    if (!background && !discard && advancedDirty() && !confirmText("Ungespeicherte Dateiänderungen verwerfen?")) return false;
     const serial = ++rawRequests.advanced, session = state.sessionSerial;
     const data = await api(`/api/configs/${encodeURIComponent(id)}`);
     if (!state.authenticated || session !== state.sessionSerial || serial !== rawRequests.advanced) return false;
@@ -637,7 +673,7 @@ function completionChoices(data, input) {
   async function saveAdvancedConfig() {
     const config = state.advanced;
     const otherDirty = (config.id === "geyser" && geyserDirty()) || (state.mission?.id === config.id && missionDirty()) || (pluginForConfig(config.id) && pluginDirty(pluginForConfig(config.id)));
-    if (otherDirty && !window.confirm("Ungespeicherte Änderungen im zugehörigen Formular oder Datei-Editor verwerfen und diese Datei speichern?")) return;
+    if (otherDirty && !confirmText("Ungespeicherte Änderungen im zugehörigen Formular oder Datei-Editor verwerfen und diese Datei speichern?")) return;
     const content = $("advanced-content").value;
     if (new TextEncoder().encode(content).length > 256 * 1024) throw new Error("Die Datei darf höchstens 256 KiB groß sein.");
     const result = await api(`/api/configs/${encodeURIComponent(config.id)}`, "PUT", { content, ...(state.configVersions.advanced === undefined ? {} : { version: state.configVersions.advanced }) });
@@ -753,7 +789,7 @@ function completionChoices(data, input) {
   }
 
   async function loadWorlds(preferred, { background = false, applied } = {}) {
-    if (!background && worldDirty() && !window.confirm("Ungespeicherte Weltregeln verwerfen und erneut laden?")) { $("world-select").value = state.currentWorld; return; }
+    if (!background && worldDirty() && !confirmText("Ungespeicherte Weltregeln verwerfen und erneut laden?")) { $("world-select").value = state.currentWorld; return; }
     const serial = ++worldsRequest, session = state.sessionSerial, view = state.view;
     if (!background) { $("world-controls").inert = true; $("world-rules").inert = true; }
     try {
@@ -768,7 +804,7 @@ function completionChoices(data, input) {
       const options = [...$("world-select").options];
       if (options.length !== worlds.length || worlds.some((world, i) => options[i]?.value !== world.key || options[i]?.textContent !== world.name)) {
         $("world-select").replaceChildren();
-        for (const world of worlds) { const option = document.createElement("option"); option.value = world.key; option.textContent = world.name; $("world-select").append(option); }
+        for (const world of worlds) { const option = document.createElement("option"); option.value = world.key; option.dataset.i18nSkip = ""; option.textContent = world.name; $("world-select").append(option); }
       }
       $("world-select").value = state.currentWorld || ""; $("world-select").disabled = !worlds.length;
       renderWorld(applied);
@@ -783,7 +819,7 @@ function completionChoices(data, input) {
       if (serial === worldsRequest) { $("world-controls").inert = false; $("world-rules").inert = false; }
     }
   }
-  function filterRules() { const query = $("rule-search").value.toLocaleLowerCase("de"); for (const row of $("world-rules").children) row.hidden = !row.dataset.search.includes(query); }
+  function filterRules() { const query = $("rule-search").value.toLocaleLowerCase(window.ArkI18n?.language || "de"); for (const row of $("world-rules").children) row.hidden = !(row.dataset.search + " " + row.textContent.toLocaleLowerCase(window.ArkI18n?.language || "de")).includes(query); }
 
   function choosePlayer(name, action) {
     $("player-name").value = name; if (action) $("player-action").value = action; renderPlayerAction(); $("player-name").focus();
@@ -796,26 +832,45 @@ function completionChoices(data, input) {
       for (const name of names) { const option = document.createElement("option"); option.value = name; $("player-names").append(option); }
       for (const player of data.players || []) {
         const row = document.createElement("div"); row.className = "player-row";
-        const detail = document.createElement("div"); const name = document.createElement("strong"); name.textContent = player.name;
+        const detail = document.createElement("div"); const name = document.createElement("strong"); name.dataset.i18nSkip = ""; name.textContent = player.name;
         const info = document.createElement("p"); info.className = "field-hint"; info.textContent = [player.world, player.gamemode, player.op ? "Administrator" : "Spieler", player.whitelisted ? "Whitelist" : ""].filter(Boolean).join(" · ");
         detail.append(name, info); const button = document.createElement("button"); button.type = "button"; button.className = "button quiet"; button.textContent = "Verwalten"; button.addEventListener("click", () => choosePlayer(player.name)); row.append(detail, button); $("players-table").append(row);
       }
       if (!data.players?.length) $("players-table").textContent = "Gerade ist niemand online.";
       for (const [id, entries, action] of [["whitelist-players", data.whitelist, "whitelist-remove"], ["banned-players", data.banned, "pardon"]]) {
         $(id).replaceChildren();
-        for (const name of entries || []) { const button = document.createElement("button"); button.type = "button"; button.className = "button quiet"; button.textContent = name; button.addEventListener("click", () => choosePlayer(name, action)); $(id).append(button); }
+        for (const name of entries || []) { const button = document.createElement("button"); button.type = "button"; button.className = "button quiet"; button.dataset.i18nSkip = ""; button.textContent = name; button.addEventListener("click", () => choosePlayer(name, action)); $(id).append(button); }
         if (!entries?.length) $(id).textContent = "Keine Einträge.";
       }
       if (!state.worlds.length) { try { state.worlds = (await api("/api/worlds")).worlds || []; } catch { } }
       renderPlayerAction(); message($("players-admin-message"), "Spieler und Zugangslisten geladen.");
     } catch (error) { message($("players-admin-message"), error.message, true); }
   }
+  async function loadResetAccounts() {
+    const session = state.sessionSerial;
+    try {
+      const data = await api("/api/player-accounts");
+      if (!state.authenticated || session !== state.sessionSerial) return;
+      $("reset-player-names").replaceChildren();
+      for (const account of data.accounts) { const option = document.createElement("option"); option.value = account.name; $("reset-player-names").append(option); }
+    } catch (error) { if (state.authenticated && session === state.sessionSerial) message($("reset-player-message"), error.message, true); }
+  }
+  $("reset-player-form").addEventListener("submit", event => {
+    event.preventDefault();
+    const username = $("reset-player-name").value.trim();
+    if (!window.confirm(t("Serverpasswort für {name} zurücksetzen? Alle Websitzungen dieses Spielerkontos werden beendet.", { name: username }))) return;
+    run($("reset-player-submit"), async () => {
+      await api("/api/player-accounts/password", "POST", { username, new_password: $("reset-player-password").value, confirmation: $("reset-player-confirm").value });
+      $("reset-player-password").value = $("reset-player-confirm").value = "";
+      message($("reset-player-message"), "Serverpasswort zurückgesetzt. Alle Websitzungen dieses Spielerkontos wurden beendet; Wiederherstellungscodes bleiben erhalten.");
+    }, $("reset-player-message"));
+  });
   function renderPlayerAction() {
     const target = $("player-action-fields"); target.replaceChildren();
     const action = $("player-action").value;
     if (["kick", "ban"].includes(action)) addField(target, { key: "reason", label: "Grund (optional)", type: "string" }, "", "player");
     if (action === "gamemode") addField(target, { key: "value", label: "Spielmodus", type: "choice", options: [{ value: "survival", label: "Überleben" }, { value: "creative", label: "Kreativ" }, { value: "adventure", label: "Abenteuer" }, { value: "spectator", label: "Zuschauer" }] }, "survival", "player");
-    if (action === "world") addField(target, { key: "value", label: "Zielwelt", type: "choice", options: state.worlds.map((world) => ({ value: world.key, label: world.name })) }, state.worlds[0]?.key, "player");
+    if (action === "world") addField(target, { key: "value", label: "Zielwelt", type: "choice", originalOptions: true, options: state.worlds.map((world) => ({ value: world.key, label: world.name })) }, state.worlds[0]?.key, "player");
     if (action === "teleport") for (const key of ["x", "y", "z"]) addField(target, { key, label: key.toUpperCase(), type: "number" }, key === "y" ? 64 : 0, "player");
   }
 
@@ -865,25 +920,12 @@ function completionChoices(data, input) {
     }, 180);
   }
 
-  $("login-form").addEventListener("submit", (event) => {
-    event.preventDefault();
-    run($("login-button"), async () => {
-      message($("login-message"), "Anmeldung wird geprüft …");
-      const data = await api("/api/login", "POST", { username: $("username").value.trim(), password: $("password").value });
-      await showApp(data);
-    }, $("login-message"));
-  });
-  $("logout-button").addEventListener("click", () => {
-    if (anyDirty() && !window.confirm("Es gibt ungespeicherte Änderungen. Trotzdem abmelden?")) return;
-    run($("logout-button"), async () => {
-      await api("/api/logout", "POST", {});
-      state.geyserOriginal = state.missionOriginal = state.settingsOriginal = null;
-      state.pluginOriginals = { geyser: null, quests: null };
-      $("geyser-content").value = $("mission-content").value = $("advanced-content").value = "";
-      $("logs-output").textContent = $("console-output").textContent = "";
-      delete $("console-output").dataset.history;
-      showLogin("Du bist abgemeldet.");
-    });
+  window.ArkAdmin = { hasDirty: () => state.authenticated && anyDirty() };
+  window.addEventListener("ark:session", event => {
+    const data = event.detail;
+    if (!data.authenticated || data.is_admin !== true) { clearAdmin(); return; }
+    state.csrf = data.csrf;
+    if (!state.authenticated) showApp(data).catch(error => { if (state.authenticated) notify(error.message, true); });
   });
   $("account-button").addEventListener("click", () => {
     $("password-form").reset();
@@ -901,6 +943,7 @@ function completionChoices(data, input) {
         confirm_password: $("confirm-password").value
       });
       state.csrf = data.csrf;
+      window.dispatchEvent(new CustomEvent("ark:csrf", { detail: data.csrf }));
       $("signed-in-user").textContent = data.username;
       $("password-form").reset();
       message($("password-message"), "Passwort geändert. Andere Anmeldungen wurden beendet.");
@@ -908,7 +951,7 @@ function completionChoices(data, input) {
   });
   window.addEventListener("hashchange", () => { if (state.authenticated) navigate(location.hash.slice(1)); });
   window.addEventListener("beforeunload", (event) => { if (state.authenticated && anyDirty()) { event.preventDefault(); event.returnValue = ""; } });
-  $("refresh-status").addEventListener("click", () => run($("refresh-status"), refreshStatus));
+  $("refresh-status").addEventListener("click", () => run($("refresh-status"), async () => { await loadModules(); await refreshStatus(); }));
   document.querySelectorAll(".service-card [data-action]").forEach((button) => button.addEventListener("click", () => {
     serviceAction(button.closest("[data-service]").dataset.service, button.dataset.action).catch((error) => notify(error.message, true));
   }));
@@ -977,8 +1020,8 @@ function completionChoices(data, input) {
 
   $("refresh-map").addEventListener("click", () => run($("refresh-map"), () => Promise.allSettled([refreshMap(), refreshMapViewer()]), $("map-viewer-status")));
   $("settings-search").addEventListener("input", () => {
-    const query = $("settings-search").value.toLocaleLowerCase("de");
-    for (const field of $("minecraft-dynamic-fields").querySelectorAll("[data-search]")) field.hidden = !field.dataset.search.includes(query);
+    const query = $("settings-search").value.toLocaleLowerCase(window.ArkI18n?.language || "de");
+    for (const field of $("minecraft-dynamic-fields").querySelectorAll("[data-search]")) field.hidden = !(field.dataset.search + " " + field.textContent.toLocaleLowerCase(window.ArkI18n?.language || "de")).includes(query);
     for (const group of $("minecraft-dynamic-fields").children) group.hidden = ![...group.querySelectorAll("[data-search]")].some((field) => !field.hidden);
   });
   $("advanced-content").addEventListener("input", updateAdvancedEditor);
@@ -998,10 +1041,10 @@ function completionChoices(data, input) {
     event.preventDefault();
     run($("player-action-submit"), async () => {
       const action = $("player-action").value, player = $("player-name").value.trim();
-      if (["op", "ban", "kick"].includes(action) && !window.confirm(`${player}: ${$("player-action").selectedOptions[0].textContent} jetzt anwenden?`)) return;
+      if (["op", "ban", "kick"].includes(action) && !confirmText(`${player}: ${$("player-action").selectedOptions[0].textContent} jetzt anwenden?`)) return;
       const values = Object.fromEntries([...$("player-action-fields").querySelectorAll("[name]")].map((input) => [input.name, inputValue(input)]));
       const result = await api("/api/players/action", "POST", { action, player, ...values });
-      message($("player-action-message"), result.output || "Aktion angewendet."); await loadPlayers();
+      $("player-action-message").dataset.i18nSkip = ""; $("player-action-message").textContent = result.output ? displayText(result.output) : t("Aktion angewendet."); await loadPlayers();
     }, $("player-action-message"));
   });
   $("console-command").addEventListener("input", queueCompletion);
@@ -1021,7 +1064,7 @@ function completionChoices(data, input) {
     catch { throw new Error("Vollbild ist in diesem Browser nicht verfügbar. Bitte „Separat öffnen“ verwenden."); }
   }, $("map-viewer-status")));
   async function refreshVisibleSettings(includeRaw = false) {
-    if (!state.authenticated || document.hidden || pollBusy || state.editorBusy.size || state.worldBusy || !state.loaded.has(state.view)) return;
+    if (!state.authenticated || document.hidden || pollBusy || state.editorBusy.size || state.worldBusy || !state.loaded.has(state.view) || !Object.hasOwn(titles, location.hash.slice(1))) return;
     const view = state.view; pollBusy = true;
     try {
       if (view === "minecraft") {
@@ -1044,7 +1087,7 @@ function completionChoices(data, input) {
   document.addEventListener("toggle", event => { if (event.target.open && event.target.matches("#view-configs details, #view-geyser details, #view-missions details")) refreshVisibleSettings(true); }, true);
   setInterval(() => { refreshMap(); refreshMapViewer(); }, 5000);
   setInterval(() => {
-    if (state.authenticated && !document.hidden) { refreshStatus().catch((error) => notify(error.message, true)); refreshVisibleSettings(); }
+    if (state.authenticated && !document.hidden && Object.hasOwn(titles, location.hash.slice(1))) { refreshStatus().catch((error) => { if (state.authenticated) notify(error.message, true); }); refreshVisibleSettings(); }
   }, 15000);
-  api("/api/session").then((data) => data.authenticated ? showApp(data) : showLogin()).catch((error) => showLogin(error.message));
+  window.addEventListener("ark:language", () => { document.title = `${t(titles[state.view])} · ARK Expedition`; updateEditors(); });
 })();
