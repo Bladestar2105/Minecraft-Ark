@@ -4,6 +4,12 @@
 
 Öffne das Webinterface des Servers direkt unter seiner Hauptadresse `/`. Alle verwenden dasselbe Anmeldeformular und dieselbe deutsch-/englischsprachige Oberfläche: Profil, Garderobe, Konto und Support gehören zum eigenen Spielerkonto. **ArkAccounts** stellt Anmeldung, Kontoeinstellungen, Profil und Statistiken bereit; Skins und Tickets erscheinen nur mit den jeweiligen optionalen Modulen. Alte `/play/`-Links leiten auf `/` weiter; ein zweites Portal oder eine OP-Anmeldung ist nicht nötig.
 
+## Portaladresse im Spiel finden
+
+Am Hauptspawn zeigt ein schwebender Hinweis die Portaladresse und `/web`. Zusätzlich erscheint standardmäßig alle fünf Minuten eine Chat-Nachricht mit derselben URL. Auf Java lässt sich der Chat-Link anklicken; auf Bedrock kannst du die ausgeschriebene Adresse verwenden. Der Betreiber kann die Hinweise abschalten oder das Intervall ändern. `/web` gibt nach der Spielanmeldung weiterhin deinen privaten Einmalcode und die Adresse aus; teile diesen Code nicht.
+
+Die Adresse gehört zu diesem Server. Betreiber richten sie wie unter [Portaladresse und Hinweise](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE#portaladresse-und-hinweise-im-spiel) beschrieben ein.
+
 ## Anmelden
 
 Bestehende AuthMe-Benutzer melden sich direkt mit bekanntem Spielernamen und AuthMe-Serverpasswort an. Eine vorherige `/web`-Kopplung ist nicht erforderlich. Das Passwort wird mit der Kontoverwaltung im Spiel geteilt, nicht mit Microsoft.

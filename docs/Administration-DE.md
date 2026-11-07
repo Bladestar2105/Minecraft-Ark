@@ -38,7 +38,26 @@ Unter **Spieler** setzt die Verwaltung das gemeinsame Server-/Portalpasswort ein
 
 Mit ArkSupport werden Anfragen unter **Support** gelesen, beantwortet, geschlossen und wieder geöffnet. Mit ArkWardrobe wird die [Skin-Signierung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing-DE) eingerichtet. Fehlende optionale Module blenden ihre Bedienung aus; eine fehlgeschlagene Modulabfrage zeigt eine Fehlermeldung. Aktualisiere den Status für einen neuen Versuch.
 
-Setze `portal-url` in `data/plugins/ArkAccounts/config.yml` auf die erreichbare Hauptadresse `/` und starte den betroffenen Server nach Konfigurationsänderungen neu. Signierungszugänge gehören zu Wardrobe, nicht Accounts. Für bestehende gestoppte Installationen ergänzt `python3 scripts/init.py --portal-only` fehlende Portalgeheimnisse, ohne bestehende Zugänge zu ersetzen. Dies ist keine automatische Migration alter Kontodaten.
+## Portaladresse und Hinweise im Spiel
+
+Die gemeinsame Adresse für `/web`, den Hinweis am Hauptspawn und die regelmäßigen Chat-Nachrichten steht in `data/plugins/ArkAccounts/config.yml`. Richte zuerst einen tatsächlich erreichbaren Webzugang ein; eine URL einzutragen erstellt weder DNS noch HTTPS oder Portfreigaben.
+
+1. Melde dich mit Verwaltungsrechten an und stoppe Minecraft kontrolliert über das Webinterface. Nutze dafür bei Bedarf das lokale Betreiberkonto, das auch bei gestopptem Spiel erreichbar bleibt.
+2. Öffne **Weitere Einstellungen → Spielerportal (ArkAccounts)**.
+3. Setze `portal-url` auf die vollständige Hauptadresse einschließlich `https://`, beispielsweise `https://portal.example.org/`. Verwende keinen alten `/play/`-Pfad. Die Adresse darf keine Zugangsdaten oder Fragmentkennung enthalten.
+4. Setze `portal-announcement-seconds`: `300` bedeutet fünf Minuten, `0` schaltet Chat-Hinweise aus; sonst sind `30` bis `86400` Sekunden zulässig.
+5. `portal-spawn-display: true` zeigt den Hinweis am Hauptspawn; `false` deaktiviert ihn. Die Anzeige verändert keine Gebäude oder Blöcke.
+6. Speichere und starte Minecraft wieder. Prüfe die Adresse am Spawn und mit `/web` im Spiel.
+
+```yaml
+portal-url: https://portal.example.org/
+portal-announcement-seconds: 300
+portal-spawn-display: true
+```
+
+Netzwerkbindung, interne Ports und geheime Tokenpfade sind im Editor geschützt. Bei einer Neuinstallation kann `python3 scripts/setup.py --portal-url https://portal.example.org/` die Adresse vorbelegen. Bei bestehenden Installationen die vorhandene Konfiguration bearbeiten; die Einrichtung überschreibt sie nicht. Falls du selbst `ARK_ACCOUNTS_PLAYER_URL` als Umgebungsvariable setzt, hat dieser Wert Vorrang: entferne oder ändere ihn ebenfalls, sonst wirkt die URL-Änderung in der Datei nicht.
+
+Signierungszugänge gehören zu Wardrobe, nicht Accounts. Für bestehende gestoppte Installationen ergänzt `python3 scripts/init.py --portal-only` fehlende Portalgeheimnisse, ohne bestehende Zugänge zu ersetzen. Dies ist keine automatische Migration alter Kontodaten.
 
 ## Private Backups und Updates
 

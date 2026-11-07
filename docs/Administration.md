@@ -38,7 +38,26 @@ Under **Players**, administrators can reset a known account's shared server/port
 
 With ArkSupport installed, use **Support** to read, reply, close and reopen tickets. With ArkWardrobe installed, configure [skin signing](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing). Missing optional modules hide their controls; capability failures show an unavailable/retry message. Refresh status to retry.
 
-Set `portal-url` in `data/plugins/ArkAccounts/config.yml` to your reachable root URL `/`; restart the affected server after configuration changes. Signing credentials belong to Wardrobe, not Accounts. For an existing stopped installation, `python3 scripts/init.py --portal-only` adds missing portal secrets without replacing existing credentials. It is not an automatic legacy account-data migration.
+## Portal address and in-game notices
+
+The shared address for `/web`, the main-spawn display and regular chat notices is configured in `data/plugins/ArkAccounts/config.yml`. Set up reachable web access first; entering a URL does not create DNS, HTTPS or port forwarding.
+
+1. Sign in with administrative rights and stop Minecraft cleanly through the web interface. Use the local owner account if necessary; it remains accessible when the game is stopped.
+2. Open **More settings → Player portal (ArkAccounts)**.
+3. Set `portal-url` to the full root address including `https://`, for example `https://portal.example.org/`. Do not use the old `/play/` path. The address must not contain credentials or a fragment.
+4. Set `portal-announcement-seconds`: `300` means five minutes, `0` disables chat notices; other permitted values are `30` through `86400` seconds.
+5. `portal-spawn-display: true` enables the main-spawn notice; `false` disables it. The display changes no buildings or blocks.
+6. Save and start Minecraft again. Check the address at spawn and using `/web` in game.
+
+```yaml
+portal-url: https://portal.example.org/
+portal-announcement-seconds: 300
+portal-spawn-display: true
+```
+
+Network binding, internal ports and secret token paths are protected in the editor. A new installation can initialize the address with `python3 scripts/setup.py --portal-url https://portal.example.org/`. Edit the existing configuration on established installations; setup does not overwrite it. If you set the `ARK_ACCOUNTS_PLAYER_URL` environment variable yourself, it takes precedence: remove or change it as well, or the file's URL change will not take effect.
+
+Signing credentials belong to Wardrobe, not Accounts. For an existing stopped installation, `python3 scripts/init.py --portal-only` adds missing portal secrets without replacing existing credentials. This is not an automatic migration of old account data.
 
 ## Private backups and updates
 

@@ -37,6 +37,7 @@ public final class ArkAccounts extends JavaPlugin implements Listener,CommandExe
     private Object authMe;
     private Method isAuthenticated,checkPassword,changePassword,isRegistered,forceLogout;
     private String portalUrl;
+    private PortalNotices portalNotices;
     private final SecretCommands secretCommands=new SecretCommands();
     private final ExecutorService io=new ThreadPoolExecutor(2,2,0,TimeUnit.MILLISECONDS,new ArrayBlockingQueue<>(32),r->{var t=new Thread(r,"ArkAccounts-commands");t.setDaemon(true);return t;});
     private final Map<UUID,Long> commandCooldown=new HashMap<>();
@@ -45,8 +46,8 @@ public final class ArkAccounts extends JavaPlugin implements Listener,CommandExe
             secretCommands.install();
             saveDefaultConfig();Path root=getDataFolder().toPath();
             String player=secret("ARK_ACCOUNTS_PLAYER_TOKEN_FILE","player-token-file");String admin=secret("ARK_ACCOUNTS_ADMIN_TOKEN_FILE","admin-token-file");
-            portalUrl=System.getenv().getOrDefault("ARK_ACCOUNTS_PLAYER_URL",getConfig().getString("portal-url","http://localhost:8090/")).replaceFirst("/play/?$","/");
-            URI portal=URI.create(portalUrl);if(!Set.of("http","https").contains(portal.getScheme()) || portal.getHost()==null || portal.getUserInfo()!=null)throw new IllegalArgumentException();
+            PortalInfo portal=PortalInfo.from(System.getenv().getOrDefault("ARK_ACCOUNTS_PLAYER_URL",getConfig().getString("portal-url","http://localhost:8090/")),getConfig().get("portal-announcement-seconds"),getConfig().get("portal-spawn-display"));
+            portalUrl=portal.url();
             if(getServer().getPluginManager().getPlugin("AuthMe")!=null) {
                 Class<?> type=Class.forName("fr.xephi.authme.api.v3.AuthMeApi");authMe=type.getMethod("getInstance").invoke(null);
                 isAuthenticated=type.getMethod("isAuthenticated",Player.class);checkPassword=type.getMethod("checkPassword",String.class,String.class);
@@ -84,6 +85,7 @@ public final class ArkAccounts extends JavaPlugin implements Listener,CommandExe
             api.start();getServer().getPluginManager().registerEvents(this,this);
             if(authMe!=null)registerUnregisterEvents();
             for(String name:List.of("web","account")){Objects.requireNonNull(getCommand(name)).setExecutor(this);getCommand(name).setTabCompleter(this);}
+            portalNotices=new PortalNotices(this,portal);
             getLogger().info("Private accounts API listening on port "+api.port()+". Optional modules register separately.");
         }catch(Exception e){getLogger().severe("Accounts unavailable: "+(e instanceof ApiError a?a.code:e.getClass().getSimpleName()));getServer().getPluginManager().disablePlugin(this);}
     }
@@ -199,5 +201,5 @@ public final class ArkAccounts extends JavaPlugin implements Listener,CommandExe
     }
     @Override public Registration register(Plugin owner,String module,Handler handler,java.util.function.Function<Identity,UUID> selectedSkin){if(stopping||!owner.isEnabled())throw new ApiError(503,"module_unavailable");return modules.register(owner,module,handler,selectedSkin);}
     @EventHandler public void pluginDisabled(PluginDisableEvent event){modules.closeOwner(event.getPlugin());}
-    @Override public void onDisable(){stopping=true;modules.closeAll();getServer().getServicesManager().unregisterAll(this);if(api!=null)api.close();io.shutdownNow();secretCommands.close();}
+    @Override public void onDisable(){stopping=true;if(portalNotices!=null)portalNotices.close();modules.closeAll();getServer().getServicesManager().unregisterAll(this);if(api!=null)api.close();io.shutdownNow();secretCommands.close();}
 }

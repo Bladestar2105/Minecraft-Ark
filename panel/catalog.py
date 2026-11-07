@@ -1,5 +1,6 @@
 """Fixed admin configuration metadata and pure server-property validation."""
 import re
+from ipaddress import IPv4Address, IPv6Address
 from urllib.parse import urlsplit
 from uuid import UUID
 
@@ -80,6 +81,7 @@ EXTRA_CONFIGS = {
     'quest-conditions': _config('Quests – Bedingungen', 'plugins/Quests/storage/conditions.yml', 'Spielinhalte', reload_target='quests', restart_required=False, requires_stopped=False),
     'quest-actions': _config('Quests – Aktionen', 'plugins/Quests/storage/actions.yml', 'Spielinhalte', reload_target='quests', restart_required=False, requires_stopped=False),
     'floodgate': _config('Floodgate', 'plugins/floodgate/config.yml', 'Bedrock', protected_note='Authentifizierung und Schlüssel bleiben geschützt.'),
+    'ark-accounts': _config('Spielerportal (ArkAccounts)', 'plugins/ArkAccounts/config.yml', 'Zugang', protected_note='Minecraft nach dem Speichern starten. Interne Adresse, Port und geheime Dateipfade bleiben geschützt. ARK_ACCOUNTS_PLAYER_URL überschreibt portal-url, falls der Betreiber diese Umgebungsvariable ausdrücklich setzt.'),
     'ark-dinos': _config('ARK – Dinosaurier', 'plugins/ArkDinos/config.yml', 'Spielinhalte'),
     'ark-atlas': _config('ARK – Atlas', 'plugins/ArkAtlas/config.yml', 'Karten', protected_note='map-id gehört zur gespeicherten Spielkarte und bleibt geschützt.'),
     'ark-atlas-sites': _config('ARK – Atlasorte', 'plugins/ArkAtlas/sites.yml', 'Karten'),
@@ -191,6 +193,7 @@ _CONFIG_DESCRIPTIONS = {
     'quest-conditions': 'Definiert benannte Voraussetzungen und Einschränkungen, auf die Missionen verweisen.',
     'quest-actions': 'Definiert benannte Aktionen und Befehlsabläufe, die Missionen auslösen können.',
     'floodgate': 'Regelt die Anmeldung von Bedrock-Spielern über Geyser, etwa deren Namensdarstellung.',
+    'ark-accounts': 'portal-url bestimmt die öffentliche Portaladresse für /web, Spawn und Chat. portal-announcement-seconds: 300 = alle fünf Minuten, 0 = aus (sonst 30–86400). portal-spawn-display: true zeigt den Spawn-Hinweis.',
     'ark-dinos': 'Verhalten der ARK-Dinosaurier, insbesondere Zähmen, Besitz und Folgen.',
     'ark-atlas': 'Verwaltung des Weltatlas im Spiel und seiner vorhandenen Karteninstanz.',
     'ark-atlas-sites': 'Namen, Symboltypen und Koordinaten der Orte, die auf dem Weltatlas markiert werden.',
@@ -207,6 +210,35 @@ _CONFIG_DESCRIPTIONS = {
 
 def config_description(config_id):
     return translate(_CONFIG_DESCRIPTIONS.get(config_id, 'Konfiguration dieser Komponente; die Bedeutung zusätzlicher Felder steht in deren Dokumentation.'))
+
+
+def validate_portal_url(value):
+    """Accept a public address that Java URI and clickable chat can also use."""
+    try:
+        if (not isinstance(value, str) or not 1 <= len(value) <= 512
+                or any(c.isspace() or ord(c) < 32 or 127 <= ord(c) <= 159 for c in value)
+                or any(c in value for c in '\\<>"{}|^`#') or re.search(r'%(?![0-9a-fA-F]{2})', value)):
+            raise ValueError
+        value.encode('utf-8')
+        url = urlsplit(value)
+        host = url.hostname
+        if (url.scheme.lower() not in ('http', 'https') or not host or url.username is not None
+                or url.password is not None or url.netloc.endswith(':')
+                or url.port is not None and not 1 <= url.port <= 65535
+                or '[' in url.path + url.query or ']' in url.path + url.query):
+            raise ValueError
+        if ':' in host:
+            if '%' in host:
+                raise ValueError
+            IPv6Address(host)
+        else:
+            host = host.removesuffix('.')
+            if len(host) > 253 or not all(re.fullmatch(r'[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?', label) for label in host.split('.')):
+                raise ValueError
+            if '.' in host and host.rsplit('.', 1)[1].isdigit():
+                IPv4Address(host)
+    except (ValueError, UnicodeError):
+        raise ValueError(translate('portal-url benötigt eine absolute HTTP(S)-Adresse mit gültigem Host ohne Zugangsdaten, Steuerzeichen oder Fragment (höchstens 512 Zeichen).')) from None
 
 _PROTECTED = {'online-mode', 'enforce-secure-profile', 'prevent-proxy-connections', 'level-name', 'level-seed',
               'server-ip', 'server-port', 'enable-rcon', 'enable-query', 'query.port', 'text-filtering-config',

@@ -69,7 +69,7 @@ class RuleHelpTests(unittest.TestCase):
 
     def test_all_exposed_config_sections_have_a_specific_purpose(self):
         descriptions = [config_description(name) for name in [*EXTRA_CONFIGS, 'geyser', 'quests', 'quest-settings', 'permissions']]
-        self.assertEqual(len(descriptions), 41)
+        self.assertEqual(len(descriptions), 42)
         self.assertEqual(len(set(descriptions)), len(descriptions))
         self.assertTrue(all(25 <= len(text) <= 240 for text in descriptions))
         self.assertIn('Dokumentation', config_description('future-config'))

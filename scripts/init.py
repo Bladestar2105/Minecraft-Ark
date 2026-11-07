@@ -3,11 +3,44 @@
 import hashlib
 import json
 import os
+from ipaddress import IPv4Address, IPv6Address
 from pathlib import Path
+import re
 import secrets
 import shutil
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_PORTAL_URL = "http://localhost:8090/"
+
+
+def validate_portal_url(value):
+    """Validate before downloading a world or creating local credentials."""
+    try:
+        if (not isinstance(value, str) or not 1 <= len(value) <= 512
+                or any(c.isspace() or ord(c) < 32 or 127 <= ord(c) <= 159 for c in value)
+                or any(c in value for c in '\\<>"{}|^`#') or re.search(r'%(?![0-9a-fA-F]{2})', value)):
+            raise ValueError
+        value.encode('utf-8')
+        url = urlsplit(value)
+        host = url.hostname
+        if (url.scheme.lower() not in ('http', 'https') or not host or url.username is not None
+                or url.password is not None or url.netloc.endswith(':')
+                or url.port is not None and not 1 <= url.port <= 65535
+                or '[' in url.path + url.query or ']' in url.path + url.query):
+            raise ValueError
+        if ':' in host:
+            if '%' in host:
+                raise ValueError
+            IPv6Address(host)
+        else:
+            host = host.removesuffix('.')
+            if len(host) > 253 or not all(re.fullmatch(r'[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?', label) for label in host.split('.')):
+                raise ValueError
+            if '.' in host and host.rsplit('.', 1)[1].isdigit():
+                IPv4Address(host)
+    except (ValueError, UnicodeError):
+        raise ValueError("Portal URL must be an absolute HTTP(S) address with a valid host, no credentials, controls or fragment (512 characters maximum).") from None
 
 
 def initialize_portal(root=ROOT):
@@ -49,8 +82,9 @@ def initialize_portal(root=ROOT):
         raise ValueError("Player and administrator service tokens must differ.")
 
 
-def initialize(root=ROOT):
+def initialize(root=ROOT, portal_url=DEFAULT_PORTAL_URL):
     root = Path(root)
+    validate_portal_url(portal_url)
     if not (root / "data/ark/level.dat").is_file():
         raise ValueError("Install and verify the released world in data/ first.")
     private = root / "secrets"
@@ -59,6 +93,9 @@ def initialize(root=ROOT):
     properties = root / "data/server.properties"
     if properties.exists():
         raise ValueError("Existing server.properties: refusing to replace a running installation.")
+    config = root / "data/plugins/ArkAccounts/config.yml"
+    if config.is_symlink() or config.exists() and not config.is_file():
+        raise ValueError("ArkAccounts config must be a regular file.")
     old_mask = os.umask(0o077)
     try:
         private.mkdir(mode=0o700)
@@ -86,6 +123,19 @@ def initialize(root=ROOT):
         if not (root / ".env").exists():
             shutil.copyfile(root / ".env.example", root / ".env")
         initialize_portal(root)
+        if not config.exists():
+            for directory in [config.parent.parent, config.parent]:
+                if not directory.exists():
+                    directory.mkdir()
+                    directory.chmod(0o755)
+            with config.open("x") as target:
+                target.write("# Public portal URL; editable in the panel after stopping Minecraft.\n"
+                             "bind: 0.0.0.0\nport: 8101\n"
+                             "player-token-file: /run/secrets/wardrobe-player-token\n"
+                             "admin-token-file: /run/secrets/wardrobe-admin-token\n"
+                             "portal-url: " + json.dumps(portal_url, ensure_ascii=False) + "\n"
+                             "portal-announcement-seconds: 300\nportal-spawn-display: true\n")
+            config.chmod(0o644)
     finally:
         os.umask(old_mask)
     print("Local credentials created. Read secrets/panel-login.txt privately; keep secrets/ out of Git.")
@@ -95,8 +145,12 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--portal-only", action="store_true", help="Add missing portal secrets to an existing stopped installation.")
-    if parser.parse_args().portal_only:
+    parser.add_argument("--portal-url", help="Public player portal URL for a fresh installation (default: " + DEFAULT_PORTAL_URL + ").")
+    options = parser.parse_args()
+    if options.portal_only:
+        if options.portal_url is not None:
+            parser.error("--portal-url applies to fresh installation; edit an existing URL in the panel.")
         initialize_portal()
         print("Portal secrets ready; existing credentials preserved.")
     else:
-        initialize()
+        initialize(portal_url=options.portal_url or DEFAULT_PORTAL_URL)

@@ -4,6 +4,12 @@
 
 Open the server's webinterface at its root address `/`. Everyone uses the same sign-in form and English/German interface: profile, wardrobe, account and support belong to your own player account. **ArkAccounts** supplies login, account settings, profile and statistics; skins and tickets appear only when their optional modules are installed. Old `/play/` links redirect to `/`; no second portal or OP login is needed.
 
+## Find the portal address in game
+
+A floating notice at the main spawn shows the portal address and `/web`. A chat notice with the same URL also appears every five minutes by default. Java supports clicking the chat link; Bedrock players can use the written address. Operators can disable notices or change the interval. After game authentication, `/web` still supplies your private single-use code and the address; do not share that code.
+
+The address belongs to this server. Operators configure it under [Portal address and in-game notices](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration#portal-address-and-in-game-notices).
+
 ## Sign in
 
 Existing AuthMe users sign in directly with their known server player name and AuthMe password. No earlier `/web` pairing is required. The password is shared with the game-side account system, not with Microsoft.

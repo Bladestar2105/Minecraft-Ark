@@ -12,6 +12,40 @@ from build_plugins import download
 
 
 class SetupTests(unittest.TestCase):
+    def test_public_portal_url_is_initialized_once_and_invalid_url_fails_before_credentials(self):
+        for url in ['https://portal.example/', 'http://localhost:8090/', 'https://[::1]:8443/']:
+            with self.subTest(url=url), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                (root / 'data/ark').mkdir(parents=True)
+                (root / 'data/ark/level.dat').write_bytes(b'fixture')
+                (root / '.env.example').write_text('EULA=FALSE\n')
+                with contextlib.redirect_stdout(io.StringIO()):
+                    initialize(root, portal_url=url)
+                config = (root / 'data/plugins/ArkAccounts/config.yml').read_text()
+                self.assertIn('portal-url: ' + json.dumps(url), config)
+                self.assertIn('portal-announcement-seconds: 300', config)
+                self.assertIn('portal-spawn-display: true', config)
+                self.assertEqual((root / 'data/plugins/ArkAccounts').stat().st_mode & 0o777, 0o755)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'data/ark').mkdir(parents=True)
+            (root / 'data/ark/level.dat').write_bytes(b'fixture')
+            (root / '.env.example').write_text('EULA=FALSE\n')
+            config = root / 'data/plugins/ArkAccounts/config.yml'
+            config.parent.mkdir(parents=True)
+            config.write_text('portal-url: https://existing.example/\n')
+            with contextlib.redirect_stdout(io.StringIO()):
+                initialize(root, portal_url='https://new.example/')
+            self.assertEqual(config.read_text(), 'portal-url: https://existing.example/\n')
+        for url in ['https://user@example.com/', 'https://bad_host/', 'https://example.com/#', 'https://example.com:0/']:
+            with self.subTest(url=url), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                (root / 'data/ark').mkdir(parents=True)
+                (root / 'data/ark/level.dat').write_bytes(b'fixture')
+                with self.assertRaises(ValueError):
+                    initialize(root, portal_url=url)
+                self.assertFalse((root / 'secrets').exists())
+
     def test_fresh_credentials_are_private_and_never_overwritten(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -132,12 +166,13 @@ class FirstSetupTests(unittest.TestCase):
                 (root / "config" / name).write_text("fixture: true\n")
             output = io.StringIO()
             with contextlib.redirect_stdout(output):
-                setup(root, ["accounts", "support"])
+                setup(root, ["accounts", "support"], portal_url="https://portal.example/")
             self.assertEqual((root / "data/ark/level.dat").read_bytes(), b"world")
-            self.assertTrue((root / "data/plugins/ArkAccounts-1.0.1.jar").is_file())
+            self.assertTrue((root / "data/plugins/ArkAccounts-1.0.2.jar").is_file())
             self.assertTrue((root / "data/plugins/ArkSupport-1.0.0.jar").is_file())
             self.assertFalse((root / "data/plugins/ArkWardrobe-1.0.0.jar").exists())
             self.assertTrue((root / "secrets/panel-login.txt").is_file())
+            self.assertIn('portal-url: "https://portal.example/"', (root / 'data/plugins/ArkAccounts/config.yml').read_text())
             self.assertEqual((root / ".env").read_text(), "EULA=FALSE\n")
             self.assertFalse((root / "data/eula.txt").exists())
             self.assertIn("docker compose", output.getvalue())

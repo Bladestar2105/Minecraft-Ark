@@ -13,7 +13,7 @@ from docker.models.containers import ExecResult
 from werkzeug.security import generate_password_hash
 
 try:
-    from panel.app import create_app
+    from panel.app import PanelError, create_app, validate_yaml
 except ModuleNotFoundError:
     create_app = None
 
@@ -105,6 +105,79 @@ class PanelTests(unittest.TestCase):
 
     def mutate(self, path, payload, method="post", **kwargs):
         return getattr(self.client, method)(path, json=payload, headers={"Origin": "http://localhost", "X-CSRF-Token": self.csrf}, **kwargs)
+
+    def test_portal_config_is_discoverable_and_saves_only_while_stopped(self):
+        self.login()
+        path = self.data / "plugins/ArkAccounts/config.yml"
+        path.parent.mkdir(parents=True)
+        original = ('# retain me\nbind: 0.0.0.0\nport: 8101\n'
+                    'player-token-file: /private/player\nadmin-token-file: /private/admin\n'
+                    'portal-url: https://old.example/\n')
+        path.write_text(original)
+        entry = next(item for item in self.client.get('/api/configs').json['configs'] if item['id'] == 'ark-accounts')
+        self.assertTrue(entry['available'])
+        self.assertTrue(entry['requires_stopped'])
+        self.assertTrue(entry['restart_required'])
+        english = next(item for item in self.client.get('/api/configs', headers={'Accept-Language': 'en'}).json['configs'] if item['id'] == 'ark-accounts')
+        self.assertEqual(english['name'], 'Player portal (ArkAccounts)')
+        self.assertIn('public portal address', english['description'])
+        self.assertIn('overrides portal-url', english['protected_note'])
+        snapshot = self.client.get('/api/configs/ark-accounts')
+        self.assertEqual(snapshot.status_code, 200)
+        hidden = snapshot.json['content']
+        self.assertNotIn('/private/', hidden)
+        changed = hidden.replace('https://old.example/', 'https://portal.example/') + 'portal-announcement-seconds: 300\nportal-spawn-display: true\n'
+        self.assertEqual(self.mutate('/api/configs/ark-accounts', {'content': changed}, method='put').status_code, 409)
+        self.assertEqual(path.read_text(), original)
+        self.containers.items['minecraft-ark'].status = 'exited'
+        saved = self.mutate('/api/configs/ark-accounts', {'content': changed, 'version': snapshot.json['version']}, method='put')
+        self.assertEqual(saved.status_code, 200, saved.json)
+        self.assertTrue(saved.json['restart_required'])
+        self.assertIn('# retain me', path.read_text())
+        document = yaml.safe_load(path.read_text())
+        self.assertEqual(document['portal-url'], 'https://portal.example/')
+        self.assertEqual(document['player-token-file'], '/private/player')
+        self.assertEqual(document['admin-token-file'], '/private/admin')
+        self.assertEqual(next((self.state / 'config-backups').iterdir()).read_text(), original)
+
+    def test_portal_editor_protects_internal_listener_and_secret_paths(self):
+        self.login()
+        path = self.data / 'plugins/ArkAccounts/config.yml'
+        path.parent.mkdir(parents=True)
+        original = 'bind: 0.0.0.0\nport: 8101\nplayer-token-file: /private/player\nadmin-token-file: /private/admin\nportal-url: https://portal.example/\n'
+        path.write_text(original)
+        self.containers.items['minecraft-ark'].status = 'exited'
+        hidden = self.client.get('/api/configs/ark-accounts').json['content']
+        for change in [hidden.replace('0.0.0.0', '127.0.0.1'), hidden.replace('8101', '8123'),
+                       hidden.replace('bind: 0.0.0.0\n', ''), hidden.replace('port: 8101\n', ''),
+                       hidden.replace('player-token-file: "__ARK_PROTECTED__"', 'player-token-file: /changed'),
+                       hidden.replace('admin-token-file: "__ARK_PROTECTED__"\n', '')]:
+            with self.subTest(change=change):
+                self.assertEqual(self.mutate('/api/configs/ark-accounts', {'content': change}, method='put').status_code, 400)
+                self.assertEqual(path.read_text(), original)
+        self.assertFalse((self.state / 'config-backups').exists())
+
+    def test_portal_config_rejects_unsafe_urls_and_bad_notice_types(self):
+        for url in ['https://portal.example/', 'http://localhost:8090/', 'HTTPS://example.com/a?x=1',
+                    'https://[::1]:8443/', 'https://portal.example/überblick', 'https://example.com./']:
+            with self.subTest(url=url):
+                self.assertEqual(validate_yaml('ark-accounts', yaml.safe_dump({'portal-url': url}))['portal-url'], url)
+        invalid_urls = [None, '', 'ftp://example.com/', '//example.com', 'https://', 'https://user@example.com/',
+                        'https://example.com/#', 'https://example.com/#fragment', 'https://example.com:0/',
+                        'https://example.com:65536/', 'https://example.com:/', 'https://bad_host/',
+                        'https://-bad.example/', 'https://a..example/', 'https://example.com\\evil/',
+                        'https://example.com/\nhello', 'https://example.com/\x7f', 'https://example.com/\x80', 'https://example.com/%xx',
+                        'https://example.com/' + 'a' * 512]
+        for url in invalid_urls:
+            with self.subTest(url=url), self.assertRaises(PanelError):
+                validate_yaml('ark-accounts', yaml.safe_dump({'portal-url': url}))
+        for value in [0, 30, 300, 86400]:
+            validate_yaml('ark-accounts', yaml.safe_dump({'portal-url': 'https://example.com/', 'portal-announcement-seconds': value, 'portal-spawn-display': False}))
+        for field, values in [('portal-announcement-seconds', [True, '300', -1, 1, 29, 86401, 30.0]),
+                              ('portal-spawn-display', ['true', 1, None])]:
+            for value in values:
+                with self.subTest(field=field, value=value), self.assertRaises(PanelError):
+                    validate_yaml('ark-accounts', yaml.safe_dump({'portal-url': 'https://example.com/', field: value}))
 
     def test_private_routes_require_login_and_security_headers(self):
         for path in ["/api/map/players", "/api/map/terrain", "/api/map/terrain?world=minecraft:ark_creative", "/api/status", "/api/logs/minecraft", "/api/settings/minecraft", "/api/settings/geyser", "/api/settings/quests", "/api/configs", "/dns/", "/dns/control/status"]:

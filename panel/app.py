@@ -28,14 +28,14 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from yaml.events import AliasEvent
 
 if __package__:
-    from .catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field
+    from .catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field, validate_portal_url
     from .config_content import PROTECTED, redact_content, restore_content, validate_json
     from .rate_limit import ApiRateLimiter, RateLimitError, client_address
     from .rcon_client import command as rcon_command, RconError
     from .i18n import locale, translate, WIKI_BASE
     from .wardrobe_client import configured_client, fixed_origin, MAX_RESPONSE, signing_connection, signing_settings, WardrobeError, allowed_player_path, account_list, password_reset_payload, support_payload, support_response, module_status, operator_login_payload, operator_identity, read_secret
 else:
-    from catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field
+    from catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field, validate_portal_url
     from config_content import PROTECTED, redact_content, restore_content, validate_json
     from rate_limit import ApiRateLimiter, RateLimitError, client_address
     from rcon_client import command as rcon_command, RconError
@@ -156,6 +156,16 @@ def validate_yaml(config_id, content):
         bedrock = value.get("bedrock")
         if not isinstance(bedrock, dict) or not isinstance(value.get("java"), dict) or type(bedrock.get("port")) is not int or not 1 <= bedrock["port"] <= 65535:
             raise PanelError("Geyser benötigt bedrock.port (1–65535) und einen java-Abschnitt.")
+    elif config_id == "ark-accounts":
+        try:
+            validate_portal_url(value.get("portal-url"))
+        except ValueError as error:
+            raise PanelError(str(error)) from None
+        interval = value.get("portal-announcement-seconds", 300)
+        if type(interval) is not int or interval != 0 and not 30 <= interval <= 86400:
+            raise PanelError("portal-announcement-seconds muss 0 oder eine ganze Zahl von 30 bis 86400 sein.")
+        if type(value.get("portal-spawn-display", True)) is not bool:
+            raise PanelError("portal-spawn-display muss true oder false sein.")
     elif config_id == "quests":
         quests = value.get("quests")
         if not isinstance(quests, dict) or not quests:
@@ -1081,7 +1091,7 @@ def create_app(test_config=None):
             except PanelError:
                 available = False
             entries.append(dict(id=key, available=available, description=config_description(key),
-                **{field: translate(value) if field in ("name", "group") else value for field, value in metadata.items() if field not in ["path", "description"]}))
+                **{field: translate(value) if field in ("name", "group", "protected_note") else value for field, value in metadata.items() if field not in ["path", "description"]}))
         return jsonify(configs=entries)
 
     @app.route("/api/settings/<plugin>", methods=["GET", "PUT"])
