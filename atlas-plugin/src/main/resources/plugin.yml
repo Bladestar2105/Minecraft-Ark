@@ -6,9 +6,9 @@ author: ARK
 description: Native in-game terrain atlas for the Survival world ark.
 softdepend: [Multiverse-Core, Multiverse-Inventories]
 commands:
-  karte:
+  atlas:
     description: ARK-Weltatlas in Survival erhalten
-    usage: /karte
+    usage: /atlas
     permission: arkatlas.use
   arkatlas:
     description: Atlas aus lokalen Dateien neu laden

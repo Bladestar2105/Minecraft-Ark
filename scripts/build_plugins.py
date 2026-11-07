@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download pinned build dependencies, test and build the four own plugins."""
+"""Download pinned build dependencies, test and build the own plugins."""
 import hashlib
 import json
 import os
@@ -34,17 +34,24 @@ def download(item, folder):
 
 
 def build():
+    dependencies = []
     for item in json.loads((ROOT / "dependencies-build.json").read_text()):
-        download(item, ROOT / ".deps")
+        dependencies.append(download(item, ROOT / ".deps"))
     java_home = os.environ.get("JAVA_HOME")
     def java_tool(name):
         return str(Path(java_home, "bin", name)) if java_home else name
-    tests = {"dino": ["TamingRulesTest"], "atlas": ["AtlasRulesTest"],
+    tests = {"dino": ["TamingRulesTest", "RidingRulesTest"], "atlas": ["AtlasRulesTest"],
              "panel": ["BridgeProtocolTest", "RuntimeSettingsTest"],
-             "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"]}
+             "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"],
+             "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest"],
+             "wardrobe": ["WardrobeTest", "SignersTest", "CommandPolicyTest", "WardrobeRoutesTest"],
+             "support": ["SupportTest", "SupportRoutesTest"]}
     versions = {"dino": "ArkDinos-1.0.0", "atlas": "ArkAtlas-1.0.0",
-                "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.0"}
-    packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access"}
+                "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.0",
+                "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.0"}
+    packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",
+                "accounts": "accounts", "wardrobe": "wardrobe", "support": "support"}
+    built = []
     for module, mains in tests.items():
         folder = ROOT / (module + "-plugin")
         output = folder / "build"
@@ -53,7 +60,10 @@ def build():
         classes, checks = output / "classes", output / "test-classes"
         classes.mkdir(parents=True)
         checks.mkdir()
-        cp = str(ROOT / ".deps/*")
+        jars = [path for path in dependencies if module not in {"accounts", "support"} or not path.name.startswith("SkinsRestorer-")]
+        if module in {"wardrobe", "support"}:
+            jars.append(ROOT / "accounts-plugin/build/ArkAccounts-1.0.0.jar")
+        cp = os.pathsep.join(str(path) for path in jars)
         run = lambda args: subprocess.run(args, cwd=ROOT, check=True)
         sources = sorted(str(path) for path in (folder / "src/main/java").rglob("*.java"))
         run([java_tool("javac"), "--release", "25", "-sourcepath", "", "-cp", cp,
@@ -68,7 +78,13 @@ def build():
         run([java_tool("jar"), "--create", "--date", "2026-11-03T00:00:00Z", "--file",
              str(output / (versions[module] + ".jar")), "-C", str(classes), ".", "-C",
              str(folder / "src/main/resources"), "."])
-    print("Four plugins built; their rule tests passed.")
+        artifact = output / (versions[module] + ".jar")
+        name, version = versions[module].rsplit("-", 1)
+        built.append({"module": module, "name": name, "version": version,
+                      "path": artifact.relative_to(ROOT).as_posix(),
+                      "sha256": hashlib.sha256(artifact.read_bytes()).hexdigest()})
+    (ROOT / "own-plugins.json").write_text(json.dumps({"format": 1, "plugins": built}, indent=2) + "\n")
+    print("Own plugins built; their rule tests passed.")
 
 
 if __name__ == "__main__":

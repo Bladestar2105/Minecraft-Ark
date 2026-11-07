@@ -3,6 +3,11 @@ import re
 from urllib.parse import urlsplit
 from uuid import UUID
 
+if __package__:
+    from .i18n import metadata, translate
+else:
+    from i18n import metadata, translate
+
 
 def _field(key, label, description, kind, default, group, **limits):
     return dict(key=key, label=label, description=description, type=kind, default=default,
@@ -152,7 +157,7 @@ RULE_HELP = {'minecraft:' + name: {'label': label, 'description': description} f
 
 
 def rule_help(name):
-    return RULE_HELP.get(name, {'label': name, 'description': 'Die genaue Wirkung dieser zusätzlichen Spielregel ist dem Panel nicht bekannt; bitte die Dokumentation der Serverversion beachten.'}).copy()
+    return metadata(RULE_HELP.get(name, {'label': name, 'description': 'Die genaue Wirkung dieser zusätzlichen Spielregel ist dem Panel nicht bekannt; bitte die Dokumentation der Serverversion beachten.'}))
 
 
 _CONFIG_DESCRIPTIONS = {
@@ -201,7 +206,7 @@ _CONFIG_DESCRIPTIONS = {
 
 
 def config_description(config_id):
-    return _CONFIG_DESCRIPTIONS.get(config_id, 'Konfiguration dieser Komponente; die Bedeutung zusätzlicher Felder steht in deren Dokumentation.')
+    return translate(_CONFIG_DESCRIPTIONS.get(config_id, 'Konfiguration dieser Komponente; die Bedeutung zusätzlicher Felder steht in deren Dokumentation.'))
 
 _PROTECTED = {'online-mode', 'enforce-secure-profile', 'prevent-proxy-connections', 'level-name', 'level-seed',
               'server-ip', 'server-port', 'enable-rcon', 'enable-query', 'query.port', 'text-filtering-config',
@@ -248,7 +253,7 @@ def field_for(key, value):
         field = SERVER_FIELDS[key].copy()
         if 'options' in field:
             field['options'] = list(field['options'])
-        return field
+        return metadata(field)
     if type(value) is bool or str(value).lower() in ['true', 'false']:
         kind, default = 'boolean', str(value).lower() == 'true'
     elif type(value) is int or re.fullmatch(r'-?[0-9]+', str(value)):
@@ -258,32 +263,32 @@ def field_for(key, value):
     field = _field(key, key, 'Zusätzliche Eigenschaft der tatsächlich vorhandenen Serverkonfiguration.', kind, default,
                    'Weitere Einstellungen', **({'max_length': 4096} if kind == 'string' else {}))
     field.update(EXTRA_SERVER_HELP.get(key, {}))
-    return field
+    return metadata(field)
 
 
 def validate_field(field, value):
-    label = field.get('label', field['key'])
+    label = translate(field.get('label', field['key']))
     kind = field['type']
     if kind == 'boolean':
         if type(value) is not bool:
-            raise ValueError(f'{label}: Bitte einen Wahrheitswert wählen.')
+            raise ValueError(translate('{label}: Bitte einen Wahrheitswert wählen.', label=label))
         return
     if kind == 'integer':
         if type(value) is not int:
-            raise ValueError(f'{label}: Bitte eine ganze Zahl angeben.')
+            raise ValueError(translate('{label}: Bitte eine ganze Zahl angeben.', label=label))
         if ('min' in field and value < field['min']) or ('max' in field and value > field['max']):
-            raise ValueError(f'{label}: Die Zahl liegt außerhalb des erlaubten Bereichs.')
+            raise ValueError(translate('{label}: Die Zahl liegt außerhalb des erlaubten Bereichs.', label=label))
         return
     if not isinstance(value, str):
-        raise ValueError(f'{label}: Bitte Text angeben.')
+        raise ValueError(translate('{label}: Bitte Text angeben.', label=label))
     try:
         value.encode('utf-8')
     except UnicodeEncodeError as error:
-        raise ValueError(f'{label}: Der Text enthält ungültige Unicode-Zeichen.') from error
+        raise ValueError(translate('{label}: Der Text enthält ungültige Unicode-Zeichen.', label=label)) from error
     if any(character in value for character in '\r\n\0') or not field.get('min_length', 0) <= len(value) <= field.get('max_length', 4096):
-        raise ValueError(f'{label}: Textlänge oder enthaltene Steuerzeichen sind nicht erlaubt.')
+        raise ValueError(translate('{label}: Textlänge oder enthaltene Steuerzeichen sind nicht erlaubt.', label=label))
     if kind == 'choice' and value not in field['options']:
-        raise ValueError(f'{label}: Bitte einen der angebotenen Werte wählen.')
+        raise ValueError(translate('{label}: Bitte einen der angebotenen Werte wählen.', label=label))
     if field['key'] == 'resource-pack' and value:
         try:
             url = urlsplit(value)
@@ -292,12 +297,12 @@ def validate_field(field, value):
         except ValueError:
             valid = False
         if not valid:
-            raise ValueError(f'{label}: Bitte eine HTTP(S)-Adresse oder eine leere Angabe verwenden.')
+            raise ValueError(translate('{label}: Bitte eine HTTP(S)-Adresse oder eine leere Angabe verwenden.', label=label))
     if field['key'] == 'resource-pack-sha1' and value and not re.fullmatch(r'[0-9a-fA-F]{40}', value):
-        raise ValueError(f'{label}: Die Prüfsumme muss aus 40 Hexadezimalzeichen bestehen.')
+        raise ValueError(translate('{label}: Die Prüfsumme muss aus 40 Hexadezimalzeichen bestehen.', label=label))
     if field['key'] == 'resource-pack-id' and value:
         try:
             if str(UUID(value)) != value.lower():
                 raise ValueError
         except ValueError as error:
-            raise ValueError(f'{label}: Bitte eine gültige UUID oder eine leere Angabe verwenden.') from error
+            raise ValueError(translate('{label}: Bitte eine gültige UUID oder eine leere Angabe verwenden.', label=label)) from error

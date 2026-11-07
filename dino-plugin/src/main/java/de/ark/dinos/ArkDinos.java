@@ -20,10 +20,16 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDismountEvent;
+import org.bukkit.event.entity.EntityMountEvent;
 import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.entity.EntityTeleportEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerGameModeChangeEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerLeashEntityEvent;
 import org.bukkit.event.player.PlayerUnleashEntityEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
@@ -31,9 +37,11 @@ import org.bukkit.event.world.EntitiesUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 public final class ArkDinos extends JavaPlugin implements Listener {
     private final Map<UUID, Mob> loaded = new HashMap<>();
+    private final Map<UUID, Mob> riding = new HashMap<>();
     private final TamingRules rules = new TamingRules();
     private NamespacedKey ownerKey;
     private NamespacedKey stayKey;
@@ -48,11 +56,13 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getWorlds().forEach(world -> world.getEntities().forEach(this::restore));
         getServer().getScheduler().runTaskTimer(this, this::follow, 20L, 20L);
+        getServer().getScheduler().runTaskTimer(this, this::ride, 1L, 1L);
     }
 
     @Override
     public void onDisable() {
-        loaded.values().forEach(this::stop);
+        loaded.values().forEach(this::endRide);
+        riding.clear();
         loaded.clear();
     }
 
@@ -120,7 +130,10 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     }
 
     private void restore(Entity entity) {
-        if (owned(entity) && prepare((Mob) entity)) loaded.put(entity.getUniqueId(), (Mob) entity);
+        if (owned(entity)) {
+            endRide((Mob) entity);
+            if (prepare((Mob) entity)) loaded.put(entity.getUniqueId(), (Mob) entity);
+        }
     }
 
     @EventHandler
@@ -130,7 +143,10 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     @EventHandler
     public void unload(EntitiesUnloadEvent event) {
-        event.getEntities().forEach(entity -> loaded.remove(entity.getUniqueId()));
+        event.getEntities().forEach(entity -> {
+            Mob mob = loaded.remove(entity.getUniqueId());
+            if (mob != null) endRide(mob);
+        });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -142,6 +158,10 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             return;
         }
         Player player = event.getPlayer();
+        if (owned(entity) && player.isInsideVehicle()) {
+            event.setCancelled(true);
+            return;
+        }
         var item = player.getInventory().getItemInMainHand();
         boolean seed = item.getType() == Material.TORCHFLOWER_SEEDS && item.getAmount() > 0;
         var action = rules.interact(owned(entity) ? owner(entity) : null, player.getUniqueId().toString(),
@@ -171,7 +191,80 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             entity.getPersistentDataContainer().set(stayKey, PersistentDataType.BYTE, (byte) (stay ? 1 : 0));
             stop((Mob) entity);
             player.sendActionBar(Component.text(stay ? "Dein Urtier bleibt hier." : "Dein Urtier folgt dir."));
+        } else if (loaded.containsKey(entity.getUniqueId()) && entity.getScoreboardTags().contains("ark_dino_tamed")
+                && RidingRules.canMount(owned(entity) ? owner(entity) : null, player.getUniqueId().toString(),
+                survival(player), item.getType().isAir(), player.isSneaking(), !entity.getPassengers().isEmpty(), player.isInsideVehicle())) {
+            Mob mob = (Mob) entity;
+            stop(mob);
+            riding.put(mob.getUniqueId(), mob);
+            if (!mob.addPassenger(player)) endRide(mob);
         }
+    }
+
+    private void endRide(Mob mob) {
+        riding.remove(mob.getUniqueId());
+        mob.eject();
+        stop(mob);
+        var velocity = mob.getVelocity();
+        mob.setVelocity(new Vector(0, velocity.getY(), 0));
+    }
+
+    private void endRide(Player player) {
+        if (player.getVehicle() instanceof Mob mob && owned(mob)) endRide(mob);
+    }
+
+    private void ride() {
+        for (Mob mob : List.copyOf(riding.values())) {
+            var passengers = mob.getPassengers();
+            if (!mob.isValid() || mob.isDead() || passengers.size() != 1 || !(passengers.getFirst() instanceof Player player)
+                    || !player.isOnline() || player.isDead() || !owner(mob).equals(player.getUniqueId().toString())
+                    || !survival(player) || !player.getWorld().equals(mob.getWorld()) || player.getCurrentInput().isSneak()) {
+                endRide(mob);
+                continue;
+            }
+            stop(mob);
+            var input = player.getCurrentInput();
+            var motion = RidingRules.movement(player.getYaw(), input.isForward(), input.isBackward(), input.isLeft(), input.isRight());
+            var location = mob.getLocation();
+            // Never step into an unloaded chunk; native collisions and gravity still apply.
+            int chunkX = (int) Math.floor(location.getX() + motion.x() + Math.signum(motion.x()) * mob.getWidth()) >> 4;
+            int chunkZ = (int) Math.floor(location.getZ() + motion.z() + Math.signum(motion.z()) * mob.getWidth()) >> 4;
+            var velocity = mob.getVelocity();
+            mob.setVelocity(mob.getWorld().isChunkLoaded(chunkX, chunkZ)
+                    ? new Vector(motion.x(), velocity.getY(), motion.z()) : new Vector(0, velocity.getY(), 0));
+            mob.setRotation(player.getYaw(), 0);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void mount(EntityMountEvent event) {
+        if (owned(event.getMount()) && (riding.get(event.getMount().getUniqueId()) != event.getMount()
+                || !(event.getEntity() instanceof Player player) || !owner(event.getMount()).equals(player.getUniqueId().toString())
+                || !survival(player) || !event.getMount().getPassengers().isEmpty())) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void dismount(EntityDismountEvent event) {
+        if (event.getDismounted() instanceof Mob mob && riding.remove(mob.getUniqueId()) != null) {
+            stop(mob);
+            mob.setVelocity(new Vector(0, mob.getVelocity().getY(), 0));
+        }
+    }
+
+    @EventHandler
+    public void quit(PlayerQuitEvent event) { endRide(event.getPlayer()); }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void gameMode(PlayerGameModeChangeEvent event) { endRide(event.getPlayer()); }
+
+    @EventHandler
+    public void world(PlayerChangedWorldEvent event) { endRide(event.getPlayer()); }
+
+    @EventHandler
+    public void death(EntityDeathEvent event) {
+        if (event.getEntity() instanceof Player player) endRide(player);
+        Mob mob = loaded.remove(event.getEntity().getUniqueId());
+        if (mob != null) endRide(mob);
     }
 
     private void follow() {
@@ -183,6 +276,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 continue;
             }
             mob.setTarget(null);
+            if (riding.containsKey(mob.getUniqueId())) continue;
             Player player;
             try {
                 player = getServer().getPlayer(UUID.fromString(owner(mob)));

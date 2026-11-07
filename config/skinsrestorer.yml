@@ -1,0 +1,48 @@
+# SkinsRestorer 15.12.6: native Paper integration, self-service skin choices.
+# Existing AuthMe command restrictions remain in force; do not whitelist /skin before login.
+login:
+  alwaysApplyPremium: false
+  noSkinIfLoginCanceled: true
+storage:
+  defaultSkins:
+    enabled: false
+    applyForPremium: false
+  skinExpiresAfter: 1440
+  uuidExpiresAfter: 10080
+  disallowAutoUpdateSkin: false
+commands:
+  forceDefaultPermissions: true
+  disableSkinCommand: true
+  disableGUICommand: true
+  disableSkullCommand: true
+  skinChangeCooldown: 30
+  skinErrorCooldown: 5
+  perSkinPermissions: false
+  restrictSkinUrls:
+    enabled: false
+api:
+  fetchRecommendedSkins: false
+  elyByEnabled: false
+gui:
+  custom:
+    enabled: true
+    onlyShowList: true
+    list:
+      - steve
+      - alex
+      - ari
+      - efe
+      - kai
+      - makena
+      - noor
+      - sunny
+      - zuri
+  players:
+    enabled: false
+  recommendations:
+    enabled: false
+advanced:
+  disableOnJoinSkins: false
+  enablePaperJoinListener: true
+  teleportRefresh: false
+  noConnections: false

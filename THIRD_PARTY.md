@@ -33,3 +33,7 @@ Chunky 1.5.3 was used for completed pregeneration and is not needed to play:
 Preserve original notices and license files in downloaded packages. Review upstream
 terms before redistributing third-party binaries. The supplied installer downloads
 them directly from the listed providers instead.
+# Skin support
+
+The player-portal update downloads **SkinsRestorer15.12.6** from its official publisher with a SHA-256 pin. It is installed separately, not bundled into our own JAR. See [upstream source and license](https://github.com/SkinsRestorer/SkinsRestorer/tree/15.12.6). MineSkin is an optional signing service; the operator supplies their own API key. The alternate local generator uses the operator's own Microsoft/Minecraft authorization. No third-party account credentials or application IDs are redistributed.
+

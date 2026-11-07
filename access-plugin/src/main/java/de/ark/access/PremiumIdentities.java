@@ -64,6 +64,38 @@ final class PremiumIdentities {
         return backend;
     }
 
+    Identity linked(String name, UUID linkedUuid, boolean registered, UUID storedUuid) {
+        return linked(name, linkedUuid, registered, storedUuid, false);
+    }
+
+    // Floodgate b141 discards Paper's replacement prelogin profile. Supply the retained UUID before it constructs one.
+    UUID linkedBackend(String name, UUID externalUuid) {
+        Identity known = known(name);
+        if (known != null) return name.equals(known.name()) && externalUuid.equals(known.mojangUuid())
+            ? known.backendUuid() : externalUuid;
+        UUID retained = externalUuid.version() == 4 ? backendFor(externalUuid) : null;
+        return retained == null ? externalUuid : retained;
+    }
+
+    Identity linked(String name, UUID linkedUuid, boolean registered, UUID storedUuid, boolean localConfirmed) {
+        if (name == null || !name.matches("[A-Za-z0-9_]{3,16}") || linkedUuid == null) return null;
+        Identity known = known(name);
+        if (known != null) {
+            boolean sameIdentity = linkedUuid.equals(known.mojangUuid())
+                || localConfirmed && linkedUuid.version() == 3 && linkedUuid.equals(known.backendUuid());
+            return sameIdentity && name.equals(known.name()) && registered
+                && (storedUuid == null || storedUuid.equals(known.backendUuid())) ? known : null;
+        }
+        // A local association was created by authenticated players on this server. It is not Mojang proof.
+        // AuthMe UUID storage is optional; the independently attested local record already stores the actual backend UUID.
+        if (localConfirmed) return registered && (storedUuid == null || linkedUuid.equals(storedUuid))
+            ? new Identity(name, null, linkedUuid) : null;
+        // An external Java link cannot prove ownership of a pre-existing server-password account.
+        if (registered || linkedUuid.version() != 4) return null;
+        UUID backend = backendFor(linkedUuid);
+        return new Identity(name, linkedUuid, backend == null ? linkedUuid : backend);
+    }
+
     synchronized void confirm(String name, UUID mojangUuid, UUID backendUuid) throws IOException {
         Identity identity = new Identity(name, mojangUuid, backendUuid);
         validate(identity);

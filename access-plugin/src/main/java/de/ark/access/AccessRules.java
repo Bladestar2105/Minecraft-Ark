@@ -27,11 +27,16 @@ final class AccessRules {
     }
 
     Admission admit(String name, UUID uuid, boolean verifiedFloodgate) {
-        if (verifiedFloodgate) return new Admission(true, uuid, "");
+        Identity legacy = identities.get(name.toLowerCase(Locale.ROOT));
+        if (verifiedFloodgate) {
+            if (legacy != null && (!legacy.name().equals(name) || !legacy.uuid().equals(uuid))) {
+                return new Admission(false, uuid, "Die verknuepfte Java-Identitaet stimmt nicht mit diesem Serverkonto ueberein.");
+            }
+            return new Admission(true, uuid, "");
+        }
         if (name.startsWith(prefix) || !name.matches("[A-Za-z0-9_]{3,16}")) {
             return new Admission(false, uuid, "Dieser Name ist fuer verifizierte Bedrock-Spieler reserviert.");
         }
-        Identity legacy = identities.get(name.toLowerCase(Locale.ROOT));
         if (legacy != null) {
             if (!legacy.name().equals(name)) {
                 return new Admission(false, uuid, "Bitte benutze die genaue Schreibweise: " + legacy.name());

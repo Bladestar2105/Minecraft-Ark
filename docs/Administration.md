@@ -1,59 +1,48 @@
 # Administration
 
-The panel is optional. First install the game and generate local secrets with
-`python3 scripts/init.py`. There is no shared default password. The initial
-password is stored privately in `secrets/panel-login.txt`; the username is `admin`.
-The current panel interface is primarily German.
+[Deutsch](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE) · [Installation](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Installation) · [Security](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Security)
 
-On Linux, the panel process (UID 1000) needs write access to `panel-state` and
-`data`. Configure its Docker socket group in `.env`:
+The webinterface is at `http://localhost:8090`; its published port binds to loopback. Fresh setup creates a private local administrator account named `admin` in `secrets/panel-login.txt`. There is no shared default password. Both admin and player interfaces offer English and German.
+
+## Start and access
+
+Setup creates `.env` with the `admin` Compose profile enabled. After your EULA/configuration review, start explicitly. On Linux, first arrange UID-1000 access to `data` and `panel-state`, and set `DOCKER_SOCKET_GID` in `.env` to the Docker socket's group:
 
 ```sh
 stat -c %g /var/run/docker.sock
-# Put the resulting group ID in DOCKER_SOCKET_GID in .env.
 sudo chown -R 1000:1000 panel-state data
 docker compose --profile admin up -d --build
 ```
 
-[Open the panel](http://localhost:8090). Its published port binds only to loopback.
-For remote access, use your own SSH tunnel, for example:
+Keep `secrets/` private. For remote administration, use your own SSH tunnel:
 
 ```sh
 ssh -L 8090:127.0.0.1:8090 your-user@your-server
 ```
 
-Then open `http://localhost:8090` locally. If you intentionally use another
-hostname, set `PANEL_TRUSTED_HOSTS` accordingly. Docker socket access gives the
-panel extensive host privileges; protect its account like a server administrator.
-RCON is not published on the host. The DNS menu requires a separately operated
-AdGuard service; it is not included in the public base stack.
+Open `http://localhost:8090` locally. If using another hostname, configure `PANEL_TRUSTED_HOSTS`. Protect the panel as host administration: its Docker socket permits extensive host control. RCON, BlueMap, ArkAccounts port 8101 and the player app port 8091 stay internal. The DNS page needs a separately operated AdGuard service; the public base stack does not include it.
 
-The panel provides status, service actions, console, settings and maps. Change
-the password in its account area. Current credentials persist in `panel-state`;
-the bootstrap file stays unchanged. Login cookies have a fixed **30-day lifetime**.
-After a password change, the current browser remains signed in and all other
-previous login cookies are revoked. Preserve this state across updates and never
-attach it to public issue reports.
+## Two explicit administrator sign-ins
 
-## Backups and updates
+- **Local administrator:** use the locally generated panel credentials. Login works when Minecraft/ArkAccounts is unavailable. Change this account's password in the panel account dialog. The current browser stays signed in; previous other cookies are revoked. Local cookies have a fixed 30-day lifetime and persistent credential state in `panel-state`.
+- **Registered server operator:** choose **Sign in as a server operator** and enter your known server username/password, or run `/web admin` as an authenticated actual OP and redeem its single-use code. The code lasts up to five minutes. OP sessions last at most eight hours, and every protected request rechecks current OP/account authority. De-opping, expiry or an unavailable account service denies OP access.
 
-Before updates, inform players and stop affected services cleanly. Back up
-`data`, `panel-state`, `secrets`, `.env` and Compose together, privately, to separate
-storage. Backups contain accounts, keys and other confidential data. A sanitized
-public release is not a complete private backup.
+A normal `/play/` session never becomes an admin session automatically. Being online, having a matching name or possessing a player cookie is insufficient. OP users change their shared server password through the **Server account** link to `/play/#account`; they cannot use the local admin password dialog to change the separate bootstrap account.
 
-```sh
-docker compose stop
-# Create a private backup on separate storage here.
-docker compose --profile admin up -d
-```
+## Accounts, tickets and skins
 
-Versions are intentionally pinned. A Minecraft version upgrade needs plugin/
-datapack compatibility checks and a restorable backup first. This public base
-stack does not install an automatic update timer. Game settings persist in
-`data/server.properties` through `OVERRIDE_SERVER_PROPERTIES=FALSE`. Never put
-passwords in `.env`, Compose, issues or screenshots.
+The isolated player app at `/play/` has separate cookies/secrets and no Docker socket, RCON secret or world mount. **ArkAccounts** owns player identity/password/session data; [Wardrobe](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Wardrobe) and [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support) are optional extensions. Read [Modules](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules).
 
-Before inviting players, use a fresh non-operator account to check portals,
-inventory separation, protection, atlas, dinosaur taming and one quest. Historical
-checks on the original server do not replace verification on your own hardware.
+Under **Players**, administrators can reset a known account's shared server/portal password without its old password. The reset revokes target web sessions and retains recovery codes and identity links. This Accounts function remains available without Support or Wardrobe. [Reset instructions](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support#reset-a-known-server-password).
+
+With ArkSupport installed, use **Support** to read, reply, close and reopen tickets. With ArkWardrobe installed, configure [skin signing](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing). Missing optional modules hide their controls; capability failures show an unavailable/retry message. Refresh status to retry.
+
+Set `portal-url` in `data/plugins/ArkAccounts/config.yml` to your reachable `/play/` URL; restart the affected server after configuration changes. Signing credentials belong to Wardrobe, not Accounts. For an existing stopped installation, `python3 scripts/init.py --portal-only` adds missing portal secrets without replacing existing credentials. It is not an automatic legacy account-data migration.
+
+## Private backups and updates
+
+Stop affected services cleanly and back up `data`, `panel-state`, `secrets`, `.env` and Compose together to private separate storage. Include ArkAccounts, ArkWardrobe, ArkSupport, SkinsRestorer and any AuthMe/Floodgate state. Backups contain passwords/hashes, tokens, recovery verifiers, tickets and player data.
+
+Fresh setup and the world archive are not updaters. Never extract a public world over an existing installation. Versions are pinned; test compatibility and a restore before upgrades. Game settings persist through `OVERRIDE_SERVER_PROPERTIES=FALSE`.
+
+Before opening the server, test protection, inventory separation, atlas, quests and dinosaurs using a non-OP account. Also test the selected optional modules. Local fixtures do not establish real signing or console behavior; see [Troubleshooting](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Troubleshooting).

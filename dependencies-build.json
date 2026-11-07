@@ -73,5 +73,12 @@
     "name": "packetevents-spigot-2.14.0.jar",
     "url": "https://github.com/retrooper/packetevents/releases/download/v2.14.0/packetevents-spigot-2.14.0.jar",
     "sha256": "060087c58ec268eae7dd0eb1f17ac3bea1eaadda1693414141ff64e506091bd7"
+  },
+  {
+    "project": "skinsrestorer",
+    "name": "SkinsRestorer-15.12.6.jar",
+    "version": "15.12.6",
+    "url": "https://github.com/SkinsRestorer/SkinsRestorer/releases/download/15.12.6/SkinsRestorer.jar",
+    "sha256": "a85b4a370f988741c9a38f4d0498262edacbf3220314790ac1c127461996359c"
   }
 ]

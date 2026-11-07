@@ -10,6 +10,45 @@ import shutil
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def initialize_portal(root=ROOT):
+    """Add missing role-separated portal secrets without replacing operator data."""
+    root = Path(root)
+    private = root / "secrets"
+    if not (root / "data/ark/level.dat").is_file() or private.is_symlink():
+        raise ValueError("An initialized world and a real private secrets/ directory are required.")
+    private.mkdir(mode=0o700, exist_ok=True)
+    if not private.is_dir() or private.stat().st_mode & 0o077:
+        raise ValueError("Portal secrets/ must be a private directory (chmod0700).")
+    names = ["wardrobe-player-token", "wardrobe-admin-token", "player.json"]
+    for name in names:
+        path = private / name
+        if path.is_symlink() or path.exists() and not path.is_file():
+            raise ValueError("Portal secret must be a regular file: " + name)
+        if path.exists():
+            value = path.read_text().strip()
+            if name == "player.json":
+                try:
+                    value = json.loads(value)["session_secret"]
+                except (ValueError, KeyError, TypeError):
+                    raise ValueError("Invalid player session secret.") from None
+            if not isinstance(value, str) or len(value) < 48 or len(value) > 4096:
+                raise ValueError("Invalid portal secret: " + name)
+    for name in names:
+        path = private / name
+        if path.exists():
+            continue
+        value = json.dumps({"session_secret": secrets.token_hex(32)}) if name == "player.json" else secrets.token_urlsafe(48)
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(descriptor, "w") as target:
+            target.write(value + "\n")
+            target.flush()
+            os.fsync(target.fileno())
+            # The private host directory stays0700; mounted files are readable by the unprivileged containers.
+            os.fchmod(target.fileno(), 0o644)
+    if (private / names[0]).read_text().strip() == (private / names[1]).read_text().strip():
+        raise ValueError("Player and administrator service tokens must differ.")
+
+
 def initialize(root=ROOT):
     root = Path(root)
     if not (root / "data/ark/level.dat").is_file():
@@ -46,10 +85,18 @@ def initialize(root=ROOT):
             os.chown(root / "panel-state", 1000, 1000)
         if not (root / ".env").exists():
             shutil.copyfile(root / ".env.example", root / ".env")
+        initialize_portal(root)
     finally:
         os.umask(old_mask)
     print("Local credentials created. Read secrets/panel-login.txt privately; keep secrets/ out of Git.")
 
 
 if __name__ == "__main__":
-    initialize()
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--portal-only", action="store_true", help="Add missing portal secrets to an existing stopped installation.")
+    if parser.parse_args().portal_only:
+        initialize_portal()
+        print("Portal secrets ready; existing credentials preserved.")
+    else:
+        initialize()

@@ -8,6 +8,7 @@ import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import net.kyori.adventure.text.Component;
@@ -28,6 +29,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ArkAccessBridge extends JavaPlugin implements Listener {
     private static final Component UNAVAILABLE = Component.text("Die Anmeldung ist voruebergehend gesperrt. Bitte spaeter erneut versuchen.");
+    private static final Component LINK_DENIED = Component.text("Die Java-Verknuepfung ist fuer dieses Serverkonto nicht bestaetigt. Bitte zuerst mit Java und dem bisherigen Serverpasswort anmelden. Bei einer abweichenden Identitaet die Serververwaltung kontaktieren.");
     private final SecureRandom random = new SecureRandom();
     private volatile boolean ready;
     private volatile boolean shutdownScheduled;
@@ -77,7 +79,7 @@ public final class ArkAccessBridge extends JavaPlugin implements Listener {
                 if (!registered(identity.name())) throw new IllegalStateException("Every premium identity must remain registered in AuthMe");
             }
             Plugin bedrock = getServer().getPluginManager().getPlugin("floodgate");
-            if (bedrock != null && bedrock.isEnabled()) floodgate = new FloodgateVerifier();
+            if (bedrock != null && bedrock.isEnabled()) floodgate = new FloodgateVerifier(premiumIdentities::linkedBackend);
             premium = new PremiumVerifier(this, auth, premiumIdentities, this::registeredUnchecked,
                 (name, address) -> floodgate != null && floodgate.verifiedHandshake(name, address),
                 failure -> failClosed("Premium authentication dependency failed", failure));
@@ -156,17 +158,28 @@ public final class ArkAccessBridge extends JavaPlugin implements Listener {
     private void confirmAuthenticated(Player player, int attempts) {
         if (!ready || !player.isOnline() || getServer().getPlayer(player.getUniqueId()) != player) return;
         var session = premium.proof(player.getName(), player.getConnection().getAddress());
-        if (session == null || session.joinedPlayer != player || !player.getUniqueId().equals(session.backendUuid)) return;
+        PremiumIdentities.Identity identity;
+        boolean registrationConfirmed;
+        if (session != null && session.joinedPlayer == player && player.getUniqueId().equals(session.backendUuid)) {
+            identity = new PremiumIdentities.Identity(player.getName(), session.mojangUuid, session.backendUuid);
+            registrationConfirmed = session.registeredAtStart || session.registrationRequested;
+        } else {
+            var proof = floodgate == null ? null : floodgate.verified(player.getName(), player.getUniqueId(),
+                player.getConnection().getAddress(), player.getAddress());
+            if (proof == null || !proof.linked || proof.admission == null || proof.admission.mojangUuid() == null) return;
+            identity = new PremiumIdentities.Identity(player.getName(), proof.admission.mojangUuid(), proof.admission.backendUuid());
+            registrationConfirmed = proof.admission.registeredAtStart() || proof.registrationRequested;
+        }
         try {
             if (!Boolean.TRUE.equals(isAuthenticated.invoke(authApi, player))) {
                 if (attempts < 60) getServer().getScheduler().runTaskLater(this, () -> confirmAuthenticated(player, attempts + 1), 5L);
                 return;
             }
-            if (!session.registeredAtStart && !session.registrationRequested) {
+            if (!registrationConfirmed) {
                 player.kick(UNAVAILABLE);
                 return;
             }
-            premiumIdentities.confirm(player.getName(), session.mojangUuid, session.backendUuid);
+            premiumIdentities.confirm(identity.name(), identity.mojangUuid(), identity.backendUuid());
         } catch (Exception failure) {
             player.kick(UNAVAILABLE);
             failClosed("Premium identity could not be safely persisted", failure);
@@ -185,8 +198,13 @@ public final class ArkAccessBridge extends JavaPlugin implements Listener {
             if (rules.isLegacy(event.getName()) && !registered(event.getName())) {
                 throw new IllegalStateException("A reserved legacy account is no longer registered");
             }
-            boolean bedrock = floodgate != null && floodgate.verified(event.getName(), event.getUniqueId(),
+            var bedrockProof = floodgate == null ? null : floodgate.verified(event.getName(), event.getUniqueId(),
                 event.getConnection().getAddress(), event.getConnection().getClientAddress());
+            boolean bedrock = bedrockProof != null;
+            if (!bedrock && floodgate != null && floodgate.verifiedHandshake(event.getName(), event.getConnection().getAddress())) {
+                event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, UNAVAILABLE);
+                return;
+            }
             var proof = premium.proof(event.getName(), event.getConnection().getAddress());
             if (!bedrock && premiumIdentities.known(event.getName()) != null && proof == null) {
                 event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("Dieses Konto benoetigt eine verifizierte Minecraft-Anmeldung."));
@@ -198,6 +216,34 @@ public final class ArkAccessBridge extends JavaPlugin implements Listener {
                 return;
             }
             UUID backend = admission.uuid();
+            if (bedrock) {
+                boolean nowRegistered = registered(event.getName());
+                if (bedrockProof.linked) {
+                    Boolean localConfirmed = floodgate.confirmedLocalLink(bedrockProof);
+                    if (localConfirmed == null) {
+                        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, UNAVAILABLE);
+                        return;
+                    }
+                    bedrockProof.localConfirmed = localConfirmed;
+                    StoredIdentity stored = nowRegistered ? storedIdentity(event.getName()) : null;
+                    var identity = nowRegistered && (stored == null || !event.getName().equals(stored.name())) ? null
+                        : premiumIdentities.linked(event.getName(), bedrockProof.uuid, nowRegistered, stored == null ? null : stored.uuid(), bedrockProof.localConfirmed);
+                    if (identity == null) {
+                        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, LINK_DENIED);
+                        return;
+                    }
+                    backend = identity.backendUuid();
+                    // Floodgate b141 uses its preconstructed profile: a newly confirmed binding needs a fresh handshake.
+                    if (!backend.equals(bedrockProof.floodgateUuid)) {
+                        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, Component.text("Die Kontoverknuepfung wurde aktualisiert. Bitte erneut verbinden."));
+                        return;
+                    }
+                    bedrockProof.admission = new FloodgateProofs.Admission(backend, identity.mojangUuid(),
+                        bedrockProof.localConfirmed || premiumIdentities.known(event.getName()) != null, nowRegistered);
+                } else {
+                    bedrockProof.admission = new FloodgateProofs.Admission(backend, null, nowRegistered, nowRegistered);
+                }
+            }
             if (!bedrock && proof != null) {
                 boolean nowRegistered = registered(event.getName());
                 if (PremiumRules.action(proof.known != null, proof.registeredAtStart, nowRegistered) == PremiumRules.Action.REJECT) {
@@ -246,12 +292,26 @@ public final class ArkAccessBridge extends JavaPlugin implements Listener {
                 return;
             }
             try {
-                boolean bedrock = floodgate != null && floodgate.verified(player.getName(), player.getUniqueId(),
+                var bedrockProof = floodgate == null ? null : floodgate.verified(player.getName(), player.getUniqueId(),
                     player.getConnection().getAddress(), player.getAddress());
+                boolean bedrock = bedrockProof != null;
+                if (!bedrock && floodgate != null && floodgate.verifiedHandshake(player.getName(), player.getConnection().getAddress())) {
+                    player.kick(UNAVAILABLE);
+                    return;
+                }
                 if (!bedrock && (session == null || premium.proof(player.getName(), player.getConnection().getAddress()) != session)) return;
+                if (bedrock && bedrockProof.admission == null) { player.kick(UNAVAILABLE); return; }
+                boolean nowRegistered = registered(player.getName());
+                if (bedrock && bedrockProof.linked) {
+                    StoredIdentity stored = nowRegistered ? storedIdentity(player.getName()) : null;
+                    var identity = nowRegistered && (stored == null || !player.getName().equals(stored.name())) ? null
+                        : premiumIdentities.linked(player.getName(), bedrockProof.uuid, nowRegistered, stored == null ? null : stored.uuid(), bedrockProof.localConfirmed);
+                    if (identity == null || !identity.backendUuid().equals(bedrockProof.admission.backendUuid())
+                        || !Objects.equals(identity.mojangUuid(), bedrockProof.admission.mojangUuid())) { player.kick(LINK_DENIED); return; }
+                }
                 if (Boolean.TRUE.equals(isAuthenticated.invoke(authApi, player))) return;
-                PremiumRules.Action action = bedrock ? registered(player.getName()) ? PremiumRules.Action.LOGIN : PremiumRules.Action.REGISTER
-                    : PremiumRules.action(session.known != null, session.registeredAtStart, registered(player.getName()));
+                PremiumRules.Action action = bedrock ? bedrockProof.admission.action(nowRegistered)
+                    : PremiumRules.action(session.known != null, session.registeredAtStart, nowRegistered);
                 if (action == PremiumRules.Action.REJECT) { player.kick(UNAVAILABLE); return; }
                 if (action == PremiumRules.Action.PASSWORD) return;
                 if (action == PremiumRules.Action.LOGIN) {
@@ -260,6 +320,7 @@ public final class ArkAccessBridge extends JavaPlugin implements Listener {
                     byte[] secret = new byte[18];
                     random.nextBytes(secret);
                     if (session != null && !bedrock) session.registrationRequested = true;
+                    if (bedrock) bedrockProof.registrationRequested = true;
                     forceRegister.invoke(authApi, player, Base64.getUrlEncoder().withoutPadding().encodeToString(secret), true);
                 }
             } catch (Exception | LinkageError failure) {

@@ -1,0 +1,10 @@
+name: ArkSupport
+version: 1.0.0
+main: de.ark.support.ArkSupport
+api-version: '26.3'
+depend: [ArkAccounts]
+description: Persistent private player support tickets
+commands:
+  support:
+    description: Create a persistent private support ticket
+    usage: /support [low|normal|high] <message>

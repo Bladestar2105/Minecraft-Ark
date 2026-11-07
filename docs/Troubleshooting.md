@@ -1,39 +1,27 @@
 # Troubleshooting
 
-**Server does not start:** Check EULA acceptance, free disk space and
-`docker compose logs minecraft`. Use Java 25 and Minecraft/Paper 26.3. Never write
-an older server version over this world. First startup downloads server files and
-may take several minutes, especially while legacy item support initializes.
+[Deutsch](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Troubleshooting-DE) · [Installation](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Installation) · [Administration](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration)
 
-**Build/download failure:** Check access to official sources. Downloads fail if an
-exact artifact is unavailable or its hash differs. Do not substitute an unverified
-JAR. Parties 3.2.18 uses a version-checked Spiget artifact. If its changing CDN file
-no longer matches the pin, obtain the exact version from
-[Parties](https://alessiodp.com/parties) and check the same expected hash in
-`dependencies-runtime.json`.
+**Fresh setup refuses `.env`, `data`, `secrets` or `panel-state`:** it deliberately does not overwrite an installation. Use a new directory. Let setup generate `.env`/secrets, then edit them. Back up existing servers privately; do not delete their state to make setup pass.
 
-**Missing datapack:** Install Dungeons and Taverns 6.1.0 and Geophilic 3.7 with the
-installer before first startup. They are not bundled because they retain their own
-licenses. Do not ignore missing world-generation data warnings. Keep their exact
-filenames: `Dungeons and Taverns v6.1.0.zip` and `Geophilic v3.7.dp.zip`.
+**World download/checksum failure:** use the fixed [world-2026-11-06](https://github.com/Bladestar2105/Minecraft-Ark/wiki/World-Download) parts and `world-release.json`, not the latest application release. Missing/changed hashes stop installation. Do not bypass verification or extract partial downloads.
 
-**Creative portal/inventory separation is missing:** Close the server to players.
-Restore the complete world and Multiverse configuration. RCON `plugins` must show
-all three Multiverse extensions enabled. Do not create similarly named replacement
-worlds or overwrite inventory groups after players have started using the server.
+**Build failure:** source builds require JDK 25. Binary All-in-One packages already contain project JARs and need no host JDK. Check connectivity to the exact pinned publisher artifacts; never substitute an unverified JAR. If a pinned third-party download changes, report it with the dependency name/version/hash.
 
-**Bedrock cannot connect:** Check Geyser/Floodgate, client compatibility, port 19132
-and firewall rules. Keep Java online verification enabled. Some consoles lack
-arbitrary server entry; follow official Geyser guidance for your own console
-solution. Use your own internal or public server address.
+**Server will not start:** check EULA acceptance, disk space and `docker compose logs minecraft`. Use the pinned Minecraft/Paper 26.3 and Java 25 container. Do not downgrade the world. Initial dependency downloads can take several minutes.
 
-**Panel 400/403:** Open `localhost:8090` and check `PANEL_TRUSTED_HOSTS`.
-**Panel cannot save/reach Docker:** Check UID-1000 write permissions and the Docker
-socket group. `/state` must be writable and persistent.
-**DNS page unavailable:** AdGuard is not included in the base stack.
-**Browser map is empty:** BlueMap builds the local web map from saved chunks. Check
-logs and its internal status for rendering progress.
+**Missing datapacks or creative separation:** keep the server closed. Check installed Dungeons and Taverns/Geophilic packs, all three Multiverse extensions and the complete world/dimension tree. Restore a private backup rather than creating lookalike worlds or overwriting inventory groups.
 
-For an issue, provide versions, the relevant error and reproduction steps. Remove
-passwords, keys, account information, player profiles, private addresses and
-unrelated private log content before sharing it.
+**Player login rejected:** existing AuthMe users use their existing server name/password directly. For auto-authenticated players, run `/web` after game login. Codes are short-lived and scoped; `/web admin` is for a separate actual-OP login. Unknown/unresolved accounts cannot be created just by entering a name. See [Account security](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security).
+
+**OP admin login fails after working:** actual OP rights, account authority and the absolute eight-hour lifetime are checked. De-Op or service failure denies access. The separate local panel admin remains available for repairs. A player cookie is not an administrator credential.
+
+**Skins or Support absent:** inspect actual installed [Modules](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules). Accounts-only still supports profile/account and admin password resets. A failed module query is an availability error: retry through status/profile refresh. For activation problems read [Skin signing](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing); a queued job is not a completed skin change.
+
+**Support conflict/closed/limit:** refresh and read newer replies before retrying. Draft text is preserved on conflict. Closed tickets require administrator reopening; cooldown, open-ticket, message and storage bounds are intentional. See [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support).
+
+**Bedrock connection/control problems:** check Geyser/Floodgate, port 19132, firewall and client compatibility. Keep Java online verification enabled. Some consoles need a separate connection method; no public DNS/AdGuard service is bundled. Actual console movement, dialogs and skin visibility require device testing.
+
+**Panel 400/403 or cannot save:** check `PANEL_TRUSTED_HOSTS`, the correct login role, UID-1000 access to `data`/`panel-state` and Docker socket group. DNS unavailable is expected without separate AdGuard. BlueMap rebuilds its cache from saved chunks; check render progress.
+
+Provide versions, the relevant error and reproduction steps in issues. Remove passwords, tokens, recovery codes, player profiles, private addresses and unrelated private logs. [Security](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Security) explains backup/release boundaries.

@@ -108,5 +108,13 @@
     "url": "https://cdn.spiget.org/file/spiget-resources/3709.jar",
     "sha256": "6e399cc16a16e677a74b98c2585d9b4c092cf7bb97f58ce99fdfc269f42ee10d",
     "kind": "plugin"
+  },
+  {
+    "project": "skinsrestorer",
+    "name": "SkinsRestorer-15.12.6.jar",
+    "version": "15.12.6",
+    "url": "https://github.com/SkinsRestorer/SkinsRestorer/releases/download/15.12.6/SkinsRestorer.jar",
+    "sha256": "a85b4a370f988741c9a38f4d0498262edacbf3220314790ac1c127461996359c",
+    "kind": "plugin"
   }
 ]

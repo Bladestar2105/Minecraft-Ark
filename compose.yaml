@@ -20,13 +20,15 @@ services:
       RCON_PASSWORD_FILE: /run/secrets/rcon-password
       OVERRIDE_SERVER_PROPERTIES: "FALSE"
       TZ: Europe/Berlin
+      ARK_ACCOUNTS_PLAYER_TOKEN_FILE: /run/secrets/wardrobe-player-token
+      ARK_ACCOUNTS_ADMIN_TOKEN_FILE: /run/secrets/wardrobe-admin-token
     ports:
       - "${JAVA_PORT:-25565}:25565/tcp"
       - "${BEDROCK_PORT:-19132}:19132/tcp"
       - "${BEDROCK_PORT:-19132}:19132/udp"
     volumes:
       - ./data:/data
-    secrets: [rcon-password]
+    secrets: [rcon-password, wardrobe-player-token, wardrobe-admin-token]
     logging:
       options: {max-size: 10m, max-file: "3"}
   panel:
@@ -46,6 +48,10 @@ services:
       PANEL_CREDENTIALS_FILE: /run/secrets/panel.json
       PANEL_TRUSTED_HOSTS: ${PANEL_TRUSTED_HOSTS:-localhost,127.0.0.1}
       MAP_BASE_URL: http://minecraft-ark:8100
+      PLAYER_BASE_URL: http://players:8091
+      WARDROBE_BASE_URL: http://minecraft-ark:8101
+      WARDROBE_ADMIN_TOKEN_FILE: /run/secrets/wardrobe-admin-token
+      WIKI_BASE_URL: https://github.com/Bladestar2105/Minecraft-Ark/wiki
     ports: ["127.0.0.1:8090:8090/tcp"]
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -54,6 +60,31 @@ services:
     secrets:
       - source: panel-bootstrap
         target: panel.json
+      - wardrobe-admin-token
+    logging:
+      options: {max-size: 5m, max-file: "2"}
+  players:
+    profiles: [admin]
+    build: ./panel
+    container_name: minecraft-players
+    restart: unless-stopped
+    mem_limit: 128m
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp:rw,nosuid,noexec,size=16m,mode=1777"]
+    command: [gunicorn, --no-control-socket, --bind, "0.0.0.0:8091", --workers, "1", --threads, "8", --timeout, "60", "player_app:create_player_app()"]
+    environment:
+      WARDROBE_BASE_URL: http://minecraft-ark:8101
+      WARDROBE_PLAYER_TOKEN_FILE: /run/secrets/wardrobe-player-token
+      PLAYER_CREDENTIALS_FILE: /run/secrets/player.json
+      PLAYER_TRUST_PROXY: "1"
+      PANEL_TRUSTED_HOSTS: ${PANEL_TRUSTED_HOSTS:-localhost,127.0.0.1}
+      WIKI_BASE_URL: https://github.com/Bladestar2105/Minecraft-Ark/wiki
+    secrets:
+      - wardrobe-player-token
+      - source: player-bootstrap
+        target: player.json
     logging:
       options: {max-size: 5m, max-file: "2"}
 secrets:
@@ -61,3 +92,9 @@ secrets:
     file: ./secrets/rcon-password
   panel-bootstrap:
     file: ./secrets/panel.json
+  wardrobe-player-token:
+    file: ./secrets/wardrobe-player-token
+  wardrobe-admin-token:
+    file: ./secrets/wardrobe-admin-token
+  player-bootstrap:
+    file: ./secrets/player.json
