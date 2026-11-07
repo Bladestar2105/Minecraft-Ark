@@ -106,6 +106,31 @@ class PanelTests(unittest.TestCase):
     def mutate(self, path, payload, method="post", **kwargs):
         return getattr(self.client, method)(path, json=payload, headers={"Origin": "http://localhost", "X-CSRF-Token": self.csrf}, **kwargs)
 
+    def test_public_dino_pack_download_supports_game_clients_without_login(self):
+        pack = self.data / 'plugins/BetterModel/build.zip'
+        pack.parent.mkdir(parents=True)
+        pack.write_bytes(b'PK\x03\x04public model pack')
+        response = self.client.get('/resources/dinos.zip')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, pack.read_bytes())
+        self.assertEqual(response.mimetype, 'application/zip')
+        response.close()
+        partial = self.client.get('/resources/dinos.zip', headers={'Range': 'bytes=0-3'})
+        self.assertEqual(partial.status_code, 206)
+        self.assertEqual(partial.data, b'PK\x03\x04')
+        partial.close()
+        self.assertEqual(self.containers.lookups, [])
+
+    def test_dino_pack_route_never_serves_a_linked_or_arbitrary_file(self):
+        self.assertEqual(self.client.get('/resources/dinos.zip').status_code, 404)
+        pack = self.data / 'plugins/BetterModel/build.zip'
+        pack.parent.mkdir(parents=True)
+        pack.symlink_to(self.properties)
+        rejected = self.client.get('/resources/dinos.zip')
+        self.assertEqual(rejected.status_code, 400)
+        self.assertNotIn(b'do-not-return-or-change', rejected.data)
+        self.assertEqual(self.client.get('/resources/server.properties').status_code, 404)
+
     def test_portal_config_is_discoverable_and_saves_only_while_stopped(self):
         self.login()
         path = self.data / "plugins/ArkAccounts/config.yml"

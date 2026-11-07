@@ -80,5 +80,10 @@
     "version": "15.12.6",
     "url": "https://github.com/SkinsRestorer/SkinsRestorer/releases/download/15.12.6/SkinsRestorer.jar",
     "sha256": "a85b4a370f988741c9a38f4d0498262edacbf3220314790ac1c127461996359c"
+  },
+  {
+    "name": "bettermodel-3.6.0-paper.jar",
+    "url": "https://github.com/toxicity188/BetterModel/releases/download/3.6.0/bettermodel-3.6.0-paper.jar",
+    "sha256": "66b2acc679ffcb81d9d7de686092d3e1daa38dc154da4cdaa9aaabc048a06aba"
   }
 ]

@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,19 +35,21 @@ def download(item, folder):
 
 
 def build():
+    for script in ("verify_exports.py", "verify_animated_bounds.py", "verify_portability.py"):
+        subprocess.run([sys.executable, str(ROOT / "dino-models" / script)], cwd=ROOT, check=True)
     dependencies = []
     for item in json.loads((ROOT / "dependencies-build.json").read_text()):
         dependencies.append(download(item, ROOT / ".deps"))
     java_home = os.environ.get("JAVA_HOME")
     def java_tool(name):
         return str(Path(java_home, "bin", name)) if java_home else name
-    tests = {"dino": ["TamingRulesTest", "RidingRulesTest"], "atlas": ["AtlasRulesTest"],
+    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest"], "atlas": ["AtlasRulesTest"],
              "panel": ["BridgeProtocolTest", "RuntimeSettingsTest"],
              "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"],
              "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest", "PortalInfoTest"],
              "wardrobe": ["WardrobeTest", "SignersTest", "CommandPolicyTest", "WardrobeRoutesTest"],
              "support": ["SupportTest", "SupportRoutesTest", "SupportDeleteTest"]}
-    versions = {"dino": "ArkDinos-1.0.0", "atlas": "ArkAtlas-1.0.1",
+    versions = {"dino": "ArkDinos-1.1.0", "atlas": "ArkAtlas-1.0.1",
                 "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.2",
                 "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.1"}
     packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",

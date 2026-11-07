@@ -9,7 +9,7 @@ The package contains seven independently built project plugins. The fresh stack 
 | `accounts` | ArkAccounts | Shared passwords, recovery, profile/statistics, shared player login, current OP checks and private API | Core for Wardrobe/Support |
 | `wardrobe` | ArkWardrobe | Personal skins, editor storage, activation and signing | ArkAccounts; SkinsRestorer |
 | `support` | ArkSupport | Persistent tickets, replies and in-game notifications | ArkAccounts |
-| `dino` | ArkDinos | Taming, following and owner-only riding | Separate gameplay plugin |
+| `dino` | ArkDinos 1.1.0 | Six models, taming, owner-only riding and Pteranodon flight | BetterModel, Geyser bridge/utilities, PacketEvents and Java/Bedrock packs |
 | `atlas` | ArkAtlas | In-game atlas | Separate gameplay plugin |
 | `panel` | ArkPanelBridge | Runtime data and management bridge | Separate administration plugin |
 | `access` | ArkAccessBridge | Existing offline/AuthMe integration (1.1.1) | Separate reviewed migration; not fresh-stack default |

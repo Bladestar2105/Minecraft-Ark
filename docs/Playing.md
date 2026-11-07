@@ -33,13 +33,17 @@ progress and points needed for the next rank.
 
 ## Dinosaurs
 
-Twelve habitats contain 24 special sniffers/ravagers using vanilla models.
+ArkDinos 1.1.0 gives the 24 animals in twelve habitats six original models:
+T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor and Pteranodon.
+Accept the server resource packs on Java and Bedrock to see them.
 **Torchflower seeds + use** tames an unowned animal and consumes one seed.
 **Sneak + use** switches your own animal between following and staying.
 Tamed ravagers do not attack players. Animals follow within the same world up to
 48 blocks and do not load distant chunks. With the ArkDinos riding update,
 **empty hand + use** mounts your own unoccupied pet; normal movement steers and
-sneak dismounts. See [Dino riding](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding) for controls and limits.
+sneak dismounts. A tamed Pteranodon takes off with jump, flies along your view
+direction and hovers when movement is released. See [Dino riding](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding)
+for controls, landing and remaining real-device acceptance checks.
 
 ## Claims, quests and groups
 

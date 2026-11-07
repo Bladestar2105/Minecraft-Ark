@@ -6,6 +6,7 @@ A prepared survival adventure world, separate creative area and Java/Bedrock cro
 
 - 20,480 × 20,480 survival blocks, seed `20261103`, 1,638,400 pregenerated chunks.
 - 16 villages/64 houses, 12 dinosaur habitats, trader/witch/pirate camps, boss arenas, quests and an atlas with 55 locations.
+- ArkDinos 1.1.0 crossplay prototype: six original models and tame-owner Pteranodon flight; real Java/Bedrock/console visual acceptance remains open.
 - Separate creative inventories, ender chest and experience; items drop on death in survival.
 - Local administration plus an isolated player portal with shared server passwords, optional recovery and own statistics.
 - Optional built-in skin editor/wardrobe/signing and persistent private support requests.

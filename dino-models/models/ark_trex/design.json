@@ -1,0 +1,41 @@
+{
+  "name": "ark_trex",
+  "label": "T-Rex",
+  "palette": [
+    "#4d7c48",
+    "#6e9957",
+    "#b8bd83",
+    "#304c35",
+    "#e8be58",
+    "#14251a",
+    "#ddd5b0",
+    "#934b43"
+  ],
+  "description": "Gro\u00dfer Kopf \u00b7 kr\u00e4ftiger Schwanz \u00b7 angehobene Ferse \u00b7 drei gespreizte Zehen",
+  "ground_parts": [
+    "toe_left_0_base",
+    "toe_left_0_tip",
+    "claw_left_0",
+    "toe_left_1_base",
+    "toe_left_1_tip",
+    "claw_left_1",
+    "toe_left_2_base",
+    "toe_left_2_tip",
+    "claw_left_2",
+    "toe_right_0_base",
+    "toe_right_0_tip",
+    "claw_right_0",
+    "toe_right_1_base",
+    "toe_right_1_tip",
+    "claw_right_1",
+    "toe_right_2_base",
+    "toe_right_2_tip",
+    "claw_right_2"
+  ],
+  "leg_bones": [
+    "leg_left",
+    "leg_right"
+  ],
+  "cubes": 55,
+  "bones": 9
+}

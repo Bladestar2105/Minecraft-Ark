@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Install verified selected modules and pinned dependencies into a fresh world."""
 import argparse
+import base64
 import hashlib
 import json
 from pathlib import Path
@@ -10,11 +11,14 @@ import uuid
 from build_plugins import ROOT, download
 from fetch_world import safe_path
 
-PLUGINS = {"dino": ("ArkDinos", "1.0.0"), "atlas": ("ArkAtlas", "1.0.1"),
+PLUGINS = {"dino": ("ArkDinos", "1.1.0"), "atlas": ("ArkAtlas", "1.0.1"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
            "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.1"),
            "access": ("ArkAccessBridge", "1.1.1")}
 DEFAULT_MODULES = [module for module in PLUGINS if module != "access"]
+DINO_MODELS = ("trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon")
+DINO_DEPENDENCIES = {"bettermodel", "geyser-model-engine", "geyser-model-engine-extension",
+                     "geyser-utils-spigot", "geyser-utils-geyser"}
 
 
 def selected_modules(modules):
@@ -66,12 +70,35 @@ def verify_own_plugins(root=ROOT, modules=None):
     return [entries[module] for module in modules]
 
 
+def dino_model_files(root):
+    """Use the editable source's embedded texture for both editions."""
+    files = []
+    for species in DINO_MODELS:
+        model = "ark_" + species
+        source = "dino-models/models/" + model + "/"
+        target = "data/plugins/Geyser-Spigot/extensions/geysermodelengineextension/input/" + model + "/"
+        bbmodel = safe_path(root, source + model + ".bbmodel").read_bytes()
+        texture_source = json.loads(bbmodel)["textures"][0]["source"]
+        prefix = "data:image/png;base64,"
+        if not isinstance(texture_source, str) or not texture_source.startswith(prefix) or len(texture_source) > 1024 * 1024:
+            raise ValueError("Invalid embedded dinosaur texture: " + model)
+        texture = base64.b64decode(texture_source[len(prefix):], validate=True)
+        if not texture.startswith(b"\x89PNG\r\n\x1a\n"):
+            raise ValueError("Dinosaur texture must be PNG: " + model)
+        files += [("data/plugins/BetterModel/models/" + model + ".bbmodel", bbmodel),
+                  (target + model + ".png", texture)]
+        for name in (model + ".geo.json", model + ".animation.json", "config.json"):
+            files.append((target + name, safe_path(root, source + name).read_bytes()))
+    return files
+
+
 def install(root=ROOT, modules=None):
     root = Path(root).resolve()
     modules = selected_modules(modules)
     if not safe_path(root, "data/ark/level.dat").is_file():
         raise ValueError("Install the world first; keep Minecraft stopped during installation.")
     own = verify_own_plugins(root, modules)
+    models = dino_model_files(root) if "dino" in modules else []
     copies = [("config/geyser.yml", "data/plugins/Geyser-Spigot/config.yml"),
               ("config/floodgate.yml", "data/plugins/floodgate/config.yml"),
               ("config/permissions.yml", "data/permissions.yml")]
@@ -79,8 +106,11 @@ def install(root=ROOT, modules=None):
         copies.append(("config/skinsrestorer.yml", "data/plugins/SkinsRestorer/config.yml"))
     items = json.loads(safe_path(root, "dependencies-runtime.json").read_text())
     items = [item for item in items if "wardrobe" in modules or item.get("project") != "skinsrestorer"]
+    items = [item for item in items if "dino" in modules or item.get("project") not in DINO_DEPENDENCIES]
+    items = [item for item in items if {"dino", "access"} & set(modules) or item.get("project") != "packetevents"]
     folders = {"datapack": "data/ark/datapacks", "plugin": "data/plugins",
-               "floodgate-extension": "data/plugins/floodgate"}
+               "floodgate-extension": "data/plugins/floodgate",
+               "geyser-extension": "data/plugins/Geyser-Spigot/extensions"}
     for item in items:
         if item.get("kind") not in folders or not isinstance(item.get("name"), str) or Path(item["name"]).name != item["name"]:
             raise ValueError("Unexpected dependency kind or filename.")
@@ -88,6 +118,7 @@ def install(root=ROOT, modules=None):
     targets = ["data/server.properties", "data/dependencies-installed.json"]
     targets += [target for _, target in copies]
     targets += ["data/plugins/" + Path(item["path"]).name for item in own]
+    targets += [target for target, _ in models]
     for target in targets:
         path = safe_path(root, target)
         if path.exists():
@@ -100,12 +131,18 @@ def install(root=ROOT, modules=None):
     (root / "data/plugins").mkdir(parents=True, exist_ok=True)
     for item in own:
         shutil.copyfile(root / item["path"], root / "data/plugins" / Path(item["path"]).name)
+    for target, content in models:
+        destination = safe_path(root, target)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(content)
     for source, target in copies:
         destination = root / target
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / source, destination)
         if source == "config/floodgate.yml":
             destination.write_text(destination.read_text().replace("${metrics.uuid}", str(uuid.uuid4())))
+        if source == "config/geyser.yml" and "dino" in modules:
+            destination.write_text(destination.read_text().replace("force-resource-packs: false", "force-resource-packs: true"))
     (root / "data/dependencies-installed.json").write_text(json.dumps(items, indent=2) + "\n")
     print("Selected own plugins and pinned dependencies installed. Keep data/ private.")
 

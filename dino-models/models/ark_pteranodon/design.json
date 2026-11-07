@@ -1,0 +1,41 @@
+{
+  "name": "ark_pteranodon",
+  "label": "Pteranodon",
+  "palette": [
+    "#536d7b",
+    "#91acb4",
+    "#c5c3ae",
+    "#344854",
+    "#f0d377",
+    "#1e3039",
+    "#e2d7b3",
+    "#b56c4e"
+  ],
+  "description": "Langer Schnabel und Kopfkamm \u00b7 gespannte Flughaut \u00b7 verl\u00e4ngerter Fl\u00fcgelfinger",
+  "ground_parts": [
+    "toe_left_0_base",
+    "toe_left_0_tip",
+    "claw_left_0",
+    "toe_left_1_base",
+    "toe_left_1_tip",
+    "claw_left_1",
+    "toe_left_2_base",
+    "toe_left_2_tip",
+    "claw_left_2",
+    "toe_right_0_base",
+    "toe_right_0_tip",
+    "claw_right_0",
+    "toe_right_1_base",
+    "toe_right_1_tip",
+    "claw_right_1",
+    "toe_right_2_base",
+    "toe_right_2_tip",
+    "claw_right_2"
+  ],
+  "leg_bones": [
+    "leg_left",
+    "leg_right"
+  ],
+  "cubes": 80,
+  "bones": 8
+}

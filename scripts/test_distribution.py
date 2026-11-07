@@ -1,4 +1,5 @@
 import hashlib
+import base64
 import json
 from pathlib import Path
 import tempfile
@@ -11,7 +12,7 @@ import install_plugins
 import package
 
 
-PLUGINS = {"dino": ("ArkDinos", "1.0.0"), "atlas": ("ArkAtlas", "1.0.1"),
+PLUGINS = {"dino": ("ArkDinos", "1.1.0"), "atlas": ("ArkAtlas", "1.0.1"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
            "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.1"),
            "access": ("ArkAccessBridge", "1.1.1")}
@@ -54,7 +55,82 @@ def package_fixture(root):
     return entries
 
 
+def dino_models_fixture(root):
+    for name in ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon'):
+        model = 'ark_' + name
+        folder = root / 'dino-models/models' / model
+        folder.mkdir(parents=True)
+        texture = b'\x89PNG\r\n\x1a\nfixture'
+        (folder / (model + '.bbmodel')).write_text(json.dumps({'textures': [{'source': 'data:image/png;base64,' + base64.b64encode(texture).decode()}]}))
+        for suffix in ('.geo.json', '.animation.json'):
+            (folder / (model + suffix)).write_text('{"fixture":true}\n')
+        (folder / 'config.json').write_text('{"fixture":true}\n')
+
+
 class InstallerTests(unittest.TestCase):
+    def test_model_dependencies_and_required_bedrock_pack_follow_module_selection(self):
+        for modules in (['accounts'], ['dino']):
+            with self.subTest(modules=modules), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                install_fixture(root)
+                dino_models_fixture(root)
+                (root / 'config/geyser.yml').write_text('gameplay:\n  force-resource-packs: false\n')
+                (root / 'dependencies-runtime.json').write_text(json.dumps([
+                    {'kind': 'plugin', 'project': 'bettermodel', 'name': 'BetterModel.jar'},
+                    {'kind': 'geyser-extension', 'project': 'geyser-model-engine-extension', 'name': 'Bridge.jar'},
+                    {'kind': 'plugin', 'project': 'packetevents', 'name': 'PacketEvents.jar'}]))
+                fetched = []
+                def download(item, folder):
+                    fetched.append((item['name'], folder.relative_to(root.resolve()).as_posix()))
+                with patch.object(install_plugins, 'download', side_effect=download):
+                    install_plugins.install(root, modules)
+                if 'dino' in modules:
+                    self.assertEqual(fetched, [('BetterModel.jar', 'data/plugins'), ('Bridge.jar', 'data/plugins/Geyser-Spigot/extensions'), ('PacketEvents.jar', 'data/plugins')])
+                    self.assertIn('force-resource-packs: true', (root / 'data/plugins/Geyser-Spigot/config.yml').read_text())
+                else:
+                    self.assertEqual(fetched, [])
+                    self.assertFalse((root / 'data/plugins/BetterModel').exists())
+                    self.assertIn('force-resource-packs: false', (root / 'data/plugins/Geyser-Spigot/config.yml').read_text())
+
+    def test_missing_invalid_or_existing_model_rejects_before_installation_changes(self):
+        for change in ('missing', 'texture', 'existing'):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                install_fixture(root)
+                dino_models_fixture(root)
+                source = root / 'dino-models/models/ark_pteranodon'
+                if change == 'missing':
+                    (source / 'config.json').unlink()
+                elif change == 'texture':
+                    (source / 'ark_pteranodon.bbmodel').write_text('{"textures":[{"source":"data:image/png;base64,YmFk"}]}')
+                else:
+                    target = root / 'data/plugins/BetterModel/models/ark_trex.bbmodel'
+                    target.parent.mkdir(parents=True)
+                    target.write_text('existing operator model')
+                with patch.object(install_plugins, 'download', side_effect=AssertionError('must preflight models')):
+                    with self.assertRaises((ValueError, FileNotFoundError)):
+                        install_plugins.install(root, ['dino'])
+                self.assertFalse(list((root / 'data/plugins').glob('*.jar')) if (root / 'data/plugins').exists() else [])
+                self.assertFalse((root / 'data/plugins/Geyser-Spigot/config.yml').exists())
+                if change == 'existing':
+                    self.assertEqual(target.read_text(), 'existing operator model')
+
+    def test_dino_selection_installs_all_six_java_and_bedrock_model_inputs(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            install_fixture(root)
+            dino_models_fixture(root)
+            with patch.object(install_plugins, 'download'):
+                install_plugins.install(root, ['dino'])
+            java = root / 'data/plugins/BetterModel/models'
+            bedrock = root / 'data/plugins/Geyser-Spigot/extensions/geysermodelengineextension/input'
+            self.assertEqual(len(list(java.glob('ark_*.bbmodel'))), 6)
+            self.assertEqual(len(list(bedrock.glob('ark_*'))), 6)
+            for folder in bedrock.iterdir():
+                self.assertEqual(sorted(p.name for p in folder.iterdir()),
+                                 [folder.name + '.animation.json', folder.name + '.geo.json', folder.name + '.png', 'config.json'])
+                self.assertEqual((folder / (folder.name + '.png')).read_bytes(), b'\x89PNG\r\n\x1a\nfixture')
+
     def test_local_linking_extension_installs_in_floodgate_directory(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -145,6 +221,19 @@ class InstallerTests(unittest.TestCase):
 
 
 class DistributionTests(unittest.TestCase):
+    def test_editable_dinosaur_models_are_allowed_as_text_sources(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package_fixture(root)
+            name = 'dino-models/models/ark_trex/ark_trex.bbmodel'
+            model = root / name
+            model.parent.mkdir(parents=True)
+            model.write_text('{"textures":[{"source":"data:image/png;base64,cHVibGlj"}]}\n')
+            names = json.loads((root / 'distribution-files.json').read_text()) + [name]
+            (root / 'distribution-files.json').write_text(json.dumps(sorted(names)))
+            with zipfile.ZipFile(next(package.package(root, 'models').glob('*.zip'))) as bundle:
+                self.assertEqual(bundle.read(name), model.read_bytes())
+
     def test_bundle_is_reproducible_contains_allowlisted_sources_and_seven_verified_jars(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

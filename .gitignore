@@ -7,6 +7,10 @@
 /dist/
 /own-plugins.json
 /.venv/
+/output/
+/dino-models/verification.json
+/dino-models/animated-bounds.json
+/dino-models/models/*/*.png
 **/__pycache__/
 **/build/
 *.tar*

@@ -22,9 +22,9 @@ weiterhin den persönlichen Rang und die fehlenden Punkte zum nächsten Rang.
 
 ## Dinos
 
-Zwölf Habitate enthalten 24 besondere Sniffer/Ravager mit Vanilla-Modellen. **Fackelliliensamen + Benutzen** zähmt ein unbesessenes Tier und verbraucht einen Samen. **Schleichen + Benutzen** schaltet eigene Tiere zwischen Folgen/Bleiben um. Gezähmte Ravager greifen Spieler nicht an. Tiere folgen in derselben Welt bis 48 Blöcke und laden keine entfernten Chunks.
+ArkDinos 1.1.0 gibt den 24 Tieren in zwölf Habitaten sechs eigene Modelle: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor und Pteranodon. Nimm auf Java und Bedrock die Server-Ressourcenpakete an, um sie zu sehen. **Fackelliliensamen + Benutzen** zähmt ein unbesessenes Tier und verbraucht einen Samen. **Schleichen + Benutzen** schaltet eigene Tiere zwischen Folgen/Bleiben um. Gezähmte Tiere greifen Spieler nicht an. Sie folgen in derselben Welt bis 48 Blöcke und laden keine entfernten Chunks.
 
-Mit dem ArkDinos-Reitupdate steigt der Besitzer mit **leerer Haupthand + Benutzen** auf einen freien eigenen Dino. Normale Bewegung lenkt, Schleichen steigt ab. [Dino-Reitregeln und Grenzen](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding-DE).
+Der Besitzer steigt mit **leerer Haupthand + Benutzen** auf einen freien eigenen Dino. Normale Bewegung lenkt, Schleichen steigt ab. Ein gezähmter Pteranodon hebt mit Springen ab, fliegt entlang der Blickrichtung und schwebt beim Loslassen der Bewegung. [Dino-Reitregeln, Landung und offene Geräteabnahme](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding-DE).
 
 ## Grundstücke, Missionen und Kreativ
 

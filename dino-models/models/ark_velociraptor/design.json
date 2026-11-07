@@ -1,0 +1,41 @@
+{
+  "name": "ark_velociraptor",
+  "label": "Velociraptor",
+  "palette": [
+    "#b78049",
+    "#d5ad69",
+    "#d6c49b",
+    "#624935",
+    "#f2d967",
+    "#24281e",
+    "#ddd2a7",
+    "#8c4936"
+  ],
+  "description": "Schlanker K\u00f6rper \u00b7 lange Arme \u00b7 Sichelkrallen \u00b7 Federakzente",
+  "ground_parts": [
+    "toe_left_0_base",
+    "toe_left_0_tip",
+    "claw_left_0",
+    "toe_left_1_base",
+    "toe_left_1_tip",
+    "claw_left_1",
+    "toe_left_2_base",
+    "toe_left_2_tip",
+    "claw_left_2",
+    "toe_right_0_base",
+    "toe_right_0_tip",
+    "claw_right_0",
+    "toe_right_1_base",
+    "toe_right_1_tip",
+    "claw_right_1",
+    "toe_right_2_base",
+    "toe_right_2_tip",
+    "claw_right_2"
+  ],
+  "leg_bones": [
+    "leg_left",
+    "leg_right"
+  ],
+  "cubes": 64,
+  "bones": 8
+}

@@ -18,6 +18,8 @@ Do **not** create `.env`, `data`, `secrets` or `panel-state` before fresh setup.
 
 If you use a verified binary ZIP, skip the JDK/build step and follow [All-in-One](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One). Setup never accepts the EULA or starts services.
 
+With the dinosaur module, provide a player-reachable address during setup: `python3 scripts/setup.py --portal-url https://mc.example.org/`. Java downloads the generated model pack through `/resources/dinos.zip`; `localhost` is suitable only for local tests. This requires the default `admin` profile. Without that profile, host the generated `data/plugins/BetterModel/build.zip` yourself and update `resource-pack` in `data/server.properties`. Java and Bedrock require their respective resource packs. The six models and flight controls are a prototype; visual acceptance on actual Java/Bedrock devices remains open.
+
 ## Review and start
 
 Read the [Minecraft EULA](https://www.minecraft.net/en-us/eula), then set `EULA=TRUE` in the generated `.env` only after accepting it. Review `JAVA_PORT`, `BEDROCK_PORT`, trusted hosts, the Compose profile and Linux permissions using [Administration](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration).

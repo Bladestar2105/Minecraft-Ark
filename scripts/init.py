@@ -8,7 +8,7 @@ from pathlib import Path
 import re
 import secrets
 import shutil
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, urlunsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PORTAL_URL = "http://localhost:8090/"
@@ -112,6 +112,11 @@ def initialize(root=ROOT, portal_url=DEFAULT_PORTAL_URL):
             "enable-rcon=true\nrcon.port=25575\nrcon.password=" + rcon + "\n"
             "difficulty=normal\ngamemode=survival\nmax-players=10\nspawn-protection=0\n"
             "motd=Minecraft ARK\nallow-flight=true\n")
+        if any((root / "data/plugins").glob("ArkDinos-*.jar")):
+            portal = urlsplit(portal_url)
+            pack_url = urlunsplit((portal.scheme, portal.netloc, "/resources/dinos.zip", "", ""))
+            with properties.open("a") as target:
+                target.write("resource-pack=" + pack_url + "\nrequire-resource-pack=true\n")
         for name in ["data", "panel-state"]:
             (root / name).mkdir(exist_ok=True)
         # Docker's unprivileged panel reads these files; the host directory remains private.
