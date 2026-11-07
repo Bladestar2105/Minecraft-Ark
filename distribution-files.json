@@ -194,5 +194,8 @@
   "wardrobe-plugin/src/test/java/de/ark/wardrobe/SignersTest.java",
   "wardrobe-plugin/src/test/java/de/ark/wardrobe/WardrobeRoutesTest.java",
   "wardrobe-plugin/src/test/java/de/ark/wardrobe/WardrobeTest.java",
+  "world-design/README.md",
+  "world-design/renewal.py",
+  "world-design/test_renewal.py",
   "world-release.json"
 ]
