@@ -92,9 +92,9 @@
   {
     "project": "geyser",
     "name": "Geyser-Spigot.jar",
-    "version": "2.12.1-b1284",
-    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1284/downloads/spigot",
-    "sha256": "2a8af1fc256864f4d76af219366bf28efa1558cacb6bb06cf0b1639c4c3e241d",
+    "version": "2.12.1-b1295",
+    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1295/downloads/spigot",
+    "sha256": "b60ff8f9a007f30823cf40173532a0390e6150cdfc577551f6f37bdd5ccd1528",
     "kind": "plugin"
   },
   {
@@ -102,6 +102,14 @@
     "url": "https://download.geysermc.org/v2/projects/floodgate/versions/2.2.5/builds/141/downloads/spigot",
     "sha256": "21570aff9ce17d6983928e8552777760e1ede5050026b04c686b0ae112e6fd7e",
     "kind": "plugin"
+  },
+  {
+    "project": "floodgatedb",
+    "name": "floodgate-sqlite-database.jar",
+    "version": "2.2.5-b138",
+    "url": "https://download.geysermc.org/v2/projects/floodgatedb/versions/2.2.5/builds/138/downloads/sqlite",
+    "sha256": "df4ae91e452f7124f11b97d625357b00b13208c056e68c5473e1599b1e443317",
+    "kind": "floodgate-extension"
   },
   {
     "name": "Parties-3.2.18.jar",

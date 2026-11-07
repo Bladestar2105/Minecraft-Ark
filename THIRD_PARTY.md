@@ -10,7 +10,8 @@ This project's licenses do not replace their terms.
 | Minecraft / Mojang / Microsoft | Java 26.3 | Game and base resources; [EULA](https://www.minecraft.net/en-us/eula) |
 | Paper | 26.3/241; API 26.3/236 | [Server/API and license information](https://github.com/PaperMC/Paper) |
 | itzg Docker Minecraft Server | Java 25 image, digest in Compose | [Source/license](https://github.com/itzg/docker-minecraft-server) |
-| GeyserMC / Floodgate | 2.12.1-b1284 / 2.2.5-b141 | [Geyser license](https://github.com/GeyserMC/Geyser/blob/master/LICENSE), [Floodgate](https://github.com/GeyserMC/Floodgate) |
+| GeyserMC / Floodgate | 2.12.1-b1295 / 2.2.5-b141 | [Geyser license](https://github.com/GeyserMC/Geyser/blob/master/LICENSE), [Floodgate](https://github.com/GeyserMC/Floodgate) |
+| Floodgate SQLite linking extension | 2.2.5-b138 | Downloaded into Floodgate's own folder; [official linking setup](https://geysermc.org/wiki/floodgate/linking/#local-linking) |
 | Multiverse Core / Inventories / Portals | 5.8.2 / 5.3.6 / 5.3.0 | [Multiverse](https://github.com/Multiverse) |
 | WorldEdit / WorldGuard | 7.4.6 / 7.0.20 | [EngineHub](https://enginehub.org/) |
 | GriefPrevention | 16.18.7 | [Source](https://github.com/TechFortress/GriefPrevention) |

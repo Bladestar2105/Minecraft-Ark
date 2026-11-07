@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import uuid
 from unittest.mock import patch
 import zipfile
 
@@ -34,8 +35,9 @@ def install_fixture(root):
     (root / "data/ark").mkdir(parents=True)
     (root / "data/ark/level.dat").write_bytes(b"world")
     (root / "config").mkdir()
-    for name in ("geyser.yml", "skinsrestorer.yml", "permissions.yml"):
+    for name in ("geyser.yml", "floodgate.yml", "skinsrestorer.yml", "permissions.yml"):
         (root / "config" / name).write_text("fixture: true\n")
+    (root / "config/floodgate.yml").write_text('metrics:\n  enabled: true\n  uuid: ${metrics.uuid}\n')
     (root / "dependencies-runtime.json").write_text(json.dumps([
         {"kind": "plugin", "project": "skinsrestorer", "name": "SkinsRestorer.jar", "url": "https://example.org/skins.jar", "sha256": "0" * 64},
         {"kind": "plugin", "project": "geyser", "name": "Geyser.jar", "url": "https://example.org/geyser.jar", "sha256": "0" * 64}]))
@@ -53,6 +55,30 @@ def package_fixture(root):
 
 
 class InstallerTests(unittest.TestCase):
+    def test_local_linking_extension_installs_in_floodgate_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            install_fixture(root)
+            provider = root / "publisher-provider.jar"
+            provider.write_bytes(b"verified sqlite provider fixture")
+            (root / "dependencies-runtime.json").write_text(json.dumps([{
+                "kind": "floodgate-extension", "project": "floodgatedb",
+                "name": "floodgate-sqlite-database.jar", "url": provider.as_uri(),
+                "sha256": hashlib.sha256(provider.read_bytes()).hexdigest()}]))
+            try:
+                install_plugins.install(root, ["accounts"])
+            except ValueError as error:
+                self.fail("Local linking installation was rejected: " + str(error))
+            floodgate = root / "data/plugins/floodgate"
+            self.assertEqual((floodgate / "floodgate-sqlite-database.jar").read_bytes(), provider.read_bytes())
+            self.assertFalse((root / "data/plugins/floodgate-sqlite-database.jar").exists())
+            config = (floodgate / "config.yml").read_text()
+            metrics_uuid = config.split('uuid: ')[1].strip()
+            self.assertNotEqual(metrics_uuid, '${metrics.uuid}')
+            self.assertEqual(str(uuid.UUID(metrics_uuid)), metrics_uuid)
+            self.assertEqual(config.replace(metrics_uuid, '${metrics.uuid}'), (root / "config/floodgate.yml").read_text())
+            self.assertEqual(sorted(p.name for p in floodgate.iterdir()), ["config.yml", "floodgate-sqlite-database.jar"])
+
     def test_accounts_and_support_install_without_skin_dependency_or_access(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -87,7 +113,7 @@ class InstallerTests(unittest.TestCase):
             self.assertEqual(list((root / "data").iterdir()), [root / "data/ark"])
 
     def test_native_jar_paths_symlinks_and_existing_configs_are_rejected(self):
-        for change in ("symlink", "escape", "config", "data-link"):
+        for change in ("symlink", "escape", "config", "floodgate-config", "data-link"):
             with self.subTest(change=change), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 entries = install_fixture(root)
@@ -103,11 +129,19 @@ class InstallerTests(unittest.TestCase):
                     path = root / "data/plugins/Geyser-Spigot/config.yml"
                     path.parent.mkdir(parents=True)
                     path.write_text("operator: settings")
+                elif change == "floodgate-config":
+                    path = root / "data/plugins/floodgate/config.yml"
+                    path.parent.mkdir(parents=True)
+                    path.write_text("operator: settings")
+                    (path.parent / "linked-players.db").write_bytes(b"private links")
                 else:
                     (root / "data/plugins").symlink_to(root / "config", target_is_directory=True)
                 with patch.object(install_plugins, "download", side_effect=AssertionError("must preflight")):
                     with self.assertRaises(ValueError):
                         install_plugins.install(root, ["accounts"])
+                if change == "floodgate-config":
+                    self.assertEqual(path.read_text(), "operator: settings")
+                    self.assertEqual((path.parent / "linked-players.db").read_bytes(), b"private links")
 
 
 class DistributionTests(unittest.TestCase):

@@ -24,7 +24,7 @@ class AdminTests(unittest.TestCase):
                         rules=[dict(name='minecraft:keep_inventory', type='boolean', value=True),
                                dict(name='minecraft:random_tick_speed', type='integer', value=3)])]}
                 elif command == 'arkpanel players':
-                    result = players or {'players': [dict(name='.Yoshisan88', key='minecraft:overworld', world='ark', gamemode='survival')], 'whitelist': [], 'banned': []}
+                    result = players or {'players': [dict(name='.BedrockUser', key='minecraft:overworld', world='ark', gamemode='survival')], 'whitelist': [], 'banned': []}
                 else:
                     result = {'available': True, 'ready': True, 'start': 0, 'end': 2,
                               'suggestions': [{'text': 'give'}, {'text': '<unsafe>'}]}
@@ -90,8 +90,8 @@ class AdminTests(unittest.TestCase):
         self.assertEqual(self.containers.items['minecraft-ark'].commands[-1][-1], 'execute in minecraft:overworld run gamerule minecraft:keep_inventory false')
         self.assertEqual(self.mutate('/api/worlds/minecraft:overworld', {'action': 'rule', 'name': 'minecraft:keep_inventory', 'value': 'false'}, method='put').status_code, 400)
         self.assertEqual(self.mutate('/api/worlds/minecraft:overworld', {'action': 'rule', 'name': 'made-up', 'value': True}, method='put').status_code, 400)
-        self.assertEqual(self.mutate('/api/players/action', {'action': 'kick', 'player': '.Yoshisan88', 'reason': 'Test'}, method='post').status_code, 200)
-        self.assertEqual(self.containers.items['minecraft-ark'].commands[-1][-1], 'kick .Yoshisan88 Test')
+        self.assertEqual(self.mutate('/api/players/action', {'action': 'kick', 'player': '.BedrockUser', 'reason': 'Test'}, method='post').status_code, 200)
+        self.assertEqual(self.containers.items['minecraft-ark'].commands[-1][-1], 'kick .BedrockUser Test')
         self.assertEqual(self.mutate('/api/players/action', {'action': 'op', 'player': 'name\nstop'}).status_code, 400)
 
     def test_completion_only_uses_encoded_read_protocol(self):
@@ -140,11 +140,11 @@ class AdminTests(unittest.TestCase):
     def test_moderation_success_can_echo_error_words_without_reporting_failure(self):
         self.login()
         item = self.containers.items['minecraft-ark']
-        item.exec_run = lambda args: helpers.ExecResult(0, b'Banned .Yoshisan88: Could not follow the rules')
-        response = self.mutate('/api/players/action', {'action': 'ban', 'player': '.Yoshisan88', 'reason': 'Could not follow the rules'})
+        item.exec_run = lambda args: helpers.ExecResult(0, b'Banned .BedrockUser: Could not follow the rules')
+        response = self.mutate('/api/players/action', {'action': 'ban', 'player': '.BedrockUser', 'reason': 'Could not follow the rules'})
         self.assertEqual(response.status_code, 200)
         item.exec_run = lambda args: helpers.ExecResult(0, b'No player was found')
-        self.assertEqual(self.mutate('/api/players/action', {'action': 'kick', 'player': '.Yoshisan88'}).status_code, 422)
+        self.assertEqual(self.mutate('/api/players/action', {'action': 'kick', 'player': '.BedrockUser'}).status_code, 422)
 
     def test_spawn_uses_runtime_legacy_world_name_for_multiverse_location_parser(self):
         self.login()
@@ -156,7 +156,7 @@ class AdminTests(unittest.TestCase):
 
     def test_player_action_invalid_type_fails_before_native_mutation(self):
         self.login()
-        response = self.mutate('/api/players/action', {'action': {}, 'player': '.Yoshisan88'})
+        response = self.mutate('/api/players/action', {'action': {}, 'player': '.BedrockUser'})
         self.assertEqual(response.status_code, 400)
         self.assertEqual(self.containers.items['minecraft-ark'].commands, [])
 

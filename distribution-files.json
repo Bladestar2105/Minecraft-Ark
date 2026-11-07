@@ -50,6 +50,7 @@
   "atlas-plugin/src/main/resources/sites.yml",
   "atlas-plugin/src/test/java/de/ark/atlas/AtlasRulesTest.java",
   "compose.yaml",
+  "config/floodgate.yml",
   "config/geyser.yml",
   "config/permissions.yml",
   "config/quests/conditions.yml",

@@ -4,6 +4,8 @@
 
 **ArkAccounts**, independently of Wardrobe or Support, manages the shared **server/portal password**. A change in game or browser updates both; where AuthMe is installed, its password authority is used. Your Microsoft/Xbox password and the separate local panel-admin password are unaffected.
 
+To share game progress between editions, follow [Java and Bedrock account linking](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Player-Portal#share-one-java-and-bedrock-profile). A shared Microsoft login alone does not link server profiles; arrange any Bedrock progress transfer with the operator before linking.
+
 ## Set or change a password
 
 Existing AuthMe users can log into the portal directly with their server name/password. Other authenticated players can use `/web`. In **Account**, enter the current password, a new **12–64-character** password and matching confirmation. Existing shorter passwords can still be verified so you can replace them.

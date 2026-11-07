@@ -7,7 +7,7 @@ Für den Quellcodebau werden Docker mit Compose v2, Python 3.10+ und **JDK 25** 
 ## Neuer Quellcode-Checkout
 
 ```sh
-git clone --branch app-2026-11-07-support-preview https://github.com/Bladestar2105/Minecraft-Ark.git
+git clone --branch app-2026-11-07-bedrock-preview https://github.com/Bladestar2105/Minecraft-Ark.git
 cd Minecraft-Ark
 # JAVA_HOME auf JDK 25 setzen, falls PATH ein anderes JDK verwendet.
 python3 scripts/build_plugins.py

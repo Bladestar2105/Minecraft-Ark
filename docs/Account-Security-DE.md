@@ -4,6 +4,8 @@
 
 **ArkAccounts** verwaltet unabhängig von Wardrobe oder Support das gemeinsame **Server-/Portalpasswort**. Änderungen im Spiel oder Browser wirken für beide Bereiche; mit installiertem AuthMe bleibt dessen Passwortverwaltung maßgeblich. Microsoft-/Xbox-Passwort und das getrennte lokale Panel-Adminpasswort bleiben unverändert.
 
+Für gemeinsamen Spielfortschritt beider Editionen folge der [Java-/Bedrock-Kontoverknüpfung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Player-Portal-DE#einen-spielstand-mit-java-und-bedrock-nutzen). Ein gemeinsamer Microsoft-Login verknüpft Serverprofile nicht automatisch; kläre eine gewünschte Übernahme des Bedrock-Fortschritts vor dem Verknüpfen mit dem Betreiber.
+
 ## Passwort festlegen oder ändern
 
 Bestehende AuthMe-Benutzer melden sich direkt mit Servername und Serverpasswort im Portal an. Andere angemeldete Spieler nutzen `/web`. Gib unter **Konto** das aktuelle Passwort, ein neues Passwort mit **12–64 Zeichen** und die passende Bestätigung ein. Kürzere bisherige Passwörter können zur Änderung weiterhin geprüft werden.

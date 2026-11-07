@@ -24,6 +24,10 @@
 
 **Bedrock connection/control problems:** check Geyser/Floodgate, port 19132, firewall and client compatibility. Keep Java online verification enabled. Some consoles need a separate connection method; no public DNS/AdGuard service is bundled. Actual console movement, dialogs and skin visibility require device testing.
 
+**Bedrock sleeping/position problems:** the dependency pin is Geyser **2.12.1-b1295**, containing the upstream [sleeping teleport-loop fix](https://github.com/GeyserMC/Geyser/pull/6892) for Java 26.x. Existing servers must replace their older Geyser JAR with the verified build and restart; changing the download manifest alone does not update an installed server. Re-test entering and leaving a bed on the affected console after reconnecting. This update does not establish that every bed rendering issue is fixed.
+
+**Bedrock cannot till soil or strip logs:** these actions use the client's **Use/Place** control with a hoe or axe, rather than Attack/Destroy. Test outside protected spawn/claims and record world, coordinates, tool, off-hand item and control used. Ordinary digging and tool use are different actions. Keep protection enabled; Java OP success does not prove a location is open to ordinary players. The upstream [26.3 hoe issue](https://github.com/GeyserMC/Geyser/issues/6753) remained open when this pin was prepared; the sleep fix does not claim to fix it.
+
 **Panel 400/403 or cannot save:** check `PANEL_TRUSTED_HOSTS`, current server OP rights, UID-1000 access to `data`/`panel-state` and Docker socket group. DNS unavailable is expected without separate AdGuard. BlueMap rebuilds its cache from saved chunks; check render progress.
 
 Provide versions, the relevant error and reproduction steps in issues. Remove passwords, tokens, recovery codes, player profiles, private addresses and unrelated private logs. [Security](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Security) explains backup/release boundaries.

@@ -23,7 +23,7 @@ Host requirements are Docker with Compose v2, Python 3.10+, an archive extractor
 **From source:** use JDK 25 as well, then:
 
 ```sh
-git clone --branch app-2026-11-07-support-preview https://github.com/Bladestar2105/Minecraft-Ark.git
+git clone --branch app-2026-11-07-bedrock-preview https://github.com/Bladestar2105/Minecraft-Ark.git
 cd Minecraft-Ark
 python3 scripts/build_plugins.py
 python3 scripts/setup.py

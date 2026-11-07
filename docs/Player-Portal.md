@@ -23,6 +23,38 @@ Automatically authenticated Java/Bedrock players without a known server password
 
 Names alone never create or take over accounts. The server resolves ownership from the actual game identity. Existing Floodgate links remain authoritative; linking does not automatically merge libraries or inventories. Reauthenticate after link changes.
 
+## Share one Java and Bedrock profile
+
+Using the same Microsoft account for both editions does **not** automatically give both connections the same server player ID. Use Floodgate's local account linking to prove control of both game accounts; no Microsoft password or email address belongs in the portal or a ticket.
+
+Before linking, tell the operator which existing progress you want to keep. Linking normally selects the **Java profile**, including its inventory and location. A separate Bedrock profile is not merged or deleted. If you want to keep Bedrock progress, ask the operator for a backed-up transfer **before** linking. Survival and creative inventory groups remain separate.
+
+1. Join with Java and finish the server's authentication; join with your own Bedrock account too.
+2. On Java, run `/linkaccount Bedrockname` and read the private code and instructions. Use the Bedrock/Xbox name requested by the command.
+3. On Bedrock, run `/linkaccount Javaname code` within five minutes, or the operator's configured timeout.
+4. Disconnect Java and reconnect Bedrock. Check inventory, ender chest, experience and location in each relevant world; sign in to the portal again.
+
+After linking, both editions use the Java identity and cannot play simultaneously as that identity. `/unlinkaccount` removes this server's local link; it does not combine profiles or remove an independently configured global link. [Official Floodgate linking guide](https://geysermc.org/wiki/floodgate/linking/).
+
+### Enable local linking as an operator
+
+Fresh setup downloads the pinned SQLite linking extension into `data/plugins/floodgate/` and enables local linking. Linking is optional: Bedrock players can still join without a Java account. The package contains no existing links, private keys or player data; Floodgate creates these privately on first startup.
+
+Existing installations are never overwritten by the fresh installer. To enable local linking there, download the SQLite extension through the [official guide](https://geysermc.org/wiki/floodgate/linking/#local-linking), place `floodgate-sqlite-database.jar` inside `data/plugins/floodgate/` rather than the top-level plugins directory, and review this section in `data/plugins/floodgate/config.yml`:
+
+```yaml
+player-link:
+  enabled: true
+  enable-own-linking: true
+  allowed: true
+  link-code-timeout: 300
+  type: sqlite
+```
+
+Keep unrelated existing settings, including your chosen global-linking policy. Back up accounts and player/plugin data consistently while Minecraft is stopped, then restart and test mutual linking with accounts you own. Local links take precedence over global links. Existing AuthMe/offline installations also need their reviewed identity protection; a global lookup or matching name must never replace proof of ownership.
+
+Transferring an established Bedrock profile requires a separate operator migration while both accounts are offline. Back up both profiles and relevant plugin databases first, resolve conflicting Java progress deliberately, and include per-world inventories and plugin-owned progress rather than copying only one player file. Do not publish account mappings or manually insert an unverified link.
+
 ## Your data and optional features
 
 The profile shows your identity, online status and available cumulative play time, deaths, mob kills and player kills with the observation time. Unavailable values are shown as unavailable, not invented or split into a per-world history.

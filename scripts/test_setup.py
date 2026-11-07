@@ -162,7 +162,7 @@ class FirstSetupTests(unittest.TestCase):
             (root / ".env.example").write_text("EULA=FALSE\n")
             (root / "dependencies-runtime.json").write_text("[]")
             (root / "config").mkdir()
-            for name in ("geyser.yml", "permissions.yml", "skinsrestorer.yml"):
+            for name in ("geyser.yml", "floodgate.yml", "permissions.yml", "skinsrestorer.yml"):
                 (root / "config" / name).write_text("fixture: true\n")
             output = io.StringIO()
             with contextlib.redirect_stdout(output):

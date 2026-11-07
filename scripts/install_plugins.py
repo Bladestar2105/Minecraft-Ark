@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import uuid
 from build_plugins import ROOT, download
 from fetch_world import safe_path
 
@@ -72,16 +73,18 @@ def install(root=ROOT, modules=None):
         raise ValueError("Install the world first; keep Minecraft stopped during installation.")
     own = verify_own_plugins(root, modules)
     copies = [("config/geyser.yml", "data/plugins/Geyser-Spigot/config.yml"),
+              ("config/floodgate.yml", "data/plugins/floodgate/config.yml"),
               ("config/permissions.yml", "data/permissions.yml")]
     if "wardrobe" in modules:
         copies.append(("config/skinsrestorer.yml", "data/plugins/SkinsRestorer/config.yml"))
     items = json.loads(safe_path(root, "dependencies-runtime.json").read_text())
     items = [item for item in items if "wardrobe" in modules or item.get("project") != "skinsrestorer"]
+    folders = {"datapack": "data/ark/datapacks", "plugin": "data/plugins",
+               "floodgate-extension": "data/plugins/floodgate"}
     for item in items:
-        if item.get("kind") not in {"datapack", "plugin"} or not isinstance(item.get("name"), str) or Path(item["name"]).name != item["name"]:
+        if item.get("kind") not in folders or not isinstance(item.get("name"), str) or Path(item["name"]).name != item["name"]:
             raise ValueError("Unexpected dependency kind or filename.")
-        folder = "data/ark/datapacks/" if item["kind"] == "datapack" else "data/plugins/"
-        safe_path(root, folder + item["name"])
+        safe_path(root, folders[item["kind"]] + "/" + item["name"])
     targets = ["data/server.properties", "data/dependencies-installed.json"]
     targets += [target for _, target in copies]
     targets += ["data/plugins/" + Path(item["path"]).name for item in own]
@@ -93,8 +96,7 @@ def install(root=ROOT, modules=None):
         if not safe_path(root, source).is_file():
             raise ValueError("Missing configuration template: " + source)
     for item in items:
-        folder = root / ("data/ark/datapacks" if item["kind"] == "datapack" else "data/plugins")
-        download(item, folder)
+        download(item, root / folders[item["kind"]])
     (root / "data/plugins").mkdir(parents=True, exist_ok=True)
     for item in own:
         shutil.copyfile(root / item["path"], root / "data/plugins" / Path(item["path"]).name)
@@ -102,6 +104,8 @@ def install(root=ROOT, modules=None):
         destination = root / target
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(root / source, destination)
+        if source == "config/floodgate.yml":
+            destination.write_text(destination.read_text().replace("${metrics.uuid}", str(uuid.uuid4())))
     (root / "data/dependencies-installed.json").write_text(json.dumps(items, indent=2) + "\n")
     print("Selected own plugins and pinned dependencies installed. Keep data/ private.")
 

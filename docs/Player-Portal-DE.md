@@ -23,6 +23,38 @@ Automatisch angemeldete Java-/Bedrock-Spieler ohne bekanntes Serverpasswort kön
 
 Ein Name allein erstellt oder übernimmt kein Konto. Der Server bestimmt den Besitzer anhand der tatsächlichen Spielidentität. Bestehende Floodgate-Verknüpfungen bleiben maßgeblich; sie führen Bibliotheken und Inventare nicht automatisch zusammen. Melde dich nach Verknüpfungsänderungen erneut an.
 
+## Einen Spielstand mit Java und Bedrock nutzen
+
+Dasselbe Microsoft-Konto für beide Editionen gibt beiden Verbindungen **nicht** automatisch dieselbe Spieler-ID auf dem Server. Floodgates lokale Kontoverknüpfung bestätigt den Besitz beider Spielkonten. Microsoft-Passwort oder E-Mail-Adresse gehören dafür weder ins Portal noch in ein Ticket.
+
+Kläre vor dem Verknüpfen mit dem Betreiber, welchen bisherigen Fortschritt du behalten möchtest. Die Verknüpfung wählt normalerweise den **Java-Spielstand** einschließlich Inventar und Position. Ein eigener Bedrock-Spielstand wird weder zusammengeführt noch gelöscht. Soll der Bedrock-Fortschritt erhalten bleiben, bitte **vorher** um eine gesicherte Datenübernahme. Survival- und Kreativ-Inventargruppen bleiben getrennt.
+
+1. Tritt mit Java bei und schließe die Serveranmeldung ab; tritt außerdem mit deinem eigenen Bedrock-Konto bei.
+2. Führe auf Java `/linkaccount Bedrockname` aus und lies den privaten Code samt Anleitung. Verwende den vom Befehl verlangten Bedrock-/Xbox-Namen.
+3. Führe auf Bedrock innerhalb von fünf Minuten beziehungsweise der eingestellten Frist `/linkaccount Javaname code` aus.
+4. Melde Java ab und verbinde Bedrock erneut. Prüfe Inventar, Endertruhe, Erfahrung und Position in jeder betroffenen Welt; melde dich anschließend neu im Portal an.
+
+Danach nutzen beide Editionen die Java-Identität und können damit nicht gleichzeitig spielen. `/unlinkaccount` entfernt die lokale Verknüpfung dieses Servers; der Befehl führt keine Spielstände zusammen und entfernt keine unabhängig eingerichtete globale Verknüpfung. [Offizielle Floodgate-Anleitung](https://geysermc.org/wiki/floodgate/linking/).
+
+### Lokale Verknüpfung als Betreiber aktivieren
+
+Das neue Setup lädt die festgelegte SQLite-Erweiterung nach `data/plugins/floodgate/` und aktiviert lokale Verknüpfungen. Diese bleiben freiwillig: Bedrock-Spieler können weiterhin ohne Java-Konto beitreten. Das Paket enthält keine vorhandenen Verknüpfungen, privaten Schlüssel oder Spielerdaten; Floodgate erzeugt diese beim ersten Start privat.
+
+Bestehende Installationen werden vom neuen Setup niemals überschrieben. Um dort lokale Verknüpfungen zu aktivieren, lade die SQLite-Erweiterung über die [offizielle Anleitung](https://geysermc.org/wiki/floodgate/linking/#local-linking), lege `floodgate-sqlite-database.jar` in `data/plugins/floodgate/` statt direkt im Plugin-Hauptverzeichnis ab und prüfe diesen Abschnitt in `data/plugins/floodgate/config.yml`:
+
+```yaml
+player-link:
+  enabled: true
+  enable-own-linking: true
+  allowed: true
+  link-code-timeout: 300
+  type: sqlite
+```
+
+Erhalte andere vorhandene Einstellungen einschließlich deiner Entscheidung zur globalen Verknüpfung. Sichere Konten und Spieler-/Plugin-Daten konsistent bei gestopptem Minecraft, starte anschließend neu und prüfe die gegenseitige Verknüpfung mit eigenen Konten. Lokale Verknüpfungen haben Vorrang vor globalen. Bestehende AuthMe-/Offline-Installationen benötigen zusätzlich ihren geprüften Identitätsschutz; eine globale Abfrage oder ein gleicher Name ersetzt keinen Besitznachweis.
+
+Die Übernahme eines bespielten Bedrock-Profils ist eine getrennte Betreiber-Migration, während beide Konten abgemeldet sind. Sichere zuerst beide Profile und betroffene Plugin-Datenbanken, entscheide bewusst über widersprüchlichen Java-Fortschritt und berücksichtige weltgetrennte Inventare sowie Fortschritt der Plugins statt nur einer Spielerdatei. Veröffentliche keine Kontozuordnungen und trage keine ungeprüfte Verknüpfung manuell ein.
+
 ## Eigene Daten und optionale Funktionen
 
 Das Profil zeigt Identität, Online-Status sowie verfügbare gesamte Spielzeit, Tode, besiegte Kreaturen und Spieler mit Abfragezeitpunkt. Fehlende Werte werden als nicht verfügbar angezeigt und weder erfunden noch als weltgetrennte Historie ausgegeben.
