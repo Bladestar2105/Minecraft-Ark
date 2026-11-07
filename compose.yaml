@@ -46,6 +46,9 @@ services:
       DATA_DIR: /game
       STATE_DIR: /state
       PANEL_CREDENTIALS_FILE: /run/secrets/panel.json
+      PLAYER_CREDENTIALS_FILE: /run/secrets/player.json
+      PANEL_COOKIE_SECURE: ${PANEL_COOKIE_SECURE:-0}
+      FORWARDED_ALLOW_IPS: ${FORWARDED_ALLOW_IPS:-127.0.0.1}
       PANEL_TRUSTED_HOSTS: ${PANEL_TRUSTED_HOSTS:-localhost,127.0.0.1}
       MAP_BASE_URL: http://minecraft-ark:8100
       PLAYER_BASE_URL: http://players:8091
@@ -60,6 +63,8 @@ services:
     secrets:
       - source: panel-bootstrap
         target: panel.json
+      - source: player-bootstrap
+        target: player.json
       - wardrobe-admin-token
     logging:
       options: {max-size: 5m, max-file: "2"}
@@ -79,6 +84,7 @@ services:
       WARDROBE_PLAYER_TOKEN_FILE: /run/secrets/wardrobe-player-token
       PLAYER_CREDENTIALS_FILE: /run/secrets/player.json
       PLAYER_TRUST_PROXY: "1"
+      PLAYER_COOKIE_SECURE: ${PANEL_COOKIE_SECURE:-0}
       PANEL_TRUSTED_HOSTS: ${PANEL_TRUSTED_HOSTS:-localhost,127.0.0.1}
       WIKI_BASE_URL: https://github.com/Bladestar2105/Minecraft-Ark/wiki
     secrets:

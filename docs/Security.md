@@ -6,15 +6,23 @@ The local panel administrator can control Docker and server configuration. Keep 
 
 ## Keep the roles separate
 
-ArkAccounts owns player authentication and actual OP checks. Player and administrator services use different internal tokens, cookies and CSRF/origin checks. A player cookie cannot grant administrator privileges. OP login is explicit and current OP status is rechecked for every protected request; loss of OP status or account-service reachability denies it. Local panel login remains separate and usable without Minecraft.
+ArkAccounts owns player authentication and actual OP checks. The root interface has one login for players and OPs; its personal API routes remain separate from administrative routes. Distinct internal service keys stay on the server, never in browser code. Each administrative request rechecks current OP status through ArkAccounts; a player cookie or browser flag alone is insufficient. De-opping removes administrative authority while retaining an otherwise valid personal session, and re-opping restores authority. Account-service failure denies player-based administration. The local emergency administrator uses the same form and remains usable without Minecraft.
 
 Existing AuthMe passwords remain authoritative where AuthMe is installed. The public default uses online Java verification and Floodgate; ArkAccessBridge is an optional existing-server integration, not a reason to disable online verification. Never merge identities based on a supplied name, UUID or IP address.
 
 ## Passwords, codes and support
 
-Use [Account security](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security) for shared server/portal passwords and optional one-use recovery codes. `/account` opens private password controls; do not append secrets as command arguments or put them in chat. `/web` and `/web admin` codes are short-lived credentials for different sign-in areas.
+Use [Account security](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security) for shared server/portal passwords and optional one-use recovery codes. `/account` opens private password controls; do not append secrets as command arguments or put them in chat. `/web` creates a short-lived ordinary sign-in code; `/web admin` is a legacy alias for that same kind of code, without extra rights.
 
 An administrator may reset a known player password under **Players**, revoking target web sessions while retaining recovery codes/links. It does not reset Microsoft credentials. [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support) conversations are private records accessible to their owner and administrators; do not paste passwords, tokens or account-recovery codes into them.
+
+## Request budgets
+
+Both web services limit API requests to **240 per client IP per minute**, **40 per ten seconds**, and **1,200 per minute across each service process**. These counters are local to the current single Gunicorn worker; multiple workers require shared counters first. At the public root entry point, `X-Forwarded-For` is used for the client IP only when the immediate peer exactly matches an IP in `FORWARDED_ALLOW_IPS`; otherwise the direct peer is used. Do not trust arbitrary forwarded headers or `*`.
+
+The native Accounts API also keeps the existing **240 requests per session per minute** and adds shared per-player UUID budgets: **600 requests**, **60 writes**, **three skin activations** and **ten support replies per minute**. Administrative writes outside the authentication endpoints are limited to **30 per minute**, alongside the existing administrative request budget. Authentication, service-token checks, body limits and bounded queues still apply; a lower applicable limit wins. A limit response is **HTTP429 with `Retry-After`**: wait rather than retrying continuously.
+
+These are request limits, not Docker CPU/RAM caps or network DDoS protection. Traffic that saturates the connection before reaching the application needs filtering at the reverse proxy, firewall or upstream provider. See [Administration](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration) for access boundaries.
 
 ## Backups and release hygiene
 

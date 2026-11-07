@@ -134,7 +134,7 @@ class FirstSetupTests(unittest.TestCase):
             with contextlib.redirect_stdout(output):
                 setup(root, ["accounts", "support"])
             self.assertEqual((root / "data/ark/level.dat").read_bytes(), b"world")
-            self.assertTrue((root / "data/plugins/ArkAccounts-1.0.0.jar").is_file())
+            self.assertTrue((root / "data/plugins/ArkAccounts-1.0.1.jar").is_file())
             self.assertTrue((root / "data/plugins/ArkSupport-1.0.0.jar").is_file())
             self.assertFalse((root / "data/plugins/ArkWardrobe-1.0.0.jar").exists())
             self.assertTrue((root / "secrets/panel-login.txt").is_file())

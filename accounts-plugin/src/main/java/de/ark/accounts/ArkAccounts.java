@@ -45,7 +45,7 @@ public final class ArkAccounts extends JavaPlugin implements Listener,CommandExe
             secretCommands.install();
             saveDefaultConfig();Path root=getDataFolder().toPath();
             String player=secret("ARK_ACCOUNTS_PLAYER_TOKEN_FILE","player-token-file");String admin=secret("ARK_ACCOUNTS_ADMIN_TOKEN_FILE","admin-token-file");
-            portalUrl=System.getenv().getOrDefault("ARK_ACCOUNTS_PLAYER_URL",getConfig().getString("portal-url","http://localhost:8090/play/"));
+            portalUrl=System.getenv().getOrDefault("ARK_ACCOUNTS_PLAYER_URL",getConfig().getString("portal-url","http://localhost:8090/")).replaceFirst("/play/?$","/");
             URI portal=URI.create(portalUrl);if(!Set.of("http","https").contains(portal.getScheme()) || portal.getHost()==null || portal.getUserInfo()!=null)throw new IllegalArgumentException();
             if(getServer().getPluginManager().getPlugin("AuthMe")!=null) {
                 Class<?> type=Class.forName("fr.xephi.authme.api.v3.AuthMeApi");authMe=type.getMethod("getInstance").invoke(null);
@@ -78,12 +78,8 @@ public final class ArkAccounts extends JavaPlugin implements Listener,CommandExe
                     }catch(ApiError e){throw e;}catch(Exception e){throw new ApiError(503,"password_change_failed");}
                 }
             },identity->getLogger().info("audit action=account_password_reset target="+identity.uuid()+" time="+Instant.now()));
-            operators=new OperatorSessions(root.resolve("operator-sessions.json"),Instant::now,accounts,uuid->onMain(()->{
-                if(authMe==null&&!getServer().getOnlineMode())return false;
-                if(authMe!=null&&!getServer().getPluginManager().isPluginEnabled("AuthMe"))throw new ApiError(503,"authentication_unavailable");
-                return Bukkit.getOfflinePlayer(uuid).isOp();
-            }));
-            api=new PrivateApi(new InetSocketAddress(getConfig().getString("bind","0.0.0.0"),getConfig().getInt("port",8101)),player,admin,sessions,accounts,operators,modules,this::profile);
+            operators=new OperatorSessions(root.resolve("operator-sessions.json"),Instant::now,accounts,this::isOperator);
+            api=new PrivateApi(new InetSocketAddress(getConfig().getString("bind","0.0.0.0"),getConfig().getInt("port",8101)),player,admin,sessions,accounts,operators,modules,this::isOperator,this::profile);
             getServer().getServicesManager().register(AccountsApi.class,this,this,ServicePriority.Normal);
             api.start();getServer().getPluginManager().registerEvents(this,this);
             if(authMe!=null)registerUnregisterEvents();
@@ -98,6 +94,11 @@ public final class ArkAccounts extends JavaPlugin implements Listener,CommandExe
     }
     private boolean authBoolean(Method method,Object... args){try{return Boolean.TRUE.equals(method.invoke(authMe,args));}catch(Exception e){throw new ApiError(503,"authentication_unavailable");}}
     private boolean eligible(Player player){return !stopping && player.isOnline() && (authMe==null?getServer().getOnlineMode():getServer().getPluginManager().isPluginEnabled("AuthMe")&&authBoolean(isAuthenticated,player));}
+    private boolean isOperator(UUID uuid){return onMain(()->{
+        if(authMe==null&&!getServer().getOnlineMode())return false;
+        if(authMe!=null&&!getServer().getPluginManager().isPluginEnabled("AuthMe"))throw new ApiError(503,"authentication_unavailable");
+        return Bukkit.getOfflinePlayer(uuid).isOp();
+    });}
     private <T>T onMain(Callable<T> task) {
         if(stopping)throw new ApiError(503,"server_unavailable");
         try {Callable<T> guarded=()->{if(stopping)throw new ApiError(503,"server_unavailable");return task.call();};return Bukkit.isPrimaryThread()?guarded.call():Bukkit.getScheduler().callSyncMethod(this,guarded).get(5,TimeUnit.SECONDS);}
@@ -124,11 +125,9 @@ public final class ArkAccounts extends JavaPlugin implements Listener,CommandExe
         UUID uuid=player.getUniqueId();String name=player.getName();
         if(command.getName().equals("web")) {
             if(args.length==1 && args[0].equalsIgnoreCase("logout")){async(player,()->{accounts.revoke(uuid);message(player,"All portal sessions signed out.","Alle Portalsitzungen abgemeldet.");});return true;}
-            boolean operator=args.length==1&&args[0].equalsIgnoreCase("admin");
-            if(args.length!=0&&!operator){message(player,"Use /web, /web admin or /web logout.","Nutze /web, /web admin oder /web logout.");return true;}
-            if(operator&&!player.isOp()){message(player,"operator_required");return true;}
-            async(player,()->{String code=operator?operators.pair(uuid,name):sessions.pair(uuid,name);Bukkit.getScheduler().runTask(this,()->{if(player.isOnline()) {
-                player.sendMessage(Component.text((player.locale().getLanguage().equals("de")?"Portal öffnen: ":"Open portal: ")+(operator?portalUrl.replaceFirst("/play/?$","/"):portalUrl)).clickEvent(ClickEvent.openUrl(operator?portalUrl.replaceFirst("/play/?$","/"):portalUrl)));
+            if(args.length!=0&&!(args.length==1&&args[0].equalsIgnoreCase("admin"))){message(player,"Use /web or /web logout.","Nutze /web oder /web logout.");return true;}
+            async(player,()->{String code=sessions.pair(uuid,name);Bukkit.getScheduler().runTask(this,()->{if(player.isOnline()) {
+                player.sendMessage(Component.text((player.locale().getLanguage().equals("de")?"Portal öffnen: ":"Open portal: ")+portalUrl).clickEvent(ClickEvent.openUrl(portalUrl)));
                 player.sendMessage(Component.text((player.locale().getLanguage().equals("de")?"Einmalcode (5 Minuten): ":"One-time code (5 minutes): ")+code).clickEvent(ClickEvent.copyToClipboard(code)));
             }});});return true;
         }
@@ -152,7 +151,7 @@ public final class ArkAccounts extends JavaPlugin implements Listener,CommandExe
     }
     @Override public List<String> onTabComplete(CommandSender sender,Command command,String label,String[] args) {
         if(!(sender instanceof Player p) || !eligible(p))return List.of();
-        if(command.getName().equals("web"))return args.length==1?List.of("admin","logout"):List.of();
+        if(command.getName().equals("web"))return args.length==1?List.of("logout"):List.of();
         return List.of();
     }
     @EventHandler(priority=EventPriority.LOWEST,ignoreCancelled=true) public void guard(PlayerCommandPreprocessEvent event) {

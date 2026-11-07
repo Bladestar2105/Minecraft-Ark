@@ -11,6 +11,7 @@ import java.security.*;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 final class PrivateApi implements AutoCloseable {
     static final int MAX_BODY=196608;
@@ -21,11 +22,12 @@ final class PrivateApi implements AutoCloseable {
     private final Accounts accounts;
     private final OperatorSessions operators;
     private final ModuleRegistry modules;
+    private final Predicate<UUID> isOperator;
     private final Function<Sessions.Session,JsonObject> profile;
     private final Map<String,long[]> limits=new LinkedHashMap<>(16,.75f,true){protected boolean removeEldestEntry(Map.Entry<String,long[]> e){return size()>2048;}};
-    PrivateApi(InetSocketAddress address,String playerKey,String adminKey,Sessions sessions,Accounts accounts,OperatorSessions operators,ModuleRegistry modules,Function<Sessions.Session,JsonObject> profile) throws IOException {
+    PrivateApi(InetSocketAddress address,String playerKey,String adminKey,Sessions sessions,Accounts accounts,OperatorSessions operators,ModuleRegistry modules,Predicate<UUID> isOperator,Function<Sessions.Session,JsonObject> profile) throws IOException {
         if(playerKey==null || adminKey==null || playerKey.length()<32 || adminKey.length()<32 || same(playerKey,adminKey))throw new IllegalArgumentException("Distinct service secrets required");
-        this.playerKey=playerKey;this.adminKey=adminKey;this.sessions=sessions;this.accounts=accounts;this.operators=operators;this.modules=modules;this.profile=profile;
+        this.playerKey=playerKey;this.adminKey=adminKey;this.sessions=sessions;this.accounts=accounts;this.operators=operators;this.modules=modules;this.isOperator=isOperator;this.profile=profile;
         System.setProperty("sun.net.httpserver.maxReqTime",System.getProperty("sun.net.httpserver.maxReqTime","15"));
         System.setProperty("sun.net.httpserver.maxRspTime",System.getProperty("sun.net.httpserver.maxRspTime","45"));
         System.setProperty("jdk.httpserver.maxConnections",System.getProperty("jdk.httpserver.maxConnections","100"));
@@ -36,7 +38,7 @@ final class PrivateApi implements AutoCloseable {
     void start(){server.start();}int port(){return server.getAddress().getPort();}
     private static boolean same(String a,String b){return MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8),b.getBytes(StandardCharsets.UTF_8));}
     private synchronized void budget(String bucket,int max) {
-        long now=System.currentTimeMillis()/60000;long[] value=limits.computeIfAbsent(bucket,k->new long[]{now,0});
+        long now=sessions.now()/60;long[] value=limits.computeIfAbsent(bucket,k->new long[]{now,0});
         if(value[0]!=now){value[0]=now;value[1]=0;}if(++value[1]>max)throw new ApiError(429,"busy");
     }
     private void handle(HttpExchange exchange) throws IOException {
@@ -66,11 +68,18 @@ final class PrivateApi implements AutoCloseable {
                             }
                         }
                         case "/v1/admin/auth/check" -> {String token=Protocol.string(body,"token");budget("operator-check:"+Sessions.hash(token),600);response=operators.check(token);}
+                        case "/v1/admin/auth/player-check" -> {
+                            if(body.size()!=1)throw new ApiError(400,"invalid_request");
+                            String token=Protocol.string(body,"token");Sessions.Session session=sessions.require(token);
+                            budget("player-check:"+session.uuid(),600);boolean op=isOperator.test(session.uuid());sessions.require(token);
+                            response=Sessions.view(session);response.addProperty("is_op",op);
+                        }
                         case "/v1/admin/auth/logout" -> {String token=Protocol.string(body,"token");budget("operator-check:"+Sessions.hash(token),600);operators.logout(token);response=ok();}
                         default -> throw new ApiError(404,"not_found");
                     }
                 } else {
                     budget("admin",120);
+                    if(!method.equals("GET"))budget("admin-write",30);
                     switch(method+" "+path) {
                         case "GET /v1/admin/modules" -> response=modules.capabilities();
                         case "GET /v1/admin/accounts" -> response=accounts.list();
@@ -90,7 +99,12 @@ final class PrivateApi implements AutoCloseable {
                 accounts.recover(username,Protocol.string(body,"recovery_code"),Protocol.string(body,"new_password"),Protocol.string(body,"confirmation"));response=ok();
             } else {
                 List<String> tokens=exchange.getRequestHeaders().get("X-Player-Session");if(tokens==null || tokens.size()!=1)throw new ApiError(401,"unauthorized");
-                String token=tokens.getFirst();Sessions.Session session=sessions.require(token);UUID owner=session.uuid();budget("session:"+Sessions.hash(token),240);
+                String token=tokens.getFirst();Sessions.Session session=sessions.require(token);UUID owner=session.uuid();budget("session:"+Sessions.hash(token),240);budget("account:"+owner,600);
+                if(!method.equals("GET")) {
+                    budget("write:"+owner,60);
+                    if(method.equals("POST")&&path.matches("/v1/skins/[0-9a-fA-F-]{36}/activate"))budget("activate:"+owner,3);
+                    if(method.equals("POST")&&path.matches("/v1/support/[0-9a-fA-F-]{36}/reply"))budget("support-reply:"+owner,10);
+                }
                 switch(method+" "+path) {
                     case "GET /v1/session" -> response=Sessions.view(session);
                     case "GET /v1/profile" -> response=profile.apply(session);
@@ -105,6 +119,7 @@ final class PrivateApi implements AutoCloseable {
         }catch(AccountsApi.Failure error){status=error.status;response=error(error.code);}
         catch(Exception error){status=503;response=error("service_unavailable");}
         byte[] bytes=response.toString().getBytes(StandardCharsets.UTF_8);
+        if(status==429)exchange.getResponseHeaders().set("Retry-After",Long.toString(60-Math.floorMod(sessions.now(),60)));
         exchange.getResponseHeaders().set("Content-Type","application/json; charset=utf-8");exchange.getResponseHeaders().set("Cache-Control","no-store");exchange.getResponseHeaders().set("X-Content-Type-Options","nosniff");
         try {exchange.sendResponseHeaders(status,bytes.length);exchange.getResponseBody().write(bytes);}finally {exchange.close();}
     }

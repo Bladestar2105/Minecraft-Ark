@@ -31,7 +31,7 @@ docker compose up -d
 docker compose logs -f minecraft
 ```
 
-Die mitgelieferte `.env.example` aktiviert das Compose-Profil `admin` mit Verwaltung und getrennter Spieleranwendung. Mit leerem `COMPOSE_PROFILES` startet nur der Spielserver. Lies den ersten lokalen Adminzugang privat aus `secrets/panel-login.txt`; veröffentliche ihn nicht. Die Verwaltung liegt unter `http://localhost:8090`, das Spielerportal unter `/play/`.
+Die mitgelieferte `.env.example` aktiviert das Compose-Profil `admin` mit Verwaltung und getrennter Spieleranwendung. Mit leerem `COMPOSE_PROFILES` startet nur der Spielserver. Lies den ersten lokalen Adminzugang privat aus `secrets/panel-login.txt`; veröffentliche ihn nicht. Alle melden sich unter `http://localhost:8090/` an; Spielerfunktionen und aktuelle OP-Verwaltung verwenden dieselbe Oberfläche. Alte `/play/`-Links leiten zur Hauptadresse weiter.
 
 ## Nach dem Start
 

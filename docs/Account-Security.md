@@ -22,9 +22,9 @@ When recovery is already enabled, replacing or disabling it requires the current
 
 Choose **Forgot your password?** on the player login screen to use your name, an unused recovery code and a new password/confirmation. Success consumes the code and revokes web sessions; it does not automatically sign you in. Without a configured valid code, ask the server administrator for [a known-account reset](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support#reset-a-known-server-password).
 
-## Separate administrator access
+## Current administration rights
 
-An actual registered OP can explicitly sign into [Administration](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration) with the shared server password or `/web admin`. The server rechecks OP status on protected requests. A player cookie cannot create this privilege. Local `admin` panel credentials remain separate and can work while the game server is unavailable.
+All players use the same login at `/`, with the server password or an ordinary `/web` code. Actual registered OPs automatically see [administration](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration) controls; the server rechecks current OP status on each administrative request. `/deop` retains a valid personal session and removes only administration; `/op` restores it without signing in again. `/web admin` is only a legacy alias for an ordinary code. The local `admin` emergency account remains a separate credential in the same form and works while the game server is unavailable.
 
 Never publish codes, hashes, account files, private links or passwords in screenshots or GitHub issues. Recovery cannot restore a compromised Microsoft account or transfer someone else's identity.
 

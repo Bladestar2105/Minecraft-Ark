@@ -81,9 +81,12 @@ ERRORS = {
 
 
 class WardrobeError(Exception):
-    def __init__(self, code="upstream_unavailable", status=502):
+    def __init__(self, code="upstream_unavailable", status=502, retry_after=None):
         self.code = code if isinstance(code, str) and code in ERRORS else "upstream_invalid"
         self.status = status if status in (400, 401, 403, 404, 405, 409, 413, 422, 429, 500, 502, 503) else 502
+        if isinstance(retry_after, str) and re.fullmatch(r"[0-9]{1,4}", retry_after):
+            retry_after = int(retry_after)
+        self.retry_after = retry_after if self.status == 429 and type(retry_after) is int and 1 <= retry_after <= 3600 else None
         super().__init__(self.code)
 
     @property
@@ -122,7 +125,7 @@ def allowed_request(method, path, admin=False):
     if admin:
         return (path == "/v1/admin/signing" and method in ("GET", "PUT") or
                 path in ("/v1/admin/signing/connect", "/v1/admin/signing/disconnect", "/v1/admin/accounts/password",
-                         "/v1/admin/auth/login", "/v1/admin/auth/check", "/v1/admin/auth/logout") and method == "POST" or
+                         "/v1/admin/auth/login", "/v1/admin/auth/check", "/v1/admin/auth/logout", "/v1/admin/auth/player-check") and method == "POST" or
                 path in ("/v1/admin/accounts", "/v1/admin/modules", "/v1/admin/support") and method == "GET" or
                 bool(re.fullmatch("/v1/admin/support/" + SKIN_ID, path)) and method == "GET" or
                 bool(re.fullmatch("/v1/admin/support/" + SKIN_ID + "/reply", path)) and method == "POST" or
@@ -308,7 +311,7 @@ class WardrobeClient:
             if not isinstance(value, dict):
                 raise WardrobeError("upstream_invalid", 502)
             if not 200 <= remote.status < 300:
-                raise WardrobeError(value.get("code", "upstream_invalid"), remote.status)
+                raise WardrobeError(value.get("code", "upstream_invalid"), remote.status, remote.getheader("Retry-After"))
             return value
         except (OSError, http.client.HTTPException, TimeoutError):
             raise WardrobeError("upstream_unavailable", 502) from None

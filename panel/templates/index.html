@@ -4,67 +4,64 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <title>ARK Expedition · Verwaltung</title>
+  <title>ARK Expedition</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='player.css') }}">
   <script src="{{ url_for('static', filename='i18n.js') }}" defer></script>
   <script src="{{ url_for('static', filename='support.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='skin_editor.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='photo_skin.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='photo_import.js') }}" defer></script>
   <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='player.js') }}" defer></script>
   <script src="{{ url_for('static', filename='signing.js') }}" defer></script>
 </head>
 <body>
-  <div class="language-control"><a data-wiki="Administration" target="_blank" rel="noopener">Hilfe ↗</a><label for="admin-language">Sprache</label><select id="admin-language" data-language><option value="de">Deutsch</option><option value="en">English</option></select><a href="/play/">Spielerportal ↗</a></div>
-  <noscript><p class="notice error">Bitte JavaScript aktivieren, um die Verwaltung zu verwenden.</p></noscript>
+  <div class="language-control"><a data-wiki="Administration" target="_blank" rel="noopener">Hilfe ↗</a><label for="admin-language">Sprache</label><select id="admin-language" data-language><option value="de">Deutsch</option><option value="en">English</option></select></div>
+  <noscript><p class="notice error">Bitte JavaScript aktivieren, um das Webinterface zu verwenden.</p></noscript>
   <main id="login-view" class="login-layout">
-    <div class="login-brand" aria-hidden="true"><span class="brand-mark">A</span><span>ARK EXPEDITION</span></div>
-    <section class="login-card" aria-labelledby="login-title">
-      <p class="eyebrow">Deine Welt. Ein Überblick.</p>
-      <h1 id="login-title">Willkommen zurück.</h1>
-      <p class="muted">Minecraft, Missionen und Konsolen-DNS an einem Ort verwalten.</p>
-      <form id="login-form">
-        <label for="username">Benutzername</label>
-        <input id="username" name="username" autocomplete="username" value="admin" required maxlength="100">
-        <label for="password">Passwort</label>
-        <input id="password" name="password" type="password" autocomplete="current-password" required>
-        <p id="login-message" class="form-message" role="status" aria-live="polite">Verbindung wird geprüft …</p>
-        <button id="login-button" class="button primary wide" type="submit" disabled>Anmelden <span aria-hidden="true">→</span></button>
-      </form>
-      <details class="operator-login"><summary>Als Server-Operator anmelden</summary><p class="hint">Verwende dein Serverkonto mit tatsächlichen Operatorrechten. Eine normale Spieleranmeldung erteilt keinen Verwaltungszugang.</p><form id="operator-login-form"><label for="operator-username">Spielername</label><input id="operator-username" autocomplete="username" maxlength="64" required><label for="operator-password">Serverpasswort</label><input id="operator-password" type="password" autocomplete="current-password" maxlength="1024" required><button id="operator-login-submit" class="button primary wide" type="submit">Als Operator anmelden</button></form><details><summary>Operator-Code aus dem Spiel verwenden</summary><p class="hint">Führe als angemeldeter Operator im Spiel <code>/web admin</code> aus und gib den einmaligen Code ein.</p><form id="operator-code-form"><label for="operator-code">Operator-Anmeldecode</label><input id="operator-code" autocomplete="one-time-code" maxlength="128" required spellcheck="false"><button id="operator-code-submit" class="button" type="submit">Mit Operator-Code anmelden</button></form></details><p id="operator-login-message" class="form-message" role="status"></p><a data-wiki="Administration" target="_blank" rel="noopener">Hilfe zum Operator-Zugang ↗</a></details>
-      <p class="private-note"><span class="status-dot" aria-hidden="true"></span> Zugang nur im Heimnetz oder über VPN</p>
+    <section id="pair-view" class="login-card player-login" aria-labelledby="pair-title">
+      <p class="eyebrow">Dein Charakter. Deine Garderobe.</p><h1 id="pair-title">Willkommen zurück.</h1><p>Melde dich mit deinem Spielernamen und Serverpasswort an. Du kannst alternativ einen Code mit <code>/web</code> im Spiel holen.</p>
+      <form id="player-login-form"><label for="player-username">Benutzername</label><input id="player-username" autocomplete="username" maxlength="100" required><label for="player-password">Passwort</label><input id="player-password" type="password" autocomplete="current-password" maxlength="1024" required><button class="button primary" type="submit">Anmelden</button></form>
+      <details><summary>Mit Anmeldecode anmelden</summary><form id="pair-form"><label for="pair-code">Anmeldecode</label><input id="pair-code" autocomplete="one-time-code" maxlength="1024" required spellcheck="false" aria-describedby="pair-hint"><p id="pair-hint" class="hint">Melde dich zuerst im Spiel an. Der Code gilt höchstens fünf Minuten.</p><button id="pair-submit" class="button primary wide" type="submit">Mit Code anmelden</button></form></details>
+      <details><summary>Passwort vergessen?</summary><p>Verwende einen zuvor gesicherten Wiederherstellungscode. Ohne aktivierte Wiederherstellung hilft dir die Serververwaltung.</p><form id="player-recover-form"><label for="recover-username">Spielername</label><input id="recover-username" autocomplete="username" maxlength="64" required><label for="recover-code">Wiederherstellungscode</label><input id="recover-code" autocomplete="off" maxlength="1024" required><label for="recover-password">Neues Serverpasswort</label><input id="recover-password" type="password" autocomplete="new-password" minlength="12" maxlength="64" required><label for="recover-confirm">Neues Serverpasswort bestätigen</label><input id="recover-confirm" type="password" autocomplete="new-password" minlength="12" maxlength="64" required><button class="button primary" type="submit">Passwort zurücksetzen</button></form></details>
+      <p id="pair-message" class="form-message" role="status" aria-live="polite">Verbindung wird geprüft …</p><a data-wiki="Player-Portal" target="_blank" rel="noopener">So funktioniert die Anmeldung ↗</a>
     </section>
   </main>
 
   <div id="app-view" class="app-layout" hidden>
     <aside class="sidebar" aria-label="Hauptnavigation">
-      <a class="brand" href="#overview"><span class="brand-mark" aria-hidden="true">A</span><span>ARK <strong>Expedition</strong></span></a>
-      <p class="nav-caption">VERWALTUNG</p>
-      <nav id="navigation">
-        <a href="#overview" data-view="overview" aria-current="page"><span class="nav-number" aria-hidden="true">01</span>Übersicht</a>
-        <a href="#map" data-view="map"><span class="nav-number" aria-hidden="true">02</span>Karte</a>
-        <a href="#minecraft" data-view="minecraft"><span class="nav-number" aria-hidden="true">03</span>Minecraft</a>
-        <a href="#worlds" data-view="worlds"><span class="nav-number" aria-hidden="true">04</span>Welten & Regeln</a>
-        <a href="#players" data-view="players"><span class="nav-number" aria-hidden="true">05</span>Spielerverwaltung</a>
-        <a href="#configs" data-view="configs"><span class="nav-number" aria-hidden="true">06</span>Weitere Einstellungen</a>
-        <a href="#geyser" data-view="geyser"><span class="nav-number" aria-hidden="true">07</span>Geyser</a>
-        <a href="#missions" data-view="missions"><span class="nav-number" aria-hidden="true">08</span>Missionen</a>
-        <a href="#dns" data-view="dns"><span class="nav-number" aria-hidden="true">09</span>DNS</a>
-        <a href="#support" data-view="support"><span class="nav-number" aria-hidden="true">10</span>Support</a>
+      <a class="brand" href="#profile"><span class="brand-mark" aria-hidden="true">A</span><span>ARK <strong>Expedition</strong></span></a>
+      <p class="nav-caption" data-player-nav hidden>MEIN KONTO</p>
+      <nav id="player-navigation" data-player-nav hidden aria-label="Spielerbereich"><a href="#profile">Profil & Statistik</a><a href="#wardrobe">Garderobe</a><a href="#account">Konto</a><a href="#player-support">Support</a></nav>
+      <p class="nav-caption" data-admin-nav hidden>VERWALTUNG</p>
+      <nav id="navigation" data-admin-nav hidden>
+        <a href="#overview" data-admin-nav hidden data-view="overview" aria-current="page"><span class="nav-number" aria-hidden="true">01</span>Übersicht</a>
+        <a href="#map" data-admin-nav hidden data-view="map"><span class="nav-number" aria-hidden="true">02</span>Karte</a>
+        <a href="#minecraft" data-admin-nav hidden data-view="minecraft"><span class="nav-number" aria-hidden="true">03</span>Minecraft</a>
+        <a href="#worlds" data-admin-nav hidden data-view="worlds"><span class="nav-number" aria-hidden="true">04</span>Welten & Regeln</a>
+        <a href="#players" data-admin-nav hidden data-view="players"><span class="nav-number" aria-hidden="true">05</span>Spielerverwaltung</a>
+        <a href="#configs" data-admin-nav hidden data-view="configs"><span class="nav-number" aria-hidden="true">06</span>Weitere Einstellungen</a>
+        <a href="#geyser" data-admin-nav hidden data-view="geyser"><span class="nav-number" aria-hidden="true">07</span>Geyser</a>
+        <a href="#missions" data-admin-nav hidden data-view="missions"><span class="nav-number" aria-hidden="true">08</span>Missionen</a>
+        <a href="#dns" data-admin-nav hidden data-view="dns"><span class="nav-number" aria-hidden="true">09</span>DNS</a>
+        <a href="#support" data-admin-nav hidden data-view="support"><span class="nav-number" aria-hidden="true">10</span>Support</a>
       </nav>
       <div class="sidebar-bottom">
-        <span class="private-label"><span class="status-dot" aria-hidden="true"></span> Heimnetz / VPN</span>
-        <span id="signed-in-user" class="muted" data-i18n-skip></span><p id="operator-account-note" class="hint" hidden>Dein gemeinsames Serverpasswort änderst du im Spielerportal.</p>
-        <div class="button-row"><button id="account-button" class="button quiet" type="button">Konto</button><a id="operator-account-link" class="button quiet" href="/play/#account" hidden>Serverkonto</a><button id="logout-button" class="button quiet" type="button">Abmelden <span aria-hidden="true">↗</span></button></div>
+        <span id="signed-in-user" class="muted" data-i18n-skip></span>
+        <div class="button-row"><button id="account-button" class="button quiet" type="button" hidden>Passwort ändern</button><button id="player-logout" class="button quiet" type="button">Abmelden</button></div>
       </div>
     </aside>
 
     <main class="workspace">
       <header class="page-header">
-        <div><p class="eyebrow">ARK Expedition / Verwaltung</p><h1 id="page-title">Übersicht</h1></div>
-        <span class="header-tag">Deine Minecraft-Welt</span><a class="button quiet" href="#overview" id="signing-open">Skin-Signierung</a>
+        <div><p class="eyebrow">ARK Expedition</p><h1 id="page-title">Profil & Statistik</h1><span id="player-greeting" data-i18n-skip></span></div>
+        <span class="header-tag">Deine Minecraft-Welt</span><a class="button quiet" href="#overview" id="signing-open" data-admin-nav hidden>Skin-Signierung</a>
       </header>
       <div id="notification" class="notice" role="status" aria-live="polite" hidden></div>
+      {% include "_player.html" %}
 
-      <section id="view-overview" class="view" aria-labelledby="overview-title">
+      <section id="view-overview" class="view" aria-labelledby="overview-title" hidden>
         <div class="section-heading"><h2 id="overview-title">Dienste</h2><button id="refresh-status" class="button quiet" type="button">Status aktualisieren <span aria-hidden="true">↻</span></button></div>
         <div class="service-grid">
           <article class="card service-card" data-service="minecraft">

@@ -6,15 +6,23 @@ Der lokale Paneladministrator steuert Docker und Serverkonfiguration. Halte das 
 
 ## Rollen getrennt halten
 
-ArkAccounts verwaltet Spieleranmeldungen und tatsächliche OP-Prüfungen. Spieler- und Verwaltungsdienste haben unterschiedliche interne Tokens, Cookies sowie CSRF-/Origin-Prüfungen. Ein Spielercookie erteilt keine Administratorrechte. Die OP-Anmeldung erfolgt ausdrücklich; jede geschützte Anfrage prüft den aktuellen OP-Status erneut. Fehlende OP-Rechte oder eine nicht erreichbare Kontoverwaltung verhindern den Zugriff. Die lokale Panelanmeldung bleibt getrennt und funktioniert ohne Minecraft.
+ArkAccounts verwaltet Spieleranmeldungen und tatsächliche OP-Prüfungen. Die Hauptoberfläche hat eine Anmeldung für Spieler und OPs; persönliche API-Routen bleiben von Verwaltungsrouten getrennt. Unterschiedliche interne Dienstschlüssel bleiben auf dem Server und gelangen niemals in Browsercode. Jede Verwaltungsanfrage prüft die aktuellen OP-Rechte über ArkAccounts; ein Spielercookie oder Browserflag allein reicht nicht. De-Op entzieht nur Verwaltungsrechte und erhält eine ansonsten gültige persönliche Sitzung; erneutes OP stellt die Rechte wieder her. Bei Ausfall der Kontoverwaltung wird spielerbasierte Verwaltung abgewiesen. Der lokale Notfalladministrator verwendet dasselbe Formular und bleibt ohne Minecraft erreichbar.
 
 Wo AuthMe installiert ist, bleiben dessen Passwörter maßgeblich. Der öffentliche Standard nutzt Onlineprüfung für Java und Floodgate; ArkAccessBridge ist eine optionale Integration bestehender Server und kein Anlass, die Onlineprüfung abzuschalten. Führe keine Identitäten allein anhand eines übergebenen Namens, einer UUID oder IP-Adresse zusammen.
 
 ## Passwörter, Codes und Support
 
-[Kontosicherheit](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security-DE) erklärt gemeinsame Server-/Portalpasswörter und optionale Einmalcodes zur Wiederherstellung. `/account` öffnet private Passwortfelder; hänge keine Geheimnisse als Befehlsargumente an und schreibe sie nicht in den Chat. Codes aus `/web` und `/web admin` sind kurzlebige Zugangsdaten für verschiedene Anmeldebereiche.
+[Kontosicherheit](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security-DE) erklärt gemeinsame Server-/Portalpasswörter und optionale Einmalcodes zur Wiederherstellung. `/account` öffnet private Passwortfelder; hänge keine Geheimnisse als Befehlsargumente an und schreibe sie nicht in den Chat. `/web` erzeugt einen kurzlebigen gewöhnlichen Anmeldecode; `/web admin` bleibt ein alter Alias für dieselbe Codeart und gewährt keine zusätzlichen Rechte.
 
 Die Verwaltung setzt unter **Spieler** bekannte Spielerpasswörter zurück, beendet deren Websitzungen und behält Wiederherstellungscodes/Verknüpfungen. Microsoft-Zugangsdaten bleiben unberührt. [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support-DE)-Unterhaltungen sind private Datensätze für Besitzer und Verwaltung; füge keine Passwörter, Tokens oder Wiederherstellungscodes ein.
+
+## Anfragelimits
+
+Beide Webdienste begrenzen API-Anfragen auf **240 je Client-IP und Minute**, **40 je zehn Sekunden** sowie **1.200 je Minute über den jeweiligen Dienstprozess**. Die Zähler gelten pro aktuellem einzelnen Gunicorn-Worker; vor mehreren Workern sind gemeinsame Zähler nötig. Am öffentlichen Haupteinstieg bestimmt `X-Forwarded-For` die Client-IP nur, wenn die direkte Gegenstelle exakt einer IP in `FORWARDED_ALLOW_IPS` entspricht; andernfalls zählt die direkte Gegenstelle. Vertraue keinen beliebigen weitergeleiteten Headern oder `*`.
+
+Die native Accounts-API behält **240 Anfragen je Sitzung und Minute** bei und ergänzt gemeinsame Budgets pro Spieler-UUID: **600 Anfragen**, **60 Schreibzugriffe**, **drei Skinaktivierungen** und **zehn Supportantworten pro Minute**. Administrative Dienst-Schreibzugriffe außerhalb der Authentifizierungsendpunkte sind zusätzlich auf **30 pro Minute** begrenzt; das bisherige administrative Anfragebudget bleibt bestehen. Authentifizierung, Dienstschlüsselprüfungen, Größenlimits und begrenzte Warteschlangen gelten weiter; die jeweils engere Grenze greift. Eine Begrenzung liefert **HTTP429 mit `Retry-After`**: Warte, statt sofort wiederholt anzufragen.
+
+Dies sind Anfragelimits, keine Docker-CPU-/RAM-Grenzen oder Absicherung gegen Netzwerk-DDoS. Verkehr, der die Verbindung bereits vor der Anwendung auslastet, braucht Filter beim Reverseproxy, in der Firewall oder beim vorgeschalteten Anbieter. [Verwaltung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE) erklärt die Zugriffsgrenzen.
 
 ## Backups und Veröffentlichung
 

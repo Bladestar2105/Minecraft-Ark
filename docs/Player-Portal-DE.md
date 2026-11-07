@@ -1,8 +1,8 @@
-# Spielerportal
+# Spielerbereich
 
 [English](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Player-Portal) · [Kontosicherheit](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security-DE) · [Module](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules-DE)
 
-Öffne im Webinterface des Servers **Spielerportal** oder ergänze `/play/` an dessen Adresse. Wähle Deutsch oder Englisch. **ArkAccounts** stellt Anmeldung, Kontoeinstellungen, Profil und Statistiken bereit; Skins und Tickets erscheinen nur mit den jeweiligen optionalen Modulen.
+Öffne das Webinterface des Servers direkt unter seiner Hauptadresse `/`. Alle verwenden dasselbe Anmeldeformular und dieselbe deutsch-/englischsprachige Oberfläche: Profil, Garderobe, Konto und Support gehören zum eigenen Spielerkonto. **ArkAccounts** stellt Anmeldung, Kontoeinstellungen, Profil und Statistiken bereit; Skins und Tickets erscheinen nur mit den jeweiligen optionalen Modulen. Alte `/play/`-Links leiten auf `/` weiter; ein zweites Portal oder eine OP-Anmeldung ist nicht nötig.
 
 ## Anmelden
 
@@ -12,7 +12,7 @@ Automatisch angemeldete Java-/Bedrock-Spieler ohne bekanntes Serverpasswort kön
 
 1. Tritt bei und schließe die normale Serveranmeldung ab.
 2. Führe privat im Spiel `/web` aus.
-3. Löse den einmaligen Code innerhalb von fünf Minuten an der Spieleranmeldung ein. Nicht eingelöste Codes verfallen beim Serverneustart.
+3. Löse den einmaligen Code innerhalb von fünf Minuten im Anmeldeformular der Hauptadresse ein. Nicht eingelöste Codes verfallen beim Serverneustart.
 4. Öffne **Konto**, um bei Bedarf ein Passwort festzulegen. Eine frische Spielbestätigung erlaubt bis zu fünf Minuten lang ein leeres aktuelles Passwortfeld; siehe [Kontosicherheit](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security-DE).
 
 Ein Name allein erstellt oder übernimmt kein Konto. Der Server bestimmt den Besitzer anhand der tatsächlichen Spielidentität. Bestehende Floodgate-Verknüpfungen bleiben maßgeblich; sie führen Bibliotheken und Inventare nicht automatisch zusammen. Melde dich nach Verknüpfungsänderungen erneut an.
@@ -31,6 +31,6 @@ Schlägt die Modulabfrage fehl, erscheint eine Fehlermeldung mit Wiederholungsm�
 
 Passwortänderung, Wiederherstellung und Zurücksetzung beenden bestehende Websitzungen. Wiederherstellung meldet dich nicht automatisch an. `/web logout` beendet deine Portalsitzungen. Sichere Wiederherstellungscodes privat und teile sie nicht in Tickets oder Screenshots.
 
-Eine Spielersitzung hat keine Docker-, Konsolen- oder Verwaltungsrechte. Registrierte tatsächliche OPs verwenden eine getrennte ausdrückliche [Verwaltungsanmeldung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE#zwei-ausdrückliche-verwaltungsanmeldungen) mit Serverpasswort oder gesondertem `/web admin`-Code. Ein Spielercookie wird nicht automatisch aufgewertet.
+Tatsächliche Server-OPs sehen nach derselben Anmeldung automatisch zusätzliche [Verwaltungsmenüs](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE#eine-anmeldung-aktuelle-serverrechte). Jede Verwaltungsanfrage prüft die aktuellen OP-Rechte auf dem Server; ein Browserflag erteilt sie nicht. `/deop` entzieht nur den Verwaltungszugriff und erhält eine gültige persönliche Sitzung; `/op` stellt den Zugriff ohne erneute Anmeldung wieder her. `/web admin` bleibt lediglich ein alter Alias für einen gewöhnlichen `/web`-Code und gewährt keine zusätzlichen Rechte. Cookies gelten jetzt unter `/`; nach dem Update kann einmaliges Neuanmelden nötig sein.
 
 Eine öffentliche/globale Floodgate-Verknüpfung allein öffnet kein bestehendes ungebundenes AuthMe-Konto. Bestätige zuerst das ursprüngliche Java-Passwort oder den Premiumbesitz. Geprüfte lokale gegenseitige Verknüpfungen bleiben über die geprüfte AuthMe-/Floodgate-Integration erhalten; ersetze sie nicht durch eine ungeprüfte globale Abfrage.

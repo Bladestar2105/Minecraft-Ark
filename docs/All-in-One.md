@@ -31,7 +31,7 @@ docker compose up -d
 docker compose logs -f minecraft
 ```
 
-The supplied `.env.example` enables the `admin` Compose profile, including the admin and isolated player apps. Leave `COMPOSE_PROFILES` empty for game-only startup. Read the initial local admin login privately in `secrets/panel-login.txt`; never publish it. The panel is at `http://localhost:8090`, players at `/play/`.
+The supplied `.env.example` enables the `admin` Compose profile, including the admin and isolated player apps. Leave `COMPOSE_PROFILES` empty for game-only startup. Read the initial local admin login privately in `secrets/panel-login.txt`; never publish it. Everyone signs in at `http://localhost:8090/`; player functions and current OP administration share this interface. Old `/play/` links redirect to the root.
 
 ## After startup
 

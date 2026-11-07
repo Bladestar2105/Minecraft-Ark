@@ -2,7 +2,7 @@
 
 [Deutsch](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Home-DE) · [Repository](https://github.com/Bladestar2105/Minecraft-Ark)
 
-A prepared survival adventure world with a separate creative world, Java/Bedrock crossplay and a local webinterface. Both web applications offer English and German; existing adventure content is mainly German. No client mod is required.
+A prepared survival adventure world with a separate creative world, Java/Bedrock crossplay and a local webinterface. The webinterface offers English and German; existing adventure content is mainly German. No client mod is required.
 
 1. Choose the [All-in-One package](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One) or [source installation](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Installation).
 2. Setup downloads the fixed [world snapshot](https://github.com/Bladestar2105/Minecraft-Ark/wiki/World-Download), verifies it and generates your own local secrets.
@@ -11,7 +11,7 @@ A prepared survival adventure world with a separate creative world, Java/Bedrock
 
 ## Accounts and optional features
 
-[Modules](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules) explains the independent plugins. **ArkAccounts** provides accounts, shared server passwords, recovery, profiles and explicit OP administration login. Optional **ArkWardrobe** adds skins/signing; optional **ArkSupport** adds persistent support tickets. Account support resets remain available without either optional module.
+[Modules](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules) explains the independent plugins. **ArkAccounts** provides accounts, shared server passwords, recovery, profiles and a shared login with current OP administration rights. Optional **ArkWardrobe** adds skins/signing; optional **ArkSupport** adds persistent support tickets. Account support resets remain available without either optional module.
 
 - [Player portal](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Player-Portal) · [Account security and recovery](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security)
 - [Skin editor](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Editor) · [Wardrobe](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Wardrobe) · [Signing setup](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing)

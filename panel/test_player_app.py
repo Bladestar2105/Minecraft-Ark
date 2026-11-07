@@ -413,7 +413,7 @@ class PlayerBoundaryTests(unittest.TestCase):
 
     def test_public_player_proxy_strips_admin_cookie_and_spoofed_forwarding_headers(self):
         self.client.set_cookie("ark_panel_session", "admin-cookie-secret")
-        self.client.set_cookie("ark_player_session", "player-cookie", path="/play/")
+        self.client.set_cookie("ark_player_session", "player-cookie", path="/")
         remote = MagicMock(status=200)
         remote.read.return_value = b'{"authenticated":true}'
         remote.getheaders.return_value = [("Content-Type", "application/json"),
@@ -422,13 +422,13 @@ class PlayerBoundaryTests(unittest.TestCase):
         with patch("panel.app.http.client.HTTPConnection") as factory:
             connection = factory.return_value
             connection.getresponse.return_value = remote
-            response = self.client.post("/play/api/login", json={"code": "ABCD-EFGH"}, headers={"Origin": "http://localhost",
+            response = self.client.post("/api/player/recovery", json={"code": "ABCD-EFGH"}, headers={"Origin": "http://localhost",
                 "Authorization": "Bearer admin-key", "X-Forwarded-Host": "evil.test", "X-Forwarded-Proto": "https", "X-Forwarded-For": "evil-source", "X-Admin-Key": "secret"},
                 environ_overrides={"REMOTE_ADDR": "203.0.113.10"})
         self.assertEqual(response.status_code, 200, response.json)
         self.assertEqual(factory.call_args.args[:2], ("player", 8091))
         args, kwargs = connection.request.call_args
-        self.assertEqual(args[:2], ("POST", "/api/login"))
+        self.assertEqual(args[:2], ("POST", "/api/recovery"))
         headers = {key.lower(): value for key, value in kwargs["headers"].items()}
         self.assertEqual(headers["cookie"], "ark_player_session=player-cookie")
         self.assertEqual(headers["x-forwarded-host"], "localhost")
@@ -437,45 +437,47 @@ class PlayerBoundaryTests(unittest.TestCase):
         self.assertNotIn("authorization", headers)
         self.assertNotIn("x-admin-key", headers)
         self.assertNotIn("X-Hop", response.headers)
-        self.assertIn("Path=/play/", response.headers["Set-Cookie"])
+        self.assertIn("Path=/;", response.headers["Set-Cookie"])
+        self.assertTrue(any("Path=/play/" in cookie and "Max-Age=0" in cookie
+                            for cookie in response.headers.getlist("Set-Cookie")))
         self.assertNotIn("ark_panel_session", str(response.headers.getlist("Set-Cookie")))
 
     def test_player_proxy_rejects_bad_origin_paths_redirects_and_unbounded_response(self):
-        self.assertEqual(self.client.post("/play/api/login", json={"code": "ABCD-EFGH"}).status_code, 403)
-        for path in ("/play/%5cadmin", "/play/%2e%2e/secret", "/play/static/%252e%252e/admin"):
+        self.assertEqual(self.client.post("/api/player/recovery", json={"code": "ABCD-EFGH"}).status_code, 403)
+        for path in ("/api/player/%5cadmin", "/api/player/%2e%2e/secret", "/api/player/static/%252e%252e/admin"):
             self.assertEqual(self.client.get(path).status_code, 400)
         remote = MagicMock(status=302)
         remote.read.return_value = b""
         remote.getheaders.return_value = [("Location", "https://evil.test/")]
         with patch("panel.app.http.client.HTTPConnection") as factory:
             factory.return_value.getresponse.return_value = remote
-            self.assertEqual(self.client.get("/play/").status_code, 502)
+            self.assertEqual(self.client.get("/api/player/me").status_code, 502)
             remote.status = 200
             remote.getheaders.return_value = []
             remote.read.return_value = b"x" * (8 * 1024 * 1024 + 1)
-            self.assertEqual(self.client.get("/play/").status_code, 502)
+            self.assertEqual(self.client.get("/api/player/me").status_code, 502)
 
     def test_proxy_does_not_forward_current_admin_csrf_as_player_csrf(self):
         csrf = self.login()
-        self.client.set_cookie("ark_player_session", "player-cookie", path="/play/")
+        self.client.set_cookie("ark_player_session", "player-cookie", path="/")
         remote = MagicMock(status=200)
         remote.read.return_value, remote.getheaders.return_value = b"{}", [("Content-Type", "application/json")]
         with patch("panel.app.http.client.HTTPConnection") as factory:
             factory.return_value.getresponse.return_value = remote
-            response = self.client.post("/play/api/logout", json={}, headers={"Origin": "http://localhost", "X-CSRF-Token": csrf})
+            response = self.client.post("/api/player/recovery", json={}, headers={"Origin": "http://localhost", "X-CSRF-Token": csrf})
         self.assertEqual(response.status_code, 200)
         outgoing = {key.lower(): value for key, value in factory.return_value.request.call_args.kwargs["headers"].items()}
         self.assertNotIn("x-csrf-token", outgoing)
 
     def test_player_proxy_exposes_only_player_support_and_never_admin_or_operator_routes(self):
         with patch("panel.app.http.client.HTTPConnection") as factory:
-            for path in ("/play/api/operator/login", "/play/api/player-accounts", "/play/api/settings/wardrobe", "/play/api/admin/support"):
+            for path in ("/api/player/operator/login", "/api/player/player-accounts", "/api/player/settings/wardrobe", "/api/player/admin/support"):
                 self.assertEqual(self.client.post(path, json={}, headers={"Origin": "http://localhost"}).status_code, 404)
             self.assertFalse(factory.called)
             remote = MagicMock(status=200)
             remote.read.return_value, remote.getheaders.return_value = b'{"tickets":[]}', [("Content-Type", "application/json")]
             factory.return_value.getresponse.return_value = remote
-            self.assertEqual(self.client.get("/play/api/support").status_code, 200)
+            self.assertEqual(self.client.get("/api/player/support").status_code, 200)
             self.assertEqual(factory.return_value.request.call_args.args[:2], ("GET", "/api/support"))
 
     def test_concurrent_locales_do_not_mutate_global_metadata_or_original_game_data(self):

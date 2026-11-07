@@ -23,7 +23,7 @@ Host requirements are Docker with Compose v2, Python 3.10+, an archive extractor
 **From source:** use JDK 25 as well, then:
 
 ```sh
-git clone --branch app-2026-11-07-https-preview https://github.com/Bladestar2105/Minecraft-Ark.git
+git clone --branch app-2026-11-07-unified-preview https://github.com/Bladestar2105/Minecraft-Ark.git
 cd Minecraft-Ark
 python3 scripts/build_plugins.py
 python3 scripts/setup.py
@@ -38,7 +38,7 @@ docker compose up -d
 docker compose logs -f minecraft
 ```
 
-The default `admin` Compose profile starts Minecraft, the panel and the isolated player app. It does not include AdGuard/public DNS. Leave `COMPOSE_PROFILES` empty for game-only startup. The local panel is `http://localhost:8090`, players use `/play/`; read the locally generated admin login privately in `secrets/panel-login.txt`. At least 8 GiB host RAM is a starting recommendation; allow separate disk space for archive, world, renders and backups. [Installation and checks](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Installation) · [Administration](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration).
+The default `admin` Compose profile starts Minecraft, the panel and the isolated player app. It does not include AdGuard/public DNS. Leave `COMPOSE_PROFILES` empty for game-only startup. The local panel is `http://localhost:8090`, all accounts use the same root login and OP menus appear automatically; read the locally generated recovery admin login privately in `secrets/panel-login.txt`. At least 8 GiB host RAM is a starting recommendation; allow separate disk space for archive, world, renders and backups. [Installation and checks](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Installation) · [Administration](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration).
 
 Application releases and world snapshots are separate. New app releases must not change the world's fixed download tag. A world archive alone does not install new plugins. Never extract over a played server or treat fresh setup as an updater.
 
@@ -46,7 +46,7 @@ Application releases and world snapshots are separate. New app releases must not
 
 The seven project plugins are ArkAccounts, ArkWardrobe, ArkSupport, ArkDinos, ArkAtlas, ArkPanelBridge and optional ArkAccessBridge **1.1.1**. Six install by default; ArkAccessBridge is built/bundled but excluded from the fresh online-mode stack. `setup.py --modules dino,atlas,panel,accounts,support` selects a subset; Wardrobe/Support require Accounts. [Modules](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules).
 
-ArkAccounts owns passwords, recovery, profile and player/OP sessions. Existing AuthMe users log into the player portal directly with their server name/password; `/web` is an alternative for authenticated players. A fresh `/web` check allows first-password/unknown-password setup for five minutes. Actual registered OPs explicitly use their server credentials or `/web admin` for a separate admin session; player cookies are never upgraded. The separate local admin remains usable without Minecraft.
+ArkAccounts owns passwords, recovery, profile and sessions. All players use the root login with their server name/password; `/web` is an alternative for authenticated players. A fresh `/web` check allows first-password/unknown-password setup for five minutes. Registered OPs use the same login and personal pages; administration menus appear after a current server-side OP check and disappear when those rights are removed. The separate local recovery admin remains usable without Minecraft and does not receive player features.
 
 ArkWardrobe adds the own editor/library, `/wardrobe list` and `/wardrobe wear <name>`. Operators configure their own MineSkin key or self-hosted Microsoft/Minecraft account; no shared credentials are supplied. ArkSupport adds `/support [low|normal|high] Message`, private tickets and replies. Admin password resets under **Players** belong to Accounts and stay available without either optional module.
 

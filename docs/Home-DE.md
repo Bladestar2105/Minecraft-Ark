@@ -2,7 +2,7 @@
 
 [English](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Home) · [Repository](https://github.com/Bladestar2105/Minecraft-Ark)
 
-Eine vorbereitete Survival-Abenteuerwelt mit getrennter Kreativwelt, Java-/Bedrock-Crossplay und eigenem Webinterface. Beide Webanwendungen bieten Deutsch und Englisch; vorhandene Abenteuerinhalte sind überwiegend deutsch. Eine Client-Mod ist nicht erforderlich.
+Eine vorbereitete Survival-Abenteuerwelt mit getrennter Kreativwelt, Java-/Bedrock-Crossplay und eigenem Webinterface. Das Webinterface bietet Deutsch und Englisch; vorhandene Abenteuerinhalte sind überwiegend deutsch. Eine Client-Mod ist nicht erforderlich.
 
 1. Wähle das [All-in-One-Paket](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One-DE) oder die [Installation aus Quellcode](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Installation-DE).
 2. Das Setup lädt den festen [Weltstand](https://github.com/Bladestar2105/Minecraft-Ark/wiki/World-Download-DE), prüft ihn und erzeugt eigene lokale Zugangsdaten.
@@ -11,7 +11,7 @@ Eine vorbereitete Survival-Abenteuerwelt mit getrennter Kreativwelt, Java-/Bedro
 
 ## Konten und optionale Funktionen
 
-[Module](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules-DE) beschreibt die getrennten Plugins. **ArkAccounts** stellt Konten, gemeinsame Serverpasswörter, Wiederherstellung, Profile und die ausdrückliche OP-Anmeldung an der Verwaltung bereit. Optional ergänzt **ArkWardrobe** Skins und Signierung; **ArkSupport** ergänzt dauerhafte Support-Anfragen. Passwortzurücksetzungen durch die Verwaltung bleiben ohne beide optionalen Module verfügbar.
+[Module](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules-DE) beschreibt die getrennten Plugins. **ArkAccounts** stellt Konten, gemeinsame Serverpasswörter, Wiederherstellung, Profile und eine gemeinsame Anmeldung mit aktuellen OP-Verwaltungsrechten bereit. Optional ergänzt **ArkWardrobe** Skins und Signierung; **ArkSupport** ergänzt dauerhafte Support-Anfragen. Passwortzurücksetzungen durch die Verwaltung bleiben ohne beide optionalen Module verfügbar.
 
 - [Spielerportal](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Player-Portal-DE) · [Kontosicherheit und Wiederherstellung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security-DE)
 - [Skin-Editor](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Editor-DE) · [Garderobe](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Wardrobe-DE) · [Signierung einrichten](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing-DE)

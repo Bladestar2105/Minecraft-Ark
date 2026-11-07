@@ -6,7 +6,7 @@ Das Paket enthält sieben getrennt gebaute Projektplugins. Der neue Standardstac
 
 | CLI-Name | Plugin | Aufgabe | Abhängigkeit |
 | --- | --- | --- | --- |
-| `accounts` | ArkAccounts | Gemeinsame Passwörter, Wiederherstellung, Profil/Statistiken, Spieler-/OP-Sitzungen und private API | Grundlage für Wardrobe/Support |
+| `accounts` | ArkAccounts | Gemeinsame Passwörter, Wiederherstellung, Profil/Statistiken, gemeinsame Spieleranmeldung, aktuelle OP-Prüfung und private API | Grundlage für Wardrobe/Support |
 | `wardrobe` | ArkWardrobe | Eigene Skins, Editorablage, Aktivierung und Signierung | ArkAccounts; SkinsRestorer |
 | `support` | ArkSupport | Dauerhafte Anfragen, Antworten und Hinweise im Spiel | ArkAccounts |
 | `dino` | ArkDinos | Zähmen, Folgen und Reiten durch den Besitzer | Getrenntes Spielplugin |

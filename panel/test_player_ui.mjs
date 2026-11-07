@@ -1,3 +1,4 @@
+import { template } from './test_templates.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -16,13 +17,13 @@ const server=createServer(async(req,res)=>{
   let raw='';for await(const chunk of req)raw+=chunk;
   const body=raw?JSON.parse(raw):undefined;
   const send=(data,status=200)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
-  if(req.url.startsWith('/play/static/')){const file=req.url.slice('/play/static/'.length);if(file.includes('..'))return send({},404);res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.json')?'application/json':'text/css'});res.end(readFileSync(new URL('./static/'+file,import.meta.url)));return;}
-  if(!req.url.startsWith('/play/api/')){res.writeHead(200,{'Content-Type':'text/html'});res.end(readFileSync(new URL('./templates/player.html',import.meta.url)));return;}
-  const path=req.url.slice('/play/api/'.length);headers.push(req.headers);
+  if(req.url.startsWith('/static/')){const file=req.url.slice('/static/'.length);if(file.includes('..'))return send({},404);res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.json')?'application/json':'text/css'});res.end(readFileSync(new URL('./static/'+file,import.meta.url)));return;}
+  if(!req.url.startsWith('/api/')){res.writeHead(200,{'Content-Type':'text/html'});res.end(template());return;}
+  const path=req.url.replace(/^\/api\/(?:player\/)?/,'');headers.push(req.headers);
   if(req.method!=='GET'){writes.push({path,method:req.method,body});if(!['login','recover'].includes(path)&&req.headers['x-csrf-token']!=='player-csrf')return send({error:'CSRF missing'},403);}
   if(path==='modules')return send({accounts:true,wardrobe:true,support:true});
-  if(path==='session')return send({authenticated,csrf:'player-csrf',username:'Alice',language:'en'});
-  if(path==='login'){if(body.password==='wrong')return send({error:'Incorrect player name or password.',code:'invalid_credentials'},401);authenticated=true;return send({ok:true,csrf:'player-csrf',username:'Alice'});}
+  if(path==='session')return send({authenticated,csrf:'player-csrf',username:'Alice',language:'en',auth_type:'player',is_admin:false,is_player:true});
+  if(path==='login'){if(body.password==='wrong')return send({error:'Incorrect player name or password.',code:'invalid_credentials'},401);authenticated=true;return send({authenticated:true,ok:true,csrf:'player-csrf',username:'Alice',auth_type:'player',is_admin:false,is_player:true});}
   if(path==='recover'){authenticated=false;return send({ok:true});}
   if(!authenticated)return send({error:'Please sign in first.'},401);
   if(path==='logout'||path==='password'){authenticated=false;return send({ok:true});}
@@ -46,8 +47,8 @@ const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CH
 const page=await browser.newPage({locale:'en-US',viewport:{width:1380,height:1000}});
 page.on('pageerror',e=>errors.push(e.message));page.on('dialog',async dialog=>dialog.type()==='prompt'?dialog.accept('Copied skin'):dialog.accept());
 try{
-  await page.goto(`http://127.0.0.1:${server.address().port}/play/`);
-  await page.getByRole('heading',{name:'Player portal',exact:true}).waitFor();
+  await page.goto(`http://127.0.0.1:${server.address().port}/`);
+  await page.getByRole('heading',{name:'Welcome back.',exact:true}).waitFor();
   assert.equal(await page.locator('#player-login-form').isVisible(),true,'Existing accounts can sign in directly');
   await page.locator('#player-username').fill('Alice');await page.locator('#player-password').fill('wrong');await page.locator('#player-login-form button').click();
   await page.waitForFunction(()=>document.getElementById('pair-message').textContent.includes('Incorrect'));
@@ -64,10 +65,10 @@ try{
   await page.locator('#skin-save').click();await page.waitForFunction(()=>document.getElementById('skin-dirty').textContent==='Saved');assert.equal(skins[1].model,'slim');
   await page.locator('#skin-name').fill('Unsaved renamed skin');
   await page.locator('#skin-list button').first().click();await page.locator('#skin-list button').nth(1).click();assert.equal(await page.locator('#skin-name').inputValue(),'Unsaved renamed skin','Library changes retain each draft');
-  await page.locator('#language').selectOption('de');assert.equal(await page.locator('#skin-name').inputValue(),'Unsaved renamed skin');assert.equal(await page.locator('#skin-model').inputValue(),'slim');
-  await page.getByRole('heading',{name:'Profil & Statistik'}).waitFor();
+  await page.locator('#admin-language').selectOption('de');assert.equal(await page.locator('#skin-name').inputValue(),'Unsaved renamed skin');assert.equal(await page.locator('#skin-model').inputValue(),'slim');
+  await page.getByRole('heading',{name:'Profil & Statistik',level:2}).waitFor();
   assert.ok((await page.locator('[data-wiki="Skin-Editor"]').first().getAttribute('href')).endsWith('/Skin-Editor-DE'));
-  await page.locator('#language').selectOption('en');
+  await page.locator('#admin-language').selectOption('en');
   skins[1].revision=2;await page.locator('#skin-save').click();await page.waitForFunction(()=>document.getElementById('player-message').textContent.includes('changed'));
   assert.equal(await page.locator('#skin-name').inputValue(),'Unsaved renamed skin','A stale write preserves the local draft');
   await page.locator('#skin-reload').click();await page.waitForFunction(()=>document.getElementById('skin-name').value==='Second draft');
@@ -92,7 +93,7 @@ try{
   await page.waitForFunction(()=>!document.getElementById('account-current').required,{},{timeout:3000});
   assert.match(await page.locator('#account-current-hint').textContent(),/first server password/);
   assert.equal(await page.locator('#account [data-wiki]').getAttribute('href'),'https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security');
-  await page.locator('#language').selectOption('de');
+  await page.locator('#admin-language').selectOption('de');
   await page.waitForFunction(()=>document.getElementById('account-current-hint').textContent.includes('erstes Serverpasswort'));
   assert.equal(await page.locator('#account [data-wiki]').getAttribute('href'),'https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security-DE');
   await page.locator('#account-password').fill('first-server-password');await page.locator('#account-confirm').fill('first-server-password');await page.locator('#account-password-form button').click();await page.locator('#pair-view').waitFor({state:'visible'});
@@ -108,7 +109,7 @@ try{
   await page.locator('#player-username').fill('Alice');await page.locator('#player-password').fill('reset-server-password');await page.locator('#player-login-form button').click();
   await page.waitForFunction(()=>document.getElementById('account-current').required&&document.getElementById('account-current-hint').textContent.includes('aktuelles Serverpasswort'));
   // Independent body/clothing textures from front and rear photos stay local.
-  await page.locator('#language').selectOption('en');
+  await page.locator('#admin-language').selectOption('en');
   await page.locator('#skin-new').click();await page.locator('#skin-name').fill('Keep this unsaved draft');
   const originalDraftCount=await page.locator('#skin-list button').count();
   assert.equal(await page.locator('#photo-front-file').count(),1,'Separate front and rear photo sources are required');
@@ -133,7 +134,7 @@ try{
   await page.locator('#photo-canvas').click({position:{x:photoBox.width*.2,y:photoBox.height*.5}});
   assert.equal(await page.locator('#photo-hair').inputValue(),'#ff0000','Pipette samples the selected source photo');
   await page.waitForFunction(()=>{const pixel=(id,x,y)=>[...document.getElementById(id).getContext('2d').getImageData(x,y,1,1).data];return pixel('photo-front',64,32).join()==='0,255,0,255'&&pixel('photo-back',64,32).join()==='0,0,255,255'&&pixel('photo-front',64,100).join()==='255,0,0,255'&&pixel('photo-back',64,100).join()==='255,255,0,255';});
-  await page.locator('#language').selectOption('de');
+  await page.locator('#admin-language').selectOption('de');
   assert.equal(await page.locator('#photo-model').inputValue(),'slim');assert.equal(await page.locator('#photo-part').inputValue(),'body');
   assert.ok((await page.locator('#skin-photo [data-wiki]').getAttribute('href')).endsWith('/Skin-Editor-DE'));
   assert.equal(writes.length,writesBeforePhoto,'Both photo uploads, body crop alignment and preview stay local');
@@ -202,5 +203,5 @@ try{
   assert.equal(writes.some(w=>JSON.stringify(w.body).includes('PRIVATE-')||JSON.stringify(w.body).includes(photo)||JSON.stringify(w.body).includes(rearPhoto)),false,'Original front/rear photos and filenames never reach an API');
   assert.ok(headers.every(h=>['de','en'].includes(h['accept-language'])),'Every API call sends the current locale');
   assert.deepEqual(errors,[]);
-  console.log('PASS /play/ direct login, own profile, all72 UV faces, draft retention, DE/EN, revisions, import rejection, copy/activate/active-delete, recovery/password/recover, initial password/game-proof reset, configured-password guards mobile layout and local photo draft privacy/crop/color/front-back previews/cancel/late/busy decoding');
+  console.log('PASS root direct login, own profile, all72 UV faces, draft retention, DE/EN, revisions, import rejection, copy/activate/active-delete, recovery/password/recover, initial password/game-proof reset, configured-password guards mobile layout and local photo draft privacy/crop/color/front-back previews/cancel/late/busy decoding');
 }finally{await page.close();await browser.close();await new Promise(resolve=>server.close(resolve));}

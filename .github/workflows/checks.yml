@@ -24,6 +24,11 @@ jobs:
       - run: node panel/test_skin_editor.mjs
       - run: node panel/test_photo_skin.mjs
       - run: node panel/test_ui.mjs
+      - run: npm install --no-save --prefix /tmp/ark-browser-check playwright@1.65.0-alpha-2026-10-30
+      - run: /tmp/ark-browser-check/node_modules/.bin/playwright install --with-deps chromium
+      - run: node panel/test_unified_ui.mjs
+        env:
+          PLAYWRIGHT_MODULE: /tmp/ark-browser-check/node_modules/playwright/index.mjs
   plugins:
     runs-on: ubuntu-latest
     steps:

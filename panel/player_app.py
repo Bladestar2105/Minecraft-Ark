@@ -17,9 +17,11 @@ from werkzeug.exceptions import HTTPException
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 if __package__:
+    from .rate_limit import ApiRateLimiter, RateLimitError
     from .i18n import locale, translate, WIKI_BASE
     from .wardrobe_client import configured_client, ERRORS, MAX_BODY, SKIN_ID, WardrobeError, read_secret, support_payload, support_response, module_status
 else:
+    from rate_limit import ApiRateLimiter, RateLimitError
     from i18n import locale, translate, WIKI_BASE
     from wardrobe_client import configured_client, ERRORS, MAX_BODY, SKIN_ID, WardrobeError, read_secret, support_payload, support_response, module_status
 
@@ -58,7 +60,7 @@ def create_player_app(test_config=None):
         WARDROBE_PLAYER_TOKEN_FILE=os.environ.get("WARDROBE_PLAYER_TOKEN_FILE"),
         PLAYER_CREDENTIALS_FILE=os.environ.get("PLAYER_CREDENTIALS_FILE", "/run/secrets/player.json"),
         TRUSTED_HOSTS=[host.strip() for host in os.environ.get("PLAYER_TRUSTED_HOSTS", os.environ.get("PANEL_TRUSTED_HOSTS", "localhost,127.0.0.1")).split(",") if host.strip()],
-        MAX_CONTENT_LENGTH=MAX_BODY, SESSION_COOKIE_NAME="ark_player_session", SESSION_COOKIE_PATH="/play/",
+        MAX_CONTENT_LENGTH=MAX_BODY, SESSION_COOKIE_NAME="ark_player_session", SESSION_COOKIE_PATH="/",
         SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE="Strict",
         SESSION_COOKIE_SECURE=os.environ.get("PLAYER_COOKIE_SECURE") == "1",
         PERMANENT_SESSION_LIFETIME=timedelta(days=30), SESSION_REFRESH_EACH_REQUEST=False,
@@ -85,6 +87,7 @@ def create_player_app(test_config=None):
     # shortcut: per-process limits; share this state before running multiple player workers.
     auth_attempts = OrderedDict()
     auth_lock = threading.Lock()
+    api_budget = app.config.get("API_RATE_LIMITER") or ApiRateLimiter()
 
     def reserve_auth_attempt():
         source, now, reservation = request.remote_addr or "unknown", time.monotonic(), object()
@@ -148,6 +151,8 @@ def create_player_app(test_config=None):
 
     @app.before_request
     def protect():
+        if request.path.startswith("/api/"):
+            api_budget.check(request.remote_addr or "unknown")
         if request.method not in ("GET", "HEAD", "OPTIONS"):
             if request.headers.get("Origin") != request.host_url.rstrip("/"):
                 raise WardrobeError("origin_denied", 403)
@@ -163,6 +168,8 @@ def create_player_app(test_config=None):
 
     @app.after_request
     def headers(response):
+        if response.status_code == 429:
+            response.headers.setdefault("Retry-After", "60")
         if 200 <= response.status_code < 300 and getattr(g, "auth_attempt", None):
             source, reservation = g.auth_attempt
             with auth_lock:
@@ -175,9 +182,14 @@ def create_player_app(test_config=None):
             "Referrer-Policy": "same-origin", "X-Frame-Options": "SAMEORIGIN", "Content-Language": locale()})
         return response
 
+    @app.errorhandler(RateLimitError)
+    def rate_limit_error(error):
+        return jsonify(error=translate("Zu viele Anfragen. Bitte später erneut versuchen."), code="rate_limited"), 429, {"Retry-After": str(error.retry_after)}
+
     @app.errorhandler(WardrobeError)
     def wardrobe_error(error):
-        return jsonify(error=error.message, code=error.code), error.status
+        headers = {"Retry-After": str(error.retry_after or 60)} if error.status == 429 else {}
+        return jsonify(error=error.message, code=error.code), error.status, headers
 
     @app.errorhandler(HTTPException)
     def http_error(error):

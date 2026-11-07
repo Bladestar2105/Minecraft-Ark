@@ -20,6 +20,7 @@ from urllib.parse import quote, urlsplit
 import docker
 import requests
 import yaml
+from itsdangerous import BadData
 from flask import Flask, g, jsonify, redirect, render_template, request, send_file, session, stream_with_context
 from flask.sessions import SecureCookieSessionInterface
 from werkzeug.exceptions import HTTPException
@@ -29,15 +30,17 @@ from yaml.events import AliasEvent
 if __package__:
     from .catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field
     from .config_content import PROTECTED, redact_content, restore_content, validate_json
+    from .rate_limit import ApiRateLimiter, RateLimitError, client_address
     from .rcon_client import command as rcon_command, RconError
     from .i18n import locale, translate, WIKI_BASE
-    from .wardrobe_client import configured_client, fixed_origin, MAX_RESPONSE, signing_connection, signing_settings, WardrobeError, allowed_player_path, account_list, password_reset_payload, support_payload, support_response, module_status, operator_login_payload, operator_identity
+    from .wardrobe_client import configured_client, fixed_origin, MAX_RESPONSE, signing_connection, signing_settings, WardrobeError, allowed_player_path, account_list, password_reset_payload, support_payload, support_response, module_status, operator_login_payload, operator_identity, read_secret
 else:
     from catalog import EXTRA_CONFIGS, SERVER_FIELDS, config_description, field_for, protected_property, rule_help, validate_field
     from config_content import PROTECTED, redact_content, restore_content, validate_json
+    from rate_limit import ApiRateLimiter, RateLimitError, client_address
     from rcon_client import command as rcon_command, RconError
     from i18n import locale, translate, WIKI_BASE
-    from wardrobe_client import configured_client, fixed_origin, MAX_RESPONSE, signing_connection, signing_settings, WardrobeError, allowed_player_path, account_list, password_reset_payload, support_payload, support_response, module_status, operator_login_payload, operator_identity
+    from wardrobe_client import configured_client, fixed_origin, MAX_RESPONSE, signing_connection, signing_settings, WardrobeError, allowed_player_path, account_list, password_reset_payload, support_payload, support_response, module_status, operator_login_payload, operator_identity, read_secret
 
 
 SERVICES = {"minecraft": "minecraft-ark", "dns": "minecraft-dns"}
@@ -361,6 +364,8 @@ def create_app(test_config=None):
         AGH_BASE_URL=os.environ.get("AGH_BASE_URL", "http://dns:3000"),
         MAP_BASE_URL=os.environ.get("MAP_BASE_URL", "http://minecraft-ark:8100"),
         PLAYER_BASE_URL=os.environ.get("PLAYER_BASE_URL", "http://players:8091"),
+        PLAYER_CREDENTIALS_FILE=os.environ.get("PLAYER_CREDENTIALS_FILE", "/run/secrets/player.json"),
+        TRUSTED_PROXY_IPS=os.environ.get("FORWARDED_ALLOW_IPS", "").split(","),
         WARDROBE_BASE_URL=os.environ.get("WARDROBE_BASE_URL", "http://minecraft-ark:8101"),
         WARDROBE_ADMIN_TOKEN_FILE=os.environ.get("WARDROBE_ADMIN_TOKEN_FILE"),
         TRUSTED_HOSTS=[host.strip() for host in os.environ.get("PANEL_TRUSTED_HOSTS", "127.0.0.1,localhost").split(",") if host.strip()],
@@ -391,6 +396,48 @@ def create_app(test_config=None):
             or parsed_map.password or parsed_map.path or parsed_map.query or parsed_map.fragment):
         raise RuntimeError("Ungültiges internes Kartenziel.")
     parsed_player = fixed_origin(app.config["PLAYER_BASE_URL"])
+    player_key = app.config.get("PLAYER_SESSION_SECRET")
+    if player_key is None:
+        try:
+            credentials = json.loads(read_secret(app.config["PLAYER_CREDENTIALS_FILE"]))
+            player_key = credentials["session_secret"] if set(credentials) == {"session_secret"} else None
+        except (RuntimeError, ValueError, KeyError, TypeError):
+            player_key = None
+    player_serializer = None
+    if isinstance(player_key, str) and len(player_key) >= 32:
+        cookie_app = Flask("ark-player-cookie")
+        cookie_app.secret_key = player_key
+        player_serializer = SecureCookieSessionInterface().get_signing_serializer(cookie_app)
+    api_budget = app.config.get("API_RATE_LIMITER") or ApiRateLimiter()
+
+    def clear_player_cookies(response):
+        for path in ("/", "/play/"):
+            response.delete_cookie("ark_player_session", path=path, secure=app.config["SESSION_COOKIE_SECURE"], httponly=True, samesite="Strict")
+        return response
+
+    def player_identity(cookie):
+        if player_serializer is None or not isinstance(cookie, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,4096}", cookie):
+            raise WardrobeError("unauthorized", 401)
+        try:
+            value = player_serializer.loads(cookie, max_age=30 * 86400)
+        except BadData:
+            raise WardrobeError("unauthorized", 401) from None
+        if (not isinstance(value, dict) or not isinstance(value.get("player_token"), str)
+                or not re.fullmatch(r"[A-Za-z0-9._~-]{16,512}", value["player_token"])
+                or type(value.get("expires_at")) not in (int, float) or not math.isfinite(value["expires_at"])
+                or value["expires_at"] <= time.time() or not isinstance(value.get("csrf"), str)
+                or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", value["csrf"])):
+            raise WardrobeError("unauthorized", 401)
+        # A signed player cookie proves identity; only the native server can grant OP access.
+        native = configured_client(app.config, admin=True).request("POST", "/v1/admin/auth/player-check",
+            payload={"token": value["player_token"]}, admin=True)
+        identity = operator_identity(native)
+        if identity["uuid"] != value.get("uuid"):
+            raise WardrobeError("unauthorized", 401)
+        if type(native.get("is_op")) is not bool:
+            raise WardrobeError("upstream_invalid", 502)
+        return dict(authenticated=True, csrf=value["csrf"], username=identity["name"], uuid=identity["uuid"],
+                    auth_type="player", is_admin=native["is_op"], is_player=True)
     data_dir = Path(app.config["DATA_DIR"]).resolve()
     state_dir = Path(app.config["STATE_DIR"])
     client = app.config.get("DOCKER_CLIENT")
@@ -451,10 +498,10 @@ def create_app(test_config=None):
         session["auth_type"] = "local"
         session["credential_revision"] = credential_revision(password_hash)
         session["csrf"] = secrets.token_urlsafe(32)
-        return jsonify(ok=True, csrf=session["csrf"], username=app.config["AUTH_USERNAME"], auth_type="local")
+        return clear_player_cookies(jsonify(ok=True, authenticated=True, csrf=session["csrf"], username=app.config["AUTH_USERNAME"], auth_type="local", is_admin=True, is_player=False))
 
     def login_attempt():
-        address = request.remote_addr or "unknown"
+        address = client_address(request.environ, app.config["TRUSTED_PROXY_IPS"])
         now = time.monotonic()
         for key in list(failures):
             failures[key] = [attempt for attempt in failures[key] if now - attempt < 60]
@@ -615,14 +662,30 @@ def create_app(test_config=None):
 
     @app.before_request
     def protect():
-        if request.path == "/play" or request.path.startswith("/play/"):
+        if request.path.startswith(("/api/", "/play/api/")):
+            api_budget.check(client_address(request.environ, app.config["TRUSTED_PROXY_IPS"]))
+        personal = (request.path == "/play" or request.path.startswith("/play/")
+                    or request.path.startswith("/api/player/") or request.path == "/api/recover")
+        if personal:
             if request.method not in ["GET", "HEAD", "OPTIONS"] and request.headers.get("Origin") != request.host_url.rstrip("/"):
                 raise PanelError("Die Anfrage stammt nicht von dieser Seite.", 403)
             return
         public_api = ("/api/session", "/api/login", "/api/operator/login")
         private = ((request.path.startswith("/api/") and request.path not in public_api)
                    or request.path in ["/dns", "/map"] or request.path.startswith(("/dns/", "/map/")))
-        if session.get("authenticated") and (private or request.path == "/api/session"):
+        if (private or request.path == "/api/session") and request.cookies.get("ark_player_session"):
+            try:
+                g.player_identity = player_identity(request.cookies["ark_player_session"])
+            except WardrobeError as error:
+                if error.status == 401 and request.path == "/api/session":
+                    g.expire_player_cookie = True
+                else:
+                    raise
+            if private and getattr(g, "player_identity", None):
+                if request.path != "/api/logout" and not g.player_identity["is_admin"]:
+                    return jsonify(error=translate("Administratorrechte sind erforderlich."), code="admin_required"), 403
+                g.admin_identity = dict(name=g.player_identity["username"], uuid=g.player_identity["uuid"])
+        elif session.get("authenticated") and (private or request.path == "/api/session"):
             if session.get("auth_type") == "operator":
                 try:
                     expiry, token = session.get("operator_expires_at"), session.get("operator_token")
@@ -642,19 +705,24 @@ def create_app(test_config=None):
             else:
                 session.clear()
                 raise WardrobeError("unauthorized", 401)
-        if private and not session.get("authenticated"):
+        if private and not (getattr(g, "player_identity", None) or session.get("authenticated")):
             raise PanelError("Bitte zuerst anmelden.", 401)
         if request.method not in ["GET", "HEAD", "OPTIONS"]:
             if request.headers.get("Origin") != request.host_url.rstrip("/"):
                 raise PanelError("Die Anfrage stammt nicht von dieser Verwaltungsseite.", 403)
             if request.path.startswith("/api/") and request.path not in ("/api/login", "/api/operator/login"):
-                expected = session.get("csrf", "")
+                identity = getattr(g, "player_identity", None)
+                expected = identity["csrf"] if identity else session.get("csrf", "")
                 supplied = request.headers.get("X-CSRF-Token", "")
                 if not expected or not hmac.compare_digest(expected.encode("utf-8"), supplied.encode("utf-8")):
                     raise PanelError("Sicherheitsprüfung fehlgeschlagen. Bitte neu anmelden.", 403)
 
     @app.after_request
     def headers(response):
+        if response.status_code == 429:
+            response.headers.setdefault("Retry-After", "60")
+        if getattr(g, "expire_player_cookie", False):
+            clear_player_cookies(response)
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "same-origin"
@@ -666,9 +734,14 @@ def create_app(test_config=None):
     def panel_error(error):
         return jsonify(error=error.message, code="invalid_request" if error.status == 400 else "request_failed"), error.status
 
+    @app.errorhandler(RateLimitError)
+    def rate_limit_error(error):
+        return jsonify(error=translate("Zu viele Anfragen. Bitte später erneut versuchen."), code="rate_limited"), 429, {"Retry-After": str(error.retry_after)}
+
     @app.errorhandler(WardrobeError)
     def wardrobe_error(error):
-        return jsonify(error=error.message, code=error.code), error.status
+        headers = {"Retry-After": str(error.retry_after or 60)} if error.status == 429 else {}
+        return jsonify(error=error.message, code=error.code), error.status, headers
 
     @app.errorhandler(HTTPException)
     def http_error(error):
@@ -698,27 +771,63 @@ def create_app(test_config=None):
 
     @app.get("/api/session")
     def session_info():
-        authenticated = bool(session.get("authenticated"))
+        identity = getattr(g, "player_identity", None)
+        if identity:
+            return jsonify(**{key: value for key, value in identity.items() if key != "uuid"}, language=locale(), wiki_base=WIKI_BASE)
+        authenticated = bool(session.get("authenticated")) and not getattr(g, "expire_player_cookie", False)
         operator = authenticated and session.get("auth_type") == "operator"
         return jsonify(authenticated=authenticated, csrf=session.get("csrf") if authenticated else None,
                        username=g.admin_identity["name"] if operator else app.config["AUTH_USERNAME"] if authenticated else None,
-                       auth_type="operator" if operator else "local" if authenticated else None, language=locale(), wiki_base=WIKI_BASE)
+                       auth_type="operator" if operator else "local" if authenticated else None,
+                       is_admin=authenticated, is_player=False, language=locale(), wiki_base=WIKI_BASE)
 
     @app.post("/api/login")
     def login():
         value = payload()
+        credentials = set(value) == {"username", "password"}
+        if not credentials and set(value) != {"code"}:
+            raise PanelError("Benutzername oder Passwort sind ungültig.")
         username, password = value.get("username"), value.get("password")
-        if not isinstance(username, str) or not isinstance(password, str) or len(username) > 128 or len(password) > 1024:
+        if credentials and (not isinstance(username, str) or not isinstance(password, str) or len(username) > 128 or len(password) > 1024):
             raise PanelError("Benutzername oder Passwort sind ungültig.")
         with login_lock:
             address, now = login_attempt()
-            password_hash = auth_hash()
-            valid_password = check_password_hash(password_hash, password)
-            if not hmac.compare_digest(username.encode("utf-8"), app.config["AUTH_USERNAME"].encode("utf-8")) or not valid_password:
-                failed_attempt(address, now)
-                raise PanelError("Benutzername oder Passwort stimmen nicht.", 401)
-            failures.pop(address, None)
-            return signed_in(password_hash)
+            if credentials:
+                password_hash = auth_hash()
+                valid_password = check_password_hash(password_hash, password)
+                if hmac.compare_digest(username.encode("utf-8"), app.config["AUTH_USERNAME"].encode("utf-8")) and valid_password:
+                    failures.pop(address, None)
+                    return signed_in(password_hash)
+            failed_attempt(address, now)
+        if player_serializer is None:
+            raise PanelError("Benutzername oder Passwort stimmen nicht.", 401)
+        response = proxy_player("api/login")
+        if response.status_code != 200:
+            return response
+        cookie = None
+        for header in response.headers.getlist("Set-Cookie"):
+            parsed = SimpleCookie()
+            parsed.load(header)
+            candidate = parsed.get("ark_player_session")
+            if candidate and candidate["path"] == "/" and candidate.value:
+                cookie = candidate
+        if cookie is None:
+            raise WardrobeError("upstream_invalid", 502)
+        identity = player_identity(cookie.value)
+        session.clear()
+        with login_lock:
+            attempts = failures.get(address, [])
+            if now in attempts:
+                attempts.remove(now)
+            if not attempts:
+                failures.pop(address, None)
+        response.set_data(json.dumps({key: value for key, value in identity.items() if key != "uuid"} | {"ok": True}))
+        response.content_type = "application/json"
+        return response
+
+    @app.post("/api/recover")
+    def recover_player():
+        return proxy_player("api/recover")
 
     @app.post("/api/operator/login")
     def operator_login():
@@ -741,7 +850,7 @@ def create_app(test_config=None):
 
     @app.post("/api/password")
     def change_password():
-        if session.get("auth_type") == "operator":
+        if getattr(g, "player_identity", None) or session.get("auth_type") == "operator":
             raise WardrobeError("operator_local_password_denied", 403)
         value = payload()
         current, new, confirmation = value.get("current_password"), value.get("new_password"), value.get("confirm_password")
@@ -767,6 +876,10 @@ def create_app(test_config=None):
 
     @app.post("/api/logout")
     def logout():
+        if getattr(g, "player_identity", None):
+            response = proxy_player("api/logout")
+            session.clear()
+            return response
         operator = session.get("auth_type") == "operator"
         username = g.admin_identity["name"] if operator else app.config["AUTH_USERNAME"]
         try:
@@ -774,7 +887,7 @@ def create_app(test_config=None):
                 configured_client(app.config, admin=True).request("POST", "/v1/admin/auth/logout", payload={"token": session["operator_token"]}, admin=True)
         finally:
             session.clear()
-        return jsonify(ok=True, auth_type="operator" if operator else "local", username=username)
+        return clear_player_cookies(jsonify(ok=True, auth_type="operator" if operator else "local", username=username))
 
     @app.get("/api/status")
     def status():
@@ -1280,12 +1393,17 @@ def create_app(test_config=None):
         return jsonify(signing_connection(value) if connecting else {"ok": True})
 
     @app.get("/play")
+    @app.get("/play/")
     def player_redirect():
-        return redirect("/play/")
+        return redirect("/")
 
-    @app.route("/play/", defaults={"path": ""}, methods=["GET", "HEAD", "POST", "PUT", "DELETE"])
-    @app.route("/play/<path:path>", methods=["GET", "HEAD", "POST", "PUT", "DELETE"])
-    def player_proxy(path):
+    @app.route("/api/player/<path:path>", methods=["GET", "HEAD", "POST", "PUT", "DELETE"])
+    def personal_proxy(path):
+        if path in ("login", "logout", "session", "recover"):
+            raise WardrobeError("not_found", 404)
+        return proxy_player("api/" + path)
+
+    def proxy_player(path):
         if (any(ord(c) < 32 for c in path) or any(c in path for c in ("\\", "%")) or
                 any(part in (".", "..") for part in path.split("/"))):
             raise PanelError("Ungültiger Spielerbereich-Pfad.")
@@ -1300,7 +1418,7 @@ def create_app(test_config=None):
             outgoing = {key: value for key, value in outgoing.items() if key.lower() != "x-csrf-token"}
         outgoing.update({"Accept-Encoding": "identity", "Host": request.host,
                          "X-Forwarded-Host": request.host, "X-Forwarded-Proto": request.scheme,
-                         "X-Forwarded-For": request.remote_addr or "unknown"})
+                         "X-Forwarded-For": client_address(request.environ, app.config["TRUSTED_PROXY_IPS"])})
         player_cookie = request.cookies.get("ark_player_session")
         if player_cookie and re.fullmatch(r"[A-Za-z0-9._-]{1,4096}", player_cookie):
             outgoing["Cookie"] = "ark_player_session=" + player_cookie
@@ -1326,15 +1444,16 @@ def create_app(test_config=None):
                     destination = urlsplit(value)
                     if destination.netloc or destination.scheme or any(c in destination.path for c in ("\\", "%")) or ".." in destination.path.split("/"):
                         raise WardrobeError("upstream_invalid", 502)
-                    response.headers["Location"] = "/play/" + destination.path.lstrip("/") + ("?" + destination.query if destination.query else "")
+                    response.headers["Location"] = "/" + destination.path.lstrip("/") + ("?" + destination.query if destination.query else "")
                 elif key.lower() == "set-cookie":
                     parsed = SimpleCookie()
                     parsed.load(value)
                     cookie = parsed.get("ark_player_session")
                     if cookie:
-                        response.set_cookie("ark_player_session", cookie.value, path="/play/", httponly=True,
+                        response.set_cookie("ark_player_session", cookie.value, path="/", httponly=True,
                             samesite="Strict", secure=bool(cookie["secure"]), expires=cookie["expires"] or None,
                             max_age=cookie["max-age"] or None)
+                        response.delete_cookie("ark_player_session", path="/play/", httponly=True, samesite="Strict", secure=bool(cookie["secure"]))
                 elif key.lower() not in blocked:
                     response.headers[key] = value
             return response

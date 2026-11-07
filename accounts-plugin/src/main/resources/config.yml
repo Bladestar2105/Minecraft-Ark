@@ -3,4 +3,4 @@ bind: 0.0.0.0
 port: 8101
 player-token-file: /run/secrets/wardrobe_player_token
 admin-token-file: /run/secrets/wardrobe_admin_token
-portal-url: http://localhost:8090/play/
+portal-url: http://localhost:8090/

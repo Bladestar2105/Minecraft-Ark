@@ -6,7 +6,7 @@ The package contains seven independently built project plugins. The fresh stack 
 
 | CLI name | Plugin | Responsibility | Dependency |
 | --- | --- | --- | --- |
-| `accounts` | ArkAccounts | Shared passwords, recovery, profile/statistics, player/OP sessions and private API | Core for Wardrobe/Support |
+| `accounts` | ArkAccounts | Shared passwords, recovery, profile/statistics, shared player login, current OP checks and private API | Core for Wardrobe/Support |
 | `wardrobe` | ArkWardrobe | Personal skins, editor storage, activation and signing | ArkAccounts; SkinsRestorer |
 | `support` | ArkSupport | Persistent tickets, replies and in-game notifications | ArkAccounts |
 | `dino` | ArkDinos | Taming, following and owner-only riding | Separate gameplay plugin |

@@ -1,9 +1,9 @@
 "use strict";
-// All API/static URLs stay relative so the same app works at /play/.
+// One root session controls player features and current administration rights.
 (async () => {
   await ArkI18n.ready;
   const $ = id => document.getElementById(id), t = (text,vars) => ArkI18n.t(text,vars);
-  const state = { csrf:null, authenticated:false, modules:null, skins:[], drafts:new Map(), current:null, limit:20, busy:false, loadSerial:0, pollBusy:false };
+  const state = { csrf:null, authenticated:false, is_player:false, is_admin:false, modules:null, skins:[], drafts:new Map(), current:null, limit:20, busy:false, loadSerial:0, sessionSerial:0, pollBusy:false, sessionPollBusy:false };
   const supportUI = ArkSupport.mount($('player-support'), { api, authenticated:()=>state.authenticated&&state.modules?.support===true, onActivity:notice });
   const photoUI = ArkPhotoImport.mount($('skin-photo'), { available:()=>state.authenticated&&state.modules?.wardrobe===true&&state.skins.length<state.limit, busy:()=>state.busy, onCreate:editor=>{newSkin(editor);$('skin-name').focus();} });
   const statuses = { draft:'Entwurf',preparing:'Wird vorbereitet …',ready:'Bereit',saved:'Gespeichert',applied:'Im Spiel aktiv',failed:'Aktivierung fehlgeschlagen' };
@@ -13,20 +13,25 @@
   function notice(text,error=false) { $('player-message').hidden=!text; $('player-message').textContent=t(text); $('player-message').classList.toggle('error',error); }
   function status(text,error=false) { $('skin-status').textContent=t(text); $('skin-status').classList.toggle('error',error); }
   async function api(path,method='GET',body) {
+    const sessionPath=['session','login','logout','recover'].includes(path);
+    const serial=state.sessionSerial;
+    if(!sessionPath&&(!state.authenticated||!state.is_player))throw new Error(t('Bitte zuerst anmelden.'));
     const headers={Accept:'application/json','Accept-Language':ArkI18n.language};
     if (method!=='GET') { headers['Content-Type']='application/json'; if(state.csrf) headers['X-CSRF-Token']=state.csrf; }
-    let response; try { response=await fetch('api/'+path,{method,headers,credentials:'same-origin',cache:'no-store',...(body===undefined?{}:{body:JSON.stringify(body)})}); } catch { throw new Error(t('Keine Verbindung zum Spielerportal. Bitte erneut versuchen.')); }
+    let response; try { response=await fetch('/api/'+(sessionPath?'':'player/')+path,{method,headers,credentials:'same-origin',cache:'no-store',...(body===undefined?{}:{body:JSON.stringify(body)})}); } catch { throw new Error(t('Keine Verbindung zum Spielerportal. Bitte erneut versuchen.')); }
     const data=await response.json().catch(()=>({}));
+    if(!sessionPath&&(serial!==state.sessionSerial||!state.authenticated))throw new Error(t('Bitte zuerst anmelden.'));
     if (!response.ok) { if(response.status===401 && !['login','recover'].includes(path)) showLogin(); const error=new Error(t(data.error||'Die Anfrage ist fehlgeschlagen.')); error.code=data.code; throw error; }
     return data;
   }
   async function run(task) { if(state.busy) return; state.busy=true; updateControls(); try { await task(); } catch(error) { notice(error.message,true); } finally { state.busy=false; updateControls(); } }
   function showLogin(text='') {
-    state.authenticated=false;state.modules=null;
+    state.authenticated=false;state.is_player=false;state.is_admin=false;state.modules=null;state.sessionSerial++;
     supportUI.clear();
     photoUI.clear();
     state.authenticated=false; state.modules=null; state.csrf=null; state.loadSerial++;
-    $('pair-view').hidden=false; $('player-app').hidden=true; $('player-logout').hidden=true;
+    $('pair-view').hidden=false; $('login-view').hidden=false; $('app-view').hidden=true; $('player-app').hidden=true; $('player-logout').hidden=true;
+    window.dispatchEvent(new CustomEvent('ark:session',{detail:{authenticated:false,is_admin:false,is_player:false}}));
     $('pair-message').textContent=t(text); $('pair-submit').disabled=false;
     clearRecovery();
     for(const form of ['player-login-form','player-recover-form','account-password-form','recovery-form'])$(form).reset();
@@ -34,15 +39,51 @@
   }
   async function signedIn(data) {
     photoUI.clear();
+    window.dispatchEvent(new CustomEvent('ark:session',{detail:{authenticated:false,is_admin:false,is_player:false}}));
+    state.is_admin=false;
     if(state.username && state.username!==data.username) { state.drafts.clear(); state.current=null; }
-    state.username=data.username; state.csrf=data.csrf; state.authenticated=true;
-    $('player-greeting').textContent=data.username; $('pair-view').hidden=true; $('player-app').hidden=false; $('player-logout').hidden=false; $('pair-code').value='';
+    state.username=data.username;state.auth_type=data.auth_type;state.sessionSerial++;state.csrf=data.csrf;state.authenticated=true;
+    $('player-greeting').textContent=data.username; $('signed-in-user').textContent=data.username; $('pair-view').hidden=true; $('login-view').hidden=true; $('app-view').hidden=false; $('player-logout').hidden=false; $('pair-code').value='';
+    applyRole(data);
     $('skin-form').hidden=true; $('editor-empty').hidden=false;
+    if(!state.is_player)return;
     await loadModules();
     const me=await loadProfile();
     if(me){if(state.owner&&state.owner!==me.uuid){state.drafts.clear();state.current=null;}state.owner=me.uuid;if(state.modules?.wardrobe){await loadLibrary();if(state.current)await selectSkin(state.current);}}
     await loadAccount();
     await supportUI.refresh({silent:true});
+  }
+  function selectView() {
+    const hash=location.hash.slice(1),admin=state.is_admin&&Boolean(document.querySelector('[data-view="'+CSS.escape(hash)+'"]'));
+    $('player-app').hidden=!state.is_player||admin;
+    if(!admin){
+      document.querySelectorAll('.view').forEach(section=>section.hidden=true);
+      $('wardrobe-admin').hidden=true;
+      const titles={profile:'Profil & Statistik',wardrobe:'Garderobe',account:'Konto','player-support':'Support'};
+      $('page-title').textContent=t(titles[hash]||'Profil & Statistik');document.title=$('page-title').textContent+' · ARK Expedition';
+    }
+    document.querySelectorAll('#player-navigation a').forEach(link=>{if(!admin&&link.hash===(location.hash||'#profile'))link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');});
+  }
+  function applyRole(data) {
+    const adminChanged=state.is_admin!==(data.is_admin===true);
+    state.csrf=data.csrf;state.is_player=data.is_player===true;state.is_admin=data.is_admin===true;
+    document.querySelectorAll('[data-player-nav]').forEach(node=>node.hidden=!state.is_player);
+    document.querySelectorAll('[data-admin-nav]').forEach(node=>{if(!state.is_admin)node.hidden=true;else if(adminChanged)node.hidden=false;});
+    $('account-button').hidden=data.auth_type!=='local';
+    if(!state.is_admin&&document.querySelector('[data-view="'+CSS.escape(location.hash.slice(1))+'"]'))history.replaceState(null,'','#profile');
+    if(!state.is_player&&state.is_admin&&!document.querySelector('[data-view="'+CSS.escape(location.hash.slice(1))+'"]'))history.replaceState(null,'','#overview');
+    window.dispatchEvent(new CustomEvent('ark:session',{detail:data}));selectView();
+  }
+  async function refreshSession() {
+    if(state.sessionPollBusy)return;state.sessionPollBusy=true;
+    const serial=state.sessionSerial;
+    try{
+      const data=await api('session');
+      if(serial!==state.sessionSerial)return;
+      if(!data.authenticated){if(state.authenticated)showLogin('Deine Sitzung ist abgelaufen. Bitte erneut anmelden.');return;}
+      if(!state.authenticated||state.username!==data.username||state.auth_type!==data.auth_type)await signedIn(data);
+      else applyRole(data);
+    }catch(error){notice(error.message,true);}finally{state.sessionPollBusy=false;}
   }
   async function loadModules() {
     try {
@@ -167,11 +208,14 @@
   }catch(e){status(e.message,true);}});});
   $('skin-export').addEventListener('click',()=>{const a=document.createElement('a');a.href='data:image/png;base64,'+draft().editor.toPNG();a.download=(draft().name.replace(/[^\p{L}\p{N}._ -]/gu,'_')||'skin')+'.png';a.click();});
   $('pair-form').addEventListener('submit',async event=>{event.preventDefault();$('pair-submit').disabled=true;try{await signedIn(await api('login','POST',{code:$('pair-code').value.trim()}));}catch(e){$('pair-message').textContent=e.message;}finally{$('pair-submit').disabled=false;}});
-  $('player-logout').addEventListener('click',()=>{if(hasDirty()&&!confirm(t('Es gibt ungespeicherte Änderungen. Trotzdem abmelden?')))return;run(async()=>{await api('logout','POST',{});state.drafts.clear();state.current=null;clearRecovery();showLogin('Du bist abgemeldet.');});});
+  $('player-logout').addEventListener('click',()=>{if((hasDirty()||window.ArkAdmin?.hasDirty()||window.ArkSigning?.hasDirty())&&!confirm(t('Es gibt ungespeicherte Änderungen. Trotzdem abmelden?')))return;run(async()=>{await api('logout','POST',{});state.drafts.clear();state.current=null;clearRecovery();showLogin('Du bist abgemeldet.');});});
   $('profile-refresh').addEventListener('click',async()=>{const before=state.modules;await loadModules();await loadProfile();if(state.modules?.wardrobe&&!before?.wardrobe)await loadLibrary().catch(error=>notice(error.message,true));if(state.modules?.support)await supportUI.refresh({silent:true});});
-  window.addEventListener('hashchange',()=>{if(location.hash==='#player-support'&&state.authenticated)supportUI.refresh();});
+  window.addEventListener('hashchange',()=>{selectView();if(location.hash==='#player-support'&&state.authenticated&&state.is_player)supportUI.refresh();});
   window.addEventListener('beforeunload',event=>{if(hasDirty()){event.preventDefault();event.returnValue='';}});
-  window.addEventListener('ark:language',()=>{if(state.authenticated){renderLibrary();render();loadProfile();loadAccount();}});
+  window.addEventListener('ark:language',()=>{selectView();if(state.authenticated&&state.is_player){renderLibrary();render();loadProfile();loadAccount();}});
+  window.addEventListener('ark:session-refresh',refreshSession);
+  window.addEventListener('ark:csrf',event=>{state.csrf=event.detail;});
+  setInterval(()=>{if(state.authenticated&&!document.hidden)refreshSession();},15000);
   setInterval(async()=>{if(!state.authenticated||state.modules?.wardrobe!==true||state.busy||state.pollBusy||document.hidden)return;if(!state.skins.some(s=>s.status==='preparing'))return;state.pollBusy=true;try{await loadLibrary();}catch(e){notice(e.message,true);}finally{state.pollBusy=false;}},3000);
   // Account forms are kept separate from skin state; passwords/codes are never stored.
   async function loadAccount() { if(!$('account-status'))return;try{const data=await api('account');const configured=data.password_configured!==false,resetAllowed=data.password_reset_allowed===true;$('account-current').required=configured&&!resetAllowed;$('account-current-hint').textContent=t(!configured?(resetAllowed?'Lege dein erstes Serverpasswort fest. Lass das aktuelle Passwort leer; die frische Bestätigung im Spiel erlaubt die Einrichtung.':'Für dein erstes Serverpasswort bestätige die Einrichtung zuerst frisch mit /web im Spiel.'):resetAllowed?'Deine frische Bestätigung im Spiel erlaubt ein neues Serverpasswort ohne das bisherige Passwort. Lass das aktuelle Passwort dafür leer.':'Gib dein aktuelles Serverpasswort ein, um es zu ändern.');$('account-status').textContent=t(data.recovery_enabled?'Kontowiederherstellung ist aktiviert. {count} Codes verbleiben.':'Kontowiederherstellung ist deaktiviert.',{count:data.recovery_codes_remaining});$('recovery-existing-field').hidden=!data.recovery_enabled;$('recovery-disable').disabled=!data.recovery_enabled;}catch(e){$('account-status').textContent=e.message;} }
@@ -185,5 +229,6 @@
   $('recovery-copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('recovery-codes').textContent);$('account-message').textContent=t('Codes kopiert.');}catch{$('account-message').textContent=t('Kopieren nicht verfügbar. Bitte die Codes herunterladen.');}});
   $('recovery-close').addEventListener('click',clearRecovery);
   window.addEventListener('pagehide',clearRecovery);
-  try{const session=await api('session');session.authenticated?await signedIn(session):showLogin();}catch(e){showLogin(e.message);}
+  const initialSerial=state.sessionSerial;
+  try{const session=await api('session');if(initialSerial!==state.sessionSerial)return;session.authenticated?await signedIn(session):showLogin();}catch(e){if(initialSerial===state.sessionSerial)showLogin(e.message);}
 })();

@@ -1,3 +1,4 @@
+import { template } from './test_templates.mjs';
 import assert from 'node:assert/strict';
 import {readFileSync,readdirSync,existsSync,mkdirSync} from 'node:fs';
 import {createServer} from 'node:http';
@@ -12,9 +13,9 @@ const server=createServer(async(req,res)=>{
   let raw='';for await(const chunk of req)raw+=chunk;const body=raw?JSON.parse(raw):undefined;
   const send=(value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};
   if(req.url.startsWith('/static/')){const file=req.url.slice(8);res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.json')?'application/json':'text/css'});res.end(readFileSync(new URL('./static/'+file,import.meta.url)));return;}
-  if(!req.url.startsWith('/api/')){res.writeHead(200,{'Content-Type':'text/html'});res.end(readFileSync(new URL('./templates/index.html',import.meta.url),'utf8').replace(/{{ url_for\('static', filename='([^']+)'\) }}/g,'/static/$1'));return;}
+  if(!req.url.startsWith('/api/')){res.writeHead(200,{'Content-Type':'text/html'});res.end(template());return;}
   if(req.url==='/api/modules')return send({accounts:true,wardrobe:true,support:true});
-  if(req.url==='/api/session')return send({authenticated:true,csrf:'admin-csrf',username:'admin'});
+  if(req.url==='/api/session')return send({authenticated:true,csrf:'admin-csrf',username:'admin',auth_type:'local',is_admin:true,is_player:false});
   if(req.url==='/api/status')return send({services:[],players:'No players'});
   if(req.method!=='GET'){writes.push({path:req.url,body});assert.equal(req.headers['x-csrf-token'],'admin-csrf');}
   if(req.url==='/api/settings/wardrobe'){

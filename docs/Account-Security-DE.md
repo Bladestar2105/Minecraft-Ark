@@ -22,9 +22,9 @@ Ist Wiederherstellung bereits aktiv, benötigen Austausch oder Abschaltung das a
 
 Über **Passwort vergessen?** auf der Spieleranmeldung setzt du mit Name, unbenutztem Wiederherstellungscode und neuem Passwort samt Bestätigung zurück. Erfolg verbraucht den Code und beendet Websitzungen; er meldet dich nicht automatisch an. Fehlt ein eingerichteter gültiger Code, bitte die Verwaltung um [Zurücksetzung eines bekannten Kontos](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support-DE#ein-bekanntes-serverpasswort-zurücksetzen).
 
-## Getrennter Verwaltungszugang
+## Aktuelle Verwaltungsrechte
 
-Ein registrierter tatsächlicher OP meldet sich ausdrücklich an der [Verwaltung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE) an, mit gemeinsamem Serverpasswort oder `/web admin`. Geschützte Anfragen prüfen die OP-Rechte erneut. Ein Spielercookie erzeugt diese Berechtigung nicht. Der lokale Panelzugang `admin` bleibt getrennt und funktioniert auch bei nicht erreichbarem Spielserver.
+Alle Spieler verwenden dieselbe Anmeldung unter `/`, mit Serverpasswort oder gewöhnlichem `/web`-Code. Registrierte tatsächliche OPs sehen automatisch [Verwaltungsfunktionen](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE); jede Verwaltungsanfrage prüft erneut die aktuellen OP-Rechte. `/deop` erhält eine gültige persönliche Sitzung und entzieht nur die Verwaltung; `/op` stellt sie ohne Neuanmeldung wieder her. `/web admin` ist lediglich ein alter Alias für einen gewöhnlichen Code. Der lokale Notfallzugang `admin` bleibt ein getrennter Zugang im selben Formular und funktioniert auch bei nicht erreichbarem Spielserver.
 
 Veröffentliche keine Codes, Hashes, Kontodateien, privaten Verknüpfungen oder Passwörter in Screenshots oder GitHub-Issues. Wiederherstellung repariert kein kompromittiertes Microsoft-Konto und überträgt keine fremde Identität.
 

@@ -1,8 +1,8 @@
-# Player portal
+# Player area
 
 [Deutsch](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Player-Portal-DE) · [Account security](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security) · [Modules](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules)
 
-Open the server's webinterface and follow **Player portal**, or append `/play/` to its address. Choose English or German. **ArkAccounts** supplies login, account settings, profile and statistics; skins and tickets appear only when their optional modules are installed.
+Open the server's webinterface at its root address `/`. Everyone uses the same sign-in form and English/German interface: profile, wardrobe, account and support belong to your own player account. **ArkAccounts** supplies login, account settings, profile and statistics; skins and tickets appear only when their optional modules are installed. Old `/play/` links redirect to `/`; no second portal or OP login is needed.
 
 ## Sign in
 
@@ -12,7 +12,7 @@ Automatically authenticated Java/Bedrock players without a known server password
 
 1. Join and complete the server's normal authentication.
 2. Run `/web` privately in game.
-3. Redeem the single-use code on the player login page within five minutes. Unused codes expire on a server restart.
+3. Redeem the single-use code in the root sign-in form within five minutes. Unused codes expire on a server restart.
 4. Open **Account** to set a password if wanted. A fresh game confirmation permits an empty current-password field for up to five minutes; see [Account security](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security).
 
 Names alone never create or take over accounts. The server resolves ownership from the actual game identity. Existing Floodgate links remain authoritative; linking does not automatically merge libraries or inventories. Reauthenticate after link changes.
@@ -31,6 +31,6 @@ A module-query failure displays an unavailable/retry message; refresh the profil
 
 Changing the shared password or recovering/resetting the account revokes existing web sessions. Recovery does not log you in automatically. `/web logout` signs out your portal sessions. Save recovery codes privately and never include them in tickets or screenshots.
 
-A player session has no Docker, console or administrator rights. Registered actual OPs use a separate explicit [administration login](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration#two-explicit-administrator-sign-ins), with their server password or a distinct `/web admin` code. A player cookie is never automatically upgraded.
+Actual server OPs automatically see the additional [administration menus](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration#one-sign-in-current-server-permissions) after the same login. Every administrative request checks current server-side OP authority; a browser flag cannot grant it. `/deop` removes administrative access while retaining a valid personal session; `/op` restores access without another login. `/web admin` is only a legacy alias for the ordinary `/web` code and grants no extra rights. Cookies now apply at `/`; an upgrade may require signing in once again.
 
 A public/global Floodgate link alone does not unlock an existing unbound AuthMe account. Confirm the original Java password or premium ownership first. Verified local mutual linking is retained through the reviewed AuthMe/Floodgate integration; do not replace it with an unchecked global lookup.

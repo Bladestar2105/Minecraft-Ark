@@ -4,7 +4,7 @@
 
 Verbinde Java 26.3 mit deiner Serveradresse auf Port 25565 oder Bedrock auf Port 19132. PS5/Switch benötigen gegebenenfalls einen geeigneten zusätzlichen Verbindungsweg; öffentlicher DNS wird nicht mitgeliefert. Echte Konsolenwege sind getrennt zu prüfen.
 
-Die Webinterfaces bieten Deutsch und Englisch; vorhandene Abenteuertexte, Missionsnamen und Rangbezeichnungen sind überwiegend deutsch. Neue Portal-/Modulbefehle bleiben in beiden Sprachen Englisch. Neue Spieler beginnen am geschützten Hafen bei **−479,5 / 114 / −346,5**. Survival umfasst 20.480 × 20.480 Blöcke. Gegenstände fallen beim Tod herunter; Client-Mods sind nicht nötig.
+Das Webinterface bietet Deutsch und Englisch; vorhandene Abenteuertexte, Missionsnamen und Rangbezeichnungen sind überwiegend deutsch. Neue Portal-/Modulbefehle bleiben in beiden Sprachen Englisch. Neue Spieler beginnen am geschützten Hafen bei **−479,5 / 114 / −346,5**. Survival umfasst 20.480 × 20.480 Blöcke. Gegenstände fallen beim Tod herunter; Client-Mods sind nicht nötig.
 
 ## Atlas und Abenteuer
 
@@ -28,9 +28,9 @@ Das Spawnportal führt zur getrennten flachen Kreativwelt und zurück. Inventar,
 
 ## Portal, Konto und optionale Module
 
-- `/web`: einmalige Spieleranmeldung; bestehende AuthMe-Benutzer können auch direkt mit Passwort ins Portal.
+- `/web`: Einmalcode für die gemeinsame Anmeldung unter `/`; bestehende AuthMe-Benutzer verwenden auch direkt ihr Serverpasswort.
 - `/account`: private gemeinsame Passwortfelder ohne Passwortargumente.
-- `/web admin`: gesonderter Verwaltungscode für angemeldete tatsächliche OPs.
+- `/web admin`: alter Alias für einen gewöhnlichen `/web`-Code; aktuelle Server-OP-Rechte bestimmen den Verwaltungszugriff.
 - `/wardrobe list` und `/wardrobe wear <name>`: eigene Skins mit ArkWardrobe.
 - `/support [low|normal|high] Message`: private Support-Anfrage mit ArkSupport.
 

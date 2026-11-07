@@ -47,7 +47,7 @@ def build():
              "wardrobe": ["WardrobeTest", "SignersTest", "CommandPolicyTest", "WardrobeRoutesTest"],
              "support": ["SupportTest", "SupportRoutesTest"]}
     versions = {"dino": "ArkDinos-1.0.0", "atlas": "ArkAtlas-1.0.0",
-                "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.0",
+                "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.1",
                 "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.0"}
     packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",
                 "accounts": "accounts", "wardrobe": "wardrobe", "support": "support"}
@@ -62,7 +62,7 @@ def build():
         checks.mkdir()
         jars = [path for path in dependencies if module not in {"accounts", "support"} or not path.name.startswith("SkinsRestorer-")]
         if module in {"wardrobe", "support"}:
-            jars.append(ROOT / "accounts-plugin/build/ArkAccounts-1.0.0.jar")
+            jars.append(ROOT / "accounts-plugin/build/ArkAccounts-1.0.1.jar")
         cp = os.pathsep.join(str(path) for path in jars)
         run = lambda args: subprocess.run(args, cwd=ROOT, check=True)
         sources = sorted(str(path) for path in (folder / "src/main/java").rglob("*.java"))

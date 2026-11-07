@@ -1,3 +1,4 @@
+import { template } from './test_templates.mjs';
 import assert from 'node:assert/strict';
 import { readFileSync, mkdirSync } from 'node:fs';
 import vm from 'node:vm';
@@ -17,7 +18,7 @@ assert.equal(choices({ available: true, ready: true, start: 2, end: 1, suggestio
 const bounded = choices({ available: true, ready: true, start: 0, end: 1, suggestions: Array.from({ length: 80 }, (_, i) => ({ text: `entry${i}` })) }, 'a');
 assert.equal(bounded.suggestions.length, 50);
 assert.equal(choices({ available: true, ready: true, start: 0, end: 1, suggestions: [{ text: 4 }, { text: 'safe' }] }, 'a').suggestions.length, 1);
-const html = readFileSync(new URL('./templates/index.html', import.meta.url), 'utf8');
+const html = template();
 const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
 assert.equal(new Set(ids).size, ids.length, 'Static controls must have unique IDs');
 for (const [, id] of source.matchAll(/\$\("([^"]+)"\)/g)) assert.ok(ids.includes(id), `Missing control: ${id}`);
@@ -62,7 +63,7 @@ async function liveSettingsBrowserTests() {
     rules: [{ name: 'minecraft:keep_inventory', label: 'Inventar beim Tod behalten', description: 'Aus: Gegenstände fallen beim Tod herunter.', type: 'boolean', value: false, default: false },
       { name: 'minecraft:raids', label: 'Dorfüberfälle erlauben', description: 'Erlaubt Plünderer-Überfälle auf Dörfer.', type: 'boolean', value: true, default: true }] });
   let worlds = { worlds: [makeWorld('minecraft:overworld', 'ark', 'normal'), makeWorld('minecraft:ark_creative', 'ark_creative', 'peaceful')], observed_at: stamp };
-  const writes = []; const accountWrites = []; const mutationTokens = []; let rawContent = 'config-version: 12\n'; let gets = 0; let deferred = null; let deferWorld = false; let deferMinecraft = false; let deferredMinecraft = null; let deferWorldWrite = false; let deferredWorldWrite = null;
+  const writes = []; const accountWrites = []; const mutationTokens = []; let rawContent = 'config-version: 12\n'; let sessionCsrf='test'; let gets = 0; let deferred = null; let deferWorld = false; let deferMinecraft = false; let deferredMinecraft = null; let deferWorldWrite = false; let deferredWorldWrite = null;
   const server = createServer(async (req, res) => {
     let raw = ''; for await (const piece of req) raw += piece;
     const body = raw ? JSON.parse(raw) : null;
@@ -71,12 +72,12 @@ async function liveSettingsBrowserTests() {
     if (req.url.startsWith('/static/')) { res.writeHead(200, { 'Content-Type': req.url.endsWith('.js') ? 'text/javascript' : req.url.endsWith('.json') ? 'application/json' : 'text/css' }); res.end(readFileSync(new URL('.' + req.url.slice(7), new URL('./static/', import.meta.url)))); return; }
     if (!req.url.startsWith('/api/')) { res.writeHead(200, { 'Content-Type': 'text/html' }); res.end(html.replace(/{{ url_for\('static', filename='([^']+)'\) }}/g, '/static/$1')); return; }
     if (req.url === '/api/modules') return send({accounts:true,wardrobe:true,support:true});
-    if (req.url === '/api/session') return send({ authenticated: true, csrf: 'test', username: 'admin' });
+    if (req.url === '/api/session') return send({ authenticated: true, csrf: sessionCsrf, username: 'admin', auth_type:'local',is_admin:true,is_player:false });
     if (req.url === '/api/status') return send({ services: [], players: '0 players' });
     if (req.url === '/api/password') {
       accountWrites.push(body);
       if (body.current_password !== 'current-test-password') return send({ error: 'Das aktuelle Passwort stimmt nicht.' }, 403);
-      return send({ ok: true, csrf: 'changed-csrf', username: 'admin' });
+      sessionCsrf='changed-csrf'; return send({ ok: true, csrf: sessionCsrf, username: 'admin' });
     }
     if (req.url === '/api/settings/minecraft') {
       if (req.method === 'GET') { gets++; if (deferMinecraft) { deferMinecraft = false; const snapshot = clone(minecraft); deferredMinecraft = () => send(snapshot); return; } return send(minecraft); }

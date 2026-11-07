@@ -7,7 +7,7 @@ Connect Java 26.3 to your own server address on port 25565, or Bedrock on port
 server entry is unavailable. The template does not include public DNS. Not every
 console connection path has been independently tested.
 
-**Both webinterfaces offer English and German; existing adventure text and quest names remain mainly German.** Portal/module command names remain English in both interface languages. Existing world/datapack identifiers below are kept as implemented. New players start at the protected harbor at
+**The webinterface offers English and German; existing adventure text and quest names remain mainly German.** Portal/module command names remain English in both interface languages. Existing world/datapack identifiers below are kept as implemented. New players start at the protected harbor at
 **−479.5 / 114 / −346.5**. Survival covers 20,480 × 20,480 blocks. Items drop on
 death. No client mods or additional resource packs are required.
 
@@ -58,9 +58,9 @@ pavilion is protected; building is allowed outside it.
 
 ## Portal, account and optional modules
 
-- `/web`: a one-time player-portal code; existing AuthMe users can also sign in directly with their server password.
+- `/web`: a one-time code for the shared root login; existing AuthMe users can also sign in directly with their server password.
 - `/account`: private shared-password controls, without password arguments.
-- `/web admin`: a distinct administration code for an authenticated actual OP.
+- `/web admin`: legacy alias for an ordinary `/web` code; current server OP rights control administration.
 - `/wardrobe list` and `/wardrobe wear <name>`: your skins, with ArkWardrobe.
 - `/support [low|normal|high] Message`: a private request, with ArkSupport.
 

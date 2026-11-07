@@ -12,6 +12,7 @@ class PrivateFixture(BaseHTTPRequestHandler):
     status = 200
     body = b'{"ok":true}'
     media = "application/json"
+    retry_after = None
     last = None
 
     def do_GET(self):
@@ -19,6 +20,8 @@ class PrivateFixture(BaseHTTPRequestHandler):
         self.send_response(type(self).status)
         self.send_header("Content-Type", type(self).media)
         self.send_header("Content-Length", str(len(type(self).body)))
+        if type(self).retry_after is not None:
+            self.send_header("Retry-After", type(self).retry_after)
         self.end_headers()
         self.wfile.write(type(self).body)
 
@@ -49,6 +52,26 @@ class WardrobeClientTests(unittest.TestCase):
         self.base = "http://127.0.0.1:" + str(self.server.server_port)
         self.client = WardrobeClient(self.base, self.token)
         PrivateFixture.status, PrivateFixture.body, PrivateFixture.media, PrivateFixture.last = 200, b'{"ok":true}', "application/json", None
+        PrivateFixture.retry_after = None
+
+    def test_upstream_429_preserves_only_bounded_retry_seconds(self):
+        PrivateFixture.status, PrivateFixture.body = 429, b'{"code":"busy"}'
+        for value, expected in (("1", 1), ("37", 37), ("3600", 3600), ("0", None), ("3601", None),
+                                ("-2", None), ("1.5", None), ("tomorrow", None), (None, None)):
+            PrivateFixture.retry_after = value
+            with self.subTest(value=value), self.assertRaises(WardrobeError) as error:
+                self.client.request("GET", "/v1/profile", session_token="private-player-session")
+            self.assertEqual(error.exception.status, 429)
+            self.assertEqual(getattr(error.exception, "retry_after", None), expected)
+        PrivateFixture.status, PrivateFixture.retry_after = 401, "37"
+        with self.assertRaises(WardrobeError) as error:
+            self.client.request("GET", "/v1/profile", session_token="private-player-session")
+        self.assertIsNone(getattr(error.exception, "retry_after", None))
+
+    def test_internal_retry_delay_accepts_integer_but_rejects_boolean_or_unbounded_values(self):
+        for value, expected in ((5, 5), (True, None), (0, None), (3601, None), (5.5, None), ("0005", 5)):
+            with self.subTest(value=value):
+                self.assertEqual(getattr(WardrobeError("busy", 429, retry_after=value), "retry_after", None), expected)
 
     def test_real_http_uses_fixed_paths_scoped_headers_and_json_only(self):
         self.assertEqual(self.client.request("POST", "/v1/pair/redeem", {"code": "ABCD-EFGH"}), {"ok": True})

@@ -60,10 +60,9 @@ function completionChoices(data, input) {
     $("notification").hidden = false;
   }
 
-  function showLogin(text = "") {
+  function clearAdmin() {
     state.authenticated = false; state.modules = null;
     supportUI.clear();
-    $("operator-login-form").reset(); $("operator-code-form").reset(); message($("operator-login-message"), "");
     $("reset-player-form").reset(); $("reset-player-names").replaceChildren(); message($("reset-player-message"), "");
     state.authenticated = false; state.modules = null;
     state.sessionSerial++;
@@ -85,18 +84,25 @@ function completionChoices(data, input) {
     $("console-command").value = ""; $("console-output").textContent = $("logs-output").textContent = "";
     delete $("console-output").dataset.history;
     $("world-controls").replaceChildren(); $("world-rules").replaceChildren(); $("players-table").replaceChildren();
-    $("app-view").hidden = true;
-    $("login-view").hidden = false;
-    $("login-button").disabled = false;
+    document.querySelectorAll(".view").forEach(section => section.hidden = true);
+    document.querySelectorAll(".view form").forEach(form => form.reset());
+    document.querySelectorAll(".view .setting-state, .view .config-status, .view .form-message, .service-details dd, .service-state").forEach(node => node.textContent = "");
+    state.loaded.clear(); state.services = []; state.configs = []; state.allConfigs = []; state.advanced = state.mission = null;
+    for (const id of ["players-output", "whitelist-players", "banned-players", "player-names", "minecraft-dynamic-fields", "mission-config", "advanced-config"]) {
+      $(id).replaceChildren();
+    }
+    document.documentElement.dataset.arkWardrobe = "false";
+    window.dispatchEvent(new CustomEvent("ark:modules"));
+    $("notification").textContent = ""; $("notification").hidden = true;
     $("dns-frame").removeAttribute("src");
-    $("password").value = "";
     $("password-dialog").close();
     $("password-form").reset();
     message($("password-message"), "");
-    message($("login-message"), text);
   }
 
   async function api(path, method = "GET", body, signal) {
+    if (!state.authenticated) throw new Error("Keine Verwaltungsberechtigung.");
+    const serial = state.sessionSerial;
     const headers = { Accept: "application/json", "Accept-Language": window.ArkI18n?.language || "de" };
     if (method !== "GET") {
       headers["Content-Type"] = "application/json";
@@ -111,8 +117,9 @@ function completionChoices(data, input) {
     }
     let data;
     try { data = await response.json(); } catch { data = {}; }
+    if (!state.authenticated || serial !== state.sessionSerial) throw new DOMException("Verwaltungsberechtigung geändert.", "AbortError");
     if (!response.ok) {
-      if (response.status === 401 && !["/api/login", "/api/operator/login"].includes(path)) showLogin("Deine Sitzung ist abgelaufen. Bitte erneut anmelden.");
+      if (response.status === 401 || (response.status === 403 && ["admin_required", "operator_required"].includes(data.code))) { clearAdmin(); window.dispatchEvent(new Event("ark:session-refresh")); }
       throw new Error(typeof data.error === "string" ? data.error : `Die Anfrage ist fehlgeschlagen (HTTP ${response.status}).`);
     }
     return data;
@@ -551,7 +558,8 @@ function completionChoices(data, input) {
   }
 
   async function navigate(view) {
-    if (!Object.hasOwn(titles, view) || (view === "support" && state.modules?.support === false)) view = "overview";
+    if (!state.authenticated || !Object.hasOwn(titles, view)) return;
+    if (view === "support" && state.modules?.support === false) view = "overview";
     const serial = ++navigationRequest;
     state.view = view;
     if (view !== "map") { mapRequest?.abort(); mapRequest = null; viewerRequest?.abort(); viewerRequest = null; }
@@ -595,8 +603,6 @@ function completionChoices(data, input) {
 
   async function showApp(data) {
     state.authenticated = true;
-    const operator = data.auth_type === "operator";
-    $("account-button").hidden = operator; $("operator-account-link").hidden = !operator; $("operator-account-note").hidden = !operator;
     state.sessionSerial++;
     state.formVersions = {};
     state.csrf = data.csrf;
@@ -610,9 +616,6 @@ function completionChoices(data, input) {
     state.pluginOriginals = { geyser: null, quests: null };
     $("notification").hidden = true;
     $("signed-in-user").textContent = data.username;
-    $("password").value = "";
-    $("login-view").hidden = true;
-    $("app-view").hidden = false;
     await loadModules();
     await navigate(location.hash.slice(1) || "overview");
   }
@@ -915,36 +918,12 @@ function completionChoices(data, input) {
     }, 180);
   }
 
-  $("login-form").addEventListener("submit", (event) => {
-    event.preventDefault();
-    run($("login-button"), async () => {
-      message($("login-message"), "Anmeldung wird geprüft …");
-      const data = await api("/api/login", "POST", { username: $("username").value.trim(), password: $("password").value });
-      await showApp(data);
-    }, $("login-message"));
-  });
-  for (const mode of ["login", "code"]) {
-    $(`operator-${mode}-form`).addEventListener("submit", event => {
-      event.preventDefault();
-      run($(`operator-${mode}-submit`), async () => {
-        const body = mode === "code" ? { code: $("operator-code").value.trim() } : { username: $("operator-username").value.trim(), password: $("operator-password").value };
-        const data = await api("/api/operator/login", "POST", body);
-        $("operator-password").value = $("operator-code").value = "";
-        await showApp(data);
-      }, $("operator-login-message"));
-    });
-  }
-  $("logout-button").addEventListener("click", () => {
-    if (anyDirty() && !confirmText("Es gibt ungespeicherte Änderungen. Trotzdem abmelden?")) return;
-    run($("logout-button"), async () => {
-      await api("/api/logout", "POST", {});
-      state.geyserOriginal = state.missionOriginal = state.settingsOriginal = null;
-      state.pluginOriginals = { geyser: null, quests: null };
-      $("geyser-content").value = $("mission-content").value = $("advanced-content").value = "";
-      $("logs-output").textContent = $("console-output").textContent = "";
-      delete $("console-output").dataset.history;
-      showLogin("Du bist abgemeldet.");
-    });
+  window.ArkAdmin = { hasDirty: () => state.authenticated && anyDirty() };
+  window.addEventListener("ark:session", event => {
+    const data = event.detail;
+    if (!data.authenticated || data.is_admin !== true) { clearAdmin(); return; }
+    state.csrf = data.csrf;
+    if (!state.authenticated) showApp(data).catch(error => { if (state.authenticated) notify(error.message, true); });
   });
   $("account-button").addEventListener("click", () => {
     $("password-form").reset();
@@ -962,6 +941,7 @@ function completionChoices(data, input) {
         confirm_password: $("confirm-password").value
       });
       state.csrf = data.csrf;
+      window.dispatchEvent(new CustomEvent("ark:csrf", { detail: data.csrf }));
       $("signed-in-user").textContent = data.username;
       $("password-form").reset();
       message($("password-message"), "Passwort geändert. Andere Anmeldungen wurden beendet.");
@@ -1082,7 +1062,7 @@ function completionChoices(data, input) {
     catch { throw new Error("Vollbild ist in diesem Browser nicht verfügbar. Bitte „Separat öffnen“ verwenden."); }
   }, $("map-viewer-status")));
   async function refreshVisibleSettings(includeRaw = false) {
-    if (!state.authenticated || document.hidden || pollBusy || state.editorBusy.size || state.worldBusy || !state.loaded.has(state.view)) return;
+    if (!state.authenticated || document.hidden || pollBusy || state.editorBusy.size || state.worldBusy || !state.loaded.has(state.view) || !Object.hasOwn(titles, location.hash.slice(1))) return;
     const view = state.view; pollBusy = true;
     try {
       if (view === "minecraft") {
@@ -1105,8 +1085,7 @@ function completionChoices(data, input) {
   document.addEventListener("toggle", event => { if (event.target.open && event.target.matches("#view-configs details, #view-geyser details, #view-missions details")) refreshVisibleSettings(true); }, true);
   setInterval(() => { refreshMap(); refreshMapViewer(); }, 5000);
   setInterval(() => {
-    if (state.authenticated && !document.hidden) { refreshStatus().catch((error) => notify(error.message, true)); refreshVisibleSettings(); }
+    if (state.authenticated && !document.hidden && Object.hasOwn(titles, location.hash.slice(1))) { refreshStatus().catch((error) => { if (state.authenticated) notify(error.message, true); }); refreshVisibleSettings(); }
   }, 15000);
   window.addEventListener("ark:language", () => { document.title = `${t(titles[state.view])} · ARK Expedition`; updateEditors(); });
-  api("/api/session").then((data) => data.authenticated ? showApp(data) : showLogin()).catch((error) => showLogin(error.message));
 })();
