@@ -858,6 +858,7 @@
   "Serverpasswort zurückgesetzt. Alle Websitzungen dieses Spielerkontos wurden beendet; Wiederherstellungscodes bleiben erhalten.": "Server password reset. All web sessions of this player account have ended; recovery codes are retained.",
   "Serverpasswort zurückgesetzt. Bitte mit dem neuen Passwort anmelden.": "Server password reset. Sign in with the new password.",
   "Serverpasswort ändern": "Change server password",
+  "Serverwelten": "Server worlds",
   "Serverweite Paper-Optionen für Abläufe, Netzwerk und Leistungsgrenzen.": "Server-wide Paper behavior, networking and performance limits.",
   "Serverweite Vorgaben für WorldGuard-Schutz und die Behandlung geschützter Bereiche.": "Server-wide WorldGuard defaults and handling of protected regions.",
   "Setzt den vorherigen Spielmodus beim Verbinden zurück.": "Resets the previous game mode when joining.",

@@ -59,6 +59,14 @@ Netzwerkbindung, interne Ports und geheime Tokenpfade sind im Editor geschützt.
 
 Signierungszugänge gehören zu Wardrobe, nicht Accounts. Für bestehende gestoppte Installationen ergänzt `python3 scripts/init.py --portal-only` fehlende Portalgeheimnisse, ohne bestehende Zugänge zu ersetzen. Dies ist keine automatische Migration alter Kontodaten.
 
+## Browserkarten und Dimensionen
+
+Unter **Karte** wechselst du über die Weltwahl direkt in BlueMap zwischen den eingerichteten Survival-, Kreativ-, Nether- und End-Karten. Die Auswahl enthält die tatsächlich von BlueMap geladenen Karten. Eine Karte berechnet nur bereits von Minecraft erzeugte und gespeicherte Chunks; sie erzeugt keine neuen Weltbereiche und startet keine Vorberechnung einer Dimension. Unbesuchte Bereiche können deshalb leer bleiben.
+
+Fehlen Nether oder End in der Auswahl, prüfe `data/plugins/BlueMap/maps/`. Ein vorhandenes Verzeichnis mit nur zwei manuell gepflegten Kartendateien erhält nicht automatisch alle weiteren Dimensionen. Ergänze ausdrückliche Kartenkonfigurationen mit eindeutiger ID und passendem Speicherpfad/Dimensionsschlüssel gemäß der [BlueMap-Konfigurationsanleitung](https://bluemap.bluecolored.de/wiki/configs/Maps.html). In der vorbereiteten nativen Welt verwenden beide `world: "ark"`, mit `dimension: "minecraft:the_nether"` beziehungsweise `"minecraft:the_end"`; ihre Karten-IDs sind `ark_nether` und `ark_end`. Übernimm Oberwelt-Flächengrenzen oder Höhlen-/Lichteinstellungen nicht unverändert in eine Nether-Karte.
+
+Nach Sicherung und Speichern der Dateien kann ein Administrator `/bluemap reload light` ausführen, `/bluemap maps` prüfen und die Browserkarte aktualisieren. `/bluemap update ark_nether` und `/bluemap update ark_end` planen die Aktualisierung gespeicherter Chunks ein. Falls die Berechnung absichtlich gestoppt wurde, prüfe vor `/bluemap start` den Grund. Diese [BlueMap-Befehle](https://bluemap.bluecolored.de/wiki/getting-started/Commands.html) benötigen die jeweiligen Rechte; in der Panel-Konsole entfällt der führende `/`. Eine Neueinrichtung prüft und installiert den festen Weltstand; sie repariert keine BlueMap-Einstellungen eines bestehenden Servers.
+
 ## Private Backups und Updates
 
 Stoppe betroffene Dienste ordentlich und sichere `data`, `panel-state`, `secrets`, `.env` und Compose gemeinsam auf privaten getrennten Speicher. Beziehe ArkAccounts, ArkWardrobe, ArkSupport, SkinsRestorer und vorhandene AuthMe-/Floodgate-Daten ein. Backups enthalten Passwörter/Hashes, Tokens, Wiederherstellungsprüfwerte, Tickets und Spielerdaten.
