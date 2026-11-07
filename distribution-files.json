@@ -1,5 +1,6 @@
 [
   ".env.example",
+  ".github/dependabot.yml",
   ".github/workflows/checks.yml",
   ".gitignore",
   "LICENSE",

@@ -2,7 +2,7 @@
 
 [Deutsch](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One-DE) · [Source installation](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Installation) · [Modules](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules)
 
-For an application release that supplies `Minecraft-Ark-<version>-all-in-one.zip`, the ZIP contains the stack, web applications, setup/configuration sources and all seven verified project JARs. It does **not** embed the large world, third-party server/plugins, personal accounts or secrets. Use the asset attached to the chosen [application release](https://github.com/Bladestar2105/Minecraft-Ark/releases); if absent, follow the source build instead.
+The stable application release [`app-2026-11-07`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-07) provides `Minecraft-Ark-app-2026-11-07-all-in-one.zip` with the Docker stack, web applications, setup/configuration sources and all seven verified project JARs. It does **not** embed the large world, third-party server/plugins, personal accounts or secrets. Download the ZIP and `SHA256SUMS` from that same application release.
 
 Requirements on the host: Docker with Compose v2, Python 3.10+, an archive extractor and internet access. **No host JDK is required for the binary package.** Java 25 runs inside the game container. Allow space for the world archive, extracted world, map rendering and private backups; at least 8 GiB host RAM is a starting recommendation, not a capacity guarantee.
 

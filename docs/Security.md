@@ -33,3 +33,9 @@ The public package contains reviewed code/configuration and project binaries, no
 Fixture tests check boundaries but do not establish live OAuth authorization, client skin rendering or console controls. See [Skin signing](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing), [Dino riding](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding) and [Development](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Development) for the remaining acceptance checks.
 
 A public/global Floodgate link alone does not unlock an existing unbound AuthMe account. Confirm the original Java password or premium ownership first. Verified local mutual linking is retained through the reviewed AuthMe/Floodgate integration; do not replace it with an unchecked global lookup.
+
+## Dependabot and dependency updates
+
+The official GitHub repository enables Dependabot alerts, the dependency graph and pull requests for supported security updates. The configuration checks GitHub Actions, Python dependencies in `panel/requirements.txt`, the panel Dockerfile and Docker Compose images for new versions weekly. Changes are proposed as pull requests for review; they are never automatically merged or installed on a game server. Personal email/web notifications follow each account's GitHub notification settings.
+
+The custom Java/server-plugin pins in `dependencies-build.json` and `dependencies-runtime.json` are not package manifests supported by Dependabot. Their versions, provenance and checksums still require separate review. Docker version checks also do not replace container-image vulnerability scanning.

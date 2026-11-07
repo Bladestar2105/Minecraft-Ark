@@ -33,3 +33,9 @@ Das öffentliche Paket enthält geprüften Code, Konfiguration und Projektbinär
 Testdienste prüfen Grenzen, belegen aber keine echte OAuth-Berechtigung, Skinanzeige oder Konsolensteuerung. [Skin-Signierung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing-DE), [Dinos reiten](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding-DE) und [Entwicklung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Development-DE) nennen die noch nötigen Abnahmeprüfungen.
 
 Eine öffentliche/globale Floodgate-Verknüpfung allein öffnet kein bestehendes ungebundenes AuthMe-Konto. Bestätige zuerst das ursprüngliche Java-Passwort oder den Premiumbesitz. Geprüfte lokale gegenseitige Verknüpfungen bleiben über die geprüfte AuthMe-/Floodgate-Integration erhalten; ersetze sie nicht durch eine ungeprüfte globale Abfrage.
+
+## Dependabot und Abhängigkeitsupdates
+
+Im offiziellen GitHub-Repository sind Dependabot-Sicherheitswarnungen, der Dependency Graph und Pull Requests für unterstützte Sicherheitsupdates aktiviert. Die Konfiguration prüft GitHub Actions, Python-Abhängigkeiten in `panel/requirements.txt`, das Panel-Dockerfile und die Docker-Compose-Images wöchentlich auf neue Versionen. Änderungen werden als Pull Requests vorgeschlagen und müssen geprüft werden; es gibt keine automatische Zusammenführung oder Installation auf einem Spielserver. Persönliche E-Mail-/Web-Benachrichtigungen richten sich nach den GitHub-Benachrichtigungseinstellungen des jeweiligen Kontos.
+
+Die eigenen Java-/Server-Plugin-Pins in `dependencies-build.json` und `dependencies-runtime.json` sind keine von Dependabot unterstützten Paketmanifeste. Ihre Versionen, Herkunft und Prüfsummen müssen weiterhin separat geprüft werden. Docker-Versionprüfungen ersetzen außerdem keinen Schwachstellenscan der Container-Images.

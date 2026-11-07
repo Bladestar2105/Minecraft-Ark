@@ -12,7 +12,7 @@ A prepared survival adventure world, separate creative area and Java/Bedrock cro
 
 ## Choose an installation
 
-**Binary All-in-One:** when attached to an [application release](https://github.com/Bladestar2105/Minecraft-Ark/releases), `Minecraft-Ark-<version>-all-in-one.zip` contains the stack and all seven project JARs. Verify its release `SHA256SUMS`, extract into a new empty directory, then run:
+**Binary All-in-One:** [`app-2026-11-07`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-07) provides `Minecraft-Ark-app-2026-11-07-all-in-one.zip` with the Docker stack and all seven project JARs. Verify its release `SHA256SUMS`, extract into a new empty directory, then run:
 
 ```sh
 python3 scripts/setup.py
@@ -23,7 +23,7 @@ Host requirements are Docker with Compose v2, Python 3.10+, an archive extractor
 **From source:** use JDK 25 as well, then:
 
 ```sh
-git clone --branch app-2026-11-07-bedrock-preview https://github.com/Bladestar2105/Minecraft-Ark.git
+git clone --branch app-2026-11-07 https://github.com/Bladestar2105/Minecraft-Ark.git
 cd Minecraft-Ark
 python3 scripts/build_plugins.py
 python3 scripts/setup.py
