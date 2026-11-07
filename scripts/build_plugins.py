@@ -45,10 +45,10 @@ def build():
              "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"],
              "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest", "PortalInfoTest"],
              "wardrobe": ["WardrobeTest", "SignersTest", "CommandPolicyTest", "WardrobeRoutesTest"],
-             "support": ["SupportTest", "SupportRoutesTest"]}
+             "support": ["SupportTest", "SupportRoutesTest", "SupportDeleteTest"]}
     versions = {"dino": "ArkDinos-1.0.0", "atlas": "ArkAtlas-1.0.0",
                 "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.2",
-                "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.0"}
+                "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.1"}
     packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",
                 "accounts": "accounts", "wardrobe": "wardrobe", "support": "support"}
     built = []

@@ -12,7 +12,7 @@ import package
 
 PLUGINS = {"dino": ("ArkDinos", "1.0.0"), "atlas": ("ArkAtlas", "1.0.0"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
-           "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.0"),
+           "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.1"),
            "access": ("ArkAccessBridge", "1.1.1")}
 
 
@@ -66,7 +66,7 @@ class InstallerTests(unittest.TestCase):
                 install_plugins.install(root, ["accounts", "support"])
             self.assertEqual(fetched, ["Geyser.jar"])
             self.assertEqual(sorted(p.name for p in (root / "data/plugins").glob("*.jar")),
-                             ["ArkAccounts-1.0.2.jar", "ArkSupport-1.0.0.jar", "Geyser.jar"])
+                             ["ArkAccounts-1.0.2.jar", "ArkSupport-1.0.1.jar", "Geyser.jar"])
             self.assertFalse((root / "data/plugins/SkinsRestorer").exists())
 
     def test_defaults_include_six_modules_and_optional_modules_require_accounts(self):

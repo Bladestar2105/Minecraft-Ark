@@ -36,7 +36,7 @@ The player service remains isolated internally on port8091, without a Docker soc
 
 Under **Players**, administrators can reset a known account's shared server/portal password without its old password. The reset revokes target web sessions and retains recovery codes and identity links. This Accounts function remains available without Support or Wardrobe. [Reset instructions](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support#reset-a-known-server-password).
 
-With ArkSupport installed, use **Support** to read, reply, close and reopen tickets. With ArkWardrobe installed, configure [skin signing](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing). Missing optional modules hide their controls; capability failures show an unavailable/retry message. Refresh status to retry.
+With ArkSupport installed, use **Support** to read, reply, close and reopen tickets. Administrators can also [permanently delete closed tickets](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support#delete-old-tickets) with ArkSupport 1.0.1 and the matching web update. With ArkWardrobe installed, configure [skin signing](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing). Missing optional modules hide their controls; capability failures show an unavailable/retry message. Refresh status to retry.
 
 ## Portal address and in-game notices
 

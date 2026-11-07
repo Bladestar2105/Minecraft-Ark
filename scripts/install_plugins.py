@@ -11,7 +11,7 @@ from fetch_world import safe_path
 
 PLUGINS = {"dino": ("ArkDinos", "1.0.0"), "atlas": ("ArkAtlas", "1.0.0"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
-           "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.0"),
+           "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.1"),
            "access": ("ArkAccessBridge", "1.1.1")}
 DEFAULT_MODULES = [module for module in PLUGINS if module != "access"]
 

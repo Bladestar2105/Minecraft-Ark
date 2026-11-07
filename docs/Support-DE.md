@@ -21,6 +21,14 @@ Angemeldete Operatoren erhalten im Spiel einen privaten Aktivitätshinweis. Antw
 
 Melde dich an der [Verwaltung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE) an, öffne **Support**, wähle eine Anfrage und antworte. Anschließend kannst du sie schließen oder wieder öffnen. Die Liste zeigt Besitzer, Priorität, Status und Zeit; die Detailansicht zeigt die gespeicherte Unterhaltung. Bei einer neueren Änderung durch jemand anderen entsteht ein Konflikt statt einer stillen Überschreibung. Lies/aktualisiere die Unterhaltung vor einem erneuten Versuch; ungesendeter Antworttext bleibt erhalten.
 
+### Alte Tickets löschen
+
+Mit **ArkSupport 1.0.1** und der passenden Web-Aktualisierung kann ein Administrator ein **geschlossenes** Ticket öffnen und **Anfrage löschen** wählen. Lies die Bestätigung und bestätige nur, wenn das gesamte Ticket einschließlich aller Nachrichten entfernt werden darf. Offene Tickets müssen zuerst geschlossen werden. Spieler können keine Tickets löschen.
+
+Aktualisiere bei einer bestehenden Installation die Web-Anwendung und ersetze das alte ArkSupport-JAR bei gestopptem Minecraft durch `ArkSupport-1.0.1.jar`; in `data/plugins/` darf nur ein ArkSupport-JAR liegen. Das neue Modul wird beim nächsten Serverstart geladen. Führe die Ersteinrichtung nicht über einer bestehenden Installation aus.
+
+Beim Löschen wird die zuletzt angezeigte Version geprüft. Hat jemand das Ticket inzwischen geändert oder wieder geöffnet, wird die Löschung mit einem Konflikt abgelehnt; aktualisiere die Unterhaltung und entscheide erneut. Gelöschte Tickets verschwinden aus Verwaltung und Spielerportal. Es gibt weder Rückgängig-Funktion noch Papierkorb. Eine Wiederherstellung ist nur aus einer privaten Sicherung vor der Löschung möglich; das Zurückspielen einer vollständigen Sicherung kann auch spätere Änderungen zurücksetzen. Sichere `data/plugins/ArkSupport/` deshalb privat.
+
 Zwischen neuen Anfragen liegen mindestens 60 Sekunden. Pro Spieler sind bis zu fünf offene Anfragen und pro Anfrage bis zu 50 Nachrichten erlaubt. Listen zeigen die neuesten 100 Anfragen. Die Ablage ist auf 1.000 Tickets und 16 MiB begrenzt; bei Erschöpfung werden weitere Schreibvorgänge sichtbar abgelehnt und keine alten Datensätze heimlich gelöscht. Sichere `data/plugins/ArkSupport/` privat.
 
 ## Ein bekanntes Serverpasswort zurücksetzen

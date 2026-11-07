@@ -29,6 +29,9 @@ jobs:
       - run: node panel/test_unified_ui.mjs
         env:
           PLAYWRIGHT_MODULE: /tmp/ark-browser-check/node_modules/playwright/index.mjs
+      - run: node panel/test_support_ui.mjs
+        env:
+          PLAYWRIGHT_MODULE: /tmp/ark-browser-check/node_modules/playwright/index.mjs
   plugins:
     runs-on: ubuntu-latest
     steps:

@@ -1380,17 +1380,22 @@ def create_app(test_config=None):
     @app.get("/api/support")
     def support():
         value = configured_client(app.config, admin=True).request("GET", "/v1/admin/support", admin=True)
-        return jsonify(support_response(value, listing=True))
+        return jsonify(dict(support_response(value, listing=True), delete_closed=value.get("delete_closed") is True))
 
     @app.get("/api/support/<ticket_id>")
+    @app.delete("/api/support/<ticket_id>")
     @app.post("/api/support/<ticket_id>/reply")
     @app.put("/api/support/<ticket_id>/status")
     def support_detail(ticket_id):
         if not re.fullmatch(r"[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}", ticket_id):
             raise WardrobeError("invalid_request", 400)
-        action = "reply" if request.method == "POST" else "status" if request.method == "PUT" else None
+        action = "reply" if request.method == "POST" else "status" if request.method == "PUT" else "delete" if request.method == "DELETE" else None
         body = support_payload(payload(), action) if action else None
-        value = configured_client(app.config, admin=True).request(request.method, "/v1/admin/support/" + ticket_id + ("/" + action if action else ""), payload=body, admin=True)
+        value = configured_client(app.config, admin=True).request(request.method, "/v1/admin/support/" + ticket_id + ("/" + action if action in ("reply", "status") else ""), payload=body, admin=True)
+        if request.method == "DELETE":
+            if not isinstance(value, dict) or value.get("ok") is not True:
+                raise WardrobeError("upstream_invalid", 502)
+            return jsonify(ok=True)
         return jsonify(support_response(value))
 
     @app.post("/api/wardrobe/connect")

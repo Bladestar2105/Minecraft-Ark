@@ -20,6 +20,9 @@ class UnifiedNative(NativeFixture):
         self.role_error = None
 
     def request(self, method, path, payload=None, session_token=None, admin=False):
+        if method == 'DELETE' and path == '/v1/admin/support/23456789-1234-1234-1234-123456789abc':
+            self.calls.append((method, path, payload, session_token, admin))
+            return dict(ok=True)
         if path == '/v1/admin/auth/player-check':
             self.calls.append((method, path, payload, session_token, admin))
             if self.role_error:
@@ -117,6 +120,19 @@ class UnifiedAuthTests(unittest.TestCase):
             value['uuid'] = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
         self.client.set_cookie('ark_player_session', signed.get_cookie('ark_player_session').value)
         self.assertEqual(self.client.get('/api/configs').status_code, 401)
+
+    def test_ticket_deletion_rechecks_current_op_and_rejects_personal_scope(self):
+        session = self.login().json
+        path = '/api/support/23456789-1234-1234-1234-123456789abc'
+        headers = {'Origin': 'http://localhost', 'X-CSRF-Token': session['csrf']}
+        for is_op, expected in ((False, 403), (True, 200), (False, 403)):
+            self.native.is_op = is_op
+            response = self.client.delete(path, json={'revision': 2}, headers=headers)
+            self.assertEqual(response.status_code, expected, response.json)
+        self.assertEqual(sum(call[0] == 'DELETE' for call in self.native.calls), 1)
+        self.native.is_op = True
+        self.assertEqual(self.client.delete('/api/player/support/23456789-1234-1234-1234-123456789abc',
+            json={'revision': 2}, headers=headers).status_code, 404)
 
     def test_revocation_and_outage_fail_closed_and_csrf_protects_both_surfaces(self):
         self.native.is_op = True

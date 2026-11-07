@@ -120,7 +120,9 @@ function completionChoices(data, input) {
     if (!state.authenticated || serial !== state.sessionSerial) throw new DOMException("Verwaltungsberechtigung geändert.", "AbortError");
     if (!response.ok) {
       if (response.status === 401 || (response.status === 403 && ["admin_required", "operator_required"].includes(data.code))) { clearAdmin(); window.dispatchEvent(new Event("ark:session-refresh")); }
-      throw new Error(typeof data.error === "string" ? data.error : `Die Anfrage ist fehlgeschlagen (HTTP ${response.status}).`);
+      const error = new Error(typeof data.error === "string" ? data.error : `Die Anfrage ist fehlgeschlagen (HTTP ${response.status}).`);
+      error.status = response.status;
+      throw error;
     }
     return data;
   }

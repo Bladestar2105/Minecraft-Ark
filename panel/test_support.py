@@ -18,6 +18,8 @@ class SupportFixture(NativeFixture):
     def __init__(self):
         super().__init__()
         self.support_error = None
+        self.delete_closed = True
+        self.delete_result = dict(ok=True, token="must-not-leak")
         self.ticket = dict(id=TICKET_ID, player_uuid=UUID, player_name=".Bedrock", priority="normal", status="open", revision=1,
             created_at="2026-11-07T12:00:00Z", updated_at="2026-11-07T12:00:00Z",
             messages=[dict(author="player", message="Help\n<script>plain text</script>", created_at="2026-11-07T12:00:00Z", token="must-not-leak")], token="must-not-leak")
@@ -29,7 +31,12 @@ class SupportFixture(NativeFixture):
                 raise self.support_error
             if path in ("/v1/support", "/v1/admin/support") and method == "GET":
                 summary = {key: value for key, value in self.ticket.items() if key != "messages"}
-                return dict(tickets=[dict(summary, message_count=1)])
+                result = dict(tickets=[dict(summary, message_count=1)])
+                if self.delete_closed is not None:
+                    result["delete_closed"] = self.delete_closed
+                return result
+            if method == "DELETE":
+                return copy.deepcopy(self.delete_result)
             return dict(ticket=copy.deepcopy(self.ticket))
         if path == "/v1/admin/accounts":
             self.calls.append((method, path, payload, session_token, admin))
@@ -143,6 +150,38 @@ class SupportTests(unittest.TestCase):
             self.assertEqual(response.json, dict(accounts=True, wardrobe=False, support=True))
             self.assertEqual(self.native.calls[-1][1], "/v1/admin/modules" if admin else "/v1/modules")
             self.assertEqual(self.native.calls[-1][-1], admin)
+
+    def test_delete_is_admin_only_requires_exact_revision_and_sanitizes_success(self):
+        path = "/api/support/" + TICKET_ID
+        self.assertEqual(self.admin.delete(path, json=dict(revision=1)).status_code, 403)
+        for client, prefix in ((self.player, "/api/support/"), (self.admin, "/api/player/support/")):
+            calls = sum(call[0] == "DELETE" for call in self.native.calls)
+            self.assertIn(self.write(client, prefix + TICKET_ID, dict(revision=1), "delete").status_code, (404, 405))
+            self.assertEqual(sum(call[0] == "DELETE" for call in self.native.calls), calls)
+        for body in ({}, dict(revision=True), dict(revision=0), dict(revision="1"), dict(revision=1, owner=UUID)):
+            self.assertEqual(self.write(self.admin, path, body, "delete").status_code, 400)
+        result = self.write(self.admin, path, dict(revision=1), "delete")
+        self.assertEqual(result.status_code, 200, result.json)
+        self.assertEqual(result.json, dict(ok=True))
+        self.assertEqual(self.native.calls[-1], ("DELETE", "/v1/admin/support/" + TICKET_ID, dict(revision=1), None, True))
+        for bad in ({}, dict(ok=False), dict(ok=1)):
+            self.native.delete_result = bad
+            self.assertEqual(self.write(self.admin, path, dict(revision=1), "delete").status_code, 502)
+
+    def test_delete_preserves_native_open_conflict_missing_and_storage_errors(self):
+        for code, status in (("support_open", 409), ("stale_revision", 409), ("not_found", 404), ("storage_unavailable", 503)):
+            self.native.support_error = WardrobeError(code, status)
+            response = self.write(self.admin, "/api/support/" + TICKET_ID, dict(revision=2), "delete")
+            self.assertEqual(response.status_code, status)
+            self.assertEqual(response.json["code"], code)
+
+    def test_delete_capability_is_explicit_admin_only_and_old_module_stays_usable(self):
+        for value, expected in ((True, True), (False, False), (None, False), ("true", False), (1, False)):
+            self.native.delete_closed = value
+            result = self.admin.get("/api/support")
+            self.assertEqual(result.status_code, 200, result.json)
+            self.assertIs(result.json["delete_closed"], expected)
+            self.assertNotIn("delete_closed", self.player.get("/api/support").json)
 
 
 if __name__ == "__main__":

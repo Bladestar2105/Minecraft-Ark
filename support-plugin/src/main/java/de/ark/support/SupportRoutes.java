@@ -12,13 +12,17 @@ final class SupportRoutes implements AccountsApi.Handler {
         if(!open.getAsBoolean())throw new ApiError(503,"module_unavailable");String path=request.path(),method=request.method();boolean admin=path.startsWith("/v1/admin/");
         if(admin!=(request.role()==AccountsApi.Role.SERVICE_ADMIN))throw new ApiError(403,"forbidden");UUID owner=admin?null:request.identity().uuid();JsonObject body=request.body();String base=admin?"/v1/admin/support":"/v1/support";
         if(path.equals(base)) {
-            if(method.equals("GET"))return new AccountsApi.Response(200,store.list(owner,admin));
+            if(method.equals("GET")){JsonObject out=store.list(owner,admin);if(admin)out.addProperty("delete_closed",true);return new AccountsApi.Response(200,out);}
             if(!admin&&method.equals("POST"))return response(201,store.create(owner,request.identity().name(),body.has("priority")?string(body,"priority"):null,string(body,"message")));
             throw new ApiError(404,"not_found");
         }
         if(!path.startsWith(base+"/"))throw new ApiError(404,"not_found");String[] parts=path.substring(base.length()+1).split("/",-1);if(parts.length<1||parts.length>2)throw new ApiError(404,"not_found");
         UUID id;try{id=UUID.fromString(parts[0]);if(!id.toString().equals(parts[0]))throw new IllegalArgumentException();}catch(Exception e){throw new ApiError(404,"not_found");}
         if(parts.length==1&&method.equals("GET"))return response(200,store.get(owner,id,admin));
+        if(admin&&parts.length==1&&method.equals("DELETE")){
+            if(!body.keySet().equals(Set.of("revision")))throw new ApiError(400,"invalid_request");
+            store.delete(id,revision(body));JsonObject out=new JsonObject();out.addProperty("ok",true);return new AccountsApi.Response(200,out);
+        }
         if(parts.length==2&&parts[1].equals("reply")&&method.equals("POST"))return response(200,store.reply(owner,id,revision(body),string(body,"message"),admin));
         if(admin&&parts.length==2&&parts[1].equals("status")&&method.equals("PUT"))return response(200,store.status(id,revision(body),string(body,"status")));throw new ApiError(404,"not_found");
     }

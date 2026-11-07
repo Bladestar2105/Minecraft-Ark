@@ -21,7 +21,7 @@
     let response; try { response=await fetch('/api/'+(sessionPath?'':'player/')+path,{method,headers,credentials:'same-origin',cache:'no-store',...(body===undefined?{}:{body:JSON.stringify(body)})}); } catch { throw new Error(t('Keine Verbindung zum Spielerportal. Bitte erneut versuchen.')); }
     const data=await response.json().catch(()=>({}));
     if(!sessionPath&&(serial!==state.sessionSerial||!state.authenticated))throw new Error(t('Bitte zuerst anmelden.'));
-    if (!response.ok) { if(response.status===401 && !['login','recover'].includes(path)) showLogin(); const error=new Error(t(data.error||'Die Anfrage ist fehlgeschlagen.')); error.code=data.code; throw error; }
+    if (!response.ok) { if(response.status===401 && !['login','recover'].includes(path)) showLogin(); const error=new Error(t(data.error||'Die Anfrage ist fehlgeschlagen.')); error.code=data.code; error.status=response.status; throw error; }
     return data;
   }
   async function run(task) { if(state.busy) return; state.busy=true; updateControls(); try { await task(); } catch(error) { notice(error.message,true); } finally { state.busy=false; updateControls(); } }

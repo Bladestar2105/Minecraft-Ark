@@ -21,6 +21,14 @@ Online authenticated operators receive a private activity notification. Replies 
 
 Sign in through [Administration](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration), open **Support**, select a request, reply, then close or reopen it. The list shows owner, priority, status and time; details show the saved conversation. Another writer's newer revision causes a conflict rather than overwriting it. Refresh/read the conversation before retrying; unsent reply text is preserved.
 
+### Delete old tickets
+
+With **ArkSupport 1.0.1** and the matching web update, an administrator can open a **closed** ticket and choose **Delete request**. Read the confirmation and confirm only if the complete ticket, including every message, can be removed. Open tickets must be closed first. Players cannot delete tickets.
+
+For an existing installation, update the web application and replace the old ArkSupport JAR with `ArkSupport-1.0.1.jar` while Minecraft is stopped; keep only one ArkSupport JAR in `data/plugins/`. The new module is loaded on the next server start. Do not run fresh setup over an existing installation.
+
+Deletion checks the revision you last viewed. If someone has changed or reopened the ticket in the meantime, the operation fails with a conflict; refresh the conversation and decide again. Deleted tickets disappear from both the administration and the player's portal. There is no undo or recycle bin. Recovery is possible only from a private backup made before deletion; restoring a whole backup can also revert later changes. Keep `data/plugins/ArkSupport/` backed up privately.
+
 There is a 60-second creation cooldown, up to five open requests per player and up to 50 messages per request. Lists show the latest 100 requests. Storage is bounded to 1,000 tickets and 16 MiB; exhaustion rejects further writes with a visible error and does not silently delete old records. Back up `data/plugins/ArkSupport/` privately.
 
 ## Reset a known server password

@@ -72,6 +72,7 @@ ERRORS = {
     "support_open_limit": "Es sind höchstens fünf offene Tickets pro Spieler erlaubt.",
     "support_message_limit": "Dieses Ticket hat die Grenze von 50 Nachrichten erreicht.",
     "support_closed": "Dieses Ticket ist geschlossen. Die Verwaltung kann es wieder öffnen.",
+    "support_open": "Bitte das Ticket vor dem Löschen schließen.",
     "support_capacity": "Der Supportspeicher ist ausgelastet. Bitte die Serververwaltung kontaktieren.",
     "account_not_found": "Dieses Serverkonto ist nicht vorhanden.",
     "operator_required": "Für diese Anmeldung sind aktuelle OP-Rechte erforderlich.",
@@ -127,7 +128,7 @@ def allowed_request(method, path, admin=False):
                 path in ("/v1/admin/signing/connect", "/v1/admin/signing/disconnect", "/v1/admin/accounts/password",
                          "/v1/admin/auth/login", "/v1/admin/auth/check", "/v1/admin/auth/logout", "/v1/admin/auth/player-check") and method == "POST" or
                 path in ("/v1/admin/accounts", "/v1/admin/modules", "/v1/admin/support") and method == "GET" or
-                bool(re.fullmatch("/v1/admin/support/" + SKIN_ID, path)) and method == "GET" or
+                bool(re.fullmatch("/v1/admin/support/" + SKIN_ID, path)) and method in ("GET", "DELETE") or
                 bool(re.fullmatch("/v1/admin/support/" + SKIN_ID + "/reply", path)) and method == "POST" or
                 bool(re.fullmatch("/v1/admin/support/" + SKIN_ID + "/status", path)) and method == "PUT")
     if path in ("/v1/session", "/v1/profile", "/v1/account", "/v1/modules"):
@@ -169,7 +170,7 @@ def bounded_text(value, minimum=1, maximum=64, newlines=False, controls=False):
 
 
 def support_payload(value, action):
-    fields = {"create": {"priority", "message"}, "reply": {"revision", "message"}, "status": {"revision", "status"}}[action]
+    fields = {"create": {"priority", "message"}, "reply": {"revision", "message"}, "status": {"revision", "status"}, "delete": {"revision"}}[action]
     if not isinstance(value, dict) or set(value) != fields:
         raise WardrobeError("invalid_request", 400)
     if "revision" in fields and (type(value["revision"]) is not int or not 1 <= value["revision"] <= 2147483647):

@@ -121,6 +121,19 @@ class WardrobeClientTests(unittest.TestCase):
                 module_status(flags)
             self.assertEqual(error.exception.status, 502)
 
+    def test_ticket_delete_uses_admin_key_and_never_player_scope(self):
+        ticket = "23456789-1234-1234-1234-123456789abc"
+        for path in ("/v1/support/" + ticket, "/v1/admin/support/" + ticket):
+            with self.assertRaises(WardrobeError):
+                self.client.request("DELETE", path, {"revision": 2}, session_token="private-player-session")
+        self.assertIsNone(PrivateFixture.last)
+        admin = WardrobeClient(self.base, self.token, admin=True)
+        self.assertEqual(admin.request("DELETE", "/v1/admin/support/" + ticket, {"revision": 2}, admin=True), {"ok": True})
+        method, path, headers, body = PrivateFixture.last
+        self.assertEqual((method, path), ("DELETE", "/v1/admin/support/" + ticket))
+        self.assertNotIn("X-Player-Session", headers)
+        self.assertEqual(json.loads(body), {"revision": 2})
+
     def test_malformed_error_redirects_and_oversized_responses_are_sanitized(self):
         for status, body, media in ((401, b'{"code":"invalid_credentials","error":"private-token"}', "application/json"),
                                     (429, b'{"code":"busy","error":"private-token"}', "application/json"),

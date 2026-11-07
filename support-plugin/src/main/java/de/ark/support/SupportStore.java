@@ -57,6 +57,9 @@ final class SupportStore {
     private void commit(Ticket ticket) {
         requireOpen();
         Map<String,Ticket> next=new LinkedHashMap<>(tickets);next.put(ticket.id,ticket);
+        commit(next);
+    }
+    private void commit(Map<String,Ticket> next) {
         String encoded=Data.JSON.toJson(next.values());
         if(next.size()>MAX_TICKETS || encoded.getBytes(StandardCharsets.UTF_8).length>MAX_BYTES)throw new ApiError(503,"support_capacity");
         requireOpen();try {AtomicFiles.write(file,encoded);tickets=next;}catch(Exception e){throw new ApiError(503,"storage_unavailable");}
@@ -89,6 +92,11 @@ final class SupportStore {
         if(ticket.status.equals(status))return view(ticket,false);
         if(status.equals("open")&&tickets.values().stream().filter(t->t.player_uuid.equals(ticket.player_uuid)&&t.status.equals("open")).count()>=5)throw new ApiError(429,"support_open_limit");
         ticket.status=status;ticket.revision++;ticket.updated_at=clock.get().toString();commit(ticket);notify(ticket,false);return view(ticket,false);
+    }
+    synchronized void delete(UUID id,long expected) {
+        Ticket ticket=require(null,id,true);revision(ticket,expected);
+        if(!ticket.status.equals("closed"))throw new ApiError(409,"support_open");
+        Map<String,Ticket> next=new LinkedHashMap<>(tickets);next.remove(ticket.id);commit(next);
     }
     private void requireOpen(){if(closed||!enabled.getAsBoolean())throw new ApiError(503,"module_unavailable");}
     void close(){closed=true;}

@@ -173,6 +173,7 @@
   "support-plugin/src/main/java/de/ark/support/SupportRoutes.java",
   "support-plugin/src/main/java/de/ark/support/SupportStore.java",
   "support-plugin/src/main/resources/plugin.yml",
+  "support-plugin/src/test/java/de/ark/support/SupportDeleteTest.java",
   "support-plugin/src/test/java/de/ark/support/SupportRoutesTest.java",
   "support-plugin/src/test/java/de/ark/support/SupportTest.java",
   "support-plugin/src/test/java/de/ark/support/TestSupport.java",

@@ -36,7 +36,7 @@ Der Spielerprozess bleibt intern auf Port8091 getrennt, ohne Docker-Socket, RCON
 
 Unter **Spieler** setzt die Verwaltung das gemeinsame Server-/Portalpasswort eines bekannten Kontos ohne altes Passwort zurück. Dabei enden die Websitzungen des Zielkontos; Wiederherstellungscodes und Identitätsverknüpfungen bleiben erhalten. Diese Accounts-Funktion bleibt ohne Support oder Wardrobe verfügbar. [Anleitung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support-DE#ein-bekanntes-serverpasswort-zurücksetzen).
 
-Mit ArkSupport werden Anfragen unter **Support** gelesen, beantwortet, geschlossen und wieder geöffnet. Mit ArkWardrobe wird die [Skin-Signierung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing-DE) eingerichtet. Fehlende optionale Module blenden ihre Bedienung aus; eine fehlgeschlagene Modulabfrage zeigt eine Fehlermeldung. Aktualisiere den Status für einen neuen Versuch.
+Mit ArkSupport werden Anfragen unter **Support** gelesen, beantwortet, geschlossen und wieder geöffnet. Mit ArkSupport 1.0.1 und der passenden Web-Aktualisierung können Administratoren außerdem [geschlossene Tickets endgültig löschen](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support-DE#alte-tickets-löschen). Mit ArkWardrobe wird die [Skin-Signierung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Signing-DE) eingerichtet. Fehlende optionale Module blenden ihre Bedienung aus; eine fehlgeschlagene Modulabfrage zeigt eine Fehlermeldung. Aktualisiere den Status für einen neuen Versuch.
 
 ## Portaladresse und Hinweise im Spiel
 
