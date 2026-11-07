@@ -14,3 +14,5 @@
 .operator-login { margin-top: 24px; }.operator-login summary { cursor: pointer; margin: 16px 0; }.operator-login form { display: grid; gap: 10px; margin-top: 18px; }
 
 [aria-disabled=true] { opacity: .5; cursor: not-allowed; }
+.photo-import { margin: 16px 0; }.photo-import section { margin-top: 18px; padding: 18px; border: 1px solid var(--border); border-radius: 8px; }.photo-import p { line-height: 1.6; }.photo-import input[type=file] { display: block; max-width: 100%; margin-top: 10px; }.photo-import fieldset { margin: 18px 0; }.photo-layout { display: grid; grid-template-columns: minmax(0,1fr) 220px; align-items: center; gap: 18px; margin-bottom: 18px; }.photo-layout>div { min-width: 0; }#photo-canvas { display: block; width: auto; height: auto; max-width: 100%; max-height: 520px; touch-action: none; cursor: crosshair; background: #31403d; }#photo-canvas[width="1"] { display: none; }.photo-import h4 { margin: 0; }
+@media(max-width:1050px) { .photo-layout { grid-template-columns: minmax(0,1fr); }.photo-import section { padding: 12px; } }

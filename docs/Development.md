@@ -14,12 +14,15 @@ python3 -m venv .venv
 .venv/bin/python -m unittest discover -s panel -p 'test_*.py'
 .venv/bin/python -m unittest discover -s scripts -p 'test_*.py'
 node panel/test_skin_editor.mjs
+node panel/test_photo_skin.mjs
 node panel/test_ui.mjs
 ```
 
 The builder verifies pinned API dependencies from `dependencies-build.json`, compiles with `--release 25`, runs dependency-free Java checks and creates all seven JARs plus `own-plugins.json`. Local dependency caches are not redistributed. Reproducible JAR bytes require the same JDK version; a binary-package user does not need a host JDK.
 
 Browser fixture checks are `panel/test_ui.mjs --browser`, `panel/test_player_ui.mjs`, `panel/test_signing_ui.mjs` and `panel/test_support_ui.mjs`. They require an installed Playwright module/Chromium; set `PLAYWRIGHT_MODULE` to its `index.mjs` and optionally `PLAYWRIGHT_CHROMIUM` to the browser executable. They exercise production UI with local APIs, including DE/EN drafts, account recovery, OP separation, support revisions and missing optional modules. Screenshots are local test evidence.
+
+The dependency-free `panel/test_photo_skin.mjs` checks rectangular body-part regions, colour sampling, front/rear texture averaging, plain rear fallback without a rear photo, and valid Classic/Slim UV output using synthetic images. `panel/static/photo_skin.js` and `panel/static/photo_import.js` implement the local photo flow; the player browser fixture checks drafts, cancellation and photo privacy. No AI, ImageMagick, extra library or photo-processing server is needed. See [Skin editor](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Editor) for image limits, privacy and visual limits.
 
 ## Package application artifacts
 

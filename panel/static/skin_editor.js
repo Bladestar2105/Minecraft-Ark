@@ -57,6 +57,16 @@
       canvas.getContext('2d').putImageData(new ImageData(this.pixels.slice(),64,64),0,0); return canvas;
     }
     toPNG() { return this.toCanvas().toDataURL('image/png').split(',')[1]; }
+      drawPreview(canvas, face) {
+        if (!['front','back'].includes(face)) throw new Error('Invalid preview face');
+        const texture=this.toCanvas(), ctx=canvas.getContext('2d'), sx=canvas.width/16, sy=canvas.height/32;
+        ctx.imageSmoothingEnabled=false;ctx.clearRect(0,0,canvas.width,canvas.height);
+        const arm=this.model==='slim'?3:4,back=face==='back';
+        const positions={head:[4,0,8,8],body:[4,8,8,12],right_arm:[back?12:4-arm,8,arm,12],left_arm:[back?4-arm:12,8,arm,12],right_leg:[back?8:4,20,4,12],left_leg:[back?4:8,20,4,12]};
+        for(const part of parts) for(const layer of ['base','overlay']) {
+          const [x,y,w,h]=positions[part];ctx.drawImage(texture,...faceRect(part,face,layer,this.model),x*sx,y*sy,w*sx,h*sy);
+        }
+      }
     static async fromPNG(png, model = 'classic') {
       if (typeof png !== 'string' || png.length > 1400000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(png)) throw new Error('Bitte eine gültige PNG-Datei mit 64 × 64 Pixeln wählen.');
       const bytes=atob(png); if (bytes.slice(0,8) !== '\x89PNG\r\n\x1a\n') throw new Error('Bitte eine gültige PNG-Datei mit 64 × 64 Pixeln wählen.');

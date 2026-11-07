@@ -14,12 +14,15 @@ python3 -m venv .venv
 .venv/bin/python -m unittest discover -s panel -p 'test_*.py'
 .venv/bin/python -m unittest discover -s scripts -p 'test_*.py'
 node panel/test_skin_editor.mjs
+node panel/test_photo_skin.mjs
 node panel/test_ui.mjs
 ```
 
 Der Builder prüft festgelegte API-Abhängigkeiten aus `dependencies-build.json`, kompiliert mit `--release 25`, führt Java-Prüfungen ohne Testframework aus und erzeugt alle sieben JARs samt `own-plugins.json`. Lokale Abhängigkeitscaches werden nicht weiterverteilt. Identische JAR-Bytes benötigen dieselbe JDK-Version; Benutzer des Binärpakets brauchen kein Host-JDK.
 
 Browserprüfungen mit Testdiensten sind `panel/test_ui.mjs --browser`, `panel/test_player_ui.mjs`, `panel/test_signing_ui.mjs` und `panel/test_support_ui.mjs`. Sie benötigen ein installiertes Playwright-Modul/Chromium; `PLAYWRIGHT_MODULE` zeigt auf dessen `index.mjs`, optional `PLAYWRIGHT_CHROMIUM` auf die Browserdatei. Geprüft wird die produktive UI mit lokalen APIs, darunter DE/EN-Entwürfe, Wiederherstellung, getrennte OP-Anmeldung, Supportrevisionen und fehlende optionale Module. Screenshots sind lokale Testnachweise.
+
+`panel/test_photo_skin.mjs` prüft ohne weitere Abhängigkeiten rechteckige Körperteilbereiche, Farbproben, Texturmittelung für Vorder-/Rückseiten, einfarbige Ersatzflächen ohne Rückseitenfoto und gültige Classic-/Slim-UV-Flächen mit künstlichen Bildern. `panel/static/photo_skin.js` und `panel/static/photo_import.js` setzen den lokalen Fotoablauf um; die Spieler-Browserprüfung prüft Entwürfe, Abbrechen und Foto-Datenschutz. KI, ImageMagick, zusätzliche Bibliotheken oder ein Fotoverarbeitungsserver sind nicht erforderlich. Bildgrenzen, Datenschutz und Qualitätsgrenzen stehen unter [Skin-Editor](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Skin-Editor-DE).
 
 ## Anwendungsartefakte packen
 

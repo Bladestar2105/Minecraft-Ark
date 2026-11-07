@@ -5,10 +5,11 @@
   const $ = id => document.getElementById(id), t = (text,vars) => ArkI18n.t(text,vars);
   const state = { csrf:null, authenticated:false, modules:null, skins:[], drafts:new Map(), current:null, limit:20, busy:false, loadSerial:0, pollBusy:false };
   const supportUI = ArkSupport.mount($('player-support'), { api, authenticated:()=>state.authenticated&&state.modules?.support===true, onActivity:notice });
+  const photoUI = ArkPhotoImport.mount($('skin-photo'), { available:()=>state.authenticated&&state.modules?.wardrobe===true&&state.skins.length<state.limit, busy:()=>state.busy, onCreate:editor=>{newSkin(editor);$('skin-name').focus();} });
   const statuses = { draft:'Entwurf',preparing:'Wird vorbereitet …',ready:'Bereit',saved:'Gespeichert',applied:'Im Spiel aktiv',failed:'Aktivierung fehlgeschlagen' };
   const draft = () => state.drafts.get(state.current);
   const dirty = item => item && (item.editor.dirty || item.name !== item.savedName || !item.id);
-  const hasDirty = () => supportUI.hasDirty() || [...state.drafts.values()].some(dirty);
+  const hasDirty = () => photoUI.hasDirty() || supportUI.hasDirty() || [...state.drafts.values()].some(dirty);
   function notice(text,error=false) { $('player-message').hidden=!text; $('player-message').textContent=t(text); $('player-message').classList.toggle('error',error); }
   function status(text,error=false) { $('skin-status').textContent=t(text); $('skin-status').classList.toggle('error',error); }
   async function api(path,method='GET',body) {
@@ -23,6 +24,7 @@
   function showLogin(text='') {
     state.authenticated=false;state.modules=null;
     supportUI.clear();
+    photoUI.clear();
     state.authenticated=false; state.modules=null; state.csrf=null; state.loadSerial++;
     $('pair-view').hidden=false; $('player-app').hidden=true; $('player-logout').hidden=true;
     $('pair-message').textContent=t(text); $('pair-submit').disabled=false;
@@ -31,6 +33,7 @@
     // Keep local drafts on session expiry; a different account must never inherit them.
   }
   async function signedIn(data) {
+    photoUI.clear();
     if(state.username && state.username!==data.username) { state.drafts.clear(); state.current=null; }
     state.username=data.username; state.csrf=data.csrf; state.authenticated=true;
     $('player-greeting').textContent=data.username; $('pair-view').hidden=true; $('player-app').hidden=false; $('player-logout').hidden=false; $('pair-code').value='';
@@ -93,10 +96,11 @@
     }
     state.current=key; const item=draft(); $('skin-name').value=item.name; $('skin-model').value=item.editor.model; $('editor-empty').hidden=true; $('skin-form').hidden=false; status(''); renderLibrary(); render();
   }
-  function newSkin() {
-    const key='draft-'+crypto.randomUUID(); const item={id:null,name:t('Neuer Skin'),savedName:'',revision:null,editor:new SkinEditor()}; state.drafts.set(key,item); selectSkin(key);
+  function newSkin(editor=new SkinEditor()) {
+    const key='draft-'+crypto.randomUUID(); const item={id:null,name:t('Neuer Skin'),savedName:'',revision:null,editor}; state.drafts.set(key,item); selectSkin(key);
   }
   function updateControls() {
+    photoUI.updateAvailability();
     $('skin-fields').disabled=state.busy||state.modules?.wardrobe!==true; $('skin-new').disabled=state.busy||state.modules?.wardrobe!==true||state.skins.length>=state.limit;
     const item=draft(); if(!item) return;
     $('skin-undo').disabled=state.busy||!item.editor.history.length; $('skin-redo').disabled=state.busy||!item.editor.future.length;
@@ -119,14 +123,7 @@
     for(let y=0;y<=h;y++){ctx.beginPath();ctx.moveTo(0,y*zoom+.5);ctx.lineTo(w*zoom,y*zoom+.5);ctx.stroke();}
     ctx.strokeStyle='#ffffff'; ctx.lineWidth=2; ctx.strokeRect(cursor.x*zoom+1,cursor.y*zoom+1,zoom-2,zoom-2);
     $('paint-position').textContent=t('Pixel {x}, {y} · {width} × {height}',{x:cursor.x+1,y:cursor.y+1,width:w,height:h});
-    for(const [id,face] of [['skin-front','front'],['skin-back','back']]) {
-      const preview=$(id),p=preview.getContext('2d'); p.imageSmoothingEnabled=false;p.clearRect(0,0,128,256);
-      const arm=item.editor.model==='slim'?3:4,back=face==='back';
-      const positions={head:[4,0,8,8],body:[4,8,8,12],right_arm:[back?12:4-arm,8,arm,12],left_arm:[back?4-arm:12,8,arm,12],right_leg:[back?8:4,20,4,12],left_leg:[back?4:8,20,4,12]};
-      for(const part of SkinEditor.parts) for(const layer of ['base','overlay']) {
-        const uv=SkinEditor.faceRect(part,face,layer,item.editor.model),[x,y,dw,dh]=positions[part]; p.drawImage(texture,...uv,x*8,y*8,dw*8,dh*8);
-      }
-    }
+    item.editor.drawPreview($('skin-front'),'front');item.editor.drawPreview($('skin-back'),'back');
   }
   function paint(x,y) {
     const [, , w,h]=rect(); if(x<0||x>=w||y<0||y>=h)return;
@@ -151,7 +148,7 @@
   $('skin-name').addEventListener('input',()=>{draft().name=$('skin-name').value;updateControls();renderLibrary();});
   $('skin-model').addEventListener('change',()=>{draft().editor.setModel($('skin-model').value);render();renderLibrary();});
   $('skin-undo').addEventListener('click',()=>{draft().editor.undo();render();renderLibrary();});$('skin-redo').addEventListener('click',()=>{draft().editor.redo();render();renderLibrary();});
-  $('skin-new').addEventListener('click',newSkin);
+  $('skin-new').addEventListener('click',()=>newSkin());
   $('skin-form').addEventListener('submit',event=>{event.preventDefault();run(async()=>{
     const item=draft(),oldKey=state.current,payload={name:item.name.trim(),model:item.editor.model,png:item.editor.toPNG(),...(item.id?{revision:item.revision}:{})};
     const data=await api('skins'+(item.id?'/'+encodeURIComponent(item.id):''),item.id?'PUT':'POST',payload);

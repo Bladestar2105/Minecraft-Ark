@@ -22,6 +22,7 @@ jobs:
         with:
           node-version: '24'
       - run: node panel/test_skin_editor.mjs
+      - run: node panel/test_photo_skin.mjs
       - run: node panel/test_ui.mjs
   plugins:
     runs-on: ubuntu-latest

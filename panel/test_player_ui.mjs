@@ -11,6 +11,7 @@ assert.ok(modulePath,'Set PLAYWRIGHT_MODULE to an installed Playwright index.mjs
 const { chromium }=await import(pathToFileURL(modulePath));
 let authenticated=false,skins=[],nextId=1,recovery=false,activatePolls=0,passwordConfigured=true,passwordResetAllowed=false;
 const writes=[],headers=[],errors=[];
+let delaySkinWrite=false,releaseSkinWrite=null;
 const server=createServer(async(req,res)=>{
   let raw='';for await(const chunk of req)raw+=chunk;
   const body=raw?JSON.parse(raw):undefined;
@@ -37,6 +38,7 @@ const server=createServer(async(req,res)=>{
   if(action==='activate'){skins.forEach(s=>s.selected=false);skin.selected=true;skin.status='preparing';activatePolls=1;return send({skin},202);}
   if(action==='copy'){const copy={...skin,id:String(nextId++),name:body.name,revision:1,selected:false,status:'draft'};skins.push(copy);return send({skin:copy},201);}
   if(req.method==='DELETE'){if(skin.selected)return send({error:'Activate another skin before deleting this one.'},400);skins=skins.filter(s=>s!==skin);return send({ok:true});}
+  if(delaySkinWrite&&req.method==='PUT')await new Promise(resolve=>releaseSkinWrite=resolve);
   Object.assign(skin,body,{revision:skin.revision+1});return send({skin});
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -64,7 +66,7 @@ try{
   await page.locator('#skin-list button').first().click();await page.locator('#skin-list button').nth(1).click();assert.equal(await page.locator('#skin-name').inputValue(),'Unsaved renamed skin','Library changes retain each draft');
   await page.locator('#language').selectOption('de');assert.equal(await page.locator('#skin-name').inputValue(),'Unsaved renamed skin');assert.equal(await page.locator('#skin-model').inputValue(),'slim');
   await page.getByRole('heading',{name:'Profil & Statistik'}).waitFor();
-  assert.ok((await page.locator('[data-wiki="Skin-Editor"]').getAttribute('href')).endsWith('/Skin-Editor-DE'));
+  assert.ok((await page.locator('[data-wiki="Skin-Editor"]').first().getAttribute('href')).endsWith('/Skin-Editor-DE'));
   await page.locator('#language').selectOption('en');
   skins[1].revision=2;await page.locator('#skin-save').click();await page.waitForFunction(()=>document.getElementById('player-message').textContent.includes('changed'));
   assert.equal(await page.locator('#skin-name').inputValue(),'Unsaved renamed skin','A stale write preserves the local draft');
@@ -105,7 +107,100 @@ try{
   passwordResetAllowed=false;
   await page.locator('#player-username').fill('Alice');await page.locator('#player-password').fill('reset-server-password');await page.locator('#player-login-form button').click();
   await page.waitForFunction(()=>document.getElementById('account-current').required&&document.getElementById('account-current-hint').textContent.includes('aktuelles Serverpasswort'));
+  // Independent body/clothing textures from front and rear photos stay local.
+  await page.locator('#language').selectOption('en');
+  await page.locator('#skin-new').click();await page.locator('#skin-name').fill('Keep this unsaved draft');
+  const originalDraftCount=await page.locator('#skin-list button').count();
+  assert.equal(await page.locator('#photo-front-file').count(),1,'Separate front and rear photo sources are required');
+  const photo=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=256;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='#ff0000';ctx.fillRect(0,0,128,128);ctx.fillStyle='#00ff00';ctx.fillRect(128,0,128,128);return c.toDataURL('image/png').split(',')[1];});
+  const rearPhoto=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=256;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='#0000ff';ctx.fillRect(0,0,128,128);ctx.fillStyle='#ffff00';ctx.fillRect(128,0,128,128);return c.toDataURL('image/png').split(',')[1];});
+  const writesBeforePhoto=writes.length;
+  await page.locator('#skin-photo-open').click();
+  await page.locator('#photo-front-file').setInputFiles({name:'PRIVATE-front-photo.png',mimeType:'image/png',buffer:Buffer.from(photo,'base64')});
+  await page.waitForFunction(()=>!document.getElementById('photo-apply').disabled);
+  await page.locator('#photo-back-file').setInputFiles({name:'PRIVATE-back-photo.png',mimeType:'image/png',buffer:Buffer.from(rearPhoto,'base64')});
+  await page.waitForFunction(()=>!document.getElementById('photo-fields').disabled&&!document.getElementById('photo-apply').disabled);
+  async function region(view,part,x,y,width,height) {
+    await page.locator('#photo-view').selectOption(view);await page.locator('#photo-part').selectOption(part);
+    await page.evaluate(async rect=>{const set=(key,value)=>{const input=document.getElementById('photo-'+key);input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));};set('x',0);set('y',0);await new Promise(requestAnimationFrame);set('width',rect.width);set('height',rect.height);await new Promise(requestAnimationFrame);set('x',rect.x);set('y',rect.y);await new Promise(requestAnimationFrame);},{x,y,width,height});
+  }
+  assert.equal(await page.locator('#photo-front-state').textContent(),'Image loaded.');assert.equal(await page.locator('#photo-back-state').textContent(),'Image loaded.');
+  await region('front','head',128,0,128,128);await region('front','body',0,0,128,128);
+  await region('back','head',0,0,128,128);await region('back','body',128,0,128,128);
+  await page.locator('#photo-model').selectOption('slim');
+  await page.locator('#photo-view').selectOption('front');await page.locator('#photo-mode').selectOption('hair');
+  const photoBox=await page.locator('#photo-canvas').boundingBox();
+  await page.locator('#photo-canvas').click({position:{x:photoBox.width*.2,y:photoBox.height*.5}});
+  assert.equal(await page.locator('#photo-hair').inputValue(),'#ff0000','Pipette samples the selected source photo');
+  await page.waitForFunction(()=>{const pixel=(id,x,y)=>[...document.getElementById(id).getContext('2d').getImageData(x,y,1,1).data];return pixel('photo-front',64,32).join()==='0,255,0,255'&&pixel('photo-back',64,32).join()==='0,0,255,255'&&pixel('photo-front',64,100).join()==='255,0,0,255'&&pixel('photo-back',64,100).join()==='255,255,0,255';});
+  await page.locator('#language').selectOption('de');
+  assert.equal(await page.locator('#photo-model').inputValue(),'slim');assert.equal(await page.locator('#photo-part').inputValue(),'body');
+  assert.ok((await page.locator('#skin-photo [data-wiki]').getAttribute('href')).endsWith('/Skin-Editor-DE'));
+  assert.equal(writes.length,writesBeforePhoto,'Both photo uploads, body crop alignment and preview stay local');
+  assert.equal(await page.evaluate(p=>[...Object.values(localStorage),...Object.values(sessionStorage)].join('').includes(p)),false,photo);
+  await page.setViewportSize({width:1380,height:1000});await page.locator('#skin-photo').screenshot({path:new URL('../output/playwright/photo-skin-desktop.png',import.meta.url).pathname});
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Full-body photo controls fit a mobile viewport');
+  await page.locator('#skin-photo').screenshot({path:new URL('../output/playwright/photo-skin-mobile.png',import.meta.url).pathname});
+  await page.locator('#photo-apply').click();
+  assert.equal(await page.locator('#skin-list button').count(),originalDraftCount+1);
+  assert.equal(await page.locator('#skin-model').inputValue(),'slim');
+  for(const id of ['photo-front-file','photo-back-file'])assert.equal(await page.locator('#'+id).inputValue(),'','Original source file reference cleared');
+  const newDraftName=await page.locator('#skin-name').inputValue();
+  await page.getByRole('button',{name:'Keep this unsaved draft',exact:false}).click();
+  assert.equal(await page.locator('#skin-name').inputValue(),'Keep this unsaved draft','Full body conversion preserves previous unsaved work');
+  await page.getByRole('button',{name:newDraftName,exact:false}).click();
+  await page.locator('#skin-name').fill('Photo kit');await page.locator('#skin-save').click();
+  await page.waitForFunction(()=>document.getElementById('skin-dirty').textContent==='Gespeichert');
+  const savedPhoto=skins.find(s=>s.name==='Photo kit');assert.equal(savedPhoto.model,'slim');
+  assert.notEqual(savedPhoto.png,photo);assert.notEqual(savedPhoto.png,rearPhoto);assert.deepEqual(Object.keys(writes.findLast(w=>w.path==='skins').body).sort(),['model','name','png']);
+  const pixels=await page.evaluate(async png=>{const skin=await SkinEditor.fromPNG(png,'slim');return [[8,8],[24,8],[20,20],[32,20]].map(([x,y])=>[...skin.pixels.slice((y*64+x)*4,(y*64+x)*4+4)]);},savedPhoto.png);
+  assert.deepEqual(pixels,[[0,255,0,255],[0,0,255,255],[255,0,0,255],[255,255,0,255]],'Independent face and jersey front/rear textures survive Save');
+  await page.locator('#skin-paint').focus();await page.keyboard.press('Space');await page.locator('#skin-undo').click();
+  assert.equal(await page.locator('#skin-dirty').textContent(),'Gespeichert','Generated skins use normal undo history');
+  await page.locator('#skin-photo-open').click();
+  await page.locator('#photo-front-file').setInputFiles({name:'broken.png',mimeType:'image/png',buffer:Buffer.from('invalid image')});
+  await page.waitForFunction(()=>document.getElementById('photo-status').textContent.length>0&&!document.getElementById('photo-status').textContent.includes('…'));
+  assert.equal(await page.locator('#photo-apply').isDisabled(),true);
+  await page.locator('#photo-cancel').click();assert.equal(await page.locator('#photo-panel').isVisible(),false);
+  // Front and rear decodes are independent and may finish in reverse order.
+  await page.evaluate(()=>{const decode=HTMLImageElement.prototype.decode;window.originalPhotoDecode=decode;window.photoReleases=[];HTMLImageElement.prototype.decode=async function(){await decode.call(this);await new Promise(resolve=>window.photoReleases.push(resolve));};});
+  await page.locator('#skin-photo-open').click();
+  await page.locator('#photo-front-file').setInputFiles({name:'parallel-front.png',mimeType:'image/png',buffer:Buffer.from(photo,'base64')});
+  await page.waitForFunction(()=>window.photoReleases.length===1);
+  await page.locator('#photo-back-file').setInputFiles({name:'parallel-back.png',mimeType:'image/png',buffer:Buffer.from(rearPhoto,'base64')});
+  await page.waitForFunction(()=>window.photoReleases.length===2);
+  await page.evaluate(()=>window.photoReleases[1]());
+  await page.waitForFunction(()=>document.getElementById('photo-status').textContent.includes('geladen'));
+  assert.equal(await page.locator('#photo-apply').isDisabled(),true,'Wait for all selected photos to finish');
+  await page.evaluate(()=>window.photoReleases[0]());await page.waitForFunction(()=>!document.getElementById('photo-apply').disabled);
+  const heads=await page.evaluate(()=>['photo-front','photo-back'].map(id=>[...document.getElementById(id).getContext('2d').getImageData(36,32,1,1).data]));
+  assert.deepEqual(heads,[[255,0,0,255],[0,0,255,255]],'Out-of-order image completion retains both independent sources');
+  await page.locator('#photo-cancel').click();await page.evaluate(()=>{HTMLImageElement.prototype.decode=window.originalPhotoDecode;});
+  // A front photo decoded while an unrelated Save is busy must be ready without another edit.
+  await page.evaluate(()=>{const decode=HTMLImageElement.prototype.decode;window.originalPhotoDecode=decode;HTMLImageElement.prototype.decode=async function(){await decode.call(this);await new Promise(resolve=>window.releasePhoto=resolve);};});
+  await page.locator('#skin-photo-open').click();
+  await page.locator('#photo-front-file').setInputFiles({name:'while-saving.png',mimeType:'image/png',buffer:Buffer.from(photo,'base64')});
+  await page.waitForFunction(()=>typeof window.releasePhoto==='function');
+  delaySkinWrite=true;await page.locator('#skin-save').click();
+  await page.waitForFunction(()=>document.getElementById('photo-front-file').disabled);
+  await page.evaluate(()=>window.releasePhoto());
+  await page.waitForFunction(()=>document.getElementById('photo-status').textContent.includes('geladen'));
+  assert.equal(typeof releaseSkinWrite,'function');releaseSkinWrite();delaySkinWrite=false;
+  await page.waitForFunction(()=>!document.getElementById('photo-front-file').disabled);
+  assert.equal(await page.locator('#photo-apply').isEnabled(),true,'Photo decoded during Save is immediately ready after Save');
+  await page.locator('#photo-cancel').click();
+  await page.evaluate(()=>{HTMLImageElement.prototype.decode=window.originalPhotoDecode;delete window.releasePhoto;});
+  // Finish a valid decode after logout: neither source may reopen the photo dialog.
+  await page.evaluate(()=>{const decode=HTMLImageElement.prototype.decode;HTMLImageElement.prototype.decode=async function(){await decode.call(this);await new Promise(resolve=>window.releasePhoto=resolve);};});
+  await page.locator('#skin-photo-open').click();
+  await page.locator('#photo-front-file').setInputFiles({name:'late.png',mimeType:'image/png',buffer:Buffer.from(photo,'base64')});
+  await page.waitForFunction(()=>typeof window.releasePhoto==='function');
+  await page.locator('#player-logout').click();await page.locator('#pair-view').waitFor({state:'visible'});
+  await page.evaluate(()=>window.releasePhoto());
+  assert.equal(await page.locator('#photo-panel').isVisible(),false);assert.equal(await page.locator('#photo-front-file').inputValue(),'');
+  assert.equal(writes.some(w=>JSON.stringify(w.body).includes('PRIVATE-')||JSON.stringify(w.body).includes(photo)||JSON.stringify(w.body).includes(rearPhoto)),false,'Original front/rear photos and filenames never reach an API');
   assert.ok(headers.every(h=>['de','en'].includes(h['accept-language'])),'Every API call sends the current locale');
   assert.deepEqual(errors,[]);
-  console.log('PASS /play/ direct login, own profile, all72 UV faces, draft retention, DE/EN, revisions, import rejection, copy/activate/active-delete, recovery/password/recover, initial password/game-proof reset, configured-password guards and mobile layout');
+  console.log('PASS /play/ direct login, own profile, all72 UV faces, draft retention, DE/EN, revisions, import rejection, copy/activate/active-delete, recovery/password/recover, initial password/game-proof reset, configured-password guards mobile layout and local photo draft privacy/crop/color/front-back previews/cancel/late/busy decoding');
 }finally{await page.close();await browser.close();await new Promise(resolve=>server.close(resolve));}

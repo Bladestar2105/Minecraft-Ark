@@ -7,7 +7,7 @@ Use Docker with Compose v2, Python 3.10+ and **JDK 25** for the source build. Pr
 ## Fresh source checkout
 
 ```sh
-git clone --branch app-2026-11-07-preview https://github.com/Bladestar2105/Minecraft-Ark.git
+git clone --branch app-2026-11-07-photo-preview https://github.com/Bladestar2105/Minecraft-Ark.git
 cd Minecraft-Ark
 # Set JAVA_HOME to JDK 25 if PATH uses another JDK.
 python3 scripts/build_plugins.py
