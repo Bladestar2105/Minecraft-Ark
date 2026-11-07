@@ -181,6 +181,19 @@ class UnifiedAuthTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 404, (prefix + name, response.json))
         self.assertEqual(len(self.native.calls), calls)
 
+    def test_new_permission_and_rate_errors_follow_the_selected_language(self):
+        self.assertEqual(self.login().status_code, 200)
+        denied = self.client.get('/api/configs', headers={'Accept-Language': 'en'})
+        self.assertEqual(denied.status_code, 403)
+        self.assertEqual(denied.json['error'], 'Administrator privileges are required.')
+        for app in (self.app, self.player):
+            client = app.test_client()
+            for _ in range(41):
+                response = client.get('/api/session', headers={'Accept-Language': 'en'},
+                                      environ_overrides={'REMOTE_ADDR': '203.0.113.73'})
+            self.assertEqual(response.status_code, 429)
+            self.assertEqual(response.json['error'], 'Too many requests. Please try again later.')
+
 
 if __name__ == '__main__':
     unittest.main()
