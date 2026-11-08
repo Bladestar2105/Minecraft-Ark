@@ -277,9 +277,13 @@ final class DinoAquatic implements Listener {
         if(swimmer.breachTicks>0) {
             destination.setYaw(swimmer.launch.getYaw());event.setTo(destination);
             var swept=body(mob,event.getFrom()).union(body(mob,destination));
-            if(!navigationLoaded(mob)||!swimmer.corridor.contains(swept)||!clear(mob.getWorld(),swept,false)) {
+            // A return step can cross just below the saved launch plane before the next tick recognizes landing.
+            boolean waterLanding=destination.getY()<event.getFrom().getY()
+                    &&swimmer.corridor.clone().expandDirectional(0,-.25,0).contains(swept)
+                    &&clear(mob.getWorld(),body(mob,destination),true);
+            if(!navigationLoaded(mob)||(!swimmer.corridor.contains(swept)&&!waterLanding)||!clear(mob.getWorld(),swept,false)) {
                 event.setCancelled(true);stop(mob);mob.setVelocity(new Vector(0,-.2,0));
-            } else mob.setBodyYaw(destination.getYaw());
+            } else {if(waterLanding)swimmer.corridor.union(swept);mob.setBodyYaw(destination.getYaw());}
             return;
         }
         if (!safe(mob, destination)) {

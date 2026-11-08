@@ -256,6 +256,12 @@ try {
     assert.equal(after64.uuid,before16.uuid);assert.ok(travel16>1,`16-block activation should swim horizontally from shore, moved ${travel16}`);
     await command(`aquaticfixture activation ${prior.waterActivation} ${prior.view} ${prior.simulation}`);return report.activationProbe;
   });
+  await check('Persisted live surface-margin breach resumes from stopped NoAI when loaded without changing entity',async()=>{
+    await resetMosa();await command('aquaticfixture activation 16 6 4');await command('aquaticfixture teleport aquatic_mosa 0 12.646769972037134 0 -157.90941');
+    await command('data modify entity @e[tag=aquatic_mosa,limit=1] BukkitValues."arkdinos:breach-origin-y" set value 12.49884014719662d');await command('data modify entity @e[tag=aquatic_mosa,limit=1] NoAI set value 1b');
+    const before=await inspect('aquatic_mosa'),safetyBefore=await command('aquaticfixture safety aquatic_mosa');await delay(5000);const after=await inspect('aquatic_mosa'),safetyAfter=await command('aquaticfixture safety aquatic_mosa');
+    report.surfaceMarginProbe={before,safetyBefore,after,safetyAfter};assert.equal(after.uuid,before.uuid);assert.equal(after.breachOrigin,'null');assert.match(safetyAfter,/safe=true;navigation=true/);assert.ok(Number(after.horizontal)-Number(before.horizontal)>1,'Recovered Mosa must resume horizontal swimming');assert.equal(after.health,before.health);return report.surfaceMarginProbe;
+  });
   await check('Corner recovery observation separates geometric yaw rejection from activation',async()=>{
     await resetMosa();await command('aquaticfixture activation 64 6 4');await command('aquaticfixture teleport aquatic_mosa -0.04691707458942336 9.975689623215539 13.387228889792365 117.513275');await command('aquaticfixture path aquatic_mosa 0 9 0');
     const before=await inspect('aquatic_mosa');await delay(25000);const natural=await inspect('aquatic_mosa');await command('aquaticfixture path aquatic_mosa 0 9 0');await delay(5000);const retried=await inspect('aquatic_mosa');

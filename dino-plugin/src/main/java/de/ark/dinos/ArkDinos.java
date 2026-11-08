@@ -154,6 +154,8 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         return care.adult(entity);
     }
 
+    Entity combatTarget(Entity target) { return models.resolveTarget(target); }
+
     void attackAnimation(Mob mob, boolean spit) {
         models.attack(mob, spit);
     }

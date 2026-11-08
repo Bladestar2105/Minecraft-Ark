@@ -6,6 +6,22 @@ from test_model_poses import pose
 
 
 class MosasaurusMotionTest(unittest.TestCase):
+    def test_five_explicit_hitboxes_do_not_add_visible_geometry(self):
+        model=mosasaurus()
+        colliders=getattr(model,'colliders',[])
+        self.assertEqual(len(colliders),5)
+        self.assertTrue(all(c['type']=='bounding_box' and c['name'].startswith('b_mosa_') for c in colliders))
+        self.assertFalse(any(c['name'].startswith('b_mosa_') for c in model.elements))
+        centers=[]
+        for collider in colliders:
+            size=[(b-a)/16 for a,b in zip(collider['from'],collider['to'])]
+            self.assertTrue(all(v>0 for v in size))
+            self.assertLessEqual(max(size[0],size[2])/min(size[0],size[2]),2)
+            self.assertLessEqual(max(size),5)
+            centers.append(sum(collider[k][2] for k in ('from','to'))/32)
+        self.assertLess(min(centers),-7)
+        self.assertGreater(max(centers),8)
+
     def test_loop_tracks_have_exact_endpoints_and_unique_channel_times(self):
         model=mosasaurus()
         for animation in model.animations:

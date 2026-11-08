@@ -5,6 +5,8 @@ public final class GroundSpeedsTest {
         var slow=GroundSpeeds.pace("brachiosaurus");var fast=GroundSpeeds.pace("velociraptor");
         check(slow.walk()==1&&slow.run()==2,"Heavy browser uses deliberate ground paces");
         check(fast.walk()==2&&fast.run()==7,"Small runner stays within the bounded gameplay cap");
+        var rex=GroundSpeeds.pace("trex");
+        check(rex.walk()==1.5&&rex.run()==6,"T-Rex receives the requested modest pace increase");
         for(var species:new String[]{"brachiosaurus","stegosaurus","triceratops","trex","velociraptor","dilophosaurus","pteranodon"}) {
             var pace=GroundSpeeds.pace(species);check(pace.walk()>0&&pace.run()>pace.walk()&&pace.run()<=7,"Every species walks and sprints within bounds");
             for(boolean running:new boolean[]{false,true}) {

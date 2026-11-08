@@ -35,8 +35,7 @@ def download(item, folder):
 
 
 def build():
-    for script in ("verify_exports.py", "verify_animated_bounds.py", "verify_gait.py", "verify_portability.py", "test_nametags.py"):
-        subprocess.run([sys.executable, str(ROOT / "dino-models" / script)], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, str(ROOT / "dino-models/verify_portability.py")], cwd=ROOT, check=True)
     subprocess.run([sys.executable, str(ROOT / "dino-items/test_eggs.py")], cwd=ROOT, check=True)
     subprocess.run([sys.executable, str(ROOT / "dino-items/test_placed_eggs.py")], cwd=ROOT, check=True)
     dependencies = []

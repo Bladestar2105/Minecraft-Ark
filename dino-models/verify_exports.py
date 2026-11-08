@@ -8,7 +8,7 @@ summary=[]
 for name in sorted(expected):
     p=ROOT/'models'/name;m=json.loads((p/(name+'.bbmodel')).read_text());design=json.loads((p/'design.json').read_text())
     geo=json.loads((p/(name+'.geo.json')).read_text())['minecraft:geometry'][0];anims=json.loads((p/(name+'.animation.json')).read_text())['animations']
-    cubes=m['elements'];groups={g['name']:g for g in m['groups']};bones={g['name']:g for g in geo['bones']}
+    cubes=[e for e in m['elements'] if e['type']=='cube'];colliders=[e for e in m['elements'] if e['type']=='bounding_box'];groups={g['name']:g for g in m['groups']};bones={g['name']:g for g in geo['bones']}
     assert len(cubes)==design['cubes']==sum(len(b['cubes']) for b in bones.values())
     assert len(groups)==design['bones']==len(bones)
     assert len({c['name'] for c in cubes})==len(cubes) and len({c['uuid'] for c in cubes})==len(cubes)
@@ -20,7 +20,9 @@ for name in sorted(expected):
         assert node['uuid'] not in parents;parents[node['uuid']]=parent
         for child in node['children']:visit(child,node['uuid'])
     for node in m['outliner']:visit(node)
-    assert set(ownership)=={c['uuid'] for c in cubes}
+    assert set(ownership)=={c['uuid'] for c in m['elements']}
+    assert all(c['name'].startswith('b_') and all(b>a for a,b in zip(c['from'],c['to'])) for c in colliders)
+    assert len(colliders)==(5 if name=='ark_mosasaurus' else 0)
     assert set(parents)=={g['uuid'] for g in groups.values()}
     for g in groups.values():
         b=bones[g['name']];assert b['pivot']==[-g['origin'][0],*g['origin'][1:]]

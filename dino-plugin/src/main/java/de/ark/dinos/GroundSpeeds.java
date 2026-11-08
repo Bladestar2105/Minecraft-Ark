@@ -8,7 +8,7 @@ final class GroundSpeeds {
             case "brachiosaurus" -> new Pace(1,2);
             case "stegosaurus" -> new Pace(1,2.8);
             case "triceratops" -> new Pace(1.4,4.6);
-            case "trex" -> new Pace(1.3,5);
+            case "trex" -> new Pace(1.5,6);
             case "velociraptor" -> new Pace(2,7);
             case "dilophosaurus" -> new Pace(1.8,6);
             case "pteranodon" -> new Pace(1.4,3);

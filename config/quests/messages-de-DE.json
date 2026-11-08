@@ -1,0 +1,5 @@
+{
+  "questListTitle": "Missionen: /quests take <Name> (Nummern sind nur Listenplätze)",
+  "questNotFound": "Quest '<input>' nicht gefunden. Nutze /quests take <Name> aus /quests list, z. B. /quests take Nachtwache. Listennummern sind keine Quest-IDs.",
+  "COMMAND_TAKE_HELP": "<command> <Name> - Mission über ihren Namen annehmen, nicht über die Listennummer."
+}

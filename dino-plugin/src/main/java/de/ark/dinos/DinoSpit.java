@@ -98,7 +98,7 @@ final class DinoSpit implements Listener {
         boolean allowed = !event.isCancelled();
         event.setCancelled(true);
         shot.ball().remove();
-        if (allowed && shot.target().equals(event.getHitEntity()) && valid(shot) && shot.source().hasLineOfSight(shot.target())
+        if (allowed && shot.target().equals(plugin.combatTarget(event.getHitEntity())) && valid(shot) && shot.source().hasLineOfSight(shot.target())
                 && combat.damage(shot.source(), shot.target(), 3, false)) {
             shot.target().addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
             shot.target().addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 0));

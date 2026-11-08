@@ -25,6 +25,7 @@ import kr.toxicity.model.api.animation.AnimationIterator;
 import kr.toxicity.model.api.animation.AnimationModifier;
 import kr.toxicity.model.api.animation.AnimationOverrideState;
 import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
+import kr.toxicity.model.api.nms.HitBox;
 import kr.toxicity.model.api.tracker.ModelScaler;
 import kr.toxicity.model.api.tracker.EntityTracker;
 import kr.toxicity.model.api.tracker.TrackerModifier;
@@ -104,6 +105,12 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
             this.name = name;
             previousLocation = mob.getLocation();
         }
+    }
+
+    Entity resolveTarget(Entity entity) {
+        if (!(entity instanceof HitBox hitBox)) return entity;
+        Entity source = entity.getServer().getEntity(hitBox.source().uuid());
+        return source == null ? entity : source;
     }
 
     BetterModelAdapter(JavaPlugin plugin) {

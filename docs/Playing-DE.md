@@ -30,7 +30,7 @@ Der Besitzer steigt mit **leerer Haupthand + Benutzen** auf einen freien eigenen
 
 Wähle mit einer Goldschaufel gegenüberliegende Grundstücksecken; ein Stock zeigt vorhandene Grundstücke. Befehle: `/claimslist`, `/trust Name`, `/untrust Name`, `/trustlist`, `/abandonclaim`. Anfangs gibt es 1.000 Anspruchsblöcke, weitere 100 je aktiver Stunde bis 10.000. Öffentliche Bauten haben getrennten Schutz.
 
-`/quests list` zeigt zehn Missionen. Beispiel: `/quests take Werkzeugmacher`, danach mit `Ja` bestätigen. Gruppen: `/party create Name`, `/party invite Name`, `/party accept`. Jeder muss dieselbe Mission selbst annehmen. Kreativaktionen zählen nicht. `/trigger rang` zeigt die bestehenden Abenteuerpunkte des Welt-Datapacks; Ränge verleihen keine Kampfboni.
+`/quests list` zeigt verfügbare Missionen. Die Nummern sind nur Listenplätze, keine Quest-IDs: `/quests take` erwartet den **angezeigten Namen**, zum Beispiel `/quests take Nachtwache`, nicht `/quests take 7`. Nachtwache setzt weiterhin Material fürs Lager voraus. Beispiel: `/quests take Werkzeugmacher`, danach mit `Ja` bestätigen. Gruppen: `/party create Name`, `/party invite Name`, `/party accept`. Jeder muss dieselbe Mission selbst annehmen. Kreativaktionen zählen nicht. `/trigger rang` zeigt die bestehenden Abenteuerpunkte des Welt-Datapacks; Ränge verleihen keine Kampfboni.
 
 Das Spawnportal führt zur getrennten flachen Kreativwelt und zurück. Inventar, Rüstung, Nebenhand, Endertruhe und Erfahrung bleiben in ihrer Weltgruppe. Fahrzeuge, Kreaturen und gedroppte Gegenstände nutzen die Portale nicht. Der Ankunftspavillon ist geschützt; außerhalb darf gebaut werden.
 

@@ -9,6 +9,7 @@ CAMERA=(.6,.5,-.8)
 FACES=dict(north=[0,3,2,1],south=[4,5,6,7],west=[0,4,7,3],east=[1,2,6,5],up=[3,7,6,2],down=[0,1,5,4])
 def projection(v):x,y,z=v;return .8*x+.6*z,.3*x-.4*z-y
 def animated_vertices(model,animation='idle',time=0,base_animation=None,base_time=0):
+    model=dict(model,elements=[e for e in model['elements'] if e['type']=='cube'])
     poses={c['uuid']:vertices(c) for c in model['elements']}
     selected=next((a for a in model.get('animations',[]) if a['name']==animation),None)
     if selected is None:return poses
@@ -39,6 +40,7 @@ def animated_vertices(model,animation='idle',time=0,base_animation=None,base_tim
     return poses
 
 def model_svg(model,design,box,view='perspective',animation='idle',time=0,ground=False,base_animation=None,reference_boxes=(),framing_points=()):
+    model=dict(model,elements=[e for e in model['elements'] if e['type']=='cube'])
     camera=(0,.25,-1) if view=='front' else (1,.25,0) if view=='side' else (.6,.12,-.8) if view=='mouth' else CAMERA
     project=(lambda v:(v[0],-v[1]-.25*v[2])) if view=='front' else (lambda v:(v[2],.25*v[0]-v[1])) if view=='side' else (lambda v:(.8*v[0]+.6*v[2],.072*v[0]-.096*v[2]-v[1])) if view=='mouth' else projection
     poses=animated_vertices(model,animation,time,base_animation)
@@ -114,7 +116,7 @@ def save(name,content,width,height):
 def main():
     models=[]
     for dirname in ['ark_trex','ark_triceratops','ark_stegosaurus','ark_brachiosaurus','ark_velociraptor','ark_pteranodon','ark_dilophosaurus','ark_mosasaurus']:
-        p=ROOT/'models'/dirname;m=json.loads((p/(dirname+'.bbmodel')).read_text());d=json.loads((p/'design.json').read_text());models.append((m,d))
+        p=ROOT/'models'/dirname;m=json.loads((p/(dirname+'.bbmodel')).read_text());m['elements']=[e for e in m['elements'] if e['type']=='cube'];d=json.loads((p/'design.json').read_text());models.append((m,d))
         subtitle=d['description'].split(' · ')
         content=text('ARK / '+d['label'],55,65,32,weight='bold')+text(' · '.join(subtitle[:2]),55,99,17,'#9dbbb4')
         content+=model_svg(m,d,(70,145,1060,550))

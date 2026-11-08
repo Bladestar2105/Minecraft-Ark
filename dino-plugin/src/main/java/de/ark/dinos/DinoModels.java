@@ -26,6 +26,16 @@ final class DinoModels implements AutoCloseable {
         }
     }
 
+    Entity resolveTarget(Entity entity) {
+        if (adapter == null) return entity;
+        try {
+            return adapter.resolveTarget(entity);
+        } catch (RuntimeException | LinkageError error) {
+            plugin.getLogger().warning("Dinosaur target unavailable: " + error.getMessage());
+            return entity;
+        }
+    }
+
     void attach(Mob mob, String modelName) {
         try {
             if (adapter == null || !plugin.getServer().getPluginManager().isPluginEnabled("BetterModel")

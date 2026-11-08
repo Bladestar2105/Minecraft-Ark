@@ -144,7 +144,7 @@ try {
  if(process.env.DINO_SPEED_ONLY==='1') {
   await command('gamemode creative @a');await command('fill -24 3 -24 40 3 40 stone');
   const species=process.env.DINO_SPEED_MODELS==='1'?['velociraptor','brachiosaurus']:['triceratops','stegosaurus','brachiosaurus','pteranodon','trex','velociraptor','dilophosaurus'];
-  const targets={brachiosaurus:[1,2],stegosaurus:[1,2.8],triceratops:[1.4,4.6],trex:[1.3,5],velociraptor:[2,7],dilophosaurus:[1.8,6],pteranodon:[1.4,3]};
+  const targets={brachiosaurus:[1,2],stegosaurus:[1,2.8],triceratops:[1.4,4.6],trex:[1.5,6],velociraptor:[2,7],dilophosaurus:[1.8,6],pteranodon:[1.4,3]};
   const within=(actual,target)=>assert.ok(Math.abs(actual-target)<=target*.1,`Measured ${actual}b/s differs from target ${target}b/s`);
   const samples={};const distance=(a,b)=>Math.hypot(Number(b.x)-Number(a.x),Number(b.z)-Number(a.z));const measured=(a,b)=>({before:a,after:b,blocksPerSecond:distance(a,b)*20/(Number(b.tick)-Number(a.tick))});
   await check(`${species.length} species match ground walk/run and real rider normal/sprint targets, return from sprint and stop without sliding`,async()=>{

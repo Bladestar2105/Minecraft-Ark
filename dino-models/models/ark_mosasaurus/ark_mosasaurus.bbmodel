@@ -24036,6 +24036,81 @@
         70.63078946776307,
         196.6
       ]
+    },
+    {
+      "name": "b_mosa_head",
+      "type": "bounding_box",
+      "uuid": "1fd6390d-0606-53f5-b052-c3c4ba907ffd",
+      "from": [
+        -14,
+        14,
+        -150
+      ],
+      "to": [
+        14,
+        36,
+        -96
+      ]
+    },
+    {
+      "name": "b_mosa_shoulders",
+      "type": "bounding_box",
+      "uuid": "46bf4ac5-3444-55a2-94e6-efbeed9c37bb",
+      "from": [
+        -24,
+        8,
+        -92
+      ],
+      "to": [
+        24,
+        43,
+        -30
+      ]
+    },
+    {
+      "name": "b_mosa_torso",
+      "type": "bounding_box",
+      "uuid": "da7f2c37-5f58-59ee-a1dc-85f88f5efaa4",
+      "from": [
+        -30,
+        1,
+        -32
+      ],
+      "to": [
+        30,
+        47,
+        48
+      ]
+    },
+    {
+      "name": "b_mosa_rear",
+      "type": "bounding_box",
+      "uuid": "f28a9dd2-aaca-5d71-b0a0-ee1c7c47bf94",
+      "from": [
+        -24,
+        6,
+        48
+      ],
+      "to": [
+        24,
+        40,
+        113
+      ]
+    },
+    {
+      "name": "b_mosa_tail",
+      "type": "bounding_box",
+      "uuid": "64d5ff7e-47da-5b53-b2c1-65920b17220c",
+      "from": [
+        -16,
+        10,
+        112
+      ],
+      "to": [
+        16,
+        30,
+        172
+      ]
     }
   ],
   "groups": [
@@ -24490,9 +24565,11 @@
                   "uuid": "99f33a85-1362-5a45-bee0-6d6b62049b3d",
                   "isOpen": true,
                   "children": []
-                }
+                },
+                "1fd6390d-0606-53f5-b052-c3c4ba907ffd"
               ]
-            }
+            },
+            "46bf4ac5-3444-55a2-94e6-efbeed9c37bb"
           ]
         },
         {
@@ -24574,15 +24651,18 @@
                 "2a2012f9-7294-59d0-8dd3-22bb43112ba5",
                 "cdf1adfe-67f0-59e1-bab6-899238f3b09b",
                 "b782ed1d-a255-5233-8cb1-fe8774e3e20e",
-                "892e2b62-6af3-5a19-845d-9549e833da6d"
+                "892e2b62-6af3-5a19-845d-9549e833da6d",
+                "64d5ff7e-47da-5b53-b2c1-65920b17220c"
               ]
             },
             "7ea169b9-b4f3-539a-ba82-4185eb7f6f73",
             "74c6f68a-b7aa-5b1a-b273-1c020e5b6108",
             "81640faa-152a-5225-ad0d-2c22f27ab467",
-            "3f602bf9-8b26-595d-b332-ad6fc0ef413c"
+            "3f602bf9-8b26-595d-b332-ad6fc0ef413c",
+            "f28a9dd2-aaca-5d71-b0a0-ee1c7c47bf94"
           ]
-        }
+        },
+        "da7f2c37-5f58-59ee-a1dc-85f88f5efaa4"
       ]
     }
   ],

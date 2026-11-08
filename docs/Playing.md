@@ -52,7 +52,7 @@ claims. Manage your land with `/claimslist`, `/trust Name`, `/untrust Name`,
 `/trustlist` and `/abandonclaim`. Starting budget: 1,000 blocks, increasing by 100
 per active hour up to 10,000. Public structures have separate protection.
 
-`/quests list` shows ten quests. Example: `/quests take Werkzeugmacher`, then
+`/quests list` shows available quests. The numbers are list positions, not quest IDs: use the **display name**, such as `/quests take Nachtwache`, rather than `/quests take 7`. Nachtwache still requires Material fürs Lager. Example: `/quests take Werkzeugmacher`, then
 confirm with `Ja` (German for yes). Parties: `/party create Name`, `/party invite Name`,
 `/party accept`. Every member must accept the same quest individually. Creative
 actions do not count. Parties must be installed successfully for group commands.

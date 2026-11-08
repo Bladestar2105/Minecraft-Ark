@@ -1,6 +1,7 @@
 package de.ark.dinos;
 
 import io.papermc.paper.event.player.PlayerArmSwingEvent;
+import io.papermc.paper.event.player.PrePlayerAttackEntityEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +99,7 @@ final class DinoCombat implements Listener {
         if (!plugin.owned(mob)) return predator(mob) && !plugin.formerOwner(mob, target)
                 && target instanceof Player player && player.isOnline() && plugin.survival(player);
         Player owner = owner(mob);
-        if (plugin.staying(mob) || owner == null || !owner.isOnline() || owner.isDead() || !plugin.survival(owner)
+        if (owner == null || (plugin.staying(mob) && !mob.getPassengers().contains(owner)) || !owner.isOnline() || owner.isDead() || !plugin.survival(owner)
                 || !owner.getWorld().equals(mob.getWorld()) || owner.getLocation().distanceSquared(mob.getLocation()) > 48 * 48
                 || target.equals(owner) || plugin.owned(target)) return false;
         if (target instanceof Player player && (!player.isOnline() || !plugin.survival(player)
@@ -125,8 +126,8 @@ final class DinoCombat implements Listener {
         plugin.stop(mob);
     }
 
-    private boolean meleeReach(Mob mob, LivingEntity target) {
-        return mob.getBoundingBox().expand(1.5, 1, 1.5).overlaps(target.getBoundingBox());
+    private boolean meleeReach(Mob mob, Entity contact) {
+        return mob.getBoundingBox().expand(1.5, 1, 1.5).overlaps(contact.getBoundingBox());
     }
 
     boolean damage(Mob mob, LivingEntity target, double amount, boolean nativeMelee) {
@@ -144,20 +145,26 @@ final class DinoCombat implements Listener {
         } finally { attacking = null; attackTarget = null; }
     }
 
-    private void attack(Mob mob, LivingEntity target) {
+    private boolean attack(Mob mob, LivingEntity target) {
+        return attack(mob,target,target);
+    }
+
+    private boolean attack(Mob mob, LivingEntity target, Entity contact) {
         int tick = Bukkit.getCurrentTick();
         Integer previous = lastAttack.get(mob.getUniqueId());
         if ((previous != null && tick - previous < 20) || !target.equals(targets.get(mob.getUniqueId()))
-                || !validTarget(mob, target) || !mob.hasLineOfSight(target)) return;
-        if (!meleeReach(mob, target)) {
+                || !validTarget(mob, target) || !mob.hasLineOfSight(contact)) return false;
+        if (!meleeReach(mob, contact)) {
             if ("dilophosaurus".equals(plugin.species(mob)) && spit.launch(mob, target)) {
                 lastAttack.put(mob.getUniqueId(), tick);
+                return true;
             }
-            return;
+            return false;
         }
         lastAttack.put(mob.getUniqueId(), tick);
         plugin.attackAnimation(mob, false);
         damage(mob, target, meleeDamage(mob), true);
+        return true;
     }
 
     private void tick() {
@@ -226,16 +233,33 @@ final class DinoCombat implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void swing(PlayerArmSwingEvent event) {
-        Player player = event.getPlayer();
-        if (event.getHand() != EquipmentSlot.HAND || !(player.getVehicle() instanceof Mob mob)
-                || !plugin.owned(mob) || !plugin.owner(mob).equals(player.getUniqueId().toString()) || !available(mob)) return;
+        if (event.getHand() == EquipmentSlot.HAND) manualAttack(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void playerAttack(PrePlayerAttackEntityEvent event) {
+        // Paper26.3 target attacks no longer emit the arm-swing event used for air punches.
+        if (plugin.combatTarget(event.getAttacked()) instanceof LivingEntity && manualAttack(event.getPlayer())) event.setCancelled(true);
+    }
+
+    private boolean manualAttack(Player player) {
+        if (!(player.getVehicle() instanceof Mob mob) || !plugin.survival(player)
+                || !plugin.owned(mob) || !plugin.owner(mob).equals(player.getUniqueId().toString()) || !available(mob)) return false;
+        int tick=Bukkit.getCurrentTick();
+        Integer previous=lastAttack.get(mob.getUniqueId());
+        if(previous!=null&&tick-previous<20)return true;
         var eye = player.getEyeLocation();
         var hit = player.getWorld().rayTrace(eye, eye.getDirection(), "dilophosaurus".equals(plugin.species(mob)) ? 8 : 5, FluidCollisionMode.NEVER, true, .2,
-                entity -> entity instanceof LivingEntity && !entity.equals(player) && !entity.equals(mob));
-        if (hit == null || !(hit.getHitEntity() instanceof LivingEntity target) || !validTarget(mob, target)) return;
-        targets.put(mob.getUniqueId(), target);
-        try { attack(mob, target); }
-        finally { targets.remove(mob.getUniqueId()); }
+                entity -> plugin.combatTarget(entity) instanceof LivingEntity target && !target.equals(player) && !target.equals(mob));
+        Entity contact=hit==null?null:hit.getHitEntity();
+        if (contact != null && plugin.combatTarget(contact) instanceof LivingEntity target && validTarget(mob, target)) {
+            targets.put(mob.getUniqueId(), target);
+            try { if(attack(mob, target, contact))return true; }
+            finally { targets.remove(mob.getUniqueId()); }
+        }
+        lastAttack.put(mob.getUniqueId(),tick);
+        plugin.attackAnimation(mob,false);
+        return true;
     }
 
     private void playerUnavailable(Player player) {

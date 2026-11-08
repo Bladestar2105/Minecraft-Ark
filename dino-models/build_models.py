@@ -39,7 +39,7 @@ def png_texture(colors):
 class Model:
     def __init__(self,name,label,colors,description):
         self.name=name;self.label=label;self.colors=colors;self.description=description
-        self.groups={};self.nodes={};self.elements=[];self.animations=[];self.feet=[];self.legs=[];self.growth_details={}
+        self.groups={};self.nodes={};self.elements=[];self.colliders=[];self.animations=[];self.feet=[];self.legs=[];self.growth_details={}
     def bone(self,name,pivot,parent=None):
         self.groups[name]=dict(name=name,origin=list(pivot),uuid=ident(self.name+'/'+name),rotation=[0,0,0],export=True)
         self.nodes[name]=dict(uuid=self.groups[name]['uuid'],isOpen=True,children=[])
@@ -107,6 +107,9 @@ class Model:
         pivot=self.groups['head']['origin'][:]
         pivot[1]=max(v[1] for cube in self.elements if cube['uuid'] in head_shapes for v in vertices(cube))+8
         self.bone('name_anchor',pivot,'head')
+    def collider(self,name,a,b,parent):
+        element=dict(name=name,type='bounding_box',uuid=ident(self.name+'/'+name),**{'from':list(a),'to':list(b)})
+        self.colliders.append(element);self.nodes[parent]['children'].append(element['uuid'])
     def finish(self):
         # Ground the lowest toe/sole exactly; all rest-pose shapes remain at or above the floor.
         low=min(v[1] for c in self.elements for v in vertices(c));shift=-low
@@ -168,7 +171,7 @@ class Model:
         self.animate('attack',.75,tracks,loop='once')
     def export(self):
         out=ROOT/'models'/self.name;out.mkdir(parents=True,exist_ok=True);tex=png_texture(self.colors)
-        m=dict(meta=dict(format_version='5.0',model_format='free',box_uv=False),name=self.name,model_identifier=self.name,resolution=dict(width=64,height=64),elements=self.elements,groups=list(self.groups.values()),outliner=[self.nodes['body']],textures=[dict(name=self.name+'.png',id='0',uuid=ident(self.name+'/texture'),width=64,height=64,uv_width=64,uv_height=64,source='data:image/png;base64,'+base64.b64encode(tex).decode())],animations=self.animations)
+        m=dict(meta=dict(format_version='5.0',model_format='free',box_uv=False),name=self.name,model_identifier=self.name,resolution=dict(width=64,height=64),elements=self.elements+self.colliders,groups=list(self.groups.values()),outliner=[self.nodes['body']],textures=[dict(name=self.name+'.png',id='0',uuid=ident(self.name+'/texture'),width=64,height=64,uv_width=64,uv_height=64,source='data:image/png;base64,'+base64.b64encode(tex).decode())],animations=self.animations)
         (out/(self.name+'.bbmodel')).write_text(json.dumps(m,indent=2)+'\n');(out/(self.name+'.png')).write_bytes(tex)
         # Mirror X and rotation X/Y like Blockbench's official Bedrock codec.
         bones=[]
@@ -525,6 +528,13 @@ def mosasaurus():
         'neck':[bite([[-3,0,0],[4,0,0],[-1,0,0]]),('position',[(0,[0,0,0]),(.14,[0,0,2]),(.32,[0,0,-7]),(.5,[0,0,-2]),(.75,[0,0,0])])],
         'head':bite([[-7,0,0],[9,0,0],[-3,0,0]]),'jaw':bite([[-34,0,0],[-5,0,0],[-19,0,0]])},loop='once')
     m.nametag()
+    for name,a,b,parent in [
+            ('head',[-14,14,-150],[14,36,-96],'head'),
+            ('shoulders',[-24,8,-92],[24,43,-30],'neck'),
+            ('torso',[-30,1,-32],[30,47,48],'body'),
+            ('rear',[-24,6,48],[24,40,113],'tail'),
+            ('tail',[-16,10,112],[16,30,172],'tail_mid')]:
+        m.collider('b_mosa_'+name,a,b,parent)
     return m
 
 if __name__=='__main__':

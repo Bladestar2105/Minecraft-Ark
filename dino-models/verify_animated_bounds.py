@@ -45,6 +45,7 @@ def check(name):
             raise AssertionError((uid,t))
         for t in sorted(times):
             for cube in model['elements']:
+                if cube['type']!='cube':continue
                 for point in product(*zip(cube['from'],cube['to'])):
                     point=transform(point,cube['origin'],cube['rotation'])
                     uid=owners[cube['uuid']]
