@@ -6,10 +6,10 @@ import build_models
 from test_model_poses import pose
 
 BASELINE = {
-    'triceratops': '58747f1236ac16c0c73644ab6e1e07a1a66178e548d7b075180a8effeab7268a',
-    'stegosaurus': '99fac962a42180b42eb73f32b570da75018ba4d5030916a6fcd8b29acc24b310',
+    'triceratops': '26240c50ccec7fd1a6f57b2795f4937e8ce5bbee4940150bfc277a6deae29c80',
+    'stegosaurus': 'e021fa349f51bc96ca5152ae915899567847d4abf4a9f859cbf94ecc16442f7f',
     'pteranodon': 'b192998cb08efbcb0e7968f754cdf7a07fb6a5dbfb951b465985454404428b5a',
-    'dilophosaurus': '98c3b109ff6f225346f6847830574019a0ff18331de99bb07b1c6360c244f3b1',
+    'dilophosaurus': '7d012313990b5099ea6b04c4f0649cea8506e1ec953a737d502bc9e329925298',
 }
 PREFIXES = {'triceratops': ('brow_horn_', 'nose_horn'),
             'stegosaurus': ('plate_', 'neck_plate_', 'tail_plate_', 'tail_spike_'),

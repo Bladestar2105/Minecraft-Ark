@@ -22,6 +22,14 @@ import kr.toxicity.model.api.event.ModelEventListener;
 import kr.toxicity.model.api.event.PluginEndReloadEvent;
 import kr.toxicity.model.api.event.PluginStartReloadEvent;
 import kr.toxicity.model.api.animation.AnimationIterator;
+import kr.toxicity.model.api.animation.AnimationProgress;
+import kr.toxicity.model.api.animation.AnimationKeyframe;
+import kr.toxicity.model.api.animation.TimedStorage;
+import kr.toxicity.model.api.data.blueprint.BlueprintAnimation;
+import kr.toxicity.model.api.data.blueprint.BlueprintAnimator;
+import kr.toxicity.model.api.bone.BoneMovement;
+import kr.toxicity.model.api.bone.BoneName;
+import org.joml.Vector3f;
 import kr.toxicity.model.api.animation.AnimationModifier;
 import kr.toxicity.model.api.animation.AnimationOverrideState;
 import kr.toxicity.model.api.bukkit.platform.BukkitAdapter;
@@ -91,6 +99,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         final Mob mob;
         final String name;
         String phase;
+        boolean phaseScheduled;
         volatile float walkSpeed = 1;
         Location previousLocation;
         EntityTracker tracker;
@@ -98,6 +107,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         int visualId = -1;
         double growth = Double.NaN;
         String detailStage;
+        volatile Map<BoneName, Vector3f> detailScales = Map.of();
         Component customName;
         TextDisplay label;
         Model(Mob mob, String name) {
@@ -423,10 +433,14 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
             if (model.detailStage != null) model.tracker.stopAnimation(model.detailStage);
             var pose = model.tracker.renderer().animations().get(stage);
             if (pose != null) {
-                // Tracker-wide playback fills untracked bones; keep detail scales off animated parents and frill ribs.
-                for (var bone : model.tracker.bones()) if (bone.name().name().startsWith("growth_")) {
-                    bone.addAnimation(AnimationOverrideState.NOT_MATCHED, pose, GROWTH, () -> { });
+                var scales = new HashMap<BoneName, Vector3f>();
+                for (var entry : pose.animator().entrySet()) {
+                    var movement = entry.getValue().keyframe().get(0).animate(new BoneMovement(), new BoneMovement());
+                    scales.put(entry.getKey(), new Vector3f(movement.scale()));
                 }
+                model.detailScales = Map.copyOf(scales);
+                // Keep the stage flag for Bedrock on the locally static body.
+                model.tracker.bone("body").addAnimation(AnimationOverrideState.MATCHED, pose, GROWTH, () -> { });
                 model.detailStage = stage;
             } else if (warned.add("growth:" + model.name)) plugin.getLogger().warning("Missing dinosaur growth pose: " + model.name + "/" + stage);
         }
@@ -479,11 +493,14 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
             model.detailStage = null;
             growth(mob);
         }
-        if (phase.equals(model.phase)) return;
+        // BetterModel installs its built-in idle when this tracker first starts.
+        boolean scheduled = tracker.isScheduled();
+        if (phase.equals(model.phase) && scheduled == model.phaseScheduled) return;
         if (model.phase != null) tracker.stopAnimation(model.phase);
-        tracker.animate(phase, phase.equals("walk") || phase.equals("swim") ? AnimationModifier.builder()
+        tracker.animate(growthClip(model, tracker.renderer().animations().get(phase), false), phase.equals("walk") || phase.equals("swim") ? AnimationModifier.builder()
                 .type(AnimationIterator.Type.LOOP).priority(100).speed(() -> model.walkSpeed).build() : PHASE);
         model.phase = phase;
+        model.phaseScheduled = scheduled;
     }
 
     void attack(Mob mob, boolean spit) {
@@ -494,7 +511,42 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         if (tracker == null) return;
         tracker.stopAnimation("attack");
         tracker.stopAnimation("spit");
-        tracker.animate(spit && model.name.equals("ark_dilophosaurus") ? "spit" : "attack", ATTACK);
+        tracker.animate(growthClip(model, tracker.renderer().animations().get(spit && model.name.equals("ark_dilophosaurus") ? "spit" : "attack"), true), ATTACK);
+    }
+
+    private record GrowthProgress(AnimationProgress source, Model model, BoneName bone) implements AnimationProgress {
+        @Override public float time() { return source.time(); }
+        @Override public boolean skipInterpolation() { return source.skipInterpolation(); }
+        @Override public boolean globalRotation() { return source.globalRotation(); }
+        @Override public BoneMovement animate(BoneMovement movement, BoneMovement dest) {
+            source.animate(movement, dest);
+            var scale = model.detailScales.get(bone);
+            if (scale != null) dest.scale().mul(scale);
+            return dest;
+        }
+    }
+
+    // Detail bones must sample their parent on the same phase clock.
+    private BlueprintAnimation growthClip(Model model, BlueprintAnimation base, boolean attack) {
+        if (model.detailScales.isEmpty()) return base;
+        var animators = new HashMap<>(base.animator());
+        for (var bone : model.tracker.bones()) {
+            if (!model.detailScales.containsKey(bone.name())) continue;
+            var own = base.animator().get(bone.name());
+            var ancestor = bone.getParent();
+            BlueprintAnimator inherited = null;
+            while (ancestor != null && inherited == null) {
+                inherited = base.animator().get(ancestor.name());
+                ancestor = ancestor.getParent();
+            }
+            if (attack && own == null && inherited == null) continue;
+            TimedStorage<AnimationProgress> timing = own != null ? own.keyframe()
+                    : inherited != null ? inherited.keyframe().toEmpty() : base.emptyAnimator();
+            var frames = new AnimationProgress[timing.size()];
+            for (int i = 0; i < frames.length; i++) frames[i] = new GrowthProgress(timing.get(i), model, bone.name());
+            animators.put(bone.name(), new BlueprintAnimator(bone.name(), new AnimationKeyframe(frames)));
+        }
+        return new BlueprintAnimation(base.name(), base.loop(), base.length(), base.override(), animators, base.script(), base.emptyAnimator());
     }
 
     private static double walkStride(String name) {

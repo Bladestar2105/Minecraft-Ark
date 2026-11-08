@@ -22,6 +22,7 @@ public final class ModelFixture extends JavaPlugin implements Listener {
     private final List<String> startup = new ArrayList<>();
     private final Set<Integer> traceEntities = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final List<String> movementPackets = new java.util.concurrent.CopyOnWriteArrayList<>();
+    private final Map<String,List<Map<String,Object>>> detailSamples = new HashMap<>();
     private final Map<Integer,List<Integer>> animationMasks = new java.util.concurrent.ConcurrentHashMap<>();
     private Object bridgeCodec;
     private Set<Player> bridgeViewers;
@@ -100,6 +101,33 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                 &&packet.getClass().getMethod("getIdentifier").invoke(packet).equals("modelengine:anim0")){
             int id=(int)packet.getClass().getMethod("getEntityId").invoke(packet);
             animationMasks.computeIfAbsent(id,ignored->new java.util.concurrent.CopyOnWriteArrayList<>()).add((int)packet.getClass().getMethod("getValue").invoke(packet));
+        }
+    }
+    private static Object field(Object object, String name) throws ReflectiveOperationException {
+        var field=object.getClass().getDeclaredField(name);field.setAccessible(true);return field.get(object);
+    }
+    private Map<String,Object> detailFrame(kr.toxicity.model.api.bone.RenderedBone bone) throws ReflectiveOperationException {
+        Object global=field(bone,"globalState");var lock=(kr.toxicity.model.api.util.lock.DuplexLock)field(global,"lock");
+        return lock.accessToReadLock(()->{try {
+            Object state=field(global,"state");var current=(kr.toxicity.model.api.bone.BoneMovement)field(global,"current");
+            var rotation=current.rotation();var active=bone.runningAnimation();
+            return new LinkedHashMap<String,Object>(Map.of("bone",bone.name().name(),"clip",active==null?"none":active.name(),
+                    "scale",(double)current.scale().x,"rotation",List.of(rotation.x,rotation.y,rotation.z,rotation.w),
+                    "frame",state.getClass().getMethod("frame").invoke(state),"delay",state.getClass().getMethod("getDelay").invoke(state),
+                    "duration",bone.interpolationDuration()));
+        }catch(ReflectiveOperationException error){throw new IllegalStateException(error);}});
+    }
+    private void sampleDetails(String name, Mob mob, int tick) throws ReflectiveOperationException {
+        var tracker=BetterModel.registry(mob.getUniqueId()).orElseThrow().tracker("ark_"+name);
+        for(var bone:tracker.bones())if(bone.name().name().startsWith("growth_")) {
+            var row=detailFrame(bone);row.put("tick",tick);var clip=tracker.renderer().animations().get((String)row.get("clip"));
+            var ancestor=bone.getParent();
+            while(ancestor!=null&&(clip==null||!clip.animator().containsKey(ancestor.name())))ancestor=ancestor.getParent();
+            if(ancestor!=null){var reference=detailFrame(ancestor);var again=detailFrame(bone);
+                row.put("stable",row.get("clip").equals(again.get("clip"))&&row.get("frame").equals(again.get("frame"))&&row.get("delay").equals(again.get("delay")));
+                row.put("reference",reference);
+            }
+            detailSamples.get(name).add(row);
         }
     }
     private void recordStartup() {
@@ -257,6 +285,13 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                     location.set(Double.parseDouble(args[2]), Double.parseDouble(args[3]), Double.parseDouble(args[4]));
                     mob.teleport(location);
                 }
+                case "sample-details" -> {
+                    detailSamples.put(name,new ArrayList<>());Mob actor=mob;
+                    for(int tick=0;tick<=30;tick++){int sample=tick;getServer().getScheduler().runTaskLater(this,()->{
+                        try{sampleDetails(name,actor,sample);}catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
+                    },tick);}return true;
+                }
+                case "detail-samples" -> {var gson=Class.forName("com.google.gson.Gson").getConstructor().newInstance();java.nio.file.Files.createDirectories(getDataFolder().toPath());java.nio.file.Files.writeString(getDataFolder().toPath().resolve("detail-"+name+".json"),(String)gson.getClass().getMethod("toJson",Object.class).invoke(gson,detailSamples.get(name)));sender.sendMessage("samples="+detailSamples.get(name).size());return true;}
                 case "detail-state" -> {
                     var tracker=BetterModel.registry(mob.getUniqueId()).orElseThrow().tracker("ark_"+name);
                     var rows=new ArrayList<String>();

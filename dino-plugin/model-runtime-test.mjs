@@ -267,9 +267,25 @@ try {
         const detail=await command(`dm detail-state ${name} ${bones.join(',')}`);
         for(const row of detail.trim().split('|')) {
           const [bone,actual,clip]=row.split(':');const expected=Number(Object.values(clips[stage].animators).find(a=>a.name===bone).keyframes[0].data_points[0].x);
-          assert.equal(clip,stage,`${name}/${bone} has the wrong active detail clip`);assert.ok(Math.abs(Number(actual)-expected)<.002,`${name}/${bone} runtime detail scale differs: ${row}`);
+          assert.ok(['idle','walk','attack','spit'].includes(clip),`${name}/${bone} must share a movement/combat clock: ${row}`);assert.ok(Math.abs(Number(actual)-expected)<.002,`${name}/${bone} runtime detail scale differs: ${row}`);
         }
         return detail;
+      };
+      const verifyClocks=async stage=>{
+        await command(`dm detail-samples ${name}`);
+        const rows=JSON.parse(await readFile(`${directory}/plugins/ModelFixture/detail-${name}.json`,'utf8'));
+        assert.equal(rows.length,bones.length*31,'Each growth detail needs all31 real native frames');
+        let moving=0;
+        for(const row of rows){
+          const expected=Number(Object.values(clips[stage].animators).find(a=>a.name===row.bone).keyframes[0].data_points[0].x);
+          assert.ok(Math.abs(row.scale-expected)<.002,`${name}/${row.bone} lost its age scale at tick${row.tick}`);
+          if(!row.reference||!row.stable)continue;
+          const reference=row.reference;assert.equal(row.clip,reference.clip,`${name}/${row.bone} has an independent animation clock`);
+          assert.equal(row.delay,reference.delay);assert.ok(Math.abs(row.frame-reference.frame)<.001);assert.equal(row.duration,reference.duration);
+          const normalize=q=>q.map(v=>v/Math.hypot(...q)),a=normalize(row.rotation),b=normalize(reference.rotation),dot=Math.min(1,Math.abs(a.reduce((sum,v,i)=>sum+v*b[i],0)));
+          assert.ok(2*Math.acos(dot)<.0002,`${name}/${row.bone} lags its animated ancestor at tick${row.tick}`);moving++;
+        }
+        assert.ok(moving>=10,`${name} must prove its animated ancestor during the finite combat pose`);return rows;
       };
       for(const [remaining,stage] of [[900000,'growth_baby'],[450000,'growth_juvenile'],[0,'growth_adult']]) {
         await command(`tp ModelRider ${index*7} 4 -8`);await command(`dm position ${name} ${index*7} 4 -13`);await command(`dm age ${name} ${remaining}`);await delay(250);
@@ -277,27 +293,44 @@ try {
         const detail=await verifyDetails(stage),bridge=await command(`dm bridge-viewer ${name} ModelRider`),bridgeId=Number(bridge.match(/bridge=(\d+)/)[1]);
         await command(`dm motion ${name} .12 -.08 0`);await delay(300);const walking=await inspect(name),token=await command(`dm token ${name} walk`);
         assert.match(walking.running,/name=walk/);assert.match(walking.running,new RegExp(`name=${stage}`));
-        await command(`dm attack ${name}`);await delay(200);const attacking=await inspect(name);
+        await command(`dm attack ${name}`);await command(`dm sample-details ${name}`);await delay(200);const attacking=await inspect(name);
         for(const clip of ['walk','attack',stage])assert.match(attacking.running,new RegExp(`name=${clip}`));
         assert.equal(await command(`dm token ${name} walk`),token,'Detail growth/attack restarted the movement clock');await verifyDetails(stage);
         await delay(850);const ending=await inspect(name);report.detailDiagnostics={name,stage,state,walking,attacking,ending};assert.equal(await command(`dm token ${name} walk`),token);assert.doesNotMatch(ending.running,/name=attack/);
+        await delay(600);const clocks=await verifyClocks(stage);
         let frill;
         if(name==='dilophosaurus') {
-          const before=await command('dm rotation-state dilophosaurus frill_left');await command('dm attack dilophosaurus spit');await delay(350);const opened=await command('dm rotation-state dilophosaurus frill_left');
+          const before=await command('dm rotation-state dilophosaurus frill_left');await command('dm attack dilophosaurus spit');await command('dm sample-details dilophosaurus');await delay(350);const opened=await command('dm rotation-state dilophosaurus frill_left');
           assert.ok(Math.abs(Number(opened.split(':')[1].split(',')[1])-Number(before.split(':')[1].split(',')[1]))>.3,'Spit must still rotate the scaled frill open');
           const spit=await inspect(name);for(const clip of ['walk','spit',stage])assert.match(spit.running,new RegExp(`name=${clip}`));await verifyDetails(stage);
-          await delay(850);frill={before,opened,spit};
+          await delay(1250);frill={before,opened,spit,clocks:await verifyClocks(stage)};
         }
         const masks=JSON.parse((await command(`dm animation-masks ${name} ${bridgeId}`)).trim());
         assert.ok(masks.some(mask=>(mask&bit(stage)) && (mask&bit('walk')) && (mask&bit('attack'))),'Growth, walk and attack must overlap in real GME packets');
         if(frill)assert.ok(masks.some(mask=>(mask&bit(stage)) && (mask&bit('spit'))),'Growth and opened frill must overlap in real GME packets');
         const otherStages=['growth_baby','growth_juvenile','growth_adult'].filter(clip=>clip!==stage).reduce((value,clip)=>value|bit(clip),0);
         assert.equal(masks.at(-1)&otherStages,0,'An old growth stage remains active');
-        await command(`dm stopmotion ${name}`);await delay(200);await command(`dm bridge-off ${name}`);stages.push({stage,state,detail,walking,attacking,masks,frill});
+        await command(`dm stopmotion ${name}`);await delay(200);await command(`dm bridge-off ${name}`);stages.push({stage,state,detail,walking,attacking,masks,frill,clocks});
       }
       await command(`dm position ${name} ${original.x} ${original.y} ${original.z}`);samples[name]=stages;
     }
     return samples;
+  });
+  await check('A fresh baby keeps its detail phase and Bedrock stage after its viewer rejoins',async()=>{
+    const name='pteranodon',bone='growth_head_crest',asset=JSON.parse(await readFile(`${root}dino-models/models/ark_${name}/ark_${name}.bbmodel`,'utf8'));
+    const animationNames=asset.animations.map(a=>a.name).sort(),stageBit=2**animationNames.indexOf('growth_baby');
+    const detail=async()=>{const row=(await command(`dm detail-state ${name} ${bone}`)).trim().split(':');return{bone:row[0],scale:Number(row[1]),phase:row[2]};};
+    await command(`dm stopmotion ${name}`);await command(`dm position ${name} 0 4 -5`);await command(`dm prepare-juvenile ${name}`);await command(`dm attach ${name}`);
+    await eventually(async()=>{const row=await detail();return Math.abs(row.scale-.2)<.002&&row.phase==='idle';},'Fresh baby was replaced by BetterModel built-in idle');
+    const before=await detail();await command(`dm bridge-off ${name}`);alice.close();await delay(250);
+    alice=new Client('ModelRider');clients.push(alice);await eventually(()=>alice.joined,'Rejoining model viewer did not join',30000);await command('gamemode creative ModelRider');await command('tp ModelRider 0 4 3');
+    alice.send(pluginMessageId,Buffer.concat([string('minecraft:register'),Buffer.from('geyserutils:main')]));
+    const bridge=await command(`dm bridge-viewer ${name} ModelRider`),bridgeId=Number(bridge.match(/bridge=(\d+)/)[1]);
+    await eventually(async()=>JSON.parse((await command(`dm animation-masks ${name} ${bridgeId}`)).trim()).some(mask=>(mask&stageBit)!==0),'Rejoined viewer lost the actual encoded baby stage');
+    const after=await detail();assert.ok(Math.abs(after.scale-.2)<.002);assert.equal(after.phase,'idle');
+    // Allow the one startup repair after BetterModel restarts for the rejoining viewer.
+    await delay(400);const token=await command(`dm token ${name} idle`);await delay(400);assert.equal(await command(`dm token ${name} idle`),token,'Stable idle repeatedly restarted after rejoin');
+    await command(`dm bridge-off ${name}`);await command(`dm adult ${name}`);return{before,after,bridge};
   });
   await check('Wild aquatic presentation preserves Dolphin collision, swims in three dimensions and returns from its bite',async()=>{
     assert.match(await command('fill 49 4 -9 73 23 25 glass'),/Successfully filled|No blocks were filled/);

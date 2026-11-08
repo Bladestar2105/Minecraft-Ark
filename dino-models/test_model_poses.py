@@ -1,6 +1,8 @@
 """Visible model features and actual animated poses, using independent corner transforms."""
 from itertools import product
 from types import SimpleNamespace
+import json
+import math
 import unittest
 import build_models
 
@@ -40,19 +42,137 @@ def inside_box(point,corners):
         if coordinate < -1e-7 or coordinate > 1+1e-7:return False
     return True
 
-def boxes_overlap(corners,low,high):
+def posed_boxes_overlap(corners,other):
     edges=[[corners[i][j]-corners[0][j] for j in range(3)] for i in [4,2,1]]
-    basis=[[1,0,0],[0,1,0],[0,0,1]]
+    basis=[[other[i][j]-other[0][j] for j in range(3)] for i in [4,2,1]]
     axes=basis+edges+[[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]] for a in edges for b in basis]
-    other=list(product(*zip(low,high)))
     for axis in axes:
-        if sum(v*v for v in axis)<1e-10:continue
-        a=[sum(x*y for x,y in zip(p,axis)) for p in corners];b=[sum(x*y for x,y in zip(p,axis)) for p in other]
-        if max(a)<min(b) or max(b)<min(a):return False
+        length=sum(v*v for v in axis)**.5
+        if length<1e-5:continue
+        a=[sum(x*y for x,y in zip(p,axis))/length for p in corners];b=[sum(x*y for x,y in zip(p,axis))/length for p in other]
+        # Touching hinge faces must survive floating-point rotation.
+        if max(a)<min(b)-1e-7 or max(b)<min(a)-1e-7:return False
     return True
 
 
+def boxes_overlap(corners,low,high):
+    return posed_boxes_overlap(corners,list(product(*zip(low,high))))
+
+
+def exported_model(species):
+    data=json.loads((build_models.ROOT/'models'/('ark_'+species)/('ark_'+species+'.bbmodel')).read_text())
+    groups={g['uuid']:g for g in data['groups']};nodes={}
+    def visit(node):
+        nodes[groups[node['uuid']]['name']]=node
+        for child in node['children']:
+            if isinstance(child,dict):visit(child)
+    for root in data['outliner']:visit(root)
+    return SimpleNamespace(name=data['name'],groups={g['name']:g for g in groups.values()},nodes=nodes,
+                           elements=[c for c in data['elements'] if c['type']=='cube'],animations=data['animations'])
+
+
 class ModelPoseTest(unittest.TestCase):
+    def test_exported_jaws_keep_flesh_contact_during_bites(self):
+        heads={'trex':('skull','snout','cheek_'),'triceratops':('head','snout','beak','frill_'),
+               'stegosaurus':('head','beak','neck'),'brachiosaurus':('skull','muzzle','nasal_rise'),
+               'velociraptor':('skull','snout'),'dilophosaurus':('skull','snout'),
+               'mosasaurus':('skull','snout','cheek_')}
+        for species,prefixes in heads.items():
+            model=exported_model(species)
+            owners={child:name for name,node in model.nodes.items() for child in node['children'] if isinstance(child,str)}
+            jaws=[c['name'] for c in model.elements if owners[c['uuid']]=='jaw' and c['name'].startswith(('jaw','lower_jaw'))]
+            skull=[c['name'] for c in model.elements if owners[c['uuid']]=='head' and c['name'].startswith(prefixes)]
+            stages=['baby','juvenile','adult'] if 'growth_adult' in {a['name'] for a in model.animations} else [None]
+            for stage in stages:
+                for step in range(31):
+                    with self.subTest(species=species,stage=stage,step=step):
+                        points=pose(model,'attack',.75*step/30,stage)
+                        self.assertTrue(any(posed_boxes_overlap(points[jaw],points[head]) for jaw in jaws for head in skull),
+                                        'Opening the mouth must leave the lower jaw joined to head flesh')
+
+    def test_exported_growing_crests_keep_contact_with_head_flesh(self):
+        for species,bones in [('pteranodon',['growth_head_crest']),('dilophosaurus',['growth_crest_left','growth_crest_right'])]:
+            model=exported_model(species)
+            skull=[c['name'] for c in model.elements if c['name'].startswith(('skull','snout'))]
+            for bone in bones:
+                crest=[c['name'] for c in model.elements if c['uuid'] in model.nodes[bone]['children']]
+                for stage in ['baby','juvenile','adult']:
+                    for step in range(31):
+                        with self.subTest(species=species,bone=bone,stage=stage,step=step):
+                            points=pose(model,'attack',.75*step/30,stage)
+                            self.assertTrue(any(posed_boxes_overlap(points[part],points[head]) for part in crest for head in skull),
+                                            'A growing crest must remain joined to the skull or snout flesh')
+
+    def test_exported_dilo_frill_roots_keep_contact_with_neck_or_head(self):
+        model=exported_model('dilophosaurus')
+        owners={child:name for name,node in model.nodes.items() for child in node['children'] if isinstance(child,str)}
+        parents={child['uuid']:name for name,node in model.nodes.items() for child in node['children'] if isinstance(child,dict)}
+        def under(name,root):
+            while name:
+                if name==root:return True
+                name=parents.get(model.groups[name]['uuid'])
+            return False
+        flesh=[c['name'] for c in model.elements if owners[c['uuid']] in ['neck','head'] and c['name'].startswith(('neck_','skull','snout'))]
+        details={side:[c['name'] for c in model.elements if under(owners[c['uuid']],'growth_frill_'+side)] for side in ['left','right']}
+        for clip in model.animations:
+            if clip['name'].startswith('growth_'):
+                for track in clip['animators'].values():track['keyframes'][-1]['time']=20
+        for stage in ['baby','juvenile','adult']:
+            for clip in model.animations:
+                if clip['name'].startswith('growth_'):continue
+                for step in range(31):
+                    points=pose(model,clip['name'],clip['length']*step/30,stage)
+                    for side,parts in details.items():
+                        with self.subTest(stage=stage,clip=clip['name'],step=step,side=side):
+                            self.assertTrue(any(posed_boxes_overlap(points[part],points[body]) for part in parts for body in flesh),
+                                            'The growing neck fan must remain joined to adjacent neck or head flesh')
+
+    def test_stego_tail_bite_bounds_ideal_single_step_chord_error(self):
+        model=exported_model('stegosaurus')
+        track=next(a for a in model.animations if a['name']=='attack')['animators'][model.groups['tail']['uuid']]
+        frames=[k for k in track['keyframes'] if k['channel']=='rotation']
+        values=[(k['time'],float(k['data_points'][0]['y'])) for k in frames]
+        anchors=[(0,0),(.16,-20),(.34,65),(.52,-15),(.75,0)]
+        self.assertTrue(set(anchors).issubset(values),'Resampling must retain every original tail strike key')
+        for time,value in values:
+            a,b=next((a,b) for a,b in zip(anchors,anchors[1:]) if a[0]<=time<=b[0])
+            expected=a[1]+(b[1]-a[1])*(time-a[0])/(b[0]-a[0])
+            self.assertAlmostEqual(value,expected,places=9,msg='The original linear strike curve must be retained')
+        pivot=model.groups['tail']['origin']
+        radius=max(math.dist(pivot,g['origin'])/16 for name,g in model.groups.items() if name.startswith(('growth_tail_plate_','growth_tail_spike_')))
+        # Display translations interpolate along a chord while parent rotations follow an arc.
+        # This bounds one ideal interval; client interpolation restarts can accumulate
+        # more transient error, which the separate actual-wire replay measures.
+        error=max(radius*(1-math.cos(math.radians(abs(b[1]-a[1]))/2)) for a,b in zip(values,values[1:]))
+        self.assertLess(error,.05,'Sparse strike keys slide child roots along the tail despite matching rotation clocks')
+
+    def test_exported_stego_growth_roots_stay_joined_to_flesh(self):
+        model=exported_model('stegosaurus')
+        owners={child:name for name,node in model.nodes.items() for child in node['children'] if isinstance(child,str)}
+        parents={child['uuid']:name for name,node in model.nodes.items() for child in node['children'] if isinstance(child,dict)}
+        features={}
+        for name,node in model.nodes.items():
+            if not name.startswith('growth_'):continue
+            ancestors=[];parent=parents.get(model.groups[name]['uuid'])
+            while parent:
+                ancestors.append(parent);parent=parents.get(model.groups[parent]['uuid'])
+            details=[c['name'] for c in model.elements if owners[c['uuid']]==name]
+            flesh=[c['name'] for c in model.elements if owners[c['uuid']] in ancestors and not c['name'].startswith(('plate_','neck_plate_','tail_plate_','tail_spike_','tooth_','gums_'))]
+            features[name]=(details,flesh)
+        # These stage poses are constant; extend their endpoint over the longer walk clip.
+        for clip in model.animations:
+            if clip['name'].startswith('growth_'):
+                for track in clip['animators'].values():track['keyframes'][-1]['time']=20
+        for stage in ['baby','juvenile','adult']:
+            for clip in model.animations:
+                if clip['name'].startswith('growth_'):continue
+                for step in range(31):
+                    points=pose(model,clip['name'],clip['length']*step/30,stage)
+                    for bone,(details,flesh) in features.items():
+                        with self.subTest(stage=stage,clip=clip['name'],step=step,bone=bone):
+                            self.assertTrue(any(posed_boxes_overlap(points[detail],points[body]) for detail in details for body in flesh),
+                                            'A growing plate or spike root must remain joined to the supporting flesh')
+
     def test_pteranodon_flight_tucks_its_feet_behind_the_hips(self):
         model=pteranodon();rest=pose(model,'idle',0)
         foot_names=[name for name in rest if name.startswith(('toe_','claw_'))]

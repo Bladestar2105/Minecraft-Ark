@@ -5260,6 +5260,88 @@
       ]
     },
     {
+      "name": "jaw_hinge",
+      "type": "cube",
+      "uuid": "4504a74f-c29c-5526-811d-973093ae1b90",
+      "box_uv": false,
+      "origin": [
+        0,
+        81.0,
+        -29
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            33,
+            5,
+            38,
+            9
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            33,
+            12,
+            38,
+            16
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            33,
+            19,
+            37,
+            23
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            33,
+            26,
+            37,
+            30
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            33,
+            7,
+            38,
+            11
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            33,
+            14,
+            38,
+            18
+          ],
+          "texture": 0
+        }
+      },
+      "from": [
+        -2.5,
+        80.0,
+        -31
+      ],
+      "to": [
+        2.5,
+        82.6,
+        -28
+      ]
+    },
+    {
       "name": "oral_cavity",
       "type": "cube",
       "uuid": "4db37e56-acaa-5d9d-b8f1-d41532c50fc0",
@@ -7645,6 +7727,7 @@
                   "children": [
                     "d0f1ba1a-5bf9-5bc6-8281-eb14a8b8cef2",
                     "acc86d14-9a4a-5988-a420-c31b1f040ef3",
+                    "4504a74f-c29c-5526-811d-973093ae1b90",
                     "fad487d5-1f34-52cd-87e5-33cd183ae30b",
                     "210ff4d8-92c3-5755-a175-a9a2f0ef3a6a",
                     "4f1c9d86-1ba2-5417-a066-117bdcabca04",
