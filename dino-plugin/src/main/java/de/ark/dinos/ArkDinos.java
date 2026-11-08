@@ -55,11 +55,14 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     private NamespacedKey ownerKey;
     private NamespacedKey stayKey;
     private List<String> survivalWorlds;
+    private List<String> prototypeWorlds;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         survivalWorlds = getConfig().getStringList("survival-worlds");
+        prototypeWorlds = getConfig().contains("prototype-worlds")
+                ? getConfig().getStringList("prototype-worlds") : survivalWorlds;
         ownerKey = new NamespacedKey(this, "owner");
         stayKey = new NamespacedKey(this, "stay");
         speciesKey = new NamespacedKey(this, "species");
@@ -102,6 +105,10 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     private boolean survival(Player player) {
         return player.getGameMode() == GameMode.SURVIVAL && survivalWorlds.contains(player.getWorld().getName());
+    }
+
+    private boolean prototype(Entity entity) {
+        return prototypeWorlds.contains(entity.getWorld().getName());
     }
 
     private void stop(Mob mob) {
@@ -150,7 +157,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     }
 
     private void identify(Entity entity) {
-        if (!supported(entity)) return;
+        if (!supported(entity) || !prototype(entity)) return;
         var result = SpeciesRules.resolve(species(entity), entity.getScoreboardTags(), owned(entity), entity instanceof Ravager);
         if (result.species() == null) return;
         if (result.conflict()) getLogger().warning("Conflicting habitat tags for " + entity.getUniqueId() + "; using " + result.species());
@@ -163,7 +170,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         if (owned(entity)) {
             Mob mob = (Mob) entity;
             endRide(mob);
-            if (mob.getPersistentDataContainer().has(flightKey) || "pteranodon".equals(species(mob)) && !mob.hasGravity()) {
+            if (mob.getPersistentDataContainer().has(flightKey) || prototype(mob) && "pteranodon".equals(species(mob)) && !mob.hasGravity()) {
                 protectFall(mob);
                 restoreGravity(mob);
             }
@@ -270,8 +277,14 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             landing.put(mob.getUniqueId(), mob);
         }
         mob.eject();
+        stopRidingMotion(mob);
+    }
+
+    private void stopRidingMotion(Mob mob) {
         stop(mob);
-        mob.setVelocity(new Vector(0, flying.containsKey(mob.getUniqueId()) ? 0 : mob.getVelocity().getY(), 0));
+        boolean airborne = flying.containsKey(mob.getUniqueId());
+        mob.setVelocity(new Vector(0, airborne ? 0 : mob.getVelocity().getY(), 0));
+        if (!airborne) models.animation(mob, "idle");
     }
 
     private void endRide(Player player) {
@@ -326,7 +339,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             }
             stop(mob);
             var input = player.getCurrentInput();
-            if ("pteranodon".equals(species(mob))) {
+            if (prototype(mob) && "pteranodon".equals(species(mob))) {
                 if (input.isJump() && !mob.isInWater() && !flying.containsKey(mob.getUniqueId())) {
                     flying.put(mob.getUniqueId(), Math.min(mob.getLocation().getY() + 48, mob.getWorld().getMaxHeight() - mob.getHeight() - 3));
                     landing.remove(mob.getUniqueId());
@@ -368,8 +381,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 protectFall(mob);
                 landing.put(mob.getUniqueId(), mob);
             }
-            stop(mob);
-            mob.setVelocity(new Vector(0, flying.containsKey(mob.getUniqueId()) ? 0 : mob.getVelocity().getY(), 0));
+            stopRidingMotion(mob);
         }
     }
 

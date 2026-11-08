@@ -8,6 +8,15 @@ With an empty main hand, interact with your tamed Sniffer or Ravager to ride it.
 
 The Pteranodon alone can fly: jump takes off and ascends, look and use directional controls to steer, and look down while moving forward to descend and land. Releasing controls hovers. Ascent stops at 48 blocks above takeoff or below the world ceiling, whichever is lower. Native collisions remain active; rider headroom is reserved, water ends flight, and an unloaded destination stops all velocity without loading chunks. Sneak dismounts; the mount descends under control. Flight exits give the former rider and mount bounded slow falling long enough to reach the world's minimum height, including when unload or shutdown interrupts landing. Gravity is restored on landing, unload, death, disable and stale flight-state recovery; fall-distance resets apply only during controlled flight/landing. Normal damage and void damage still apply.
 
+To enable custom dinosaurs only in selected worlds while keeping other pets native, include the allowed worlds in `survival-worlds` and list only model worlds in `prototype-worlds`:
+
+```yaml
+survival-worlds: [ark, custom_dinos]
+prototype-worlds: [custom_dinos]
+```
+
+`prototype-worlds` limits new species identification/migration, model attachment and Pteranodon flight. Outside it, existing ownership, tame/stay/follow and native ground riding continue, and saved species cannot enable flight. Omit the setting to use `survival-worlds`; set `[]` to disable prototype features everywhere. A persisted active-flight marker still restores gravity on load for safety. Removing an allowlist entry does not delete its world or entities.
+
 Six species persist as `arkdinos:species`: `triceratops`, `stegosaurus`, `trex`, `brachiosaurus`, `pteranodon`, `velociraptor`. Exact legacy habitat tags `ark_renewal_habitat_01_dino_0` through habitat 12, slot 1, map those species in that repeating order: four entities per species across the 24 tags. T-Rex and Velociraptor use Ravagers; the other four use Sniffers. Compatible saved species win over habitat tags. Conflicting or incompatible tags use a logged native-type default (Triceratops or T-Rex), as do untagged legacy owned dinos. Ordinary untagged mobs remain unchanged. Migration updates PDC/model attachment on the existing entity, preserving UUID, health, position, ownership and stay state, without respawning or teleporting it. Tagged wild dinos also receive models on enable, entity load and supported spawn events.
 
 Owned dinos are passive, including Ravagers' damage and target selection. They follow their online Survival owner in the same world, between 3 and 48 blocks away, using native pathfinding. They stop when staying, the owner leaves, changes world or enters Creative, or goes beyond 48 blocks. Come back near a pet to resume following. Pets do not teleport, load chunks or cross portals/worlds. Native pathfinding cannot guarantee passage through fences, cliffs or deep water; stay pauses AI but does not pin an entity against pushing or water currents.
@@ -60,3 +69,5 @@ save-all flush
 ```
 
 Primary API references: [Paper Pathfinder](https://jd.papermc.io/paper/26.3/com/destroystokyo/paper/entity/Pathfinder.html), [player input](https://jd.papermc.io/paper/26.3/org/bukkit/entity/Player.html#getCurrentInput()), [passengers and velocity](https://jd.papermc.io/paper/26.3/org/bukkit/entity/Entity.html), [Ravager timers](https://jd.papermc.io/paper/26.3/org/bukkit/entity/Ravager.html), [entity target event](https://jd.papermc.io/paper/26.3/org/bukkit/event/entity/EntityTargetLivingEntityEvent.html), and [Paper's awareness implementation](https://github.com/PaperMC/Paper/blob/main/paper-server/patches/sources/net/minecraft/world/entity/Mob.java.patch).
+
+`rtk proxy env DINO_PROTOTYPE_SCOPE=1 node dino-plugin/gameplay-runtime-test.mjs` verifies the two-world allowlist with the real optional model stack in a fresh fixture: no main-world migration/model/flight, unchanged main owner ground controls, test-world model/flight, saved-species bypass denial and reload. Report: `build/prototype-scope-runtime-report.json`.

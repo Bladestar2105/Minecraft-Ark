@@ -13,7 +13,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
-const modelStack = process.env.DINO_MODEL_STACK === '1';
+const scopeMode = process.env.DINO_PROTOTYPE_SCOPE === '1';
+const modelStack = process.env.DINO_MODEL_STACK === '1' || scopeMode;
 const stackCache = `${root}output/dino-model-spike-20261107/private/server`;
 const cache = process.env.DINO_PAPER_CACHE ?? (modelStack ? stackCache : `${root}artifacts/renewal-20261103/server`);
 const paperJar = process.env.DINO_PAPER_JAR ?? (modelStack ? `${stackCache}/paper.jar` : `${root}artifacts/renewal-20261103/paper-26.3-236.jar`);
@@ -23,7 +24,7 @@ const report = { startedAt: new Date().toISOString(), fixture: directory, checks
   'Direct Java protocol777 test clients, not an official Java client, Mineflayer, Bedrock or PS5.',
   'Chunk unload/load lifecycle uses dispatched native events; real world persistence is checked with a clean server restart.',
 ] };
-const reportPath = `${plugin}build/${modelStack ? 'gameplay-model-runtime-report.json' : 'gameplay-runtime-report.json'}`;
+const reportPath = `${plugin}build/${scopeMode ? 'prototype-scope-runtime-report.json' : modelStack ? 'gameplay-model-runtime-report.json' : 'gameplay-runtime-report.json'}`;
 const clients = [];
 let server;
 let log = '';
@@ -123,6 +124,7 @@ try {
       await cp(`${root}dino-models/models/ark_${name}`,`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/input/ark_${name}`,{recursive:true});
     }
   }
+  if(scopeMode){await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\n  - ark_model_test\nprototype-worlds:\n  - ark_model_test\n');}
   await mkdir(`${directory}/fixture-classes`);
   execFileSync(`${javaHome}/bin/javac`, ['--release', '25', '-sourcepath', '', '-cp', `${plugin}.deps/*`, '-d', `${directory}/fixture-classes`, `${plugin}src/gameplay/java/de/ark/dinos/GameplayFixture.java`]);
   execFileSync(`${javaHome}/bin/jar`, ['--create', '--file', `${directory}/plugins/RidingFixture.jar`, '-C', `${directory}/fixture-classes`, '.', '-C', `${plugin}src/gameplay/resources`, '.']);
@@ -143,6 +145,52 @@ try {
   await eventually(() => alice.joined && bob.joined, 'Native clients did not join', 30000);
   await command('gamemode survival @a'); await command('effect give @a resistance 9999 4 true'); await tp(alice, 0, 0); await tp(bob, 12, 12);
   assert.match(await command('fill -16 3 -16 32 3 32 stone'), /Successfully filled/i, 'Safe platform must exist before summoning mobs');
+  if(scopeMode){
+    await command('dinofixture create-world ark_model_test');
+    const inspect=async tag=>Object.fromEntries((await command(`dinofixture inspect ${tag}`)).trim().split(';').map(field=>{const at=field.indexOf('=');return[field.slice(0,at),field.slice(at+1)];}));
+    const scopeClick=async(tag,world,sneak=false)=>{const state=await inspect(tag);await command(`execute in ${world} run tp RideOwner ${state.x} ${state.y} ${Number(state.z)+2}`);await delay(350);alice.input(sneak?32:0);await delay(100);alice.interact(Number(state.id),sneak);await delay(300);alice.input(0);};
+    const scopeMount=async(tag,world)=>{await command('clear RideOwner');await scopeClick(tag,world);assert.equal((await inspect(tag)).passengers,'1');};
+    await check('Prototype world scopes migration, models and flight; main owner ground controls remain native',async()=>{
+      const worlds=[['scope_main','minecraft:overworld'],['scope_test','minecraft:ark_model_test']];const states={};
+      for(const [tag,world]of worlds){
+        await command(`execute in ${world} run tp RideOwner 0 4 3`);await delay(500);
+        await command(`execute in ${world} run fill -8 3 -8 16 3 16 stone`);
+        await command(`execute in ${world} run summon sniffer 0 4 0 {Tags:["${tag}","ark_dino","ark_renewal_habitat_05_dino_0"],NoAI:1b,PersistenceRequired:1b}`);
+        await command(`dinofixture load-event ${tag}`);const state=await inspect(tag);const model=await command(`dinofixture model-state ${tag}`);
+        if(tag==='scope_main'){assert.equal(state.species,'null','Main habitat must not migrate');assert.match(model,/trackers=0;/,'Main habitat must not gain a model');}
+        else {assert.equal(state.species,'pteranodon');assert.match(model,/trackers=1;/);}
+        await command('give RideOwner torchflower_seeds 1');await scopeClick(tag,world);await scopeClick(tag,world,true);
+        const owned=await inspect(tag);assert.equal(owned.owner,alice.uuid);assert.equal(owned.stay,'1');if(tag==='scope_main')assert.equal(owned.species,'null','Main taming must not migrate');
+        await scopeMount(tag,world);const start=await inspect(tag);alice.look(0,0);alice.input(17);await delay(1000);alice.input(0);const moved=await inspect(tag);
+        assert.ok(Number(moved.z)>Number(start.z)+1,'Owner directional input did not move native carrier');
+        if(tag==='scope_main'){assert.equal(moved.gravity,'true');assert.ok(Math.abs(Number(moved.y)-Number(start.y))<.5,'Main legacy Pteranodon tag must not fly');}
+        else {assert.equal(moved.gravity,'false');assert.ok(Number(moved.y)>Number(start.y)+3,'Prototype Pteranodon must take off');}
+        alice.input(32);await delay(250);alice.input(0);await eventually(async()=> (await inspect(tag)).gravity==='true','Unridden prototype did not land');
+        states[tag]={initial:state,model,start,moved,final:await inspect(tag)};
+      }
+      // Saved species must not bypass the world gate, even if an administrator or prior draft wrote it.
+      await command('data modify entity @e[tag=scope_main,limit=1] BukkitValues."arkdinos:species" set value "pteranodon"');
+      await scopeMount('scope_main','minecraft:overworld');const before=await inspect('scope_main');alice.input(16);await delay(800);alice.input(0);const after=await inspect('scope_main');assert.equal(after.gravity,'true');assert.ok(Math.abs(Number(after.y)-Number(before.y))<.5,'Saved species bypassed prototype world scope');alice.input(32);await delay(200);alice.input(0);
+      await command('dinofixture clear-species scope_main');
+      await command('dinofixture disable scope_main');await command('dinofixture enable scope_main');
+      assert.equal((await inspect('scope_main')).species,'null');assert.match(await command('dinofixture model-state scope_main'),/trackers=0;/);assert.equal((await inspect('scope_test')).species,'pteranodon');assert.match(await command('dinofixture model-state scope_test'),/trackers=1;/);
+      assert.equal((await inspect('scope_main')).owner,alice.uuid);assert.equal((await inspect('scope_main')).stay,'1');
+      assert.doesNotMatch(log,/Could not pass event|Task .*ArkDinos.*exception|Error occurred while (enabling|disabling) ArkDinos|Sniffer controller unavailable/);
+      return states;
+    });
+    await check('Ground walk returns to idle on normal and forced riding exits',async()=>{
+      await command(`execute in minecraft:ark_model_test run summon sniffer 8 4 0 {Tags:["scope_ground","ark_dino_tamed"],PersistenceRequired:1b,BukkitValues:{"arkdinos:owner":"${alice.uuid}","arkdinos:stay":1b,"arkdinos:species":"triceratops"}}`);await command('dinofixture load-event scope_ground');
+      const exits={};
+      for(const mode of ['sneak','game-mode']){
+        await command('gamemode survival RideOwner');await scopeMount('scope_ground','minecraft:ark_model_test');assert.equal((await inspect('scope_ground')).stay,'1');
+        alice.look(0,0);alice.input(1);await delay(400);const walking=await command('dinofixture model-state scope_ground');assert.match(walking,/name=walk/);
+        if(mode==='sneak')alice.input(32);else await command('gamemode creative RideOwner');await delay(250);alice.input(0);exits[mode]=await command('dinofixture model-state scope_ground');
+      }
+      await command('gamemode survival RideOwner');
+      for(const [mode,state]of Object.entries(exits)){assert.match(state,/name=idle/,`${mode} left a ground model walking: ${JSON.stringify(exits)}`);assert.doesNotMatch(state,/name=walk/);}
+      return exits;
+    });
+  } else {
   await check('All 24 legacy habitats persist six species without replacing native entities', async () => {
     const names=['triceratops','stegosaurus','trex','brachiosaurus','pteranodon','velociraptor'];
     const snapshots=[];
@@ -252,6 +300,7 @@ try {
     assert.match(await command('forceload query'),/No force loaded chunks|No force-loaded chunks/i);
     assert.doesNotMatch(log,/Could not pass event|Task .*ArkDinos.*exception|Error occurred while (enabling|disabling) ArkDinos|Sniffer controller unavailable/);
   });
+  }
   await writeFile(`${directory}/console.log`, log);
 } catch (error) { console.error(error.stack); process.exitCode = 1; }
 finally {

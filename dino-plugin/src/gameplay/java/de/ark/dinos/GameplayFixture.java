@@ -20,9 +20,11 @@ public final class GameplayFixture extends JavaPlugin implements org.bukkit.even
   if(!sender.getName().equals("Rcon")&&!sender.getName().equals("CONSOLE"))return true;
   if(args[0].equals("player")){var player=getServer().getPlayer(args[1]);sender.sendMessage("slowfall="+player.hasPotionEffect(PotionEffectType.SLOW_FALLING));return true;}
   if(args[0].equals("death-state")){sender.sendMessage(lastDeath);return true;}
-  Mob mob=(Mob)getServer().getWorld("ark").getEntities().stream().filter(e->e.getScoreboardTags().contains(args[1])).findFirst().orElseThrow();
+  if(args[0].equals("create-world")){var world=new WorldCreator(args[1]).type(WorldType.FLAT).generateStructures(false).createWorld();world.setSpawnLocation(0,4,0);sender.sendMessage("world="+world.getKey());return true;}
+  Mob mob=(Mob)getServer().getWorlds().stream().flatMap(world->world.getEntities().stream()).filter(e->e.getScoreboardTags().contains(args[1])).findFirst().orElseThrow();
   var plugin=getServer().getPluginManager().getPlugin("ArkDinos");
   switch(args[0]){
+   case "clear-species" -> mob.getPersistentDataContainer().remove(NamespacedKey.fromString("arkdinos:species"));
    case "collision-state" -> {
     var rider=(org.bukkit.entity.Player)mob.getPassengers().getFirst();var block=mob.getWorld().getBlockAt(0,8,0);
     sender.sendMessage("riderOverlap="+block.getBoundingBox().overlaps(rider.getBoundingBox())+";riderBox="+rider.getBoundingBox()+";eyeY="+rider.getEyeLocation().getY()+";mountY="+mob.getLocation().getY());return true;
@@ -49,6 +51,6 @@ public final class GameplayFixture extends JavaPlugin implements org.bukkit.even
    default ->{}
   }
   var pdc=mob.getPersistentDataContainer();var loc=mob.getLocation();
-  sender.sendMessage("uuid="+mob.getUniqueId()+";health="+mob.getHealth()+";x="+loc.getX()+";y="+loc.getY()+";z="+loc.getZ()+";owner="+pdc.get(NamespacedKey.fromString("arkdinos:owner"),PersistentDataType.STRING)+";stay="+pdc.get(NamespacedKey.fromString("arkdinos:stay"),PersistentDataType.BYTE)+";species="+pdc.get(NamespacedKey.fromString("arkdinos:species"),PersistentDataType.STRING)+";passengers="+mob.getPassengers().size()+";aware="+mob.isAware()+";path="+mob.getPathfinder().hasPath()+";gravity="+mob.hasGravity()+";vx="+mob.getVelocity().getX()+";vy="+mob.getVelocity().getY()+";vz="+mob.getVelocity().getZ());return true;
+  sender.sendMessage("id="+mob.getEntityId()+";uuid="+mob.getUniqueId()+";health="+mob.getHealth()+";x="+loc.getX()+";y="+loc.getY()+";z="+loc.getZ()+";owner="+pdc.get(NamespacedKey.fromString("arkdinos:owner"),PersistentDataType.STRING)+";stay="+pdc.get(NamespacedKey.fromString("arkdinos:stay"),PersistentDataType.BYTE)+";species="+pdc.get(NamespacedKey.fromString("arkdinos:species"),PersistentDataType.STRING)+";passengers="+mob.getPassengers().size()+";aware="+mob.isAware()+";path="+mob.getPathfinder().hasPath()+";gravity="+mob.hasGravity()+";vx="+mob.getVelocity().getX()+";vy="+mob.getVelocity().getY()+";vz="+mob.getVelocity().getZ());return true;
  }
 }
