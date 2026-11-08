@@ -54,6 +54,33 @@ final class DinoModels implements AutoCloseable {
         }
     }
 
+    void attack(Mob mob, boolean spit) {
+        if (adapter == null) return;
+        try {
+            adapter.attack(mob, spit);
+        } catch (RuntimeException | LinkageError error) {
+            unload(mob);
+            plugin.getLogger().warning("Dinosaur attack animation unavailable: " + error.getMessage());
+        }
+    }
+
+    void growth(Mob mob) {
+        if (adapter != null) {
+            try {
+                adapter.growth(mob);
+            } catch (RuntimeException | LinkageError error) {
+                unload(mob);
+                plugin.getLogger().warning("Dinosaur growth model unavailable: " + error.getMessage());
+            }
+        }
+        if (adapter == null || !mob.getPersistentDataContainer().has(new NamespacedKey(plugin, "model-original-scale"))) {
+            Long adultAt = mob.getPersistentDataContainer().get(new NamespacedKey(plugin, "adult-at"), PersistentDataType.LONG);
+            Long duration = mob.getPersistentDataContainer().get(new NamespacedKey(plugin, "growth-duration"), PersistentDataType.LONG);
+            var scale = mob.getAttribute(Attribute.SCALE);
+            if (adultAt != null && scale != null) scale.setBaseValue(DinoGrowth.scale(adultAt, System.currentTimeMillis(), duration == null ? DinoGrowth.DURATION_MS : duration));
+        }
+    }
+
     void unload(Entity entity) {
         if (adapter != null) adapter.unload(entity);
         if (entity instanceof Mob mob) {
@@ -68,7 +95,11 @@ final class DinoModels implements AutoCloseable {
         Double value = data.get(key, PersistentDataType.DOUBLE);
         var scale = mob.getAttribute(Attribute.SCALE);
         if (value != null && scale != null) {
-            if (Double.isFinite(value) && value > 0) scale.setBaseValue(value);
+            if (Double.isFinite(value) && value > 0) {
+                Long adultAt = data.get(new NamespacedKey(plugin, "adult-at"), PersistentDataType.LONG);
+                Long duration = data.get(new NamespacedKey(plugin, "growth-duration"), PersistentDataType.LONG);
+                scale.setBaseValue(value * DinoGrowth.scale(adultAt, System.currentTimeMillis(), duration == null ? DinoGrowth.DURATION_MS : duration));
+            }
             data.remove(key);
         }
     }

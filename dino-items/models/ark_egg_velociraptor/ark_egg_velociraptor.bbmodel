@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "ark_egg_velociraptor",
+  "model_identifier": "ark_egg_velociraptor",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "name": "species_shell",
+      "type": "cube",
+      "uuid": "3229bd55-69d6-5e46-9d78-dffbb69d2a59",
+      "box_uv": false,
+      "from": [
+        -7.02,
+        -0.02,
+        -6.02
+      ],
+      "to": [
+        7.02,
+        16.02,
+        6.02
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            16,
+            0,
+            32,
+            16
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            32,
+            0,
+            48,
+            16
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            48,
+            0,
+            64,
+            16
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            0,
+            16,
+            16,
+            32
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            16,
+            16,
+            32,
+            32
+          ],
+          "texture": 0
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "shell",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "uuid": "b0ee5445-93da-5d94-8bf8-ff67c09ef187",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "b0ee5445-93da-5d94-8bf8-ff67c09ef187",
+      "isOpen": true,
+      "children": [
+        "3229bd55-69d6-5e46-9d78-dffbb69d2a59"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "ark_egg_velociraptor.png",
+      "id": "0",
+      "uuid": "6f689a05-b491-5926-a38a-9f868b87c144",
+      "width": 64,
+      "height": 64,
+      "uv_width": 64,
+      "uv_height": 64,
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABG0lEQVR42u3XsQ3CMBCFYW/EBjSIkoYKJDoKOqahpUrHAGxAR88MTAFyEQnIQRyD9O7EX7gi72x9inBeOjWr2z+vBAAA9g/b5fSrwVHyJsBmPu4MWkxGxZtHyicrfL3sO8OOu1nRIaLlPwI8StYcIEIeAGvA+bB+Cg89QKR8evcH0g6qOUCkvAnwqpcH5XDpASLle6/BdtVeQ97zJkB+OL8y7SrVj5hPJUOGbB4tn/qG1GweKU8ZAgAAAFz2eSmAus9LAdR93hWAos4C4AFA2eddACj7vAsAZZ93dw0q+rwcQN3nXXwJqvu8iy6g7vOUIQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAfrDvAZ4qS0KyaqQAAAABJRU5ErkJggg=="
+    }
+  ],
+  "animations": [
+    {
+      "uuid": "670ccadc-ef21-5650-8499-4ae679a51698",
+      "name": "idle",
+      "loop": "loop",
+      "override": false,
+      "length": 1,
+      "snapping": 20,
+      "animators": {
+        "b0ee5445-93da-5d94-8bf8-ff67c09ef187": {
+          "name": "shell",
+          "type": "bone",
+          "keyframes": [
+            {
+              "channel": "rotation",
+              "time": 0,
+              "uuid": "2397b80d-7201-5dcd-bfb0-d910bf2be8c5",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 1,
+              "uuid": "63f5f583-b7c8-5576-86d1-7e967d98c194",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

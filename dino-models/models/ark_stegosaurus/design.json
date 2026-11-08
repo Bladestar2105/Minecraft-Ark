@@ -2,16 +2,16 @@
   "name": "ark_stegosaurus",
   "label": "Stegosaurus",
   "palette": [
-    "#497c78",
-    "#76a199",
-    "#b9b99a",
-    "#31554f",
-    "#f7ce68",
-    "#183633",
-    "#e7ddba",
-    "#d47c43"
+    "#69735b",
+    "#89927a",
+    "#b4ad8f",
+    "#444e3c",
+    "#dfbb64",
+    "#242e21",
+    "#dacfad",
+    "#986b4d"
   ],
-  "description": "Zwei versetzte Plattenreihen \u00b7 kleiner Kopf \u00b7 vier Schwanzstacheln",
+  "description": "Gew\u00f6lbter R\u00fccken \u00b7 versetzte R\u00fcckenplatten \u00b7 vier Schwanzstacheln",
   "ground_parts": [
     "sole_front_left",
     "nail_front_left-0.28",
@@ -36,6 +36,7 @@
     "leg_front_right",
     "leg_back_left"
   ],
-  "cubes": 69,
-  "bones": 7
+  "walk_stride_blocks": 0.603235,
+  "cubes": 136,
+  "bones": 29
 }

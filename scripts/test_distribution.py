@@ -56,9 +56,15 @@ def package_fixture(root):
 
 
 def dino_models_fixture(root):
-    for name in ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon'):
-        model = 'ark_' + name
-        folder = root / 'dino-models/models' / model
+    source = next(parent / 'dino-items/egg-assets.json' for parent in Path(__file__).resolve().parents
+                  if (parent / 'dino-items/egg-assets.json').is_file())
+    (root / 'dino-items').mkdir()
+    (root / 'dino-items/egg-assets.json').write_bytes(source.read_bytes())
+    species = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus', 'mosasaurus')
+    models = [('dino-models', 'ark_' + name) for name in species]
+    models += [('dino-items', 'ark_egg_' + name) for name in species if name != 'mosasaurus']
+    for directory, model in models:
+        folder = root / directory / 'models' / model
         folder.mkdir(parents=True)
         texture = b'\x89PNG\r\n\x1a\nfixture'
         (folder / (model + '.bbmodel')).write_text(json.dumps({'textures': [{'source': 'data:image/png;base64,' + base64.b64encode(texture).decode()}]}))
@@ -68,6 +74,30 @@ def dino_models_fixture(root):
 
 
 class InstallerTests(unittest.TestCase):
+    def test_species_egg_pack_and_mappings_preserve_existing_model_pack_and_cache(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            install_fixture(root)
+            dino_models_fixture(root)
+            geyser = root / 'data/plugins/Geyser-Spigot'
+            preserved = [geyser / 'packs/other.mcpack', geyser / 'custom_mappings/operator.json',
+                         geyser / 'extensions/geysermodelengineextension/generated_pack.zip',
+                         root / 'data/plugins/BetterModel/.cache/model.json']
+            for path in preserved:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b'operator model cache')
+            with patch.object(install_plugins, 'download'):
+                install_plugins.install(root, ['dino'])
+            pack = geyser / 'packs/ark-dino-eggs.mcpack'
+            self.assertTrue(pack.is_file(), 'Dino installation must include the Bedrock egg graphics')
+            with zipfile.ZipFile(pack) as archive:
+                atlas = json.loads(archive.read('textures/item_texture.json'))['texture_data']
+                self.assertEqual(len(atlas), 8)
+                self.assertEqual(len({archive.read(value['textures'] + '.png') for value in atlas.values()}), 8)
+            mappings = json.loads((geyser / 'custom_mappings/ark-dino-eggs.json').read_text())
+            self.assertEqual(len(mappings['items']['minecraft:sniffer_egg']), 8)
+            self.assertTrue(all(path.read_bytes() == b'operator model cache' for path in preserved))
+
     def test_model_dependencies_and_required_bedrock_pack_follow_module_selection(self):
         for modules in (['accounts'], ['dino']):
             with self.subTest(modules=modules), tempfile.TemporaryDirectory() as tmp:
@@ -93,18 +123,19 @@ class InstallerTests(unittest.TestCase):
                     self.assertIn('force-resource-packs: false', (root / 'data/plugins/Geyser-Spigot/config.yml').read_text())
 
     def test_missing_invalid_or_existing_model_rejects_before_installation_changes(self):
-        for change in ('missing', 'texture', 'existing'):
+        for change in ('missing', 'texture', 'existing', 'egg_missing', 'egg_texture', 'egg_existing'):
             with self.subTest(change=change), tempfile.TemporaryDirectory() as tmp:
                 root = Path(tmp)
                 install_fixture(root)
                 dino_models_fixture(root)
-                source = root / 'dino-models/models/ark_pteranodon'
-                if change == 'missing':
+                model = 'ark_egg_pteranodon' if change.startswith('egg_') else 'ark_pteranodon'
+                source = root / ('dino-items' if change.startswith('egg_') else 'dino-models') / 'models' / model
+                if change.endswith('missing'):
                     (source / 'config.json').unlink()
-                elif change == 'texture':
-                    (source / 'ark_pteranodon.bbmodel').write_text('{"textures":[{"source":"data:image/png;base64,YmFk"}]}')
+                elif change.endswith('texture'):
+                    (source / (model + '.bbmodel')).write_text('{"textures":[{"source":"data:image/png;base64,YmFk"}]}')
                 else:
-                    target = root / 'data/plugins/BetterModel/models/ark_trex.bbmodel'
+                    target = root / 'data/plugins/BetterModel/models' / (model + '.bbmodel')
                     target.parent.mkdir(parents=True)
                     target.write_text('existing operator model')
                 with patch.object(install_plugins, 'download', side_effect=AssertionError('must preflight models')):
@@ -112,10 +143,10 @@ class InstallerTests(unittest.TestCase):
                         install_plugins.install(root, ['dino'])
                 self.assertFalse(list((root / 'data/plugins').glob('*.jar')) if (root / 'data/plugins').exists() else [])
                 self.assertFalse((root / 'data/plugins/Geyser-Spigot/config.yml').exists())
-                if change == 'existing':
+                if change.endswith('existing'):
                     self.assertEqual(target.read_text(), 'existing operator model')
 
-    def test_dino_selection_installs_all_six_java_and_bedrock_model_inputs(self):
+    def test_dino_selection_installs_eight_animals_and_seven_placed_egg_models(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             install_fixture(root)
@@ -124,8 +155,10 @@ class InstallerTests(unittest.TestCase):
                 install_plugins.install(root, ['dino'])
             java = root / 'data/plugins/BetterModel/models'
             bedrock = root / 'data/plugins/Geyser-Spigot/extensions/geysermodelengineextension/input'
-            self.assertEqual(len(list(java.glob('ark_*.bbmodel'))), 6)
-            self.assertEqual(len(list(bedrock.glob('ark_*'))), 6)
+            self.assertEqual(len(list(java.glob('ark_*.bbmodel'))), 15)
+            self.assertEqual(len(list(bedrock.glob('ark_*'))), 15)
+            self.assertEqual(len(list(java.glob('ark_egg_*.bbmodel'))), 7)
+            self.assertFalse((java / 'ark_egg_mosasaurus.bbmodel').exists())
             for folder in bedrock.iterdir():
                 self.assertEqual(sorted(p.name for p in folder.iterdir()),
                                  [folder.name + '.animation.json', folder.name + '.geo.json', folder.name + '.png', 'config.json'])

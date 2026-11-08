@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "ark_egg_triceratops",
+  "model_identifier": "ark_egg_triceratops",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "name": "species_shell",
+      "type": "cube",
+      "uuid": "a5471f72-6d02-5ff2-b63b-c18c0738521f",
+      "box_uv": false,
+      "from": [
+        -7.02,
+        -0.02,
+        -6.02
+      ],
+      "to": [
+        7.02,
+        16.02,
+        6.02
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            16,
+            0,
+            32,
+            16
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            32,
+            0,
+            48,
+            16
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            48,
+            0,
+            64,
+            16
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            0,
+            16,
+            16,
+            32
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            16,
+            16,
+            32,
+            32
+          ],
+          "texture": 0
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "shell",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "uuid": "45bb82d9-a0e7-5016-bf21-0b7b1ebf6318",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "45bb82d9-a0e7-5016-bf21-0b7b1ebf6318",
+      "isOpen": true,
+      "children": [
+        "a5471f72-6d02-5ff2-b63b-c18c0738521f"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "ark_egg_triceratops.png",
+      "id": "0",
+      "uuid": "d7c850d1-6266-5566-b6a6-69f25a23e407",
+      "width": 64,
+      "height": 64,
+      "uv_width": 64,
+      "uv_height": 64,
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABNklEQVR42u3XMQ4BQRTG8XciN9Ap3ECnFRcQjTiIG+g0VFqdO+h0OjXZSUbWmN0dId578S8mG9b3dvJjYz85rOe3f14CAAAAZE/MRv2wFuNBOL472EtemoL119VxMuyFVXphL3lJw5fTNqx0wG41DattEx7zTwDX8z6Ec4Ix3LYJj/kngBiuBqXDY7htAx7zLwB1weNm+ThX8g14zBf9DVaDol7XfegtX/wc8MkGLOel6T6JH8y913QRj3nJDUlD9WFd0t7y0jWo9MJe83QBAAAAAACLfV4NQLvPqwJo93l1AO0+rw6g3edNAGj2ebN/g9p93sRzgHaf/wmAdp838QvQ7vNmbgHtPk8XAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPjSugMIhqV4aC+S1gAAAABJRU5ErkJggg=="
+    }
+  ],
+  "animations": [
+    {
+      "uuid": "d02af900-af66-56fc-a534-a74c42fc7818",
+      "name": "idle",
+      "loop": "loop",
+      "override": false,
+      "length": 1,
+      "snapping": 20,
+      "animators": {
+        "45bb82d9-a0e7-5016-bf21-0b7b1ebf6318": {
+          "name": "shell",
+          "type": "bone",
+          "keyframes": [
+            {
+              "channel": "rotation",
+              "time": 0,
+              "uuid": "84e3d440-0b30-59ed-ba17-8fbf05de54dd",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 1,
+              "uuid": "ebf20483-0603-52cb-83cb-f439aa20c69e",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

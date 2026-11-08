@@ -8,13 +8,17 @@ final class RidingRules {
 
     record Motion(double x, double z) { }
 
-    static Motion movement(float yaw, boolean forward, boolean backward, boolean left, boolean right) {
+    static Motion movement(float yaw, boolean forward, boolean backward, boolean left, boolean right, boolean sprint) {
+        return movement(yaw,forward,backward,left,right,sprint ? .34 : .22);
+    }
+
+    static Motion movement(float yaw, boolean forward, boolean backward, boolean left, boolean right, double speed) {
         double ahead = (forward ? 1 : 0) - (backward ? 1 : 0);
         double sideways = (left ? 1 : 0) - (right ? 1 : 0);
         double length = Math.hypot(ahead, sideways);
         if (length == 0) return new Motion(0, 0);
         double angle = Math.toRadians(yaw);
-        return new Motion((-Math.sin(angle) * ahead + Math.cos(angle) * sideways) * 0.22 / length,
-                (Math.cos(angle) * ahead + Math.sin(angle) * sideways) * 0.22 / length);
+        return new Motion((-Math.sin(angle) * ahead + Math.cos(angle) * sideways) * speed / length,
+                (Math.cos(angle) * ahead + Math.sin(angle) * sideways) * speed / length);
     }
 }

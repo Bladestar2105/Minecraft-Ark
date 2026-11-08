@@ -25,6 +25,11 @@
     "sha256": "ebc7aec252ed0c7d2d04c039d7f00e69f7b86b1f493c741d67b3ef31b986b054"
   },
   {
+    "name": "joml-1.10.9.jar",
+    "url": "https://repo.maven.apache.org/maven2/org/joml/joml/1.10.9/joml-1.10.9.jar",
+    "sha256": "feca4db853371704338621c120acc5cc32300d8af635fa42414b6213301e216b"
+  },
+  {
     "name": "jspecify-1.0.0.jar",
     "url": "https://repo.maven.apache.org/maven2/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar",
     "sha256": "1fad6e6be7557781e4d33729d49ae1cdc8fdda6fe477bb0cc68ce351eafdfbab"
@@ -85,5 +90,10 @@
     "name": "bettermodel-3.6.0-paper.jar",
     "url": "https://github.com/toxicity188/BetterModel/releases/download/3.6.0/bettermodel-3.6.0-paper.jar",
     "sha256": "66b2acc679ffcb81d9d7de686092d3e1daa38dc154da4cdaa9aaabc048a06aba"
+  },
+  {
+    "name": "geyser-spigot-2.12.1-b1295.jar",
+    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1295/downloads/spigot",
+    "sha256": "b60ff8f9a007f30823cf40173532a0390e6150cdfc577551f6f37bdd5ccd1528"
   }
 ]

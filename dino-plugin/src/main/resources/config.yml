@@ -1,7 +1,7 @@
 survival-worlds:
   - ark
 
-# Optional: limit species migration, custom models and flight to these worlds.
+# Optional: limit models, flight, advanced taming, eggs and combat to these worlds.
 # Omit to use survival-worlds; an empty list disables these prototype features.
 # prototype-worlds:
 #   - ark_model_test

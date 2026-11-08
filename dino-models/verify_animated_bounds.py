@@ -28,14 +28,16 @@ def check(name):
     for animation in model['animations']:
         tracks=animation['animators'];times={0.,animation['length']}
         for track in tracks.values():
-            frames=track['keyframes']
-            for a,b in zip(frames,frames[1:]):
-                span=max(abs(float(a['data_points'][0][k])-float(b['data_points'][0][k])) for k in 'xyz')
-                steps=max(1,math.ceil(span/.25))
-                times.update(a['time']+(b['time']-a['time'])*i/steps for i in range(steps+1))
-        def angle(uid,t):
-            if uid not in tracks:return [0,0,0]
-            frames=tracks[uid]['keyframes']
+            for channel in {k['channel'] for k in track['keyframes']}:
+                frames=[k for k in track['keyframes'] if k['channel']==channel]
+                for a,b in zip(frames,frames[1:]):
+                    span=max(abs(float(a['data_points'][0][k])-float(b['data_points'][0][k])) for k in 'xyz')
+                    steps=max(1,math.ceil(span/.25))
+                    times.update(a['time']+(b['time']-a['time'])*i/steps for i in range(steps+1))
+        def sample(uid,t,channel):
+            if uid not in tracks:return [1,1,1] if channel=='scale' else [0,0,0]
+            frames=[k for k in tracks[uid]['keyframes'] if k['channel']==channel]
+            if not frames:return [1,1,1] if channel=='scale' else [0,0,0]
             for a,b in zip(frames,frames[1:]):
                 if a['time']<=t<=b['time']:
                     f=(t-a['time'])/(b['time']-a['time'])
@@ -47,7 +49,8 @@ def check(name):
                     point=transform(point,cube['origin'],cube['rotation'])
                     uid=owners[cube['uuid']]
                     while uid:
-                        point=transform(point,groups[uid]['origin'],angle(uid,t));uid=parents[uid]
+                        point=[origin+(value-origin)*scale for origin,value,scale in zip(groups[uid]['origin'],point,sample(uid,t,'scale'))]
+                        point=transform(point,groups[uid]['origin'],sample(uid,t,'rotation'));point=[a+b for a,b in zip(point,sample(uid,t,'position'))];uid=parents[uid]
                     for axis,value in enumerate(point):low[axis]=min(low[axis],value/16);high[axis]=max(high[axis],value/16)
                     count+=1
     offset=desc['visible_bounds_offset'];half=[desc['visible_bounds_width']/2,desc['visible_bounds_height']/2,desc['visible_bounds_width']/2]

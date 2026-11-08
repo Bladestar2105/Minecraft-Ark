@@ -61,10 +61,17 @@ public final class ModelFallbackFixture extends JavaPlugin {
             models.attach(candidate,"ark_stegosaurus");
             shared=registryNames(candidate);
         }
+        var nativeStates=new java.util.ArrayList<String>();
+        for(var entity:getServer().getWorlds().getFirst().getEntities())if(entity instanceof Mob candidate){
+            String species=candidate.getPersistentDataContainer().get(new NamespacedKey(this,"species"),PersistentDataType.STRING);
+            if(species==null||!java.util.Set.of("trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","mosasaurus").contains(species))continue;
+            models.attach(candidate,"ark_"+species);
+            nativeStates.add(species+":"+candidate.getAttribute(Attribute.SCALE).getBaseValue()+":"+candidate.isInvisible()+":"+registryNames(candidate));
+        }
         var player=getServer().getPlayerExact("ModelRider");
         player.teleport(mob.getLocation().add(0,0,2));
         mob.addPassenger(player);
-        sender.sendMessage("loaded="+loaded+";scale="+mob.getAttribute(Attribute.SCALE).getBaseValue()+";invisible="+mob.isInvisible()+";passengers="+mob.getPassengers().size()+";trackers="+trackers+";shared="+shared+";id="+mob.getEntityId());
+        sender.sendMessage("loaded="+loaded+";scale="+mob.getAttribute(Attribute.SCALE).getBaseValue()+";invisible="+mob.isInvisible()+";passengers="+mob.getPassengers().size()+";trackers="+trackers+";shared="+shared+";id="+mob.getEntityId()+";nativeAll="+String.join("|",nativeStates));
         return true;
     }
 }

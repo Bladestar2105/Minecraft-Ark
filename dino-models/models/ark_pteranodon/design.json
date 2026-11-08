@@ -2,16 +2,16 @@
   "name": "ark_pteranodon",
   "label": "Pteranodon",
   "palette": [
-    "#536d7b",
-    "#91acb4",
-    "#c5c3ae",
-    "#344854",
-    "#f0d377",
-    "#1e3039",
-    "#e2d7b3",
-    "#b56c4e"
+    "#726e60",
+    "#938875",
+    "#b6ab91",
+    "#494a3e",
+    "#dab85c",
+    "#242a21",
+    "#c7b58c",
+    "#8b6d56"
   ],
-  "description": "Langer Schnabel und Kopfkamm \u00b7 gespannte Flughaut \u00b7 verl\u00e4ngerter Fl\u00fcgelfinger",
+  "description": "Verbundene ledrige Flughaut \u00b7 langer Schnabel \u00b7 schlanker Hinterkopfkamm",
   "ground_parts": [
     "toe_left_0_base",
     "toe_left_0_tip",
@@ -36,6 +36,7 @@
     "leg_left",
     "leg_right"
   ],
-  "cubes": 80,
-  "bones": 8
+  "walk_stride_blocks": 0.899698,
+  "cubes": 128,
+  "bones": 12
 }

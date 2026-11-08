@@ -2,16 +2,16 @@
   "name": "ark_brachiosaurus",
   "label": "Brachiosaurus",
   "palette": [
-    "#668d9b",
-    "#8fb6b7",
-    "#d1d0af",
-    "#446575",
-    "#f0d481",
-    "#1b3339",
-    "#e7dfbd",
-    "#527f8d"
+    "#7b8071",
+    "#969b86",
+    "#bcb69b",
+    "#535c50",
+    "#d8bc77",
+    "#273128",
+    "#dfd5b3",
+    "#666e5d"
   ],
-  "description": "Sehr langer Hals \u00b7 hohe Schultern \u00b7 s\u00e4ulenartige Beine",
+  "description": "Hoher Schulterbogen \u00b7 verj\u00fcngter Langhals \u00b7 gefaltete graugr\u00fcne Haut",
   "ground_parts": [
     "sole_front_left",
     "nail_front_left-0.28",
@@ -36,6 +36,7 @@
     "leg_front_right",
     "leg_back_left"
   ],
-  "cubes": 38,
-  "bones": 8
+  "walk_stride_blocks": 1.000753,
+  "cubes": 90,
+  "bones": 10
 }

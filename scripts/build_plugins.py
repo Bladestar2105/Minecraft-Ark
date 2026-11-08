@@ -35,15 +35,17 @@ def download(item, folder):
 
 
 def build():
-    for script in ("verify_exports.py", "verify_animated_bounds.py", "verify_portability.py"):
+    for script in ("verify_exports.py", "verify_animated_bounds.py", "verify_gait.py", "verify_portability.py", "test_nametags.py"):
         subprocess.run([sys.executable, str(ROOT / "dino-models" / script)], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, str(ROOT / "dino-items/test_eggs.py")], cwd=ROOT, check=True)
+    subprocess.run([sys.executable, str(ROOT / "dino-items/test_placed_eggs.py")], cwd=ROOT, check=True)
     dependencies = []
     for item in json.loads((ROOT / "dependencies-build.json").read_text()):
         dependencies.append(download(item, ROOT / ".deps"))
     java_home = os.environ.get("JAVA_HOME")
     def java_tool(name):
         return str(Path(java_home, "bin", name)) if java_home else name
-    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest"], "atlas": ["AtlasRulesTest"],
+    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest", "DinoGrowthTest", "CareRulesTest", "EggAssetsTest", "GroundSpeedsTest"], "atlas": ["AtlasRulesTest"],
              "panel": ["BridgeProtocolTest", "RuntimeSettingsTest"],
              "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"],
              "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest", "PortalInfoTest"],
@@ -77,7 +79,8 @@ def build():
         (checks / "de/ark/panel/MissingOptionalDependency.class").unlink(missing_ok=True)
         for main in mains:
             run([java_tool("java"), "-cp", os.pathsep.join([cp, str(classes), str(checks)]),
-                 f"de.ark.{packages[module]}.{main}"])
+                 f"de.ark.{packages[module]}.{main}",
+                 *([str(ROOT / 'dino-plugin/src/main/resources/egg-assets.properties')] if main == 'EggAssetsTest' else [])])
         run([java_tool("jar"), "--create", "--date", "2026-11-03T00:00:00Z", "--file",
              str(output / (versions[module] + ".jar")), "-C", str(classes), ".", "-C",
              str(folder / "src/main/resources"), "."])

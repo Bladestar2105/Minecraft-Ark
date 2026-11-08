@@ -9,6 +9,13 @@ final class SpeciesRules {
     private static final Pattern HABITAT = Pattern.compile("ark_renewal_habitat_(0[1-9]|1[0-2])_dino_[01]");
     record Resolution(String species, boolean conflict) { }
 
+    static Resolution resolve(String stored, Set<String> tags, boolean owned, boolean ravager, boolean dolphin) {
+        if (!dolphin) return resolve(stored, tags, owned, ravager);
+        return new Resolution(!owned && aquatic(stored) && tags.contains("ark_dino") && tags.contains("ark_dino_wild") ? stored : null, false);
+    }
+
+    static boolean aquatic(String species) { return "mosasaurus".equals(species); }
+
     static Resolution resolve(String stored, Set<String> tags, boolean owned, boolean ravager) {
         Set<String> candidates = new HashSet<>();
         for (String tag : tags) {
@@ -24,7 +31,11 @@ final class SpeciesRules {
 
     private static boolean compatible(String name, boolean ravager) {
         if (name == null) return false;
-        return ravager ? name.equals("trex") || name.equals("velociraptor")
+        return ravager ? ravager(name)
                 : name.equals("triceratops") || name.equals("stegosaurus") || name.equals("brachiosaurus") || name.equals("pteranodon");
+    }
+
+    static boolean ravager(String species) {
+        return "trex".equals(species) || "velociraptor".equals(species) || "dilophosaurus".equals(species);
     }
 }

@@ -3,11 +3,13 @@
 import argparse
 import base64
 import hashlib
+import io
 import json
 from pathlib import Path
 import re
 import shutil
 import uuid
+import zipfile
 from build_plugins import ROOT, download
 from fetch_world import safe_path
 
@@ -16,7 +18,7 @@ PLUGINS = {"dino": ("ArkDinos", "1.1.0"), "atlas": ("ArkAtlas", "1.0.1"),
            "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.1"),
            "access": ("ArkAccessBridge", "1.1.1")}
 DEFAULT_MODULES = [module for module in PLUGINS if module != "access"]
-DINO_MODELS = ("trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon")
+DINO_MODELS = ("trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon", "dilophosaurus", "mosasaurus")
 DINO_DEPENDENCIES = {"bettermodel", "geyser-model-engine", "geyser-model-engine-extension",
                      "geyser-utils-spigot", "geyser-utils-geyser"}
 
@@ -73,9 +75,10 @@ def verify_own_plugins(root=ROOT, modules=None):
 def dino_model_files(root):
     """Use the editable source's embedded texture for both editions."""
     files = []
-    for species in DINO_MODELS:
-        model = "ark_" + species
-        source = "dino-models/models/" + model + "/"
+    models = [('dino-models', 'ark_' + species) for species in DINO_MODELS]
+    models += [('dino-items', 'ark_egg_' + species) for species in DINO_MODELS if species != 'mosasaurus']
+    for directory, model in models:
+        source = directory + "/models/" + model + "/"
         target = "data/plugins/Geyser-Spigot/extensions/geysermodelengineextension/input/" + model + "/"
         bbmodel = safe_path(root, source + model + ".bbmodel").read_bytes()
         texture_source = json.loads(bbmodel)["textures"][0]["source"]
@@ -92,13 +95,32 @@ def dino_model_files(root):
     return files
 
 
+def dino_item_files(root):
+    """Install a separate static egg pack beside GME's generated entity pack."""
+    assets = json.loads(safe_path(root, 'dino-items/egg-assets.json').read_text())
+    expected = {'manifest.json', 'textures/item_texture.json'} | {
+        'textures/items/arkdinos/egg_' + species + '.png' for species in DINO_MODELS}
+    if set(assets['bedrock']) != expected:
+        raise ValueError('Unexpected dinosaur egg resource paths')
+    output = io.BytesIO()
+    with zipfile.ZipFile(output, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+        for name, encoded in sorted(assets['bedrock'].items()):
+            content = base64.b64decode(encoded, validate=True)
+            info = zipfile.ZipInfo(name, (2026, 11, 8, 0, 0, 0))
+            info.compress_type = zipfile.ZIP_DEFLATED
+            archive.writestr(info, content)
+    target = 'data/plugins/Geyser-Spigot/'
+    return [(target + 'packs/ark-dino-eggs.mcpack', output.getvalue()),
+            (target + 'custom_mappings/ark-dino-eggs.json', (json.dumps(assets['geyser'], indent=2) + '\n').encode())]
+
+
 def install(root=ROOT, modules=None):
     root = Path(root).resolve()
     modules = selected_modules(modules)
     if not safe_path(root, "data/ark/level.dat").is_file():
         raise ValueError("Install the world first; keep Minecraft stopped during installation.")
     own = verify_own_plugins(root, modules)
-    models = dino_model_files(root) if "dino" in modules else []
+    models = dino_model_files(root) + dino_item_files(root) if "dino" in modules else []
     copies = [("config/geyser.yml", "data/plugins/Geyser-Spigot/config.yml"),
               ("config/floodgate.yml", "data/plugins/floodgate/config.yml"),
               ("config/permissions.yml", "data/permissions.yml")]

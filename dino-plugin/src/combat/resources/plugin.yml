@@ -1,0 +1,7 @@
+name: CombatFixture
+version: '1.0'
+main: de.ark.dinos.CombatFixture
+api-version: '26.3'
+depend: [ArkDinos, WorldGuard]
+commands:
+  combatfixture: {}

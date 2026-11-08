@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "ark_egg_trex",
+  "model_identifier": "ark_egg_trex",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "name": "species_shell",
+      "type": "cube",
+      "uuid": "8947ed89-a191-5a53-90f0-af6bbc25c482",
+      "box_uv": false,
+      "from": [
+        -7.02,
+        -0.02,
+        -6.02
+      ],
+      "to": [
+        7.02,
+        16.02,
+        6.02
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            16,
+            0,
+            32,
+            16
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            32,
+            0,
+            48,
+            16
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            48,
+            0,
+            64,
+            16
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            0,
+            16,
+            16,
+            32
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            16,
+            16,
+            32,
+            32
+          ],
+          "texture": 0
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "shell",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "uuid": "c17b4aa4-2dfe-5203-b231-64dbcc59fd65",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "c17b4aa4-2dfe-5203-b231-64dbcc59fd65",
+      "isOpen": true,
+      "children": [
+        "8947ed89-a191-5a53-90f0-af6bbc25c482"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "ark_egg_trex.png",
+      "id": "0",
+      "uuid": "a857dcf9-8ba0-5c48-a0f1-d3bd72340aee",
+      "width": 64,
+      "height": 64,
+      "uv_width": 64,
+      "uv_height": 64,
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABOklEQVR42u3XMQ4BQRjF8e8wEgeQKCScgE6ncwY3oKKjcxyJQuJOZCQja83uTkK8+eJfTEh4305+2R2erQ+L2z8vAwCA9Aej+fijwV7ySYDBbPh8vz0uH6+9ST/74p7ylgpXB8QVBuRswlveUuHTefc2NIRXm2nrJjzmrf7chHB9QFgh3LUBj/kXgBi+XPeNA9o24TFvTYdHPEDibZWzAY95yzlQwqCcDXjMW+6J+skGSs5b/aei+sXUaru4x7w1/V6mgjny3vLWNSj3wl7zlCEAAACgyD4vBVD3eSmAus9LAdR9Xg6g7vNyAHWfL+IRUPb54v4HqPt8MQCqPv9zAHWfL+IOUPf5Yh4BdZ+nDAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB8ad0BFzlQ24tUCL0AAAAASUVORK5CYII="
+    }
+  ],
+  "animations": [
+    {
+      "uuid": "881e912c-438b-52e6-accf-4bca4580e784",
+      "name": "idle",
+      "loop": "loop",
+      "override": false,
+      "length": 1,
+      "snapping": 20,
+      "animators": {
+        "c17b4aa4-2dfe-5203-b231-64dbcc59fd65": {
+          "name": "shell",
+          "type": "bone",
+          "keyframes": [
+            {
+              "channel": "rotation",
+              "time": 0,
+              "uuid": "c848903c-bec6-58b9-8e74-90859252e058",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 1,
+              "uuid": "9972a4d9-10b0-55c9-b22d-dd13784e4a51",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

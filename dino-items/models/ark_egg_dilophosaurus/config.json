@@ -1,0 +1,13 @@
+{
+  "head_rotation": false,
+  "material": "entity_alphatest_change_color_one_sided",
+  "blend_transition": true,
+  "binding_bones": {
+    "ark_egg_dilophosaurus": [
+      "*"
+    ]
+  },
+  "anim_textures": {},
+  "texture_materials": {},
+  "disable_part_visibility": true
+}

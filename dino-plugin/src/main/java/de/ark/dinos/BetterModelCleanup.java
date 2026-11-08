@@ -8,6 +8,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Ravager;
 import org.bukkit.entity.Sniffer;
+import org.bukkit.entity.Dolphin;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -19,7 +20,7 @@ import java.util.UUID;
 /** Removes only our saved presentation when the optional crossplay stack is incomplete. */
 final class BetterModelCleanup implements AutoCloseable {
     private static final Set<String> NAMES = Set.of("ark_trex", "ark_triceratops", "ark_stegosaurus",
-            "ark_brachiosaurus", "ark_velociraptor", "ark_pteranodon");
+            "ark_brachiosaurus", "ark_velociraptor", "ark_pteranodon", "ark_dilophosaurus", "ark_mosasaurus");
     private final JavaPlugin plugin;
     private final Map<UUID, Mob> carriers = new HashMap<>();
     private final ModelEventListener reload;
@@ -36,7 +37,7 @@ final class BetterModelCleanup implements AutoCloseable {
     }
 
     void attach(Mob mob, String name) {
-        if (!NAMES.contains(name) || !(mob instanceof Sniffer || mob instanceof Ravager)) return;
+        if (!NAMES.contains(name) || !(mob instanceof Sniffer || mob instanceof Ravager || mob instanceof Dolphin && name.equals("ark_mosasaurus"))) return;
         String species = mob.getPersistentDataContainer().get(new NamespacedKey(plugin, "species"), PersistentDataType.STRING);
         if (!mob.getScoreboardTags().contains("ark_dino") && !name.equals("ark_" + species)) return;
         carriers.put(mob.getUniqueId(), mob);
@@ -49,7 +50,10 @@ final class BetterModelCleanup implements AutoCloseable {
             registry.ifPresent(value -> {
                 // BetterModel can create an empty registry before its asynchronous model load completes.
                 if (ready && value.trackers().isEmpty()) value.load();
-                for (String name : NAMES) if (value.tracker(name) != null) value.remove(name);
+                for (String name : NAMES) if (value.tracker(name) != null) {
+                    value.tracker(name).forRemoval(true);
+                    value.remove(name);
+                }
             });
         } catch (RuntimeException | LinkageError error) {
             plugin.getLogger().warning("Saved dinosaur model cleanup failed: " + error.getMessage());
