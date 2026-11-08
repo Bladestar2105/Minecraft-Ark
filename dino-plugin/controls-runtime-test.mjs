@@ -100,7 +100,7 @@ const fields=text=>Object.fromEntries(text.trim().split(';').map(v=>{const i=v.i
 const inspect=async tag=>fields(await command(`controlsfixture inspect ${tag}`));
 const inventory=async client=>fields(await command(`controlsfixture inventory ${client.name}`));
 const food=(client,type,amount)=>command(`controlsfixture food ${client.name} ${type} ${amount}`);
-async function spawnDino(tag,species,x,owner){const type=['trex','velociraptor','dilophosaurus'].includes(species)?'ravager':'sniffer';await command(`summon ${type} ${x} 4 0 {Tags:["${tag}","ark_dino","ark_dino_tamed"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"${species}","arkdinos:owner":"${owner}","arkdinos:stay":1b,"arkdinos:growth-duration":300000L}}`);await delay(200);}
+async function spawnDino(tag,species,x,owner){const type=['trex','velociraptor','dilophosaurus'].includes(species)?'ravager':'sniffer';await command(`summon ${type} ${x} 4 0 {Tags:["${tag}","ark_dino","ark_dino_tamed"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"${species}","arkdinos:owner":"${owner}","arkdinos:stay":1b,"arkdinos:growth-duration":900000L}}`);await delay(200);}
 async function open(client,tag){const mob=await inspect(tag);await command(`tp ${client.name} ${mob.x} ${mob.y} ${Number(mob.z)+3}`);await food(client,'AIR',0);client.input(32);await delay(100);client.interact(Number(mob.id),true);await delay(200);}
 async function menuClick(client,slot,type='LEFT'){const result=await command(`controlsfixture click ${client.name} ${slot} ${type}`);await delay(200);return result;}
 async function start(){
@@ -259,7 +259,7 @@ try {
   await open(alice,'control_rex');await menuClick(alice,2);assert.match(await command('controlsfixture active control_rex'),/active=false/);assert.equal((await inspect('control_rex')).path,'false');
  });
  await check('Juveniles follow and roam while riding, combat and release remain adult-only; occupied vehicles cannot release',async()=>{
-  await spawnDino('control_baby','triceratops',8,alice.uuid);await command('controlsfixture time control_baby adult-at 300000');
+  await spawnDino('control_baby','triceratops',8,alice.uuid);await command('controlsfixture time control_baby adult-at 900000');
   await open(alice,'control_baby');await menuClick(alice,0);assert.equal((await inspect('control_baby')).stay,'0');assert.equal((await inspect('control_baby')).roam,'0');alice.input(0);
   await command(`tp ${alice.name} 8 4 14`);await eventually(async()=>Number((await inspect('control_baby')).z)>2,'Juvenile must follow its owner');
   let baby=await inspect('control_baby');await command(`tp ${alice.name} ${baby.x} ${baby.y} ${Number(baby.z)+3}`);await food(alice,'AIR',0);alice.input(0);await delay(150);alice.interact(Number(baby.id));await delay(200);assert.equal((await inspect('control_baby')).passengers,'0','Juvenile riding remains blocked');

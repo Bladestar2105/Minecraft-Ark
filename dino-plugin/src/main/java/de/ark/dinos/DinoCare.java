@@ -76,7 +76,7 @@ final class DinoCare implements Listener, AutoCloseable {
     private long adultAt(Entity entity) {
         var data=entity.getPersistentDataContainer();long deadline=number(data,adultAt);
         if(!data.has(adultAt,PersistentDataType.LONG))return 0;
-        long duration=CareRules.growthMs(plugin.prototype(entity));
+        long duration=CareRules.GROWTH_MS;
         long previous=data.getOrDefault(key("growth-duration"),PersistentDataType.LONG,CareRules.GROWTH_MS);
         if(previous!=duration) {
             long now=System.currentTimeMillis(),oldDeadline=deadline;
@@ -147,7 +147,7 @@ final class DinoCare implements Listener, AutoCloseable {
                     && CareRules.pair(parent(mob),parent(partner),mob.getLocation().distanceSquared(partner.getLocation()),now)) {
                 data.set(breedUntil,PersistentDataType.LONG,now+CareRules.BREED_COOLDOWN_MS);data.remove(loveUntil);
                 var other=partner.getPersistentDataContainer();other.set(breedUntil,PersistentDataType.LONG,now+CareRules.BREED_COOLDOWN_MS);other.remove(loveUntil);
-                give(player,egg(species,player.getUniqueId()));hearts(partner);message(player,"Ein Dino-Ei liegt in deinem Inventar. Brutzeit hier: "+(CareRules.incubationMs(plugin.prototype(mob))/60_000)+" Minuten.");return true;
+                give(player,egg(species,player.getUniqueId()));hearts(partner);message(player,"Ein Dino-Ei liegt in deinem Inventar. Brutzeit: "+(CareRules.INCUBATION_MS/60_000)+" Minuten.");return true;
             }
             message(player,"Paarungsbereit für 60 s. Zweites erwachsenes Tier derselben Art füttern.");return true;
         }
@@ -184,8 +184,8 @@ final class DinoCare implements Listener, AutoCloseable {
     }
     private List<Component> eggLore(String species) {
         return species.equals("mosasaurus")
-                ? List.of(Component.text("Nur Kreativmodus in der Testwelt · im tiefen Wasser rechtsklicken"),Component.text("Erzeugt einen wilden Mosasaurus · nicht zähmbar oder reitbar"))
-                : List.of(Component.text("Testwelt: 5 Minuten Brutzeit · 5 Minuten Wachstum"),Component.text("Hauptwelt: 20 Minuten Brutzeit · 15 Minuten Wachstum"),Component.text("Auf erlaubtem Boden platzieren · Futter beschleunigt das Wachstum"));
+                ? List.of(Component.text("Nur Kreativmodus · im tiefen Wasser rechtsklicken"),Component.text("Erzeugt einen wilden Mosasaurus · nicht zähmbar oder reitbar"))
+                : List.of(Component.text("20 Minuten Brutzeit · 15 Minuten Wachstum"),Component.text("Auf erlaubtem Boden platzieren · Futter beschleunigt das Wachstum"));
     }
     private void refreshEggs(Inventory inventory) {
         for(int slot=0;slot<inventory.getSize();slot++) {
@@ -193,7 +193,9 @@ final class DinoCare implements Listener, AutoCloseable {
             var meta=item.getItemMeta();String species=meta.getPersistentDataContainer().get(eggSpecies,PersistentDataType.STRING);
             if(species==null || !EGG_SPECIES.contains(species))continue;
             var model=new NamespacedKey("arkdinos","egg_"+species);boolean changed=!model.equals(meta.getItemModel());
-            if(List.of(Component.text("Auf erlaubtem Boden platzieren · 20 Minuten Brutzeit"),Component.text("Wächst in 15 Minuten heran · Futter beschleunigt das Wachstum")).equals(meta.lore())) { meta.lore(eggLore(species));changed=true; }
+            if(List.of(Component.text("Auf erlaubtem Boden platzieren · 20 Minuten Brutzeit"),Component.text("Wächst in 15 Minuten heran · Futter beschleunigt das Wachstum")).equals(meta.lore())
+                    || List.of(Component.text("Testwelt: 5 Minuten Brutzeit · 5 Minuten Wachstum"),Component.text("Hauptwelt: 20 Minuten Brutzeit · 15 Minuten Wachstum"),Component.text("Auf erlaubtem Boden platzieren · Futter beschleunigt das Wachstum")).equals(meta.lore())
+                    || List.of(Component.text("Nur Kreativmodus in der Testwelt · im tiefen Wasser rechtsklicken"),Component.text("Erzeugt einen wilden Mosasaurus · nicht zähmbar oder reitbar")).equals(meta.lore())) { meta.lore(eggLore(species));changed=true; }
             if(changed) { meta.setItemModel(model);item.setItemMeta(meta);inventory.setItem(slot,item); }
         }
     }
@@ -220,7 +222,7 @@ final class DinoCare implements Listener, AutoCloseable {
     }
     boolean command(Player player) {
         if(player.getGameMode()!=GameMode.CREATIVE || !plugin.prototype(player)) {
-            player.sendMessage(Component.text("Dino-Eier gibt es nur im Kreativmodus der Dino-Testwelt."));return true;
+            player.sendMessage(Component.text("Dino-Eier gibt es nur im Kreativmodus einer Dino-Welt."));return true;
         }
         EggMenu menu=new EggMenu(player.getUniqueId());menu.inventory=plugin.getServer().createInventory(menu,9,Component.text("Dino-Eier"));
         for(int i=0;i<EGG_SPECIES.size();i++)menu.inventory.setItem(i,egg(EGG_SPECIES.get(i),player.getUniqueId()));
@@ -256,7 +258,7 @@ final class DinoCare implements Listener, AutoCloseable {
         event.setCancelled(true);
         if(denied || event.getHand()!=EquipmentSlot.HAND)return;
         Player player=event.getPlayer();
-        if(player.getGameMode()!=GameMode.CREATIVE || !plugin.prototype(player)) { message(player,"Mosasaurus-Eier sind nur im Kreativmodus der Dino-Testwelt nutzbar.");return; }
+        if(player.getGameMode()!=GameMode.CREATIVE || !plugin.prototype(player)) { message(player,"Mosasaurus-Eier sind nur im Kreativmodus einer Dino-Welt nutzbar.");return; }
         var target=player.rayTraceBlocks(6,FluidCollisionMode.ALWAYS);
         Block block=target==null?null:target.getHitBlock();
         if(block==null || block.getType()!=Material.WATER) { message(player,"Im tiefen, freien Wasser rechtsklicken. Das Ei bleibt erhalten.");return; }
@@ -291,7 +293,7 @@ final class DinoCare implements Listener, AutoCloseable {
         return normalize(block.getChunk(),nestKey(block),data,nest);
     }
     private Nest normalize(Chunk chunk,NamespacedKey nestKey,PersistentDataContainer data,Nest nest) {
-        long duration=CareRules.incubationMs(plugin.prototype(chunk.getWorld()));
+        long duration=CareRules.INCUBATION_MS;
         long previous=data.getOrDefault(key("incubation-duration"),PersistentDataType.LONG,CareRules.INCUBATION_MS);
         if(previous==duration)return nest;
         long deadline=CareRules.deadline(nest.hatchAt(),previous,duration);
@@ -310,7 +312,7 @@ final class DinoCare implements Listener, AutoCloseable {
         if("mosasaurus".equals(meta.getPersistentDataContainer().get(eggSpecies,PersistentDataType.STRING)) && event.getBlockPlaced().getType()==Material.WATER)return;
         if(event.getBlockPlaced().getType()!=Material.SNIFFER_EGG || !plugin.prototype(event.getBlock().getWorld())
                 || event.getPlayer().getGameMode()!=GameMode.CREATIVE && !plugin.survival(event.getPlayer()) || read(meta.getPersistentDataContainer())==null) {
-            event.setCancelled(true);message(event.getPlayer(),"Dino-Eier können nur in der Dino-Testwelt ausgebrütet werden.");
+            event.setCancelled(true);message(event.getPlayer(),"Dino-Eier können nur in einer Dino-Welt ausgebrütet werden.");
         }
     }
     @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)
@@ -319,7 +321,7 @@ final class DinoCare implements Listener, AutoCloseable {
         var meta=event.getItemInHand().getItemMeta();Nest nest=meta==null?null:read(meta.getPersistentDataContainer());if(nest==null)return;
         var chunk=event.getBlock().getChunk();var data=chunk.getPersistentDataContainer().getAdapterContext().newPersistentDataContainer();
         data.set(eggSpecies,PersistentDataType.STRING,nest.species());data.set(eggOwner,PersistentDataType.STRING,nest.owner().toString());
-        long duration=CareRules.incubationMs(plugin.prototype(chunk.getWorld()));
+        long duration=CareRules.INCUBATION_MS;
         data.set(key("hatch-at"),PersistentDataType.LONG,System.currentTimeMillis()+duration);data.set(key("incubation-duration"),PersistentDataType.LONG,duration);
         chunk.getPersistentDataContainer().set(nestKey(event.getBlock()),PersistentDataType.TAG_CONTAINER,data);nestingChunks.add(chunk);
         message(event.getPlayer(),"Dino-Ei platziert. Es schlüpft in "+(duration/60_000)+" Minuten; die Welt darf entladen werden.");
@@ -405,7 +407,7 @@ final class DinoCare implements Listener, AutoCloseable {
         Mob mob=block.getWorld().spawn(block.getLocation().add(.5,0,.5),carrier,CreatureSpawnEvent.SpawnReason.EGG,true,entity -> {
             var data=entity.getPersistentDataContainer();data.set(key("species"),PersistentDataType.STRING,nest.species());
             data.set(key("owner"),PersistentDataType.STRING,nest.owner().toString());data.set(key("stay"),PersistentDataType.BYTE,(byte)1);
-            long duration=CareRules.growthMs(plugin.prototype(entity));
+            long duration=CareRules.GROWTH_MS;
             data.set(adultAt,PersistentDataType.LONG,now+duration);data.set(key("growth-duration"),PersistentDataType.LONG,duration);
             var scale=entity.getAttribute(Attribute.SCALE);if(scale!=null)scale.setBaseValue(DinoGrowth.scale(now+duration,now,duration));
             entity.addScoreboardTag("ark_dino");entity.addScoreboardTag("ark_dino_tamed");entity.setPersistent(true);entity.setRemoveWhenFarAway(false);

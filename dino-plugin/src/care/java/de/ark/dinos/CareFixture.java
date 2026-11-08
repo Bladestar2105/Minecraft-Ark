@@ -132,11 +132,12 @@ public final class CareFixture extends JavaPlugin implements Listener {
                     sender.sendMessage("hand="+p.getInventory().getItemInMainHand().getType()+";amount="+p.getInventory().getItemInMainHand().getAmount()+";eggs="+eggs+";eggSpecies="+species+";eggModel="+model+";lore="+lore+";top="+p.getOpenInventory().getTopInventory().getSize()+";cursor="+p.getItemOnCursor().getType());
                 }
                 case "time" -> entity(args[1]).getPersistentDataContainer().set(key(args[2]),PersistentDataType.LONG,Long.parseLong(args[3])==0?0:System.currentTimeMillis()+Long.parseLong(args[3]));
-                case "legacy-growth" -> { var mob=entity(args[1]);mob.getPersistentDataContainer().remove(key("growth-duration"));mob.getPersistentDataContainer().set(key("adult-at"),PersistentDataType.LONG,System.currentTimeMillis()+Long.parseLong(args[2])); }
+                case "legacy-growth" -> { var mob=entity(args[1]);var data=mob.getPersistentDataContainer();data.remove(key("growth-duration"));if(args.length>3)data.set(key("growth-duration"),PersistentDataType.LONG,Long.parseLong(args[3]));data.set(key("adult-at"),PersistentDataType.LONG,System.currentTimeMillis()+Long.parseLong(args[2])); }
                 case "legacy-scale" -> {
                     var mob=(Mob)entity(args[1]);long remaining=Long.parseLong(args[2]);var data=mob.getPersistentDataContainer();
-                    data.remove(key("growth-duration"));data.remove(key("model-original-scale"));data.set(key("adult-at"),PersistentDataType.LONG,System.currentTimeMillis()+remaining);
-                    mob.getAttribute(org.bukkit.attribute.Attribute.SCALE).setBaseValue(Double.parseDouble(args[3])*(.45+.55*Math.max(0,1-remaining/900000d)));
+                    long duration=args.length>4?Long.parseLong(args[4]):900000L;
+                    data.remove(key("growth-duration"));if(args.length>4)data.set(key("growth-duration"),PersistentDataType.LONG,duration);data.remove(key("model-original-scale"));data.set(key("adult-at"),PersistentDataType.LONG,System.currentTimeMillis()+remaining);
+                    mob.getAttribute(org.bukkit.attribute.Attribute.SCALE).setBaseValue(Double.parseDouble(args[3])*Math.clamp(.45+.55*(1-remaining/(double)duration),.45,1));
                     var plugin=getServer().getPluginManager().getPlugin("ArkDinos");var method=plugin.getClass().getDeclaredMethod("restore",Entity.class);method.setAccessible(true);method.invoke(plugin,mob);sender.sendMessage(state(mob));
                 }
                 case "restore" -> { var plugin=getServer().getPluginManager().getPlugin("ArkDinos");var method=plugin.getClass().getDeclaredMethod("restore",Entity.class);method.setAccessible(true);method.invoke(plugin,entity(args[1])); }
@@ -156,7 +157,9 @@ public final class CareFixture extends JavaPlugin implements Listener {
                     meta.getPersistentDataContainer().set(key("fixture-preserve"),PersistentDataType.STRING,"keep");old.setItemMeta(meta);p.getInventory().setItem(0,old);
                     ItemStack custom=old.clone();meta=custom.getItemMeta();meta.lore(java.util.List.of(net.kyori.adventure.text.Component.text("My own egg lore")));custom.setItemMeta(meta);custom.setAmount(7);p.getInventory().setItem(1,custom);
                     p.getInventory().setItem(2,new ItemStack(Material.SNIFFER_EGG,9));
-                    Block block=p.getWorld().getBlockAt(6,4,6);block.setType(Material.CHEST);var chest=(org.bukkit.block.Chest)block.getState();chest.getInventory().setItem(0,old.clone());
+                    ItemStack mosa=(ItemStack)call("egg",new Class<?>[]{String.class,java.util.UUID.class},"mosasaurus",p.getUniqueId());meta=mosa.getItemMeta();meta.lore(java.util.List.of(net.kyori.adventure.text.Component.text("Nur Kreativmodus in der Testwelt · im tiefen Wasser rechtsklicken"),net.kyori.adventure.text.Component.text("Erzeugt einen wilden Mosasaurus · nicht zähmbar oder reitbar")));mosa.setItemMeta(meta);p.getInventory().setItem(3,mosa);
+                    Block block=p.getWorld().getBlockAt(6,4,6);block.setType(Material.CHEST);var chest=(org.bukkit.block.Chest)block.getState();
+                    ItemStack prototype=old.clone();meta=prototype.getItemMeta();meta.setItemModel(new org.bukkit.NamespacedKey("arkdinos","egg_trex"));meta.lore(java.util.List.of(net.kyori.adventure.text.Component.text("Testwelt: 5 Minuten Brutzeit · 5 Minuten Wachstum"),net.kyori.adventure.text.Component.text("Hauptwelt: 20 Minuten Brutzeit · 15 Minuten Wachstum"),net.kyori.adventure.text.Component.text("Auf erlaubtem Boden platzieren · Futter beschleunigt das Wachstum")));prototype.setItemMeta(meta);chest.getInventory().setItem(0,prototype);chest.getInventory().setItem(3,mosa.clone());
                     sender.sendMessage("seeded=true");
                 }
                 case "open-legacy-chest" -> {Player p=getServer().getPlayerExact(args[1]);p.openInventory(((org.bukkit.block.Chest)p.getWorld().getBlockAt(6,4,6).getState()).getInventory());}
@@ -167,7 +170,7 @@ public final class CareFixture extends JavaPlugin implements Listener {
                     sender.sendMessage("amount="+item.getAmount()+";model="+meta.getItemModel()+";owner="+meta.getPersistentDataContainer().get(key("egg-owner"),PersistentDataType.STRING)+";species="+meta.getPersistentDataContainer().get(key("egg-species"),PersistentDataType.STRING)
                         +";name="+net.kyori.adventure.text.Component.text("Family hatch egg").equals(meta.displayName())+";extra="+meta.getPersistentDataContainer().get(key("fixture-preserve"),PersistentDataType.STRING)+";lore="+meta.lore()
                         +";customLore="+(inv.getItem(1)!=null && java.util.List.of(net.kyori.adventure.text.Component.text("My own egg lore")).equals(inv.getItem(1).getItemMeta().lore()))
-                        +";vanilla="+(inv.getItem(2)!=null && inv.getItem(2).getAmount()==9 && !inv.getItem(2).hasItemMeta()));
+                        +";vanilla="+(inv.getItem(2)!=null && inv.getItem(2).getAmount()==9 && !inv.getItem(2).hasItemMeta())+";mosaLore="+(inv.getItem(3)==null?"none":inv.getItem(3).getItemMeta().lore()));
                 }
                 case "egg" -> { Player p=getServer().getPlayerExact(args[1]);p.getInventory().setHeldItemSlot(0);p.getInventory().setItemInMainHand((ItemStack)call("egg",new Class<?>[]{String.class,java.util.UUID.class},args[2],p.getUniqueId())); }
                 case "menu" -> call("command",new Class<?>[]{Player.class},getServer().getPlayerExact(args[1]));
@@ -198,7 +201,7 @@ public final class CareFixture extends JavaPlugin implements Listener {
                 case "nest","legacy-nest","ready","grow","fade","break","piston","explode" -> {
                     WorldBlock location=block(args);Block block=location.block();var data=block.getChunk().getPersistentDataContainer();var nestKey=key("nest_"+block.getX()+"_"+block.getY()+"_"+block.getZ());var nest=data.get(nestKey,PersistentDataType.TAG_CONTAINER);
                     if(args[0].equals("ready")) { nest.set(key("hatch-at"),PersistentDataType.LONG,0L);data.set(nestKey,PersistentDataType.TAG_CONTAINER,nest);call("tick",new Class<?>[]{}); }
-                    if(args[0].equals("legacy-nest")) { nest.remove(key("incubation-duration"));nest.set(key("hatch-at"),PersistentDataType.LONG,System.currentTimeMillis()+Long.parseLong(args[5]));data.set(nestKey,PersistentDataType.TAG_CONTAINER,nest);call("tick",new Class<?>[]{}); }
+                    if(args[0].equals("legacy-nest")) { nest.remove(key("incubation-duration"));if(args.length>6)nest.set(key("incubation-duration"),PersistentDataType.LONG,Long.parseLong(args[6]));nest.set(key("hatch-at"),PersistentDataType.LONG,System.currentTimeMillis()+Long.parseLong(args[5]));data.set(nestKey,PersistentDataType.TAG_CONTAINER,nest);call("tick",new Class<?>[]{}); }
                     if(args[0].equals("grow")) { var event=new BlockGrowEvent(block,block.getState());getServer().getPluginManager().callEvent(event);sender.sendMessage("cancelled="+event.isCancelled());return true; }
                     if(args[0].equals("fade")) { var state=block.getState();state.setType(Material.AIR);var event=new BlockFadeEvent(block,state);getServer().getPluginManager().callEvent(event);sender.sendMessage("cancelled="+event.isCancelled());return true; }
                     if(args[0].equals("break")) { var event=new BlockBreakEvent(block,getServer().getPlayerExact(args[5]));getServer().getPluginManager().callEvent(event);if(!event.isCancelled())block.setType(Material.AIR,false);sender.sendMessage("cancelled="+event.isCancelled()+";vanillaDrops="+event.isDropItems());return true; }

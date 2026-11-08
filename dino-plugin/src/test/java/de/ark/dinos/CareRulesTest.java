@@ -45,11 +45,9 @@ public final class CareRulesTest {
         check(!CareRules.pair(adult,new CareRules.Parent("trex","alice",true,now,0),1,now), "Love expires after sixty seconds");
         check(!CareRules.pair(adult,new CareRules.Parent("trex","alice",true,now+60_000,now+1),1,now), "Breeding cooldown enforced");
         check(CareRules.INCUBATION_MS==1_200_000 && CareRules.GROWTH_MS==900_000 && CareRules.BREED_COOLDOWN_MS==300_000, "Approved timing");
-        check(CareRules.incubationMs(true)==300_000 && CareRules.growthMs(true)==300_000, "Prototype care takes five minutes");
-        check(CareRules.incubationMs(false)==1_200_000 && CareRules.growthMs(false)==900_000, "Main world timings remain unchanged");
-        check(CareRules.deadline(now+1_080_000,1_200_000,300_000)==now+180_000, "Existing eggs keep their elapsed two minutes");
-        check(CareRules.deadline(now+480_000,900_000,300_000)==now-120_000, "Existing juveniles older than five minutes finish immediately");
-        check(CareRules.deadline(now+180_000,300_000,300_000)==now+180_000, "Normalized timing does not shorten again");
+        check(CareRules.deadline(now+180_000,300_000,CareRules.INCUBATION_MS)==now+1_080_000, "Old five-minute eggs retain two elapsed minutes under normal incubation");
+        check(CareRules.deadline(now+180_000,300_000,CareRules.GROWTH_MS)==now+780_000, "Old five-minute juveniles retain two elapsed minutes under normal growth");
+        check(CareRules.deadline(now+780_000,900_000,CareRules.GROWTH_MS)==now+780_000, "Normalized growth does not extend again");
         check(!CareRules.SPECIES.contains("mosasaurus") && !CareRules.primary("mosasaurus","COD") && !CareRules.finisher("mosasaurus","SEAGRASS"), "Wild Mosa is excluded from care");
         System.out.println("PASS care foods, five feeds, cooldown, expiry, owner isolation and adult breeding rules");
     }

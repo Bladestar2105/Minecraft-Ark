@@ -210,8 +210,8 @@ try {
         const tag=`historical_${name}_${remaining}`;await command(`execute in ${world} run summon ${kind} 8 4 -8 {Tags:["${tag}","ark_dino","ark_dino_tamed"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"${name}","arkdinos:owner":"${alice.uuid}","arkdinos:stay":1b}}`);
         await command(`dinofixture load-event ${tag}`);const before=await inspect(tag);
         const state=Object.fromEntries((await command(`dinofixture historical-growth ${tag} ${remaining} ${base}`)).trim().split(';').map(field=>{const at=field.indexOf('=');return[field.slice(0,at),field.slice(at+1)];}));
-        const fraction=remaining===780000?.67:1;
-        assert.equal(state.uuid,before.uuid);assert.equal(state.owner,alice.uuid);assert.equal(state.duration,'300000');
+        const fraction=remaining===780000?.45+.55*2/15:.45+.55*7/15;
+        assert.equal(state.uuid,before.uuid);assert.equal(state.owner,alice.uuid);assert.ok(state.duration==='null' || state.duration==='900000');
         assert.ok(Math.abs(Number(state.original)-base)<.001,`Historical adult base changed: ${JSON.stringify(state)}`);
         assert.ok(Math.abs(Number(state.render)-fraction)<.001);assert.ok(Math.abs(Number(state.fallback)-base*fraction)<.001);
         assert.equal(Number(state.adultRender),1);assert.ok(Math.abs(Number(state.adultFallback)-base)<.001);
@@ -221,8 +221,8 @@ try {
     });
     await check('Actual juvenile feeding advances detail growth and keeps identity',async()=>{
       const world='minecraft:ark_model_test',tag='detail_feed';
-      await command(`execute in ${world} run summon sniffer 8 4 -8 {Tags:["${tag}","ark_dino","ark_dino_tamed"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"triceratops","arkdinos:owner":"${alice.uuid}","arkdinos:stay":1b,"arkdinos:growth-duration":300000L}}`);
-      await command(`dinofixture load-event ${tag}`);await command(`dinofixture growth-time ${tag} 180000`);
+      await command(`execute in ${world} run summon sniffer 8 4 -8 {Tags:["${tag}","ark_dino","ark_dino_tamed"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"triceratops","arkdinos:owner":"${alice.uuid}","arkdinos:stay":1b,"arkdinos:growth-duration":900000L}}`);
+      await command(`dinofixture load-event ${tag}`);await command(`dinofixture growth-time ${tag} 480000`);
       const before=await inspect(tag);await eventually(async()=>/growth_baby/.test(await command(`dinofixture model-state ${tag}`)),'Baby detail pose missing');
       await command('clear RideOwner');await command('give RideOwner wheat 2');await scopeClick(tag,world);
       await eventually(async()=>/growth_juvenile/.test(await command(`dinofixture model-state ${tag}`)),'Feeding must advance details to juvenile pose');

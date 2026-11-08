@@ -161,7 +161,7 @@ try {
   const all=[];
   for(const [i,name] of species.entries()){
    const state=await visual(i*2);assert.equal(state.block,'SNIFFER_EGG');assert.equal(state.width,'0.875');assert.equal(state.height,'1.0');assert.equal(state.depth,'0.75');
-   const nest=fields(await command(`carefixture nest ark_model_test ${i*2} 4 8`));assert.equal(nest.species,name);assert.equal(nest.owner,alice.uuid);assert.equal(nest.duration,'300000');
+   const nest=fields(await command(`carefixture nest ark_model_test ${i*2} 4 8`));assert.equal(nest.species,name);assert.equal(nest.owner,alice.uuid);assert.equal(nest.duration,'1200000');
    if(!process.env.DINO_EGG_FALLBACK){assert.equal(state.actors,'1');assert.equal(state.model,'ark_egg_'+name);assert.equal(state.trackers,'1');assert.equal(state.hitboxes,'0');assert.equal(state.bridge,'1');assert.equal(state.visible,'true');assert.equal(state.persistent,'false');assert.equal(state.marker,'true');}
    all.push({state,nest});
   }

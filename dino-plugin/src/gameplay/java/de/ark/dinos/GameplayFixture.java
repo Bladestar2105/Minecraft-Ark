@@ -41,7 +41,7 @@ public final class GameplayFixture extends JavaPlugin implements org.bukkit.even
   switch(args[0]){
    case "growth-time" -> {
     var data=mob.getPersistentDataContainer();
-    data.set(NamespacedKey.fromString("arkdinos:growth-duration"),PersistentDataType.LONG,300000L);
+    data.set(NamespacedKey.fromString("arkdinos:growth-duration"),PersistentDataType.LONG,900000L);
     data.set(NamespacedKey.fromString("arkdinos:adult-at"),PersistentDataType.LONG,System.currentTimeMillis()+Long.parseLong(args[2]));
     try {var field=plugin.getClass().getDeclaredField("models");field.setAccessible(true);var models=field.get(plugin);var grow=models.getClass().getDeclaredMethod("growth",Mob.class);grow.setAccessible(true);grow.invoke(models,mob);}
     catch(ReflectiveOperationException error){throw new IllegalStateException(error);}return true;

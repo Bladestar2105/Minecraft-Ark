@@ -355,7 +355,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
                 }
             }
             if (args[0].equals("age")) {
-                mob.getPersistentDataContainer().set(NamespacedKey.fromString("arkdinos:growth-duration"),PersistentDataType.LONG,300000L);
+                mob.getPersistentDataContainer().set(NamespacedKey.fromString("arkdinos:growth-duration"),PersistentDataType.LONG,900000L);
                 mob.getPersistentDataContainer().set(NamespacedKey.fromString("arkdinos:adult-at"), PersistentDataType.LONG, System.currentTimeMillis() + Long.parseLong(args[2]));
             }
             var field = plugin.getClass().getDeclaredField("combat"); field.setAccessible(true); Object combat = field.get(plugin);

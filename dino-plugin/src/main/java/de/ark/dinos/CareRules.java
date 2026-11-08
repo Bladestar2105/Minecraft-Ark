@@ -11,8 +11,6 @@ final class CareRules {
     record Progress(String actor,int feeds,long nextFeedAt,long expiresAt) { }
     record Feeding(Action action,Progress progress) { }
     record Parent(String species,String owner,boolean adult,long loveUntil,long cooldownUntil) { }
-    static long incubationMs(boolean prototype) { return prototype ? 300_000 : INCUBATION_MS; }
-    static long growthMs(boolean prototype) { return prototype ? 300_000 : GROWTH_MS; }
     static long deadline(long deadline,long previousDuration,long duration) { return deadline-previousDuration+duration; }
 
     static boolean primary(String species,String item) {

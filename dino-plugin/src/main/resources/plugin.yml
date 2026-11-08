@@ -7,5 +7,5 @@ author: ARK
 softdepend: [BetterModel, packetevents, GeyserModelEngine, Geyser-Spigot, WorldGuard, GriefPrevention]
 commands:
   dinoeier:
-    description: Dino-Eier im Kreativmodus der Dino-Testwelt auswählen
+    description: Dino-Eier im Kreativmodus einer Dino-Welt auswählen
     usage: /dinoeier

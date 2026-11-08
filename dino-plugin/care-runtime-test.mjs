@@ -167,7 +167,7 @@ try {
   for(const clickType of ['SHIFT_LEFT','NUMBER_KEY','DOUBLE_CLICK','DROP'])assert.match(await command(`carefixture click ${alice.name} 0 ${clickType}`),/cancelled=true/);
   assert.match(await command(`carefixture drag ${alice.name}`),/cancelled=true/);assert.equal((await inventory(alice)).eggs,'0');
   assert.match(await command(`carefixture click ${alice.name} 5 LEFT`),/cancelled=true/);await delay(150);assert.equal((await inventory(alice)).eggs,'1');assert.equal((await inventory(alice)).eggSpecies,'pteranodon');assert.equal((await inventory(alice)).cursor,'AIR');
-  assert.equal((await inventory(alice)).eggModel,'arkdinos:egg_pteranodon');assert.match((await inventory(alice)).lore,/5 Minuten Brutzeit.*5 Minuten Wachstum/);assert.match((await inventory(alice)).lore,/20 Minuten Brutzeit.*15 Minuten Wachstum/);
+  assert.equal((await inventory(alice)).eggModel,'arkdinos:egg_pteranodon');assert.match((await inventory(alice)).lore,/20 Minuten Brutzeit.*15 Minuten Wachstum/);assert.doesNotMatch((await inventory(alice)).lore,/Testwelt/);
   await command(`clear ${alice.name}`);await command(`gamemode survival ${alice.name}`);await command(`carefixture menu ${alice.name}`);assert.notEqual((await inventory(alice)).top,'9');
  });
  await check('Protection cancellation retains the inventory egg and creates no nest',async()=>{
@@ -184,7 +184,7 @@ try {
  await check('Obstructed nests wait safely and then hatch a persistent owned juvenile',async()=>{
   await command('setblock 12 5 12 stone');assert.match(await command('carefixture ready ark_model_test 12 4 12'),/block=SNIFFER_EGG;nest=true/,'Blocked headroom must retain egg');
   await command('setblock 12 5 12 air');assert.match(await command('carefixture ready ark_model_test 12 4 12'),/block=AIR;nest=false/);
-  const baby=await inspect('care_hatch');assert.equal(baby.owner,alice.uuid);assert.equal(baby.species,'trex');assert.equal(baby.growthDuration,'300000');assert.ok(Number(baby.adultAt)>Date.now()+290_000 && Number(baby.adultAt)<=Date.now()+300_000);
+  const baby=await inspect('care_hatch');assert.equal(baby.owner,alice.uuid);assert.equal(baby.species,'trex');assert.equal(baby.growthDuration,'900000');assert.ok(Number(baby.adultAt)>Date.now()+890_000 && Number(baby.adultAt)<=Date.now()+900_000);
   await command(`clear ${alice.name}`);await click(alice,'care_hatch');assert.equal((await inspect('care_hatch')).passengers,'0','Juvenile cannot mount');
   await food(alice,'BEEF',1);await click(alice,'care_hatch');assert.equal((await inventory(alice)).amount,'0','Juvenile food accelerates growth');
   const fed=await inspect('care_hatch');assert.equal(fed.love,'0');assert.ok(Number(baby.adultAt)-Number(fed.adultAt)>=59999);
@@ -194,19 +194,19 @@ try {
  });
  await check('Real clean restart retains incubation, species and owner without force loading',async()=>{
   await command(`carefixture egg ${alice.name} brachiosaurus`);await command(`carefixture place ${alice.name} 14 4 12`);
-  const before=await command('carefixture nest ark_model_test 14 4 12');assert.match(before,/nest=true;species=brachiosaurus/);const placed=fields(before);assert.equal(placed.duration,'300000');assert.ok(Number(placed.hatchAt)>Date.now()+290000 && Number(placed.hatchAt)<=Date.now()+300000);await command(`carefixture legacy-eggs ${alice.name}`);await stop();await start();
+  const before=await command('carefixture nest ark_model_test 14 4 12');assert.match(before,/nest=true;species=brachiosaurus/);const placed=fields(before);assert.equal(placed.duration,'1200000');assert.ok(Number(placed.hatchAt)>Date.now()+1190000 && Number(placed.hatchAt)<=Date.now()+1200000);await command(`carefixture legacy-eggs ${alice.name}`);await stop();await start();
   alice=new Client('CareOwner');clients.push(alice);await eventually(()=>alice.joined,'Restarted care client did not join',30000);await command(`tp ${alice.name} 12 4 12`);await delay(500);
   assert.equal(await command('carefixture nest ark_model_test 14 4 12'),before);assert.match(await command('forceload query'),/No force loaded chunks|No force-loaded chunks/i);
   const baby=await inspect('care_hatch');assert.equal(baby.uuid,report.juvenileBeforeRestart.uuid);assert.equal(baby.owner,alice.uuid);assert.equal(baby.adultAt,report.juvenileBeforeRestart.adultAt);
  });
  await check('Joining and opening native inventories refresh only tagged egg models and default lore, preserving custom metadata',async()=>{
-  const checkEgg=state=>{assert.equal(state.amount,'16');assert.equal(state.model,'arkdinos:egg_trex');assert.equal(state.owner,'8b26dbfd-7e37-4304-8362-ccc4816aee1f');assert.equal(state.species,'trex');assert.equal(state.name,'true');assert.equal(state.extra,'keep');assert.match(state.lore,/5 Minuten Brutzeit.*5 Minuten Wachstum/);};
+  const checkEgg=state=>{assert.equal(state.amount,'16');assert.equal(state.model,'arkdinos:egg_trex');assert.equal(state.owner,'8b26dbfd-7e37-4304-8362-ccc4816aee1f');assert.equal(state.species,'trex');assert.equal(state.name,'true');assert.equal(state.extra,'keep');assert.match(state.lore,/20 Minuten Brutzeit.*15 Minuten Wachstum/);assert.doesNotMatch(state.lore,/Testwelt/);assert.match(state.mosaLore,/Nur Kreativmodus/);assert.doesNotMatch(state.mosaLore,/Testwelt/);};
   const joined=fields(await command(`carefixture legacy-egg-state ${alice.name}`));checkEgg(joined);assert.equal(joined.customLore,'true');assert.equal(joined.vanilla,'true');
-  assert.equal(fields(await command(`carefixture legacy-egg-state ${alice.name} chest`)).model,'null','Join refresh must not rewrite unopened chests');
+  const unopened=fields(await command(`carefixture legacy-egg-state ${alice.name} chest`));assert.equal(unopened.model,'arkdinos:egg_trex');assert.match(unopened.lore,/Testwelt: 5 Minuten/,'Join refresh must not rewrite unopened chests');
   await command(`carefixture open-legacy-chest ${alice.name}`);checkEgg(fields(await command(`carefixture legacy-egg-state ${alice.name} chest`)));await command(`carefixture close ${alice.name}`);
  });
  await check('Persisted growth updates native body size through adulthood without a model plugin',async()=>{
-  await command('carefixture time care_hatch adult-at 150000');await delay(1200);
+  await command('carefixture time care_hatch adult-at 450000');await delay(1200);
   assert.ok(Math.abs(Number((await inspect('care_hatch')).scale)-.725)<.003);
   await command('carefixture time care_hatch adult-at 0');await delay(1200);
   assert.equal((await inspect('care_hatch')).scale,'1.0');
@@ -234,23 +234,23 @@ try {
   await command(`clear ${alice.name}`);await command(`gamemode creative ${alice.name}`);await command(`carefixture menu ${alice.name}`);
   await command(`carefixture click ${alice.name} 6 LEFT`);await delay(150);assert.equal((await inventory(alice)).eggSpecies,'dilophosaurus');
  });
- await check('Existing twenty-minute nests and fifteen-minute juveniles retain elapsed age under five-minute test timing',async()=>{
+ await check('Old five-minute care durations migrate to normal timing once, retaining elapsed age and native size',async()=>{
   await command(`carefixture egg ${alice.name} triceratops`);await command(`carefixture place ${alice.name} 10 4 14`);
-  const migrated=fields(await command('carefixture legacy-nest ark_model_test 10 4 14 1080000'));
-  assert.equal(migrated.duration,'300000');assert.equal(migrated.owner,alice.uuid);assert.ok(Math.abs(Number(migrated.hatchAt)-Date.now()-180000)<3000);
-  assert.equal((fields(await command('carefixture nest ark_model_test 10 4 14'))).hatchAt,migrated.hatchAt,'Migration must not shorten twice');
-  await command('setblock 10 5 14 stone');await command('carefixture legacy-nest ark_model_test 10 4 14 600000');
+  const migrated=fields(await command('carefixture legacy-nest ark_model_test 10 4 14 180000 300000'));
+  assert.equal(migrated.duration,'1200000');assert.equal(migrated.owner,alice.uuid);assert.ok(Math.abs(Number(migrated.hatchAt)-Date.now()-1080000)<3000);
+  assert.equal((fields(await command('carefixture nest ark_model_test 10 4 14'))).hatchAt,migrated.hatchAt,'Migration must not extend twice');
+  await command('setblock 10 5 14 stone');await command('carefixture legacy-nest ark_model_test 10 4 14 180000 300000');
   assert.match(await command('carefixture nest ark_model_test 10 4 14'),/nest=true/,'Old obstructed eggs survive migration');
   await command('setblock 10 5 14 air');await command('carefixture ready ark_model_test 10 4 14');
-  const before=await inspect('care_hatch');await command('carefixture legacy-growth care_hatch 780000');await command('carefixture restore care_hatch');
-  const young=await inspect('care_hatch');assert.equal(young.uuid,before.uuid);assert.equal(young.owner,before.owner);assert.equal(young.growthDuration,'300000');assert.ok(Math.abs(Number(young.adultAt)-Date.now()-180000)<3000);
-  await command('carefixture restore care_hatch');assert.equal((await inspect('care_hatch')).adultAt,young.adultAt,'Restore must not shorten twice');
+  const before=await inspect('care_hatch');await command('carefixture legacy-growth care_hatch 180000 300000');await command('carefixture restore care_hatch');
+  const young=await inspect('care_hatch');assert.equal(young.uuid,before.uuid);assert.equal(young.owner,before.owner);assert.equal(young.growthDuration,'900000');assert.ok(Math.abs(Number(young.adultAt)-Date.now()-780000)<3000);
+  await command('carefixture restore care_hatch');assert.equal((await inspect('care_hatch')).adultAt,young.adultAt,'Restore must not extend twice');
   for(const base of [1,1.2]) {
-   const scaled=fields(await command(`carefixture legacy-scale care_hatch 780000 ${base}`));assert.ok(Math.abs(Number(scaled.scale)-base*.67)<.001,'Legacy native size must preserve its adult base when duration changes');
-   const mature=fields(await command(`carefixture legacy-scale care_hatch 480000 ${base}`));assert.ok(Math.abs(Number(mature.scale)-base)<.001,'Migrated adult retains its native base scale');
+   const scaled=fields(await command(`carefixture legacy-scale care_hatch 180000 ${base} 300000`));assert.ok(Math.abs(Number(scaled.scale)-base*(.45+.55*2/15))<.001,'Legacy native size must preserve its adult base when duration changes');
+   const mature=fields(await command(`carefixture legacy-scale care_hatch 0 ${base} 300000`));assert.ok(Math.abs(Number(mature.scale)-base)<.001,'Migrated adult retains its native base scale');
   }
   await command('carefixture legacy-growth care_hatch 480000');await command('carefixture restore care_hatch');await delay(1200);
-  assert.equal((await inspect('care_hatch')).scale,'1.0','An existing seven-minute juvenile is immediately adult');
+  assert.ok(Math.abs(Number((await inspect('care_hatch')).scale)-(.45+.55*7/15))<.003,'An existing seven-minute juvenile retains normal growth age');
   await command('carefixture create-world ark');await command(`gamemode creative ${alice.name}`);await command(`execute in minecraft:ark run tp ${alice.name} 0 5 0`);await delay(500);await command('execute in minecraft:ark run summon ravager 0 4 0 {Tags:["care_main","ark_dino"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"trex"}}');
   await command('carefixture legacy-growth care_main 780000');await command('carefixture restore care_main');const main=await inspect('care_main');assert.ok(Math.abs(Number(main.adultAt)-Date.now()-780000)<3000);assert.ok(main.growthDuration==='0' || main.growthDuration==='900000');
   await command(`execute in minecraft:overworld run tp ${alice.name} 0 5 0`);
