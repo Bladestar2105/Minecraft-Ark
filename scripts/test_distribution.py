@@ -267,6 +267,33 @@ class DistributionTests(unittest.TestCase):
             with zipfile.ZipFile(next(package.package(root, 'models').glob('*.zip'))) as bundle:
                 self.assertEqual(bundle.read(name), model.read_bytes())
 
+    def test_reviewed_upstream_patch_is_text_and_keeps_binary_and_private_path_guards(self):
+        name = "dino-plugin/upstream-patches/geyser-model-engine-task-publication.patch"
+        source = next(parent / name for parent in Path(__file__).resolve().parents if (parent / name).is_file())
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package_fixture(root)
+            target = root / name
+            target.parent.mkdir(parents=True)
+            target.write_bytes(source.read_bytes())
+            names = sorted(json.loads((root / "distribution-files.json").read_text()) + [name])
+            (root / "distribution-files.json").write_text(json.dumps(names))
+            with zipfile.ZipFile(next(package.package(root, "patch-source").glob("*.zip"))) as bundle:
+                self.assertEqual(bundle.read(name), source.read_bytes())
+            for content in (b"diff with NUL\x00", b"invalid UTF8\xff"):
+                target.write_bytes(content)
+                with self.assertRaisesRegex(ValueError, "binary file"):
+                    package.package(root, "refused")
+                self.assertFalse((root / "dist/refused").exists())
+            (root / "data").mkdir()
+            (root / "data/bridge.patch").write_text("private patch content")
+            for rejected in ("data/bridge.patch", "../bridge.patch"):
+                (root / "distribution-files.json").write_text(json.dumps(sorted(["distribution-files.json", rejected])))
+                reason = "Private or non-source allowlist path" if rejected.startswith("data/") else "Unsafe path"
+                with self.assertRaisesRegex(ValueError, reason):
+                    package.package(root, "refused")
+                self.assertFalse((root / "dist/refused").exists())
+
     def test_bundle_is_reproducible_contains_allowlisted_sources_and_seven_verified_jars(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
