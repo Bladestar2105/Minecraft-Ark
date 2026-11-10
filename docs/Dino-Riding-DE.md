@@ -28,7 +28,7 @@ Dinos bleiben in ihrer Welt, laden keine entfernten Chunks und teleportieren sic
 
 Java und Bedrock verwenden ihre normale Bewegungs-/Absteigen-Steuerung. Bedrock-/Konsoleneingaben und Sitzdarstellung benötigen noch eine Abnahme auf einem echten Gerät; Server- und automatisierte Java-Client-Prüfungen belegen kein Konsolenverhalten.
 
-Beide Editionen benötigen die Server-Ressourcenpakete. Automatische Prüfungen decken alle acht Engine-Exporte, native Flugeingaben/Abbrüche sowie Geysers Fahrerreihenfolge und Interaktions-IDs ab. Sichtbares Rendern, Bedrock-/Konsolensteuerung, Kamera/Sitzdarstellung und das tatsächliche Entladen entfernt gerittener Chunks bleiben offen. Nachgebildete Paketbestätigungen belegen kein Rendern.
+Beide Editionen benötigen die Server-Ressourcenpakete. Automatische Prüfungen decken alle acht Engine-Exporte, native Flugeingaben/Abbrüche sowie Geysers Fahrerreihenfolge und Interaktions-IDs ab. Echte Chunk-/Weltentladung nach dem Verlassen durch beide Reiter und Abfragen an ungeladenen Grenzen sind geprüft. Umfang und Grenzen der sichtbaren Java-Abnahme sowie die weiterhin erforderliche Bedrock-/Konsolenabnahme stehen im [aktuellen Prüfbericht](Dinosaur-Final-Verification-2026-11-10.md). Nachgebildete Paketbestätigungen belegen kein Rendern.
 
 ## Zähmen, Eier und Kämpfen in Prototypwelten
 

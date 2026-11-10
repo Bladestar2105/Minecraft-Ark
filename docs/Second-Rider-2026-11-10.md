@@ -1,5 +1,7 @@
 # Zweiter Dino-Reiter – Umsetzung und Prüfstand
 
+> Historischer Prüfstand vor der abschließenden Laufzeitprüfung. Aktuelle Korrekturen, Kandidatenhashes, echte Unloads und Clientnachweise: [Abschlussbericht](Dinosaur-Final-Verification-2026-11-10.md).
+
 ## Umfang
 
 ArkDinos 1.2.0 erhält einen eigenen zweiten Sitz für erwachsene **T-Rex,

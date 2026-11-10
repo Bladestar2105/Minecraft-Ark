@@ -286,3 +286,7 @@ zufällig während der Wasser-/Undo-Prüfung ändert. Gezielte Bodenänderungen
 werden ausdrücklich getestet. Diese Nachweise betreffen die beschriebenen
 Fälle; sie sind keine allgemeine Unterdrückung sämtlicher Minecraft-
 Nachbarphysik und keine Prüfung eines abrupten Serverabsturzes.
+
+## Erneute isolierte Prüfung
+
+Der abschließende Lauf vom 10. November bestand erneut alle 15 nativen Paper-/WorldEdit-Prüfgruppen. Ein auf deutschem macOS reproduzierter Fixturefehler (`Anzahl` statt `Counted`) ist durch feste englische JVM-Testsprache korrigiert. Die Migrationslogik und der bestehende Live-Audit bleiben unverändert; es wurde keine erneute Live-Löschung ausgeführt. Siehe [Abschlussbericht](Dinosaur-Final-Verification-2026-11-10.md).

@@ -28,7 +28,7 @@ Pets stay in their world and do not load distant chunks or teleport to you. The 
 
 Java and Bedrock use their normal movement/dismount controls. Bedrock/console input and seat appearance still require a real-device acceptance check; server and automated Java-client checks do not establish console behavior.
 
-Both editions require the server resource packs. Automated checks cover all eight engine exports, native flight inputs/lifecycle, Geyser rider ordering and interaction IDs. Actual rendering, Bedrock/console controls, camera/seat appearance and distant ridden chunk unloading remain open. Emulated pack acknowledgments are not visual rendering evidence.
+Both editions require the server resource packs. Automated checks cover all eight engine exports, native flight inputs/lifecycle, Geyser rider ordering and interaction IDs. Real chunk/world unloading after both riders leave and queries at unloaded boundaries are verified. The [current verification report](Dinosaur-Final-Verification-2026-11-10.md) records actual Java rendering evidence and the remaining Bedrock/console acceptance. Emulated pack acknowledgments are not visual rendering evidence.
 
 ## Taming, eggs and combat in prototype worlds
 

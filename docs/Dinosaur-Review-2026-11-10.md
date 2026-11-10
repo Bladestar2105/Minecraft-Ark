@@ -1,5 +1,7 @@
 # Dino-Review und Korrekturen – 10. November 2026
 
+> Historischer Prüfstand vor der abschließenden Laufzeitprüfung. Aktuelle Korrekturen, Kandidatenhashes, echte Unloads und Clientnachweise: [Abschlussbericht](Dinosaur-Final-Verification-2026-11-10.md).
+
 ## Ergebnis und Prüfstand
 
 Geprüft wurde der Repository-Stand [`d2acdad87c842dc961c1175bba63ff89396b971a`](https://github.com/Bladestar2105/Minecraft-Ark/commit/d2acdad87c842dc961c1175bba63ff89396b971a), einschließlich der bereits zusammengeführten Dino-Änderungen aus PR 6. Die Korrekturen tragen die unterscheidbare Pluginversion **ArkDinos 1.2.0**. Die bestehenden Welten, Tiere und Besitzer werden nicht durch neue Weltdateien ersetzt.
