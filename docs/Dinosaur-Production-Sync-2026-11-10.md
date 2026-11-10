@@ -30,10 +30,63 @@ Ein enger Wasserpool erzeugte außerdem eine falsche Meldung „nur vertikales S
 
 ## Abschließende Nachweise
 
-**Bestanden:** 129/129 native Prüfgruppen auf JAR `6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970`, null übersprungene Gruppen: Pflege 19, Kampf 36, Steuerung 17, Zweitreiter 19, Wildlife 6, Schwimmen 7, Mosasaurus 21, Tempo 1, Flug 3. Die Pflegeprüfung verwendet die echten Fütterungsfristen. Der separate vollständige 21-Gruppen-Aquaticnachlauf ersetzt ausdrücklich nur die falsch gemeldete Poolgruppe des ursprünglichen Gesamtlaufs; dessen Rohbericht bleibt rot erhalten.
+**Bestanden:** 129/129 native Prüfgruppen auf JAR `6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970`, null übersprungene Gruppen: Pflege 19, Kampf 36, Steuerung 17, Zweitreiter 19, Wildlife 6, Schwimmen 7, Mosasaurus 21, Tempo 1, Flug 3. Die Pflegeprüfung verwendet die echten Fütterungsfristen. Der separate vollständige 21-Gruppen-Aquaticnachlauf ersetzt die gesamte Aquatic-Teilsuite des ursprünglichen Gesamtlaufs. Der ursprüngliche Rohbericht bleibt mit neun bestandenen Gruppen, einer falsch gemeldeten Poolgruppe und elf nicht erreichten Gruppen rot erhalten.
 
 **Bestanden:** vollständiger echter Modellstack 6/6 einschließlich WorldEdit/WorldGuard/GriefPrevention, aller acht Dino- und sieben Eiermodelle, tatsächlicher Bedrock-Registries, vier nativer Sitzpaare, realer Modellneuaufbauten und sauberem Neustart mit Wachstums-/Fallbackprüfung. Serverseitige Metadaten belegen kein Bedrock-Rendering.
 
-**Bestanden:** Build aller sieben Projektplugins, 45 Skript-/Distributionstests, 38 Modelltests und 20 Weltgeneratortests. Der unabhängige Ponytail-Code-Nachreview hat keine offenen materiellen Befunde.
+**Bestanden:** Build aller sieben Projektplugins, 45 Skript-/Distributionstests, 38 Modelltests und 20 Weltgeneratortests. Der unabhängige Ponytail-Code-Nachreview hat keine offenen materiellen Befunde. Der getrennte Neubau aus dem entpackten Prüfarchiv erzeugt alle sieben JARs bytegleich. Die echte Standardinstallation aus diesem Binärarchiv funktioniert mit leerem PATH und ohne JAVA_HOME: sechs standardmäßig ausgewählte Projektplugins, 21 Fremdabhängigkeiten und 77 Assets geprüft; eine manipulierte Bridge wird abgewiesen. Die Ridingprobe mit acht Prüfgruppen aus dem Quellarchiv besteht auf Paper 246; ihr synthetisches Unloadevent bleibt separat vom echten Lifecycle-Nachweis ausgewiesen. Das Prüfarchiv vor den abschließenden reinen Dokumentationsänderungen hat einen eigenen Hash und wird nicht mit der finalen Übergabe verwechselt.
 
-Die erste Live-Installation mit JAR `96d78c…` und Sichtweite 14 ist bestätigt; das zusätzliche, oben geprüfte Mosasaurus-JAR wird anschließend separat installiert und sein Ergebnis ergänzt. Kein Merge/Release und keine vollständige Gerätefreigabe.
+**Live-Installation: Bestanden.** Codecommit `e859534570da549632f3449c12a3a5aa33c1beb8`, ArkDinos 1.2.0 mit SHA-256 `6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970` ist produktiv installiert. Der Minecraft-Container startete am 10.11.2026 um 16:59:59 UTC neu und meldet healthy, Sichtweite 14/Simulationsdistanz 4 und null Startfehler. Vier Dimensionen wurden regulär gespeichert und ihre I/O-Scheduler beendet. Es wurden ausschließlich die JAR-Bytes dieses zweiten Updates atomar ersetzt; 24 andere Plugin-JARs, Dino-Konfiguration und server.properties blieben bytegleich. Panel, DNS und Spielerverzeichnis liefen mit unveränderten Startzeiten weiter. Es wurde ausdrücklich kein Backup erstellt. Künftige nötige Neustarts werden bei Online-Spielern vorher im Spielchat angekündigt.
+
+Das weiterhin öffentlich mit HTTP 200 ausgelieferte Java-Pack hat SHA-256 `eb579657fb0f8f16e6ced972e89239ccb1a90050ece63d45be8a87fa1e03742f`: seine 3025 Einträge sind alle bytegleich zum finalen QA-Pack. Das nach dem Live-Neustart neu erzeugte Bedrock-Pack hat SHA-256 `fa7add3a943a1d23b8129b36ac391ee8c074afbc5d534739debc99b4f3dadd97`; die strikte Quellprüfung besteht für 15 Modelle/30 Geometrien/122 Dateien. Die QA-Pakete haben eigene eindeutig zugeordnete Containerhashes; Bridge-UUIDs und zusätzliche Fixtureassets erklären unterschiedliche ZIP-Fingerprints. Die Inventareier bleiben SHA-256 `6a620a56e7bae1e536844990abc7588b586303b78aa1d13b34f39b9b1eef0f67`. Der reine Bewegungsfix ändert keine Modellinputs und erfordert keinen weiteren Paketwechsel.
+
+Alle aktuellen Einzelprüfungsnamen, Skript-/Artefakthashes, roten/grünen Eckproben und der Livebeleg stehen im [Prüfmanifest](verification/2026-11-10-production-sync.json). Der [öffentliche 21-Pin-Abgleich](verification/2026-11-10-dependency-audit.json) enthält ausschließlich Softwaremetadaten. Rohberichte bleiben unter dem ausdrücklich lokalen Ausgabeverzeichnis; ihre Hashes sind im Manifest enthalten. Dokumentationscommits nach dem Codecommit ändern das geprüfte JAR nicht. Die CI des tatsächlichen abschließenden PR-Heads wird im PR nach Abschluss verlinkt.
+
+## Aktuelle Matrix der neun Nutzerpunkte
+
+| Nutzerpunkt | Ergebnis dieses Kandidaten | Nachweis und Grenze |
+| --- | --- | --- |
+| Freie Begegnungen | **Bestanden (Server)** | Wildlife 6: geladenes Gelände, Budgets, Schutzplugins/Ausfall, persistente Tiere und Neustart. Kein neuer Zauneingriff. |
+| Tempo/Flug | **Bestanden (Server)** | Tempo 1 mit sieben Arten und Flug 3; tatsächliche Nativebewegung. Vollständige sichtbare Bedienmatrix offen. |
+| Kampf | **Bestanden (Server)** | Kampf 36 inklusive strenger Schutzhaustierprüfung und zusätzlicher nativer REGEN-Gegenprobe; keine Mitfahrersteuerung. |
+| Öffentliche Freigabe | **Bestanden (Server)** | Steuerung 17 und Zweitreiter 19 einschließlich Persistenz, Fahrerwechsel und Widerruf beider Besitzerrollen. |
+| Zwei Reiter | **Bestanden (Server)** | Zweitreiter 19 mit echtem Lifecycle/Unload und ungeladener Grenze; Fullstack 4 Sitzpaare samt realem Modellneuaufbau. Historische Java-Standbilder bleiben ihrem ursprünglichen Build zugeordnet. |
+| Proportionen/Wachstum | **Bestanden (Exporte/Server)** | Modelle 38 und vollständiger Modellstack; Größen unverändert. Vollständige sichtbare Wachstumsabnahme: **Nicht geprüft**. |
+| Oberflächen-Schwimmen | **Bestanden (Server)** | Schwimmen 7 mit sieben Land-/Flugarten; Mosasaurus separat 21 einschließlich Ecke, Breaches und Restart. Vollständige grafische Wasser-/Kopfraummatrix: **Nicht geprüft**. |
+| Modelle/Animationen | **Fehler behoben und erneut geprüft; Darstellung teilweise offen** | Vorheriger Mosa-Exportfix ausgeliefert; Fullstack 6 und echte Registry-/Paketprüfung. Kiefer in vorhandenen Java-Seitenbildern verbunden; Bedrock/PS5 und ursprünglicher unbekannter Bildzustand: **Blockiert/Nicht geprüft**. |
+| T-Rex-Zähmung/Schaden | **Bestanden (Server)** | Pflege 19 mit zwölf Fleischgaben im Abstand von jeweils mindestens 20 Sekunden, anschließend Knochen; elf gemessene Abstände und insgesamt 222,904 Sekunden. Kampf 36 mit 20 Basisschaden sowie Schutz-/Effektregeln. |
+
+Die detaillierten Szenarien und neun echten Java-Screenshots aus dem ursprünglichen Bericht bleiben gültige historische Belege; sie werden nicht auf den neuen Code-/Abhängigkeitsstand umetikettiert. Kein Bedrock-Client oder PS5-Gerät wurde verfügbar. Die noch offenen Kamerabewegungen, niedrigen Decken, Wachstums-/Betrachterkombinationen sowie die Brachiosaurus-Halsverdeckung bleiben dort ausdrücklich beschrieben. **Keine vollständige Freigabereife.**
+
+## Reproduzierbare Aufrufe
+
+Die Java 25-Installation, ein zu Paper 246 passender lokaler Paperclipcache (`libraries`, `versions`, `cache`, `paper.jar`) und die exakt gepinnten Plugin-JARs müssen vorhanden sein. `DINO_PAPER_CACHE` und die folgenden Variablen bezeichnen absolute lokale Pfade; keine Livewelt wird geöffnet. Die Skripte ermitteln ihre Parameter aus diesen Variablen, erzeugen jeweils eigene Wegwerfwelten und melden ausgeführte Prüfgruppen.
+
+```sh
+rtk proxy python3 scripts/build_plugins.py
+rtk proxy python3 -m unittest discover -s scripts -p 'test_*.py'
+rtk proxy python3 -m unittest discover -s dino-models -p 'test_*.py'
+rtk proxy python3 -m unittest discover -s world-design -p 'test_*.py'
+
+# JAVA_HOME, DINO_PAPER_CACHE und DINO_PLUGIN_JAR zuvor absolut setzen.
+export DINO_PAPER_JAR="$DINO_PAPER_CACHE/paper.jar"
+export DINO_WORLDEDIT_JAR="$DINO_PAPER_CACHE/plugins/worldedit-bukkit-7.4.6.jar"
+export DINO_WORLDGUARD_JAR="$DINO_PAPER_CACHE/plugins/worldguard-bukkit-7.0.21.jar"
+export DINO_GRIEFPREVENTION_JAR="$DINO_PAPER_CACHE/plugins/GriefPrevention.jar"
+rtk proxy node dino-plugin/care-runtime-test.mjs
+rtk proxy node dino-plugin/combat-runtime-test.mjs
+rtk proxy node dino-plugin/swimming-runtime-test.mjs
+rtk proxy node dino-plugin/aquatic-runtime-test.mjs
+rtk proxy node dino-plugin/controls-runtime-test.mjs
+rtk proxy node dino-plugin/second-rider-runtime-test.mjs
+rtk proxy node dino-plugin/wildlife-runtime-test.mjs
+rtk proxy env DINO_SPEED_ONLY=1 node dino-plugin/controls-runtime-test.mjs
+rtk proxy env DINO_FLIGHT_SPEED_ONLY=1 node dino-plugin/controls-runtime-test.mjs
+
+rtk proxy env DINO_MODEL_GAMEPLAY=1 DINO_MODEL_STACK_CACHE="$DINO_PAPER_CACHE" \
+  DINO_GME_JAR="$DINO_PAPER_CACHE/plugins/GeyserModelEngine-1.0.9.jar" \
+  node dino-plugin/model-runtime-test.mjs
+rtk proxy python3 dino-models/verify_bedrock_pack.py /absolute/path/to/generated_pack.zip
+```
+
+Für voneinander getrennte Berichte sind zusätzlich die jeweiligen `DINO_*_OUTPUT`-Variablen zu setzen. Der Modelllauf benötigt BetterModel, PacketEvents, Geyser, die gepatchte Bridge samt Extensions und GeyserUtils im selben Cache sowie Standard-TLS-Zugriff auf Microsoft-Discovery. Es wurden keine Sicherheitsfunktionen deaktiviert. Ein fehlerhafter Cacheaufbau ohne Assertions zählt nicht als bestandene Integration.

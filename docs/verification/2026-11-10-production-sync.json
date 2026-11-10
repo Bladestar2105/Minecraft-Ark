@@ -1,0 +1,1676 @@
+{
+  "format": 1,
+  "source_commit": "e859534570da549632f3449c12a3a5aa33c1beb8",
+  "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+  "server": {
+    "java": "25",
+    "paper": "26.3 build246",
+    "paper_sha256": "d158542561e440c4026be7ccb32f551ee88313864792f38ea0ce5d1b88f1b27c",
+    "bettermodel": "3.6.0",
+    "geyser": "2.12.1-b1298",
+    "bridge": "1.0.9 task-publication patch",
+    "bridge_sha256": "ec18241f9a6be0cd1dfa05664cbfb27fac8c075a641973131d22e83ae1db61d8",
+    "protection_sha256": {
+      "worldedit-bukkit-7.4.6.jar": "e0ce67d870ad1fef8a40dd9d7926360caf3bb44722438545d6b20b55f82a0c91",
+      "worldguard-bukkit-7.0.21.jar": "070223c535629f3f5d15f002388c1e3ae615a5f4ba051e7ccfb5d716540547a9",
+      "GriefPrevention.jar": "83d199575808ddbab49de36990b99ed1e5549a8c4e844a9906ac30e90fe51701"
+    }
+  },
+  "native": {
+    "status": "Bestanden",
+    "scope": "All nine isolated native suites against the same frozen candidate; official rendering and full model stack are separate evidence.",
+    "finished_at": "2026-11-10T16:58:55.157474+00:00",
+    "jar_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+    "total_passed": 129,
+    "total_failed": 0,
+    "total_skipped": 0,
+    "expected_total": 129,
+    "suites": [
+      {
+        "suite": "care",
+        "status": "Bestanden",
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0,
+        "report_sha256": "94c092a2ca372fba772a5742cc01d1f77133a4689496a98d57913a181b0325be",
+        "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+        "paper_version": "26.3 build246; wrapper SHA verified",
+        "script": "dino-plugin/care-runtime-test.mjs",
+        "script_sha256": "2b88c110668d7fa51ac5adbe7a8b72fa08382cf3fac853947152c3699e0d2881",
+        "fixture_jars_sha256": {
+          "CareFixture.jar": "0c6dbe9d07b00187abe55d8912125f6b0b95e5e76b202a35599916891604a668",
+          "ArkDinos.jar": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970"
+        },
+        "started_at": "2026-11-10T16:52:23.844Z",
+        "finished_at": "2026-11-10T16:56:55.606Z",
+        "checks": [
+          {
+            "name": "Spawn-tick Rex identification prevents legacy one-seed taming before deferred restore",
+            "status": "passed"
+          },
+          {
+            "name": "Hatch clearance covers the enlarged baby neck and tail before spawning",
+            "status": "passed"
+          },
+          {
+            "name": "Rex requires twelve real meat items with twenty-second spacing and protected taming owner",
+            "status": "passed"
+          },
+          {
+            "name": "Wall-clock Rex taming waits twenty seconds per feed and consumes twelve meat items then one bone",
+            "status": "passed"
+          },
+          {
+            "name": "Pteranodon fish/seagrass, eight plant feeds/seeds and expired progress",
+            "status": "passed"
+          },
+          {
+            "name": "Same-owner adult pair produces one real inventory egg and cooldown blocks repeats",
+            "status": "passed"
+          },
+          {
+            "name": "Full inventory breeding drops exactly one real tagged overflow egg",
+            "status": "passed"
+          },
+          {
+            "name": "Creative menu blocks transfers and grants a real inventory egg on selection",
+            "status": "passed"
+          },
+          {
+            "name": "Protection cancellation retains the inventory egg and creates no nest",
+            "status": "passed"
+          },
+          {
+            "name": "Placed eggs suppress native cracking/hatching; cancelled species spawn preserves egg",
+            "status": "passed"
+          },
+          {
+            "name": "Obstructed nests wait safely and then hatch a persistent owned juvenile",
+            "status": "passed"
+          },
+          {
+            "name": "Real clean restart retains incubation, species and owner without force loading",
+            "status": "passed"
+          },
+          {
+            "name": "Joining and opening native inventories refresh only tagged egg models and default lore, preserving custom metadata",
+            "status": "passed"
+          },
+          {
+            "name": "Persisted growth updates native body size through adulthood without a model plugin",
+            "status": "passed"
+          },
+          {
+            "name": "Breaking returns exactly one tagged egg and suppresses vanilla item drops",
+            "status": "passed"
+          },
+          {
+            "name": "Pistons cannot move nests; cancelled explosions retain them and allowed explosions clean them without egg duplication",
+            "status": "passed"
+          },
+          {
+            "name": "Dilophosaurus tames with meat and bone, breeds an inventory egg and hatches the correct native species",
+            "status": "passed"
+          },
+          {
+            "name": "Old five-minute care durations migrate to normal timing once, retaining elapsed age and native size",
+            "status": "passed"
+          },
+          {
+            "name": "Eighth creative egg creates only a wild aquatic Mosa and respects gamemode, world, space and protection",
+            "status": "passed"
+          }
+        ],
+        "raw_report_local": "frozen-native-6bb0c5ef/care/care-runtime-report.json"
+      },
+      {
+        "suite": "combat",
+        "status": "Bestanden",
+        "passed": 36,
+        "failed": 0,
+        "skipped": 0,
+        "report_sha256": "200e7e436234cc2744f11f7d902f383a1c39fcb7403d93188126ecd15caac27a",
+        "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+        "paper_version": "26.3-246-main@b31b4b5 (2026-11-09T12:57:12Z) (Implementing API version 26.3.build.246-stable)",
+        "script": "dino-plugin/combat-runtime-test.mjs",
+        "script_sha256": "02a87b2d2f5cb38c04638f350f071f8930f4b2b096a987e2990a92ad8d07e91e",
+        "fixture_jars_sha256": {
+          "CombatFixture.jar": "e59e1c2c2fc0e763ac616c97021898189a3e51a842bfc3efe284b73dec5f985d",
+          "worldguard-bukkit-7.0.21.jar": "070223c535629f3f5d15f002388c1e3ae615a5f4ba051e7ccfb5d716540547a9",
+          "worldedit-bukkit-7.4.6.jar": "e0ce67d870ad1fef8a40dd9d7926360caf3bb44722438545d6b20b55f82a0c91",
+          "GriefPrevention.jar": "83d199575808ddbab49de36990b99ed1e5549a8c4e844a9906ac30e90fe51701",
+          "ArkDinos.jar": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970"
+        },
+        "started_at": "2026-11-10T16:52:23.846Z",
+        "finished_at": "2026-11-10T16:55:58.840Z",
+        "checks": [
+          {
+            "name": "Native horse REGEN is isolated to marked fixture pets while unmarked controls still heal",
+            "status": "passed"
+          },
+          {
+            "name": "Self-defense selects the permitted attacker of an unmounted tame",
+            "status": "passed"
+          },
+          {
+            "name": "Self-defense ignores cancelled damage, zero damage, Stay, babies and owner hits",
+            "status": "passed"
+          },
+          {
+            "name": "Self-defense resolves a projectile shooter and retains PvP protection",
+            "status": "passed"
+          },
+          {
+            "name": "Tamed wolves, cats and horses are protected during owner offense and mounted attacks",
+            "status": "passed"
+          },
+          {
+            "name": "A mounted Rex applies twenty damage on a tall native carrier",
+            "status": "passed"
+          },
+          {
+            "name": "A scaled Brachiosaurus rider can aim at its ground-level melee target",
+            "status": "passed"
+          },
+          {
+            "name": "Public riding attacks use the driver while protecting the persistent owner",
+            "status": "passed"
+          },
+          {
+            "name": "Public riding uses driver team permissions and driver GriefPrevention combat attribution",
+            "status": "passed"
+          },
+          {
+            "name": "A public Dilo shot is discarded when its driver changes or loses riding permission",
+            "status": "passed"
+          },
+          {
+            "name": "GriefPrevention fresh-spawn immunity blocks both carrier families as well as direct player hits",
+            "status": "passed"
+          },
+          {
+            "name": "GriefPrevention safe claims and native PreventPvPEvent exceptions apply to both carrier families",
+            "status": "passed"
+          },
+          {
+            "name": "GriefPrevention creature trust denies both carrier families and Dilo until container trust is granted",
+            "status": "passed"
+          },
+          {
+            "name": "GriefPrevention immunity and claim changes cancel Dilo spit in flight before impact",
+            "status": "passed"
+          },
+          {
+            "name": "GriefPrevention records real positive melee and spit PvP, with no combat state from cancelled or zero damage",
+            "status": "passed"
+          },
+          {
+            "name": "Owned adult attacks the living opponent that damaged its owner",
+            "status": "passed"
+          },
+          {
+            "name": "Carrier damage outside the commanded bite cannot bypass the cooldown",
+            "status": "passed"
+          },
+          {
+            "name": "Owner attacks and owner-shot arrows select the opponent; cooldown stays at least 20 ticks",
+            "status": "passed"
+          },
+          {
+            "name": "Owner range and game-mode changes cancel an active chase",
+            "status": "passed"
+          },
+          {
+            "name": "Stay cancels active combat immediately and babies do not defend",
+            "status": "passed"
+          },
+          {
+            "name": "Wild predators attack Survival while Creative and Spectator remain excluded",
+            "status": "passed"
+          },
+          {
+            "name": "World PvP false, WorldGuard PvP deny, and friendly-fire teams each block indirect player attacks",
+            "status": "passed"
+          },
+          {
+            "name": "WorldGuard animal and mob-damage protection cancel native attacks",
+            "status": "passed"
+          },
+          {
+            "name": "Mounted swing requires a visible nearby target and one second between bites",
+            "status": "passed"
+          },
+          {
+            "name": "Mounted bites enforce world PvP, WorldGuard and friendly-fire rules independently of player damage events",
+            "status": "passed"
+          },
+          {
+            "name": "Seven owned adult species defend and bite with their defined damage; wild herbivores stay passive",
+            "status": "passed"
+          },
+          {
+            "name": "Dilo visible black native spit hits at range, adds debuffs, and observes three-second cooldown",
+            "status": "passed"
+          },
+          {
+            "name": "Dilo native spit starts at the visible adult mouth and cannot cross a wall before the muzzle",
+            "status": "passed"
+          },
+          {
+            "name": "Dilo wild ranged aggro uses native spit; blocked and missed spit cannot hurt the target",
+            "status": "passed"
+          },
+          {
+            "name": "Dilo launch, hit and native damage cancellation leave no effects or leaked shots",
+            "status": "passed"
+          },
+          {
+            "name": "Dilo in-flight cleanup respects owner mode, target removal and source unload; foreign shots stay untouched",
+            "status": "passed"
+          },
+          {
+            "name": "Dilo in-flight PvP, team and WorldGuard changes deny damage before impact",
+            "status": "passed"
+          },
+          {
+            "name": "Legacy owned dinos outside prototype worlds retain passive combat",
+            "status": "passed"
+          },
+          {
+            "name": "GriefPrevention installed handler failure denies companion attacks and warns once",
+            "status": "passed"
+          },
+          {
+            "name": "Installed WorldGuard API failure denies companion attacks and warns once",
+            "status": "passed"
+          },
+          {
+            "name": "Plugin disable removes pending native spit before shutdown",
+            "status": "passed"
+          }
+        ],
+        "raw_report_local": "frozen-native-6bb0c5ef/combat/combat-runtime-report.json"
+      },
+      {
+        "suite": "swimming",
+        "status": "Bestanden",
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "report_sha256": "26f2aa7df1e0fa1f0a912c530fc3e25a30655473e5baffde60b5e60016239cb7",
+        "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+        "paper_version": "26.3 build246; wrapper SHA verified",
+        "script": "dino-plugin/swimming-runtime-test.mjs",
+        "script_sha256": "cf68d99871c2577ec7c3827ef09ede2aa0c95ad3215d2fae35351a92152f2e13",
+        "fixture_jars_sha256": {
+          "ArkDinos.jar": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+          "SwimFixture.jar": "b07de54b23574822ed6de9fe5c1c7ff1c6f181d7ff58b2c007ea5bf961072b06"
+        },
+        "started_at": "2026-11-10T16:52:23.847Z",
+        "finished_at": "2026-11-10T16:54:25.678Z",
+        "checks": [
+          {
+            "name": "Seven land species float in wild, Stay, Free and owner-offline Follow modes for sixty seconds at adult carrier scales",
+            "status": "passed"
+          },
+          {
+            "name": "A growing small Sniffer uses its current native eye height",
+            "status": "passed"
+          },
+          {
+            "name": "All seven mounted species recover, preserve health and accept real forward input in deep water",
+            "status": "passed"
+          },
+          {
+            "name": "Submerged Ravager keeps its rider but native Sneak and game-mode cleanup still dismount",
+            "status": "passed"
+          },
+          {
+            "name": "Water ceiling respects real rider collision without granting drowning immunity",
+            "status": "passed"
+          },
+          {
+            "name": "Water plants and waterlogged blocks count as water; lava, Mosasaurus and ordinary mobs are excluded",
+            "status": "passed"
+          },
+          {
+            "name": "Unloaded water probes do not load chunks; death, unload and shutdown remove swimmer state",
+            "status": "passed"
+          }
+        ],
+        "raw_report_local": "frozen-native-6bb0c5ef/swimming/swimming-runtime-report.json"
+      },
+      {
+        "suite": "aquatic",
+        "status": "Bestanden",
+        "passed": 21,
+        "failed": 0,
+        "skipped": 0,
+        "report_sha256": "fe98992a980730ffa08a4d37c225e9fb98c8a58cd7149c1eb2266c4d2ab00305",
+        "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+        "paper_version": "26.3-246-main@b31b4b5 (2026-11-09T12:57:12Z) (Implementing API version 26.3.build.246-stable)",
+        "script": "dino-plugin/aquatic-runtime-test.mjs",
+        "script_sha256": "3d5c16a254d558de55d7a2d9d34ec933ab2a9580835fb924ca47dcccc773fbcb",
+        "fixture_jars_sha256": {
+          "WorldEdit.jar": "e0ce67d870ad1fef8a40dd9d7926360caf3bb44722438545d6b20b55f82a0c91",
+          "GriefPrevention.jar": "83d199575808ddbab49de36990b99ed1e5549a8c4e844a9906ac30e90fe51701",
+          "WorldGuard.jar": "070223c535629f3f5d15f002388c1e3ae615a5f4ba051e7ccfb5d716540547a9",
+          "AquaticFixture.jar": "954d50a5f116842ad961fa4a4a0431d05bb0dca5a6db5ba7beaf039c8b4deef1",
+          "ArkDinos.jar": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970"
+        },
+        "started_at": "2026-11-10T16:55:00.902Z",
+        "finished_at": "2026-11-10T16:57:46.670Z",
+        "checks": [
+          {
+            "name": "Mosa has a large wild Dolphin carrier while ordinary dolphins retain native goals",
+            "status": "passed"
+          },
+          {
+            "name": "Native swimming moves continuously underwater without air jumps or creative attacks",
+            "status": "passed"
+          },
+          {
+            "name": "Submerged Mosa replenishes air and moisture without drowning",
+            "status": "passed"
+          },
+          {
+            "name": "Mosa cannot be tamed, mounted, leashed, portalled or teleported to another world",
+            "status": "passed"
+          },
+          {
+            "name": "A modeled Mosa bites from its visible mouth, and raw native bites cannot bypass the one-second cooldown",
+            "status": "passed"
+          },
+          {
+            "name": "Mosa protects Creative, Spectator, land players and players beside the tail instead of the mouth",
+            "status": "passed"
+          },
+          {
+            "name": "Native fallback uses the real carrier mouth instead of an invisible nine-block bite",
+            "status": "passed"
+          },
+          {
+            "name": "WorldGuard mob-damage and native event cancellation or zero damage stop Mosa bites",
+            "status": "passed"
+          },
+          {
+            "name": "Stranded Mosa freezes on land without jumping and resumes swimming when returned to water",
+            "status": "passed"
+          },
+          {
+            "name": "Controlled native movement and timer guards reject an unloaded neighbor without chunk loads or force tickets",
+            "status": "passed"
+          },
+          {
+            "name": "Unapproved worlds retain an ordinary Dolphin instead of activating Mosa swimming or aggression",
+            "status": "passed"
+          },
+          {
+            "name": "Real clean restart restores the same injured wild Mosa, its controller, swimming, oxygen and mouth attack",
+            "status": "passed"
+          },
+          {
+            "name": "Controlled breach clears the full body above the surface, lands in water and resumes swimming",
+            "status": "passed"
+          },
+          {
+            "name": "Breach preflight rejects thin interior glass, a low roof and an obstructed landing",
+            "status": "passed"
+          },
+          {
+            "name": "Breach returns safely after a cancelled movement or a new obstruction in its air corridor",
+            "status": "passed"
+          },
+          {
+            "name": "Breach survives controller close and restore in midair with the same entity and a safe landing",
+            "status": "passed"
+          },
+          {
+            "name": "Breach survives a real clean midair restart and resumes submerged native swimming",
+            "status": "passed"
+          },
+          {
+            "name": "Boundary recovery clears a rejected upward native path without stranding the Mosa",
+            "status": "passed"
+          },
+          {
+            "name": "Shore-distance water activation 16 versus 64 on the same safe loaded Mosa",
+            "status": "passed"
+          },
+          {
+            "name": "Persisted live surface-margin breach resumes from stopped NoAI when loaded without changing entity",
+            "status": "passed"
+          },
+          {
+            "name": "Corner recovery makes net inward progress and accepts a fresh native path without jitter-only success",
+            "status": "passed"
+          }
+        ],
+        "raw_report_local": "final-aquatic-6bb0/aquatic-runtime-report.json"
+      },
+      {
+        "suite": "controls",
+        "status": "Bestanden",
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "report_sha256": "9a66b254f7f28de3dcf63519c86f4bc9f90dd495a824ff78801e744d65d8cbda",
+        "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+        "paper_version": "26.3 build246; wrapper SHA verified",
+        "script": "dino-plugin/controls-runtime-test.mjs",
+        "script_sha256": "23a38d72d5e90a6f1f8cbb515eee7cd91507a30a0549a0f63858a24a35a5041f",
+        "fixture_jars_sha256": {
+          "ArkDinos.jar": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+          "ControlsFixture.jar": "e5a2c2bc816002974a4543819ff9982de028972fe969a1767080f6d4e398e1c9"
+        },
+        "started_at": "2026-11-10T16:53:10.944Z",
+        "finished_at": "2026-11-10T16:54:01.834Z",
+        "checks": [
+          {
+            "name": "Sneak empty-hand opens owned prototype control menu",
+            "status": "passed"
+          },
+          {
+            "name": "Menu blocks transfers, nonowners and cancelled native interactions",
+            "status": "passed"
+          },
+          {
+            "name": "Owner can share riding, guests cannot manage ownership, and revocation dismounts an active guest",
+            "status": "passed"
+          },
+          {
+            "name": "Follow, stop and free wander persist distinct modes and move without owner following",
+            "status": "passed"
+          },
+          {
+            "name": "Free wander still defends owner; stop immediately cancels combat and path",
+            "status": "passed"
+          },
+          {
+            "name": "Juveniles follow and roam while riding, combat and release remain adult-only; occupied vehicles cannot release",
+            "status": "passed"
+          },
+          {
+            "name": "Wandering paths only use loaded reachable terrain without loading more chunks",
+            "status": "passed"
+          },
+          {
+            "name": "Release needs separate confirmation and rejects stale distance, world and ownership",
+            "status": "passed"
+          },
+          {
+            "name": "Adult release preserves entity identity, species, health, scale and clears ownership/progress",
+            "status": "passed"
+          },
+          {
+            "name": "Released carnivore never targets or harms former owner and remains wild toward other players",
+            "status": "passed"
+          },
+          {
+            "name": "Released Sniffer keeps custom bounded wandering without native digging and preserves UUID",
+            "status": "passed"
+          },
+          {
+            "name": "Mode and peaceful former-owner identity survive real restart",
+            "status": "passed"
+          },
+          {
+            "name": "A later tame/release remembers the latest former owner",
+            "status": "passed"
+          },
+          {
+            "name": "All seven initially wild NoAI carriers wake and wander without native Sniffer digging",
+            "status": "passed"
+          },
+          {
+            "name": "Wild roaming keeps mounting blocked and normal taming takes over the same entity",
+            "status": "passed"
+          },
+          {
+            "name": "Wild predators hunt eligible players and resume idle roaming when the player becomes Creative",
+            "status": "passed"
+          },
+          {
+            "name": "Prototype-disabled main world leaves wild NoAI fixtures unchanged",
+            "status": "passed"
+          }
+        ],
+        "raw_report_local": "frozen-native-6bb0c5ef/controls/controls-runtime-report.json"
+      },
+      {
+        "suite": "second-rider",
+        "status": "Bestanden",
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0,
+        "report_sha256": "34733556dfc2c1c4f6e2458daa6559bd6672f986a70d6ede90dcc4703512f45b",
+        "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+        "paper_version": "26.3 build246; wrapper SHA verified",
+        "script": "dino-plugin/second-rider-runtime-test.mjs",
+        "script_sha256": "0cdfacbce00b5a00304f3b5fc3590ffb8b53f43f5b66ce7e718db71bf5909814",
+        "fixture_jars_sha256": {
+          "ArkDinos.jar": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+          "ControlsFixture.jar": "5c0383278e4b3f593e1a81132aca5175f4736587eef5134a6945716383f9d2e1"
+        },
+        "started_at": "2026-11-10T16:54:01.876Z",
+        "finished_at": "2026-11-10T16:55:40.984Z",
+        "checks": [
+          {
+            "name": "Public adult dinosaur accepts a second rider in a distinct native seat, while private access remains denied",
+            "status": "passed"
+          },
+          {
+            "name": "The passenger follows movement and turns without self teleport spam and keeps independent look direction",
+            "status": "passed"
+          },
+          {
+            "name": "Only the driver commands dinosaur attacks and the dinosaur cannot target its co-rider",
+            "status": "passed"
+          },
+          {
+            "name": "Forced passenger exit preserves safe feet below a low ceiling without resistance masking collision",
+            "status": "passed"
+          },
+          {
+            "name": "Guest Sneak removes only the guest; revoking public access preserves the owner driver",
+            "status": "passed"
+          },
+          {
+            "name": "Driver Sneak ends both seats without promoting the passenger",
+            "status": "passed"
+          },
+          {
+            "name": "High-seat exit protection follows actual ground distance and preserves longer or infinite effects",
+            "status": "passed"
+          },
+          {
+            "name": "All four large adult species accept exactly two riders; small species and juveniles remain excluded",
+            "status": "passed"
+          },
+          {
+            "name": "Revoking a public driver ends both seats even when the owner is the passenger",
+            "status": "passed"
+          },
+          {
+            "name": "Turning sweeps the rear passenger arc and stops before a wall; queries do not load chunks",
+            "status": "passed"
+          },
+          {
+            "name": "Swimming checks the second rider headroom and keeps both riders aboard in open water",
+            "status": "passed"
+          },
+          {
+            "name": "Cancelled mounts, external teleports, mode changes and carrier death remove reservations and helpers",
+            "status": "passed"
+          },
+          {
+            "name": "A real unloaded chunk boundary rejects passenger motion, turn and collision probes without synchronous chunk loads",
+            "status": "passed"
+          },
+          {
+            "name": "Real chunk unload/reload after dismount removes transient seats, reservations and inherited authority",
+            "status": "passed"
+          },
+          {
+            "name": "Real chunk unload/reload after disconnect removes transient seats, reservations and inherited authority",
+            "status": "passed"
+          },
+          {
+            "name": "Real chunk unload/reload after world-change removes transient seats, reservations and inherited authority",
+            "status": "passed"
+          },
+          {
+            "name": "Real chunk unload/reload after carrier-removal removes transient seats, reservations and inherited authority",
+            "status": "passed"
+          },
+          {
+            "name": "A world vacated by both real riders unloads through the server API and emits WorldUnloadEvent",
+            "status": "passed"
+          },
+          {
+            "name": "Shutdown and a real restart leave no passenger helpers or inherited driving authority",
+            "status": "passed"
+          }
+        ],
+        "raw_report_local": "frozen-native-6bb0c5ef/second-rider/second-rider-runtime-report.json"
+      },
+      {
+        "suite": "wildlife",
+        "status": "Bestanden",
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "report_sha256": "745d08a6e7c53d490ffa9fe590b7b0a003bfe2b3a1b09b158c58dbb6b52012e0",
+        "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+        "paper_version": "26.3 build246; wrapper SHA verified",
+        "script": "dino-plugin/wildlife-runtime-test.mjs",
+        "script_sha256": "4ef4cb1f20fe7aee4a18cabf806239905a078c8bb7d66a59d30434b8ee55f1f4",
+        "fixture_jars_sha256": {
+          "worldguard-bukkit-7.0.21.jar": "070223c535629f3f5d15f002388c1e3ae615a5f4ba051e7ccfb5d716540547a9",
+          "worldedit-bukkit-7.4.6.jar": "e0ce67d870ad1fef8a40dd9d7926360caf3bb44722438545d6b20b55f82a0c91",
+          "GriefPrevention.jar": "83d199575808ddbab49de36990b99ed1e5549a8c4e844a9906ac30e90fe51701",
+          "ArkDinos.jar": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+          "ControlsFixture.jar": "7e0462249c597b035f69991b0aba2b22040b31403d17bcd841e9c2ffad522b5f"
+        },
+        "started_at": "2026-11-10T16:54:25.717Z",
+        "finished_at": "2026-11-10T16:54:45.056Z",
+        "checks": [
+          {
+            "name": "Natural world encounters obey the player budget, are unsaved and never force chunks",
+            "status": "passed"
+          },
+          {
+            "name": "No Survival players means no new encounters; taming preserves the same natural animal",
+            "status": "passed"
+          },
+          {
+            "name": "Successful leashing preserves a natural animal immediately, while cancelled leashes do not",
+            "status": "passed"
+          },
+          {
+            "name": "Aquatic encounters require full-body border clearance and cannot overlap living entities",
+            "status": "passed"
+          },
+          {
+            "name": "WorldGuard global spawning denial, named regions and GriefPrevention claims prevent encounters",
+            "status": "passed"
+          },
+          {
+            "name": "Tamed and named natural encounters survive a real restart with their UUIDs",
+            "status": "passed"
+          }
+        ],
+        "raw_report_local": "frozen-native-6bb0c5ef/wildlife/wildlife-runtime-report.json"
+      },
+      {
+        "suite": "speed",
+        "status": "Bestanden",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "report_sha256": "b9681122a973210fc36f87156b3fc6ab2b840b2dcd0ed7608728f2bd59e75292",
+        "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+        "paper_version": "26.3 build246; wrapper SHA verified",
+        "script": "dino-plugin/controls-runtime-test.mjs",
+        "script_sha256": "23a38d72d5e90a6f1f8cbb515eee7cd91507a30a0549a0f63858a24a35a5041f",
+        "fixture_jars_sha256": {
+          "ArkDinos.jar": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+          "ControlsFixture.jar": "37ec30e9414214e16e89eff276396ab9eb714bd2c244d11ef90af68aa01cc35f"
+        },
+        "started_at": "2026-11-10T16:54:45.091Z",
+        "finished_at": "2026-11-10T16:56:03.286Z",
+        "checks": [
+          {
+            "name": "7 species match ground walk/run and real rider normal/sprint targets, return from sprint and stop without sliding",
+            "status": "passed"
+          }
+        ],
+        "raw_report_local": "frozen-native-6bb0c5ef/speed/controls-runtime-report.json"
+      },
+      {
+        "suite": "flight",
+        "status": "Bestanden",
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "report_sha256": "781fefffc7c6f7ea2c8fd9cbc5f58a8fee4654e901e66f5cee37401564b57130",
+        "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+        "paper_version": "26.3 build246; wrapper SHA verified",
+        "script": "dino-plugin/controls-runtime-test.mjs",
+        "script_sha256": "23a38d72d5e90a6f1f8cbb515eee7cd91507a30a0549a0f63858a24a35a5041f",
+        "fixture_jars_sha256": {
+          "ArkDinos.jar": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+          "ControlsFixture.jar": "1c4a7e6065fac60f56a8f1b6b6424fd9fd21cd4687ef7051a281c41f32833dbd"
+        },
+        "started_at": "2026-11-10T16:55:41.092Z",
+        "finished_at": "2026-11-10T16:55:56.512Z",
+        "checks": [
+          {
+            "name": "An adult owned Ptera mounts and takes off with native jump input",
+            "status": "passed"
+          },
+          {
+            "name": "Native forward input measures 12 / 18 / 12 blocks per second across normal, sprint and released sprint",
+            "status": "passed"
+          },
+          {
+            "name": "Releasing flight input hovers and native Sneak dismount restores landing and gravity",
+            "status": "passed"
+          }
+        ],
+        "raw_report_local": "frozen-native-6bb0c5ef/flight/controls-runtime-report.json"
+      }
+    ],
+    "care_wall_clock": {
+      "accepted": [
+        {
+          "feed": 1,
+          "acceptedAt": 1794329565453,
+          "observedAt": 1794329565605,
+          "nextFeedAt": 1794329585453
+        },
+        {
+          "feed": 2,
+          "acceptedAt": 1794329585711,
+          "observedAt": 1794329585863,
+          "nextFeedAt": 1794329605711
+        },
+        {
+          "feed": 3,
+          "acceptedAt": 1794329605970,
+          "observedAt": 1794329606122,
+          "nextFeedAt": 1794329625970
+        },
+        {
+          "feed": 4,
+          "acceptedAt": 1794329626233,
+          "observedAt": 1794329626384,
+          "nextFeedAt": 1794329646233
+        },
+        {
+          "feed": 5,
+          "acceptedAt": 1794329646499,
+          "observedAt": 1794329646651,
+          "nextFeedAt": 1794329666499
+        },
+        {
+          "feed": 6,
+          "acceptedAt": 1794329666759,
+          "observedAt": 1794329666910,
+          "nextFeedAt": 1794329686759
+        },
+        {
+          "feed": 7,
+          "acceptedAt": 1794329687021,
+          "observedAt": 1794329687173,
+          "nextFeedAt": 1794329707021
+        },
+        {
+          "feed": 8,
+          "acceptedAt": 1794329707294,
+          "observedAt": 1794329707446,
+          "nextFeedAt": 1794329727294
+        },
+        {
+          "feed": 9,
+          "acceptedAt": 1794329727560,
+          "observedAt": 1794329727712,
+          "nextFeedAt": 1794329747560
+        },
+        {
+          "feed": 10,
+          "acceptedAt": 1794329747830,
+          "observedAt": 1794329747983,
+          "nextFeedAt": 1794329767830
+        },
+        {
+          "feed": 11,
+          "acceptedAt": 1794329768096,
+          "observedAt": 1794329768249,
+          "nextFeedAt": 1794329788096
+        },
+        {
+          "feed": 12,
+          "acceptedAt": 1794329788357,
+          "observedAt": 1794329788509,
+          "nextFeedAt": 1794329808357
+        }
+      ],
+      "elapsedMs": 222904,
+      "deadlineEdits": 0
+    },
+    "native_regen_regression": {
+      "events": {
+        "marked": "1",
+        "control": "1",
+        "markedCancelled": "1",
+        "controlCancelled": "0",
+        "unexpected": "0",
+        "reason": "REGEN",
+        "amount": "1.0"
+      },
+      "horses": [
+        {
+          "tag": "combat_regen_0",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_1",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_2",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_3",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_4",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_5",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_6",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_7",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_8",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_9",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_10",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_11",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_12",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_13",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_14",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_15",
+          "marked": true,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_16",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_17",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_18",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_19",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_20",
+          "marked": false,
+          "health": 500
+        },
+        {
+          "tag": "combat_regen_21",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_22",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_23",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_24",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_25",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_26",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_27",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_28",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_29",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_30",
+          "marked": false,
+          "health": 499
+        },
+        {
+          "tag": "combat_regen_31",
+          "marked": false,
+          "health": 499
+        }
+      ],
+      "nativeEventsOnly": true
+    },
+    "dependency_artifacts": {
+      "ArkDinos": {
+        "file": "/Users/stelios/Programmierung/Minecraft/output/dino-current-runtime-20261110/candidate-6bb0c5ef/ArkDinos-1.2.0.jar",
+        "sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970"
+      },
+      "Paper": {
+        "file": "/Users/stelios/Programmierung/Minecraft/output/live-dependency-stack-20261110/private/server/paper.jar",
+        "sha256": "d158542561e440c4026be7ccb32f551ee88313864792f38ea0ce5d1b88f1b27c"
+      },
+      "WorldEdit": {
+        "file": "/Users/stelios/Programmierung/Minecraft/output/live-dependency-stack-20261110/private/server/plugins/worldedit-bukkit-7.4.6.jar",
+        "sha256": "e0ce67d870ad1fef8a40dd9d7926360caf3bb44722438545d6b20b55f82a0c91"
+      },
+      "WorldGuard": {
+        "file": "/Users/stelios/Programmierung/Minecraft/output/live-dependency-stack-20261110/private/server/plugins/worldguard-bukkit-7.0.21.jar",
+        "sha256": "070223c535629f3f5d15f002388c1e3ae615a5f4ba051e7ccfb5d716540547a9"
+      },
+      "GriefPrevention": {
+        "file": "/Users/stelios/Programmierung/Minecraft/output/live-dependency-stack-20261110/private/server/plugins/GriefPrevention.jar",
+        "sha256": "83d199575808ddbab49de36990b99ed1e5549a8c4e844a9906ac30e90fe51701"
+      }
+    },
+    "initial_full_run": {
+      "summary": "frozen-native-6bb0c5ef/summary.json",
+      "status": "Failed; preserved unchanged",
+      "reason": "Aquatic pocket net-displacement assertion falsely rejected horizontal swimming that returned near its starting point; other eight suites completed green.",
+      "summary_sha256": "e6bd313eaad759ea9f3b6005b3fcf40347ffa3f630d40f78e88f29a8443d8267",
+      "original_aquatic_report": "frozen-native-6bb0c5ef/aquatic/aquatic-runtime-report.json",
+      "original_aquatic_script_sha256": "beaf1709c9e2b6fa7f3c4c1b2d076a4cfaa492eea02b47cbc33e43934a6c47da"
+    },
+    "replacement_aquatic": {
+      "report": "final-aquatic-6bb0/aquatic-runtime-report.json",
+      "full_suite_passed": 21,
+      "script_sha256": "3d5c16a254d558de55d7a2d9d34ec933ab2a9580835fb924ca47dcccc773fbcb",
+      "product_jar_unchanged": true,
+      "review": "Parent reports independent senior confirmation of fixture-assertion cause; new complete21-group run replaces only aquatic evidence."
+    },
+    "execution_provenance": "frozen-native-6bb0c5ef/execution-provenance.json"
+  },
+  "model_stack": {
+    "status": "Bestanden",
+    "checks": [
+      {
+        "name": "Installed candidate and real Geyser registries expose all eight models and both resource packs",
+        "status": "passed"
+      },
+      {
+        "name": "Actual trex driver and passenger keep their native vehicles through real model rebuild",
+        "status": "passed"
+      },
+      {
+        "name": "Actual triceratops driver and passenger keep their native vehicles through real model rebuild",
+        "status": "passed"
+      },
+      {
+        "name": "Actual stegosaurus driver and passenger keep their native vehicles through real model rebuild",
+        "status": "passed"
+      },
+      {
+        "name": "Actual brachiosaurus driver and passenger keep their native vehicles through real model rebuild",
+        "status": "passed"
+      },
+      {
+        "name": "Actual candidate growth and all eight model registrations survive a clean server restart",
+        "status": "passed"
+      }
+    ],
+    "packs_initial": {
+      "java": {
+        "path": "plugins/BetterModel/build.zip",
+        "bytes": 1218745,
+        "sha256": "4597544a75c6592bb64067e79a2299aae13d42e92840f58b68837337d3395116"
+      },
+      "bedrock": {
+        "path": "plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack.zip",
+        "bytes": 325367,
+        "sha256": "c3e4479dfcfc19b55fa48b040781008201bac29a43a98e10b68cbd730af53737"
+      },
+      "bedrockEggs": {
+        "path": "plugins/Geyser-Spigot/packs/ark-dino-eggs.mcpack",
+        "bytes": 3371,
+        "sha256": "6a620a56e7bae1e536844990abc7588b586303b78aa1d13b34f39b9b1eef0f67"
+      }
+    },
+    "packs_after_restart": {
+      "java": {
+        "path": "plugins/BetterModel/build.zip",
+        "bytes": 1218745,
+        "sha256": "4597544a75c6592bb64067e79a2299aae13d42e92840f58b68837337d3395116"
+      },
+      "bedrock": {
+        "path": "plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack.zip",
+        "bytes": 325367,
+        "sha256": "bf990d2f2e7d25cbd18611c1624af91cd2b45f16c3fdb7fb9fd7596300404741"
+      },
+      "bedrockEggs": {
+        "path": "plugins/Geyser-Spigot/packs/ark-dino-eggs.mcpack",
+        "bytes": 3371,
+        "sha256": "6a620a56e7bae1e536844990abc7588b586303b78aa1d13b34f39b9b1eef0f67"
+      }
+    },
+    "java_audit": {
+      "ok": true,
+      "models": 2702,
+      "cuboids": 6060
+    },
+    "bedrock_audit": {
+      "ok": true,
+      "models": 15,
+      "geometries": 30,
+      "files": 124,
+      "sha256": "c3e4479dfcfc19b55fa48b040781008201bac29a43a98e10b68cbd730af53737"
+    },
+    "raw_report_local": "final-model-gameplay/gameplay-report.json",
+    "raw_report_sha256": "79cd8beab1a4e6bbb68c2007b0c1a9630d41faa3e6770902a14d5cc65745d8e2"
+  },
+  "other_checks": {
+    "all_project_plugins_built": 7,
+    "scripts": 45,
+    "models": 38,
+    "world": 20,
+    "independent_ponytail_review": "Bestanden"
+  },
+  "corner_regression": {
+    "red": {
+      "jar_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "checks": [
+        {
+          "name": "Corner recovery makes net inward progress and accepts a fresh native path without jitter-only success",
+          "status": "failed",
+          "error": "AssertionError [ERR_ASSERTION]: Corner failed to move at least3 blocks inward: 0\n    at file:///Users/stelios/Programmierung/Minecraft/output/main-release-20261107/repository/dino-plugin/aquatic-runtime-test.mjs:272:12\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async check (file:///Users/stelios/Programmierung/Minecraft/output/main-release-20261107/repository/dino-plugin/aquatic-runtime-test.mjs:102:148)\n    at async file:///Users/stelios/Programmierung/Minecraft/output/main-release-20261107/repository/dino-plugin/aquatic-runtime-test.mjs:265:3"
+        }
+      ],
+      "probe": {
+        "before": {
+          "uuid": "dc182b91-d8a3-440a-baeb-bba4ca254826",
+          "x": "-0.04691707458942336",
+          "y": "9.975689623215539",
+          "z": "13.387228889792365",
+          "scale": "4.0",
+          "maxHealth": "200.0",
+          "health": "200.0",
+          "air": "4799",
+          "moistness": "2400",
+          "water": "true",
+          "ai": "true",
+          "managed": "true",
+          "path": "true",
+          "breachOrigin": "null",
+          "blockWater": "true",
+          "velocity": "0.0",
+          "distance": "0.92000003576279",
+          "horizontal": "0.0",
+          "minY": "9.104999964237214",
+          "maxY": "10.010000000000002",
+          "wet": "7",
+          "dry": "0",
+          "spanX": "0.0",
+          "spanZ": "0.0",
+          "pitch": "0.0",
+          "airJumps": "0",
+          "fullAir": "0",
+          "hits": "0",
+          "minimumGap": "9223372036854775807",
+          "blocked": "0",
+          "lastBlocked": "none",
+          "goals": "[]"
+        },
+        "natural": {
+          "uuid": "dc182b91-d8a3-440a-baeb-bba4ca254826",
+          "x": "-0.04691707458942336",
+          "y": "8.525689623215555",
+          "z": "13.387228889792365",
+          "scale": "4.0",
+          "maxHealth": "200.0",
+          "health": "200.0",
+          "air": "4799",
+          "moistness": "2400",
+          "water": "true",
+          "ai": "true",
+          "managed": "true",
+          "path": "false",
+          "breachOrigin": "null",
+          "blockWater": "true",
+          "velocity": "2.5000000000000045E-5",
+          "distance": "2.3700000357627733",
+          "horizontal": "0.0",
+          "minY": "8.525689623215555",
+          "maxY": "10.010000000000002",
+          "wet": "507",
+          "dry": "0",
+          "spanX": "0.04691707458942336",
+          "spanZ": "13.387228889792365",
+          "pitch": "0.0",
+          "airJumps": "0",
+          "fullAir": "0",
+          "hits": "0",
+          "minimumGap": "9223372036854775807",
+          "blocked": "1",
+          "lastBlocked": "from(-0.04691707458942336,9.975689623215539,13.387228889792365,117.513275)to(-0.06591744501613223,9.982181998978024,13.372642638661745,127.513275)",
+          "goals": "[]"
+        },
+        "target": [
+          0,
+          9,
+          0
+        ],
+        "retried": {
+          "uuid": "dc182b91-d8a3-440a-baeb-bba4ca254826",
+          "x": "-0.04691707458942336",
+          "y": "9.086370555791792",
+          "z": "13.387228889792365",
+          "scale": "4.0",
+          "maxHealth": "200.0",
+          "health": "200.0",
+          "air": "4799",
+          "moistness": "2400",
+          "water": "true",
+          "ai": "true",
+          "managed": "true",
+          "path": "false",
+          "breachOrigin": "null",
+          "blockWater": "true",
+          "velocity": "2.4999999999999957E-7",
+          "distance": "5.288305113571976",
+          "horizontal": "0.0",
+          "minY": "7.344377550599072",
+          "maxY": "10.010000000000002",
+          "wet": "607",
+          "dry": "0",
+          "spanX": "0.04691707458942336",
+          "spanZ": "13.387228889792365",
+          "pitch": "0.0",
+          "airJumps": "0",
+          "fullAir": "0",
+          "hits": "0",
+          "minimumGap": "9223372036854775807",
+          "blocked": "3",
+          "lastBlocked": "from(-0.04691707458942336,7.344377550599072,13.387228889792365,117.513275)to(-0.04691707458942336,7.31750875786072,13.387228889792365,117.513275)",
+          "goals": "[]"
+        },
+        "inward": 0,
+        "retryProgress": 0,
+        "safety": "safe=true;navigation=true;activation=WATER;activatedTick=641;tick=641;age=608;forced=0\n"
+      }
+    },
+    "green": {
+      "jar_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+      "checks": [
+        {
+          "name": "Corner recovery makes net inward progress and accepts a fresh native path without jitter-only success",
+          "status": "passed",
+          "detail": {
+            "before": {
+              "uuid": "21530301-4ba4-44d9-9537-5e10274ec62f",
+              "x": "-0.04691707458942336",
+              "y": "9.975689623215539",
+              "z": "13.387228889792365",
+              "scale": "4.0",
+              "maxHealth": "200.0",
+              "health": "200.0",
+              "air": "4799",
+              "moistness": "2400",
+              "water": "true",
+              "ai": "true",
+              "managed": "true",
+              "path": "true",
+              "breachOrigin": "null",
+              "blockWater": "true",
+              "velocity": "0.0",
+              "distance": "0.9444810549680304",
+              "horizontal": "0.023999412138272645",
+              "minY": "9.104999964237214",
+              "maxY": "10.014832030457757",
+              "wet": "8",
+              "dry": "0",
+              "spanX": "0.0041687130720027155",
+              "spanZ": "0.02363458513082009",
+              "pitch": "0.0",
+              "airJumps": "0",
+              "fullAir": "0",
+              "hits": "0",
+              "minimumGap": "9223372036854775807",
+              "blocked": "0",
+              "lastBlocked": "none",
+              "goals": "[]"
+            },
+            "natural": {
+              "uuid": "21530301-4ba4-44d9-9537-5e10274ec62f",
+              "x": "-8.709442951295392",
+              "y": "9.975689623215539",
+              "z": "8.888630223663663",
+              "scale": "4.0",
+              "maxHealth": "200.0",
+              "health": "200.0",
+              "air": "4799",
+              "moistness": "2400",
+              "water": "true",
+              "ai": "true",
+              "managed": "true",
+              "path": "false",
+              "breachOrigin": "null",
+              "blockWater": "true",
+              "velocity": "2.5E-5",
+              "distance": "10.708359394247115",
+              "horizontal": "9.787877751417358",
+              "minY": "9.104999964237214",
+              "maxY": "10.014832030457757",
+              "wet": "508",
+              "dry": "0",
+              "spanX": "8.713611664367395",
+              "spanZ": "13.387228889792365",
+              "pitch": "0.0",
+              "airJumps": "0",
+              "fullAir": "0",
+              "hits": "0",
+              "minimumGap": "9223372036854775807",
+              "blocked": "1",
+              "lastBlocked": "from(-0.04691707458942336,9.975689623215539,13.387228889792365,117.513275)to(-0.06591744501613223,9.982181998978024,13.372642638661745,127.513275)",
+              "goals": "[]"
+            },
+            "target": [
+              0,
+              9,
+              0
+            ],
+            "retried": {
+              "uuid": "21530301-4ba4-44d9-9537-5e10274ec62f",
+              "x": "-1.7986707174158778",
+              "y": "10.006964329828001",
+              "z": "1.3103953834233313",
+              "scale": "4.0",
+              "maxHealth": "200.0",
+              "health": "200.0",
+              "air": "4799",
+              "moistness": "2400",
+              "water": "true",
+              "ai": "true",
+              "managed": "true",
+              "path": "false",
+              "breachOrigin": "null",
+              "blockWater": "true",
+              "velocity": "2.5E-5",
+              "distance": "21.54417645840649",
+              "horizontal": "20.623195697072347",
+              "minY": "9.104999964237214",
+              "maxY": "10.014832030457757",
+              "wet": "608",
+              "dry": "0",
+              "spanX": "9.024296160248793",
+              "spanZ": "13.387228889792365",
+              "pitch": "0.0",
+              "airJumps": "0",
+              "fullAir": "0",
+              "hits": "0",
+              "minimumGap": "9223372036854775807",
+              "blocked": "2",
+              "lastBlocked": "from(-8.995618659005345,10.006964329828001,7.902116159015426,-132.48672)to(-8.956544028819629,10.011888397906976,7.762546349674029,237.51328)",
+              "goals": "[]"
+            },
+            "inward": 4.498598666128702,
+            "retryProgress": 10.218973778891707,
+            "safety": "safe=true;navigation=true;activation=WATER;activatedTick=643;tick=643;age=609;forced=0\n"
+          }
+        }
+      ],
+      "probe": {
+        "before": {
+          "uuid": "21530301-4ba4-44d9-9537-5e10274ec62f",
+          "x": "-0.04691707458942336",
+          "y": "9.975689623215539",
+          "z": "13.387228889792365",
+          "scale": "4.0",
+          "maxHealth": "200.0",
+          "health": "200.0",
+          "air": "4799",
+          "moistness": "2400",
+          "water": "true",
+          "ai": "true",
+          "managed": "true",
+          "path": "true",
+          "breachOrigin": "null",
+          "blockWater": "true",
+          "velocity": "0.0",
+          "distance": "0.9444810549680304",
+          "horizontal": "0.023999412138272645",
+          "minY": "9.104999964237214",
+          "maxY": "10.014832030457757",
+          "wet": "8",
+          "dry": "0",
+          "spanX": "0.0041687130720027155",
+          "spanZ": "0.02363458513082009",
+          "pitch": "0.0",
+          "airJumps": "0",
+          "fullAir": "0",
+          "hits": "0",
+          "minimumGap": "9223372036854775807",
+          "blocked": "0",
+          "lastBlocked": "none",
+          "goals": "[]"
+        },
+        "natural": {
+          "uuid": "21530301-4ba4-44d9-9537-5e10274ec62f",
+          "x": "-8.709442951295392",
+          "y": "9.975689623215539",
+          "z": "8.888630223663663",
+          "scale": "4.0",
+          "maxHealth": "200.0",
+          "health": "200.0",
+          "air": "4799",
+          "moistness": "2400",
+          "water": "true",
+          "ai": "true",
+          "managed": "true",
+          "path": "false",
+          "breachOrigin": "null",
+          "blockWater": "true",
+          "velocity": "2.5E-5",
+          "distance": "10.708359394247115",
+          "horizontal": "9.787877751417358",
+          "minY": "9.104999964237214",
+          "maxY": "10.014832030457757",
+          "wet": "508",
+          "dry": "0",
+          "spanX": "8.713611664367395",
+          "spanZ": "13.387228889792365",
+          "pitch": "0.0",
+          "airJumps": "0",
+          "fullAir": "0",
+          "hits": "0",
+          "minimumGap": "9223372036854775807",
+          "blocked": "1",
+          "lastBlocked": "from(-0.04691707458942336,9.975689623215539,13.387228889792365,117.513275)to(-0.06591744501613223,9.982181998978024,13.372642638661745,127.513275)",
+          "goals": "[]"
+        },
+        "target": [
+          0,
+          9,
+          0
+        ],
+        "retried": {
+          "uuid": "21530301-4ba4-44d9-9537-5e10274ec62f",
+          "x": "-1.7986707174158778",
+          "y": "10.006964329828001",
+          "z": "1.3103953834233313",
+          "scale": "4.0",
+          "maxHealth": "200.0",
+          "health": "200.0",
+          "air": "4799",
+          "moistness": "2400",
+          "water": "true",
+          "ai": "true",
+          "managed": "true",
+          "path": "false",
+          "breachOrigin": "null",
+          "blockWater": "true",
+          "velocity": "2.5E-5",
+          "distance": "21.54417645840649",
+          "horizontal": "20.623195697072347",
+          "minY": "9.104999964237214",
+          "maxY": "10.014832030457757",
+          "wet": "608",
+          "dry": "0",
+          "spanX": "9.024296160248793",
+          "spanZ": "13.387228889792365",
+          "pitch": "0.0",
+          "airJumps": "0",
+          "fullAir": "0",
+          "hits": "0",
+          "minimumGap": "9223372036854775807",
+          "blocked": "2",
+          "lastBlocked": "from(-8.995618659005345,10.006964329828001,7.902116159015426,-132.48672)to(-8.956544028819629,10.011888397906976,7.762546349674029,237.51328)",
+          "goals": "[]"
+        },
+        "inward": 4.498598666128702,
+        "retryProgress": 10.218973778891707,
+        "safety": "safe=true;navigation=true;activation=WATER;activatedTick=643;tick=643;age=609;forced=0\n"
+      }
+    }
+  },
+  "live": {
+    "status": "Bestanden",
+    "started_at": "2026-11-10T16:59:59.874050172Z",
+    "health": "healthy",
+    "view_distance": 14,
+    "simulation_distance": 4,
+    "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+    "java_pack": {
+      "sha256": "eb579657fb0f8f16e6ced972e89239ccb1a90050ece63d45be8a87fa1e03742f",
+      "bytes": 1218745,
+      "entries": 3025,
+      "http_status": 200,
+      "byte_identical_entries_with_final_qa": 3025
+    },
+    "bedrock_pack": {
+      "sha256": "fa7add3a943a1d23b8129b36ac391ee8c074afbc5d534739debc99b4f3dadd97",
+      "bytes": 324763,
+      "files": 122
+    },
+    "startup_errors": 0,
+    "new_backups": 0,
+    "versions": {
+      "ArkDinos": "ArkDinos version 1.2.0\nEight persistent ARK dinosaurs with native riding, flight and optional crossplay models.\nAuthor: ARK\n",
+      "Geyser-Spigot": "Geyser-Spigot version 2.12.1-SNAPSHOT\nWebsite: https://geysermc.org\nAuthor: GeyserMC\n",
+      "BetterModel": "BetterModel version 3.6.0\nModern Bedrock model engine for Minecraft Java Edition\nWebsite: https://modrinth.com/plugin/bettermodel\nAuthor: toxicity188\nContributors: https://github.com/toxicity188/BetterModel/graphs/contributors\n"
+    },
+    "other_services": [
+      {
+        "name": "minecraft-panel",
+        "running": true,
+        "started_at": "2026-11-08T05:52:06.472293773Z"
+      },
+      {
+        "name": "minecraft-dns",
+        "running": true,
+        "started_at": "2026-11-07T15:09:06.949621979Z"
+      },
+      {
+        "name": "minecraft-players",
+        "running": true,
+        "started_at": "2026-11-07T15:09:06.932490914Z"
+      }
+    ],
+    "receipt": {
+      "sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+      "source_commit": "e859534570da549632f3449c12a3a5aa33c1beb8",
+      "new_backups": 0,
+      "preserved_files": 26,
+      "graceful_shutdown_dimensions": [
+        "minecraft:ark_creative",
+        "minecraft:overworld",
+        "minecraft:the_end",
+        "minecraft:the_nether"
+      ]
+    },
+    "bedrock_audit": {
+      "ok": true,
+      "models": 15,
+      "geometries": 30,
+      "files": 122,
+      "sha256": "fa7add3a943a1d23b8129b36ac391ee8c074afbc5d534739debc99b4f3dadd97"
+    }
+  },
+  "limits": [
+    "No new graphical client or console acceptance was executed on e859534. Historical Java screenshots retain their original candidate attribution.",
+    "Bedrock/PS5 rendering and the remaining complete visual movement/growth matrix remain blocked or untested as listed in the original final report.",
+    "Raw local report paths are relative to output/dino-current-runtime-20261110 and are not public download links."
+  ],
+  "archive_verification": {
+    "source_archive_sha256": "e2f5da3d937bf2993227157635c3a96d593f91ca85820843e5901dc82f2e4b3b",
+    "source_build": "passed",
+    "project_jars": 7,
+    "derived_runtime_jars": 1,
+    "all_seven_manifest_and_jar_hashes_match": true,
+    "project_plugins": [
+      {
+        "module": "dino",
+        "name": "ArkDinos",
+        "version": "1.2.0",
+        "path": "dino-plugin/build/ArkDinos-1.2.0.jar",
+        "sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970"
+      },
+      {
+        "module": "atlas",
+        "name": "ArkAtlas",
+        "version": "1.0.1",
+        "path": "atlas-plugin/build/ArkAtlas-1.0.1.jar",
+        "sha256": "913ec558c3f5c5fd496366cbe390483578dba3bac69a07dfa9886728fc753eee"
+      },
+      {
+        "module": "panel",
+        "name": "ArkPanelBridge",
+        "version": "1.0.0",
+        "path": "panel-plugin/build/ArkPanelBridge-1.0.0.jar",
+        "sha256": "f676c23c4f4f46d9d14c265ad9a06946ca606f1fb7cf17607a5741bd34d2dfa8"
+      },
+      {
+        "module": "access",
+        "name": "ArkAccessBridge",
+        "version": "1.1.1",
+        "path": "access-plugin/build/ArkAccessBridge-1.1.1.jar",
+        "sha256": "f5e6ac16771aade266cc0b4f04ca2b7692e309fbebcb26b3e8dd34b702bf5539"
+      },
+      {
+        "module": "accounts",
+        "name": "ArkAccounts",
+        "version": "1.0.2",
+        "path": "accounts-plugin/build/ArkAccounts-1.0.2.jar",
+        "sha256": "8e7269179a372ce734bd3c6619994cec41a2ba324a0fc47948d3c9f5d1e9c53a"
+      },
+      {
+        "module": "wardrobe",
+        "name": "ArkWardrobe",
+        "version": "1.0.0",
+        "path": "wardrobe-plugin/build/ArkWardrobe-1.0.0.jar",
+        "sha256": "06f399769f57c69c80f28e47c32b7c0731b6302633075be7d7337bf855d2c9cb"
+      },
+      {
+        "module": "support",
+        "name": "ArkSupport",
+        "version": "1.0.1",
+        "path": "support-plugin/build/ArkSupport-1.0.1.jar",
+        "sha256": "535d469997af5e50e83826d21b81e6a3e0d746ff035becfdb700b711aedf18a5"
+      }
+    ],
+    "binary_install": {
+      "ok": true,
+      "scope": "Real default installer in unpacked binary archive; synthetic level.dat only satisfies the separate world-fetch precondition. No server or service started.",
+      "JAVA_HOME": "unset",
+      "PATH": "empty",
+      "projectPluginsInstalled": 6,
+      "foreignDependenciesVerified": 21,
+      "modelAndEggInputFilesVerified": 77,
+      "bridgeSha256": "ec18241f9a6be0cd1dfa05664cbfb27fac8c075a641973131d22e83ae1db61d8",
+      "bridgeDownloadedOrCompiled": false,
+      "actualDownloadUrls": [
+        "https://cdn.modrinth.com/data/3wmN97b8/versions/de7TbcZG/multiverse-core-5.8.2.jar",
+        "https://cdn.modrinth.com/data/8VMk6P0I/versions/otf0vOqh/multiverse-portals-5.3.0.jar",
+        "https://cdn.modrinth.com/data/qvdtDX3s/versions/86s1EwyC/multiverse-inventories-5.3.6.jar",
+        "https://cdn.modrinth.com/data/1u6JkXh5/versions/YFnqiUlL/worldedit-bukkit-7.4.6.jar",
+        "https://cdn.modrinth.com/data/DKY9btbd/versions/fiHLM6oY/worldguard-bukkit-7.0.21.jar",
+        "https://cdn.modrinth.com/data/O4o4mKaq/versions/MtwPHMAS/GriefPrevention.jar",
+        "https://cdn.modrinth.com/data/T8iZG3U1/versions/fD1cWOQu/Quests-5.3.2.jar",
+        "https://cdn.modrinth.com/data/swbUV1cr/versions/uHQIrUdf/bluemap-5.29-paper.jar",
+        "https://cdn.modrinth.com/data/tpehi7ww/versions/B1bgkN74/Dungeons%20and%20Taverns%20v6.1.0.zip",
+        "https://cdn.modrinth.com/data/hl5OLM95/versions/SVRy1ecx/Geophilic%20v3.7.dp.zip",
+        "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1298/downloads/spigot",
+        "https://download.geysermc.org/v2/projects/floodgate/versions/2.2.5/builds/141/downloads/spigot",
+        "https://download.geysermc.org/v2/projects/floodgatedb/versions/2.2.5/builds/138/downloads/sqlite",
+        "https://cdn.spiget.org/file/spiget-resources/3709.jar",
+        "https://github.com/SkinsRestorer/SkinsRestorer/releases/download/15.12.6/SkinsRestorer.jar",
+        "https://github.com/toxicity188/BetterModel/releases/download/3.6.0/bettermodel-3.6.0-paper.jar",
+        "https://github.com/GeyserExtensionists/GeyserModelEngine/releases/download/latest/GeyserModelEngineExtension-1.0.9.jar",
+        "https://github.com/GeyserExtensionists/GeyserUtils/releases/download/latest/geyserutils-spigot-1.0-SNAPSHOT.jar",
+        "https://github.com/GeyserExtensionists/GeyserUtils/releases/download/latest/geyserutils-geyser-1.0-SNAPSHOT.jar",
+        "https://github.com/retrooper/packetevents/releases/download/v2.14.0/packetevents-spigot-2.14.0.jar"
+      ],
+      "archiveSha256": "e2f5da3d937bf2993227157635c3a96d593f91ca85820843e5901dc82f2e4b3b",
+      "tamperedBundledArtifactRejected": true
+    },
+    "riding": {
+      "passed": 8,
+      "plugin_sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
+      "checks": [
+        {
+          "name": "Owner native empty-hand interaction mounts both species; normal input moves and sneak dismounts",
+          "status": "passed"
+        },
+        {
+          "name": "Nonowner, held item, Creative and third-party passengers are refused",
+          "status": "passed"
+        },
+        {
+          "name": "Game mode and world changes remove riders and stop control",
+          "status": "passed"
+        },
+        {
+          "name": "Owner logout clears the native passenger and stops movement",
+          "status": "passed"
+        },
+        {
+          "name": "Owner death clears riding without changing pet ownership",
+          "status": "passed"
+        },
+        {
+          "name": "Chunk-unload event fixture ejects and stops its controlled pet",
+          "status": "passed"
+        },
+        {
+          "name": "Plugin disable ejects its remaining rider and clears native movement",
+          "status": "passed"
+        },
+        {
+          "name": "No force-loaded chunks and no native plugin errors",
+          "status": "passed"
+        }
+      ]
+    },
+    "scope": "This earlier test archive predates final documentation-only changes. Final handoff archive has its own SHA-256 and unchanged product/installer bytes."
+  }
+}

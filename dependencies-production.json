@@ -5,7 +5,7 @@
   "notes": [
     "The previous nightly maintenance updated the deployed Compose Paper build without synchronizing repository pins. This update explicitly reconciles the repository with the observed runtime.",
     "Legacy-preserved plugins are inventoried but are not added to or configured by fresh setup.",
-    "The installed ArkDinos entry reflects the completed first deployment; the additional shoreline fix is verified separately before its next live update."
+    "The installed ArkDinos entry is confirmed after the additional shoreline-fix deployment; before and target retain explicit provenance."
   ],
   "arkdinos_update": {
     "before": {
@@ -16,12 +16,13 @@
       "version": "1.2.0",
       "sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970"
     },
-    "status": "installed-1.2.0; additional-shoreline-fix-in-verification",
+    "status": "Bestanden",
     "installed": {
       "version": "1.2.0",
-      "sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
       "view_distance": 14,
-      "new_backups": 0
+      "new_backups": 0,
+      "source_commit": "e859534570da549632f3449c12a3a5aa33c1beb8"
     }
   },
   "components": [
@@ -54,7 +55,7 @@
       "file": "ArkDinos-1.2.0.jar",
       "kind": "plugin",
       "version": "1.2.0",
-      "sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970",
       "management": "project-plugin"
     },
     {
@@ -295,5 +296,6 @@
       "sha256": "d158542561e440c4026be7ccb32f551ee88313864792f38ea0ce5d1b88f1b27c",
       "management": "managed"
     }
-  ]
+  ],
+  "confirmed_at": "2026-11-10T17:02:49.239857+00:00"
 }
