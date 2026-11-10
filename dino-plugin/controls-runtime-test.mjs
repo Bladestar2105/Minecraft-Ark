@@ -24,7 +24,7 @@ const report = {startedAt:new Date().toISOString(),fixture:directory,checks:[],l
   'Inventory clicks and cancelled interactions use dispatched native Paper events against actual inventories.',
   'Juvenile deadlines advance through fixture-only PDC edits; real server restart verifies mode and former-owner persistence.',
 ]};
-const reportPath=`${output}/${process.env.DINO_WILDLIFE_ONLY==='1'?'wildlife':'controls'}-runtime-report.json`;
+const reportPath=`${output}/${process.env.DINO_SECOND_RIDER_ONLY==='1'?'second-rider':process.env.DINO_WILDLIFE_ONLY==='1'?'wildlife':'controls'}-runtime-report.json`;
 const clients=[];let server,log='';
 const vi = value => { const out = []; do { let byte = value & 127; value >>>= 7; if (value) byte |= 128; out.push(byte); } while (value); return Buffer.from(out); };
 const readVi = (buffer, start = 0) => { let value = 0; for (let n = 0; n < 5; n++) { if (start + n >= buffer.length) return null; const byte = buffer[start + n]; value |= (byte & 127) << (7 * n); if (!(byte & 128)) return { value, end: start + n + 1 }; } throw Error('Invalid VarInt'); };
@@ -72,7 +72,7 @@ class Client extends EventEmitter {
       if (id === 3) { this.send(3); this.phase = 'play'; this.tick = setInterval(() => { this.send(0x21, Buffer.from([1])); this.send(0x0d); }, 50); }
     } else {
       if (id === 0x2d) this.send(0x1c, body);
-      if (id === 0x49) { const token = readVi(body); this.send(0, Buffer.concat([vi(token.value), body.subarray(token.end, token.end + 24), body.subarray(token.end + 48, token.end + 56)])); this.send(0x2c); }
+      if (id === 0x49) { this.selfTeleports=(this.selfTeleports??0)+1;const token = readVi(body); this.send(0, Buffer.concat([vi(token.value), body.subarray(token.end, token.end + 24), body.subarray(token.end + 48, token.end + 56)])); this.send(0x2c); }
       if (id === 0x32) { this.send(0x2c); this.joined = true; }
       if (id === 0x01) { const entity = readVi(body); this.entities.set(uuidString(body.subarray(entity.end, entity.end + 16)), entity.value); }
       if (id === 0x20) this.failure = Error(`Play disconnect: ${body.toString('hex')}`);
@@ -143,7 +143,9 @@ try {
  let alice=new Client('ControlsOwner'),bob=new Client('ControlsOther');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Controls clients did not join',30000);
  await command('gamemode survival @a');await command('effect give @a resistance 9999 4 true');await command('tp @a 0 4 3');await delay(500);
  await eventually(async()=>/Successfully filled/.test(await command('fill -16 3 -16 32 3 32 stone')),'Controls fixture platform chunks did not load');
- if(process.env.DINO_WILDLIFE_ONLY==='1') {
+ if(process.env.DINO_SECOND_RIDER_ONLY==='1') {
+  await (await import('./second-rider-runtime-checks.mjs')).default({check,command,inspect,fields,food,spawnDino,alice,bob,clients,Client,eventually,delay,report,start,stop});
+ } else if(process.env.DINO_WILDLIFE_ONLY==='1') {
   await command(`gamemode creative ${bob.name}`);
   await check('Natural world encounters obey the player budget, are unsaved and never force chunks',async()=>{
    const tick=fields(await command('controlsfixture wild-tick 40'));

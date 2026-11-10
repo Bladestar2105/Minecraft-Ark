@@ -6,7 +6,7 @@ A prepared survival adventure world, separate creative area and Java/Bedrock cro
 
 - 20,480 × 20,480 survival blocks, seed `20261103`, 1,638,400 pregenerated chunks.
 - 16 villages/64 houses, 12 dinosaur habitats, trader/witch/pirate camps, boss arenas, quests and an atlas with 55 locations.
-- ArkDinos 1.2.0: eight original models, world encounters, species speeds and sizes, surface swimming, controlled combat and owner-managed public riding. Real Java/Bedrock/console visual acceptance remains open. See the [dinosaur review and upgrade notes](docs/Dinosaur-Review-2026-11-10.md).
+- ArkDinos 1.2.0: eight original models, world encounters, species speeds and sizes, surface swimming, controlled combat, owner-managed public riding and a second seat on four large adult species. Real Java/Bedrock/console visual acceptance remains open. See the [dinosaur review and upgrade notes](docs/Dinosaur-Review-2026-11-10.md).
 - Separate creative inventories, ender chest and experience; items drop on death in survival.
 - Local administration plus an isolated player portal with shared server passwords, optional recovery and own statistics.
 - Optional built-in skin editor/wardrobe/signing and persistent private support requests.

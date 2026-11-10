@@ -72,7 +72,7 @@ final class DinoCombat implements Listener {
 
     Player actor(Mob mob) {
         Player driver = plugin.driver(mob);
-        return driver != null ? driver : mob.getPassengers().isEmpty() ? owner(mob) : null;
+        return driver != null ? driver : plugin.passengers(mob).isEmpty() ? owner(mob) : null;
     }
 
     Player damageActor(Mob mob) { return attacking == mob ? attackActor : null; }
@@ -106,7 +106,8 @@ final class DinoCombat implements Listener {
     }
 
     boolean validTarget(Mob mob, LivingEntity target, Player actor) {
-        if (!available(mob) || !target.isValid() || target.isDead() || target.equals(mob) || mob.getPassengers().contains(target)
+        if (!available(mob) || !target.isValid() || target.isDead() || target.equals(mob) || DinoSeats.isSeat(target)
+                || plugin.passengers(mob).contains(target)
                 || !target.getWorld().equals(mob.getWorld()) || mob.getLocation().distanceSquared(target.getLocation()) > 24 * 24) return false;
         if (!plugin.owned(mob)) return predator(mob) && !plugin.formerOwner(mob, target)
                 && target instanceof Player player && player.isOnline() && plugin.survival(player);
@@ -217,7 +218,7 @@ final class DinoCombat implements Listener {
         for (Mob mob : java.util.stream.Stream.concat(wild.values().stream(), plugin.companions().stream()).toList()) {
             if (!active(mob)) continue;
             if(plugin.aerial(mob)) {plugin.landPtera(mob);continue;}
-            if (!mob.getPassengers().isEmpty()) { cancel(mob); continue; }
+            if (!plugin.passengers(mob).isEmpty()) { cancel(mob); continue; }
             LivingEntity target = targets.get(mob.getUniqueId());
             if ("dilophosaurus".equals(plugin.species(mob)) && !meleeReach(mob, target)
                     && mob.getLocation().distanceSquared(target.getLocation()) <= 8 * 8 && mob.hasLineOfSight(target)) {
@@ -246,7 +247,7 @@ final class DinoCombat implements Listener {
     }
 
     private void defend(Mob mob, LivingEntity target) {
-        if (target != null && plugin.owned(mob) && mob.getPassengers().isEmpty() && validTarget(mob, target)) {
+        if (target != null && plugin.owned(mob) && plugin.passengers(mob).isEmpty() && validTarget(mob, target)) {
             targets.put(mob.getUniqueId(), target);
         }
     }

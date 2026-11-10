@@ -74,6 +74,25 @@ final class DinoModels implements AutoCloseable {
         }
     }
 
+    void seat(Mob carrier, Entity seat, double rearDistance, double relativeSeatY) {
+        if (adapter == null) return;
+        try {
+            adapter.seat(carrier, seat, rearDistance, relativeSeatY);
+        } catch (RuntimeException | LinkageError error) {
+            clearSeat(carrier);
+            plugin.getLogger().warning("Dinosaur passenger model unavailable: " + error.getMessage());
+        }
+    }
+
+    void clearSeat(Mob carrier) {
+        if (adapter == null) return;
+        try {
+            adapter.clearSeat(carrier);
+        } catch (RuntimeException | LinkageError error) {
+            plugin.getLogger().warning("Dinosaur passenger model cleanup failed: " + error.getMessage());
+        }
+    }
+
     void growth(Mob mob) {
         if (adapter != null) {
             try {

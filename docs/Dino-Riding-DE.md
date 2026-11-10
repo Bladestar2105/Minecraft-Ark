@@ -10,7 +10,15 @@ Außerhalb der Prototypwelten zähmst du eines der besonderen Habitat-Tiere im S
 2. Lenke mit der normalen Bewegungssteuerung; Sprinten erhöht das Tempo.
 3. Steige mit Schleichen beziehungsweise der Absteigen-Taste ab. Zu Fuß öffnet **Schleichen + Interagieren** mit leerer Hand in einer eingerichteten Dino-Welt ein Menü: **Folgen**, **Bleiben**, **Freilauf**, **Reiten: nur Besitzer/öffentlich** und separat **Freilassen** mit Bestätigung. Freilauf behält Besitzer und Verteidigung. Freigelassene erwachsene Tiere bleiben ihrem letzten früheren Besitzer gegenüber friedlich. Außerhalb der Prototypwelten bleibt der bisherige Bleiben/Folgen-Wechsel erhalten.
 
-Ein Sattel oder eine zusätzliche Client-Mod ist nicht nötig. Öffentliche Reiter erhalten keine Rechte zum Benennen, Füttern, Anleinen, Umschalten des Verhaltens oder Freilassen. Der Besitzer kann die Freigabe auch während eines Ritts widerrufen; der Gast steigt dann ab. Die Freigabe bleibt nach Neustarts erhalten, ältere Tiere bleiben zunächst privat. Ein Zweiersitz ist noch nicht verfügbar. Wilde Dinos und Spieler im Kreativmodus sind ausgeschlossen. Während des Reitens pausiert das Folgen; die gespeicherte Bleiben-/Folgen-Einstellung bleibt nach dem Absteigen erhalten.
+Ein Sattel oder eine zusätzliche Client-Mod ist nicht nötig. Öffentliche Reiter erhalten keine Rechte zum Benennen, Füttern, Anleinen, Umschalten des Verhaltens oder Freilassen. Der Besitzer kann die Freigabe auch während eines Ritts widerrufen; der Gast steigt dann ab. Die Freigabe bleibt nach Neustarts erhalten, ältere Tiere bleiben zunächst privat. Wilde Dinos und Spieler im Kreativmodus sind ausgeschlossen. Während des Reitens pausiert das Folgen; die gespeicherte Bleiben-/Folgen-Einstellung bleibt nach dem Absteigen erhalten.
+
+## Zu zweit reiten
+
+Erwachsene **T-Rex, Triceratops, Stegosaurus und Brachiosaurus** haben in einer eingerichteten Dino-Welt einen zweiten Platz. Der Besitzer aktiviert dafür **Reiten: öffentlich**. Sobald der erste Spieler aufsitzt, kann der zweite mit leerer Haupthand denselben Dino benutzen. Beide müssen im erlaubten Survival-Modus sein. Kleine Arten, Pteranodon und Jungtiere bekommen keinen zweiten Sitz; Mosasaurus bleibt unreitbar.
+
+Der vordere Reiter lenkt und befiehlt die Dino-Angriffe. Der Mitfahrer sitzt dahinter, kann unabhängig umherschauen und mit Schleichen alleine absteigen. Steigt der Fahrer ab oder verliert seine Berechtigung, endet der ganze Ritt; der Mitfahrer übernimmt nicht automatisch. Wird die öffentliche Freigabe entzogen, bleibt ein Besitzer auf dem Fahrersitz sitzen, ein öffentlicher Fahrer muss dagegen mit seinem Mitfahrer absteigen. Schwimmen berücksichtigt den Kopfraum beider Spieler. Eine Wand im Schwenkbereich des hinteren Sitzes kann auch das Drehen verhindern.
+
+Diese erste Umsetzung benötigt Paper 26.3. Das sichtbare Zusammenspiel beider Sitze mit Java-, Bedrock- und Konsolenclients ist weiterhin vor der Live-Freigabe abzunehmen.
 
 ## Pteranodon fliegen
 

@@ -25,7 +25,8 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ControlsFixture extends JavaPlugin implements Listener {
-    private boolean denyInteraction,denyClick,denyPteraDamage,zeroPteraDamage;
+    private boolean denyInteraction,denyClick,denyPteraDamage,zeroPteraDamage,denySeatMount;
+    private final Map<java.util.UUID,Integer> playerTeleports=new java.util.HashMap<>();
     private final Map<java.util.UUID,double[]> pteraSamples=new java.util.HashMap<>();
     public void onEnable() { getServer().getPluginManager().registerEvents(this,this);getServer().getScheduler().runTaskTimer(this,()->{
         for(var world:getServer().getWorlds())for(var entity:world.getEntities())if(entity.getScoreboardTags().stream().anyMatch(t->t.startsWith("ptera_"))) {
@@ -45,6 +46,14 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
             var field=brain.getClass().getDeclaredField("availableBehaviorsByPriority");field.setAccessible(true);return ((Map<?,?>)field.get(brain)).size();
         } catch(ReflectiveOperationException error) { throw new IllegalStateException(error); }
     }
+    private boolean blocked(Player player) {
+        var box=player.getBoundingBox();var world=player.getWorld();
+        for(int x=(int)Math.floor(box.getMinX())-1;x<=(int)Math.floor(box.getMaxX())+1;x++)
+            for(int z=(int)Math.floor(box.getMinZ())-1;z<=(int)Math.floor(box.getMaxZ())+1;z++)
+                for(int y=(int)Math.floor(box.getMinY())-1;y<=(int)Math.floor(box.getMaxY())+1;y++)
+                    if(world.getBlockAt(x,y,z).getCollisionShape().overlaps(box.clone().shift(-x,-y,-z)))return true;
+        return false;
+    }
     private String state(Entity entity) {
         var data=entity.getPersistentDataContainer();Mob mob=(Mob)entity;
         return "id="+entity.getEntityId()+";uuid="+entity.getUniqueId()+";owner="+data.get(key("owner"),PersistentDataType.STRING)
@@ -55,7 +64,7 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
                 +";feeds="+data.getOrDefault(key("tame-feeds"),PersistentDataType.INTEGER,0)+";tags="+entity.getScoreboardTags()
                 +";health="+mob.getHealth()+";scale="+mob.getAttribute(org.bukkit.attribute.Attribute.SCALE).getBaseValue()
                 +";passengers="+entity.getPassengers().size()+";aware="+mob.isAware()+";ai="+mob.hasAI()+";path="+mob.getPathfinder().hasPath()
-                +";goals="+getServer().getMobGoals().getAllGoals(mob).size()+";behaviors="+behaviors(mob)+";x="+entity.getX()+";y="+entity.getY()+";z="+entity.getZ()
+                +";goals="+getServer().getMobGoals().getAllGoals(mob).size()+";behaviors="+behaviors(mob)+";x="+entity.getX()+";y="+entity.getY()+";z="+entity.getZ()+";yaw="+entity.getYaw()
                 +";gravity="+entity.hasGravity()+";ground="+entity.isOnGround()+";horizontal="+pteraSamples.getOrDefault(entity.getUniqueId(),new double[4])[2]+";maxY="+pteraSamples.getOrDefault(entity.getUniqueId(),new double[]{0,0,0,entity.getY()})[3]
                 +";pteraFlight="+data.has(key("ptera-airborne"))+";groundUntil="+data.getOrDefault(key("ptera-ground-until"),PersistentDataType.LONG,0L)
                 +";tick="+org.bukkit.Bukkit.getCurrentTick()+";movementSpeed="+mob.getAttribute(org.bukkit.attribute.Attribute.MOVEMENT_SPEED).getValue()
@@ -63,6 +72,12 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
     }
     @EventHandler(priority=EventPriority.HIGH) public void interact(PlayerInteractEntityEvent event) { if(denyInteraction)event.setCancelled(true); }
     @EventHandler(priority=EventPriority.HIGH) public void inventoryClick(InventoryClickEvent event) { if(denyClick)event.setCancelled(true); }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true) public void playerTeleport(org.bukkit.event.player.PlayerTeleportEvent event) {
+        playerTeleports.merge(event.getPlayer().getUniqueId(),1,Integer::sum);
+    }
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true) public void seatMount(org.bukkit.event.entity.EntityMountEvent event) {
+        if(denySeatMount && event.getMount() instanceof org.bukkit.entity.ArmorStand marker && marker.isMarker())event.setCancelled(true);
+    }
     @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true) public void pteraDamage(org.bukkit.event.entity.EntityDamageByEntityEvent event) {
         if(event.getEntity().getScoreboardTags().stream().noneMatch(t->t.startsWith("ptera_")))return;
         if(denyPteraDamage)event.setCancelled(true);if(zeroPteraDamage)event.setDamage(0);
@@ -71,6 +86,33 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
         if(!sender.getName().equals("Rcon") && !sender.getName().equals("CONSOLE"))return true;
         try {
             switch(args[0]) {
+                case "player" -> {
+                    var p=getServer().getPlayerExact(args[1]);var v=p.getVehicle();
+                    sender.sendMessage("uuid="+p.getUniqueId()+";x="+p.getX()+";y="+p.getY()+";z="+p.getZ()+";yaw="+p.getYaw()+";pitch="+p.getPitch()
+                            +";vehicle="+(v==null?"none":v.getType())+";vehicleUuid="+(v==null?"none":v.getUniqueId())+";vehicleId="+(v==null?-1:v.getEntityId())
+                            +";health="+p.getHealth()+";air="+p.getRemainingAir()+";teleports="+playerTeleports.getOrDefault(p.getUniqueId(),0)
+                            +";slowFall="+(p.getPotionEffect(org.bukkit.potion.PotionEffectType.SLOW_FALLING)==null?0:p.getPotionEffect(org.bukkit.potion.PotionEffectType.SLOW_FALLING).getDuration())
+                            +";markers="+p.getWorld().getEntitiesByClass(org.bukkit.entity.ArmorStand.class).stream().filter(org.bukkit.entity.ArmorStand::isMarker).count());
+                }
+                case "share" -> call(plugin(),"publicRide",new Class<?>[]{Mob.class,boolean.class},entity(args[1]),Boolean.parseBoolean(args[2]));
+                case "revoke-inspect" -> {
+                    var guest=getServer().getPlayerExact(args[2]);
+                    call(plugin(),"publicRide",new Class<?>[]{Mob.class,boolean.class},entity(args[1]),false);
+                    sender.sendMessage("blocked="+blocked(guest)+";y="+guest.getY()+";vehicle="+(guest.getVehicle()==null?"none":guest.getVehicle().getType()));
+                }
+                case "manual-attack" -> sender.sendMessage("accepted="+call(module("combat"),"manualAttack",new Class<?>[]{Player.class},getServer().getPlayerExact(args[1])));
+                case "swim-clear" -> sender.sendMessage("clear="+call(module("swimming"),"ridersClear",new Class<?>[]{Mob.class,double.class},entity(args[1]),Double.parseDouble(args[2])));
+                case "seat-motion" -> {
+                    Mob mob=(Mob)entity(args[1]);int before=mob.getWorld().getLoadedChunks().length;
+                    boolean clear=(boolean)call(module("seats"),"canMove",new Class<?>[]{Mob.class,org.bukkit.util.Vector.class,float.class},mob,
+                            new org.bukkit.util.Vector(Double.parseDouble(args[2]),Double.parseDouble(args[3]),Double.parseDouble(args[4])),Float.parseFloat(args[5]));
+                    sender.sendMessage("clear="+clear+";before="+before+";after="+mob.getWorld().getLoadedChunks().length);
+                }
+                case "seat-target" -> {
+                    var guest=getServer().getPlayerExact(args[2]);
+                    sender.sendMessage("valid="+call(module("combat"),"validTarget",new Class<?>[]{Mob.class,LivingEntity.class},entity(args[1]),guest.getVehicle()));
+                }
+                case "disable-dinos" -> getServer().getPluginManager().disablePlugin(getServer().getPluginManager().getPlugin("ArkDinos"));
                 case "present" -> sender.sendMessage("present="+(getServer().getEntity(java.util.UUID.fromString(args[1]))!=null));
                 case "wild-tick" -> {
                     var world=getServer().getWorlds().getFirst();int before=world.getLoadedChunks().length;
@@ -135,6 +177,7 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
                 case "drag" -> { var p=getServer().getPlayerExact(args[1]);var event=new InventoryDragEvent(p.getOpenInventory(),new ItemStack(Material.AIR),new ItemStack(Material.STONE),false,Map.of(0,new ItemStack(Material.STONE)));getServer().getPluginManager().callEvent(event);sender.sendMessage("cancelled="+event.isCancelled()); }
                 case "interact" -> { var p=getServer().getPlayerExact(args[1]);p.setSneaking(Boolean.parseBoolean(args[3]));var event=new PlayerInteractEntityEvent(p,entity(args[2]),EquipmentSlot.HAND);getServer().getPluginManager().callEvent(event);sender.sendMessage("cancelled="+event.isCancelled()); }
                 case "deny-interact" -> denyInteraction=Boolean.parseBoolean(args[1]);
+                case "deny-seat-mount" -> denySeatMount=Boolean.parseBoolean(args[1]);
                 case "deny-click" -> denyClick=Boolean.parseBoolean(args[1]);
                 case "close" -> getServer().getPlayerExact(args[1]).closeInventory();
                 case "restore" -> call(plugin(),"restore",new Class<?>[]{Entity.class},entity(args[1]));

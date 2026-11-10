@@ -106,9 +106,9 @@ final class DinoSwimming implements AutoCloseable {
         return true;
     }
 
-    private static boolean ridersClear(Mob mob, double upward) {
+    private boolean ridersClear(Mob mob, double upward) {
         World world = mob.getWorld();
-        for (Entity rider : mob.getPassengers()) {
+        for (Entity rider : plugin.passengers(mob)) {
             BoundingBox sweep = rider.getBoundingBox().expandDirectional(0, upward, 0);
             if (sweep.getMinY() < world.getMinHeight() || sweep.getMaxY() >= world.getMaxHeight()) return false;
             for (int x = (int) Math.floor(sweep.getMinX()) - 1; x <= (int) Math.floor(sweep.getMaxX()) + 1; x++)

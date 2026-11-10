@@ -10,7 +10,15 @@ Outside prototype worlds, tame a special habitat animal with one torchflower see
 2. Use the normal movement controls to steer; sprint to run faster.
 3. Sneak/use the dismount control to get off. In a configured dinosaur world, sneak+interact on foot with an empty hand opens **Follow**, **Stay**, **Free wander**, **Reiten: nur Besitzer/öffentlich** (private/public riding), and a separately confirmed **Release** action. Free wander retains ownership and defense. Released adults remain peaceful toward their latest former owner. Outside prototype worlds, sneak+interact retains the legacy stay/follow toggle.
 
-No saddle or additional client mod is needed. Guests receive riding access only, without rights to name, feed, leash, change behavior or release the animal. The owner can revoke access while a guest rides, which dismounts the guest. The setting survives restarts; old pets start private. A second seat is not yet available. Wild dinosaurs and Creative players are not eligible. A rider suspends following; the saved stay/follow setting remains available after dismounting.
+No saddle or additional client mod is needed. Guests receive riding access only, without rights to name, feed, leash, change behavior or release the animal. The owner can revoke access while a guest rides, which dismounts the guest. The setting survives restarts; old pets start private. Wild dinosaurs and Creative players are not eligible. A rider suspends following; the saved stay/follow setting remains available after dismounting.
+
+## Riding together
+
+Adult **T-Rex, Triceratops, Stegosaurus and Brachiosaurus** have a second seat in configured dinosaur worlds. The owner enables **Riding: public**. Once the first player is aboard, a second player can interact with the same dinosaur using an empty main hand. Both must be eligible Survival players. Smaller species, Pteranodon and juveniles do not gain a second seat; Mosasaurus remains unrideable.
+
+The front rider steers and commands dinosaur attacks. The passenger sits behind, keeps an independent view and can Sneak to dismount alone. The driver's exit or loss of permission ends both seats, without automatically promoting the passenger. Revoking public access preserves an owner driving the dinosaur but ejects a public driver together with their passenger. Swimming checks both players' headroom. An obstacle along the rear seat's turning arc can prevent rotation as well as movement.
+
+This initial implementation requires Paper 26.3. Visible rendering of both seats with Java, Bedrock and console clients still needs acceptance before live release.
 
 ## Pteranodon flight
 

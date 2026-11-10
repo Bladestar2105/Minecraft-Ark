@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Run the actual pinned Geyser passenger translator without a Minecraft server."""
+"""Run the actual pinned Geyser passenger translator without a Minecraft server.
+
+Pass marker-baseline to reproduce the uncorrected ArmorStand seat (expected failure).
+"""
 from pathlib import Path
 import hashlib
 import json
@@ -41,11 +44,12 @@ if result.returncode == 0 and seats.exists():
     optional_paths = [p for p in paths if 'geyser' not in p.name.lower()]
     optional = subprocess.run([str(JDK / 'java'), f'-javaagent:{agent}', '-Dnet.bytebuddy.experimental=true',
                               '-cp', ':'.join(map(str, optional_paths)) + ':' + str(classes), 'de.ark.dinos.BedrockSeatsOptionalProbe'], capture_output=True, text=True)
-report = {'ok': result.returncode == 0 and (optional is None or optional.returncode == 0), 'baseline': 'baseline' in sys.argv, 'stdout': result.stdout, 'stderr': result.stderr,
+report = {'ok': result.returncode == 0 and (optional is None or optional.returncode == 0), 'baseline': 'baseline' in sys.argv or 'marker-baseline' in sys.argv, 'stdout': result.stdout, 'stderr': result.stderr,
           'limit': 'Real translator, flags, links and SEAT_OFFSET metadata. No Bedrock renderer or PS5; visual contact still needs device QA.'}
 if optional is not None:
     report['optional'] = {'ok': optional.returncode == 0, 'stdout': optional.stdout, 'stderr': optional.stderr}
-(OUTPUT / ('seat-red.json' if 'baseline' in sys.argv else 'seat-green.json')).write_text(json.dumps(report, indent=2) + '\n')
+report_name = 'seat-marker-red.json' if 'marker-baseline' in sys.argv else 'seat-red.json' if 'baseline' in sys.argv else 'seat-green.json'
+(OUTPUT / report_name).write_text(json.dumps(report, indent=2) + '\n')
 print(result.stdout, end='')
 print(result.stderr, end='', file=sys.stderr)
 if optional is not None:

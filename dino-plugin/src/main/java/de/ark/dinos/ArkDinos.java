@@ -1,6 +1,7 @@
 package de.ark.dinos;
 
 import com.destroystokyo.paper.entity.ai.GoalType;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +57,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     private DinoAquatic aquatic;
     private DinoPtera ptera;
     private DinoSwimming swimming;
+    private DinoSeats seats;
     private DinoWildSpawns wildSpawns;
     private NamespacedKey speciesKey;
     private NamespacedKey flightKey;
@@ -85,8 +87,10 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         controls = new DinoControls(this);
         ptera = new DinoPtera(this);
         swimming = new DinoSwimming(this);
+        seats = new DinoSeats(this);
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(care, this);
+        getServer().getPluginManager().registerEvents(seats, this);
         getServer().getWorlds().forEach(world -> world.getEntities().forEach(this::restore));
         wildSpawns = new DinoWildSpawns(this);
         getServer().getScheduler().runTaskTimer(this, this::follow, 20L, 20L);
@@ -101,6 +105,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         if (aquatic != null) aquatic.close();
         if (ptera != null) ptera.close();
         if (swimming != null) swimming.close();
+        if (seats != null) seats.close();
         if (wildSpawns != null) wildSpawns.close();
         flying.clear();
         landing.clear();
@@ -145,6 +150,10 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     void publicRide(Mob mob, boolean shared) {
         mob.getPersistentDataContainer().set(publicRideKey, PersistentDataType.BYTE, (byte) (shared ? 1 : 0));
         if (riding.containsKey(mob.getUniqueId()) && driver(mob) == null) endRide(mob);
+        else if (seats != null) {
+            Player guest = seats.passenger(mob);
+            if (guest != null && !canRide(mob, guest)) seats.remove(mob);
+        }
     }
 
     boolean canRide(Mob mob, Player player) {
@@ -159,6 +168,19 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         return passengers.size() == 1 && passengers.getFirst() instanceof Player player
                 && canRide(mob, player) && !player.getCurrentInput().isSneak() ? player : null;
     }
+
+    /** All riders, including the independent passenger vehicle. The native passenger remains the driver. */
+    List<Entity> passengers(Mob mob) {
+        var result = new ArrayList<>(mob.getPassengers());
+        if (seats != null) result.addAll(seats.riders(mob));
+        return result;
+    }
+
+    void extraSeat(Mob mob, Entity seat, double rearDistance, double relativeSeatY) {
+        models.seat(mob, seat, rearDistance, relativeSeatY);
+    }
+
+    void clearExtraSeat(Mob mob) { models.clearSeat(mob); }
 
     boolean staying(Entity entity) {
         var data = entity.getPersistentDataContainer();
@@ -244,7 +266,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     boolean release(Mob mob) {
         String previousOwner = owner(mob);
-        if (!owned(mob) || !adult(mob) || !mob.getPassengers().isEmpty()) return false;
+        if (!owned(mob) || !adult(mob) || !passengers(mob).isEmpty()) return false;
         endRide(mob); combat.cancel(mob);
         if (mob.getPersistentDataContainer().has(flightKey)) { protectFall(mob); restoreGravity(mob); }
         if (!prepare(mob)) return false;
@@ -329,6 +351,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     }
 
     void restore(Entity entity) {
+        if (seats != null) seats.restore(entity);
         care.restore(entity);
         if (entity instanceof Dolphin dolphin) aquatic.restore(dolphin);
         identify(entity);
@@ -463,6 +486,12 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             controlMode((Mob) entity, stay);
             player.sendActionBar(Component.text(stay ? "Dein Urtier bleibt hier." : "Dein Urtier folgt dir."));
         } else if (loaded.containsKey(entity.getUniqueId()) && entity.getScoreboardTags().contains("ark_dino_tamed")
+                && driver((Mob) entity) != null && item.getType().isAir() && !player.isSneaking()) {
+            if (seats.mount((Mob) entity, player))
+                player.sendActionBar(Component.text("Du sitzt mit auf. Der vordere Reiter steuert; Schleichen zum Absteigen."));
+            else if (canRide((Mob) entity, player))
+                player.sendActionBar(Component.text("Hier ist gerade kein freier, sicherer Mitfahrplatz verfügbar."));
+        } else if (loaded.containsKey(entity.getUniqueId()) && entity.getScoreboardTags().contains("ark_dino_tamed")
                 && RidingRules.canMount(owned(entity) ? owner(entity) : null, player.getUniqueId().toString(),
                 publicRide(entity), survival(player), item.getType().isAir(), player.isSneaking(), !entity.getPassengers().isEmpty(), player.isInsideVehicle())) {
             Mob mob = (Mob) entity;
@@ -478,7 +507,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         }
     }
 
-    private void protectFall(LivingEntity entity) {
+    void protectFall(LivingEntity entity) {
         // Bounded flight exit protection also survives unload/disable; ordinary falling is unchanged.
         entity.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING,
                 (int) Math.max(20, Math.ceil((entity.getLocation().getY() - entity.getWorld().getMinHeight() + 16) / .1)),
@@ -497,10 +526,11 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     private void endRide(Mob mob) {
         riding.remove(mob.getUniqueId());
         if (flying.containsKey(mob.getUniqueId())) {
-            for (Entity passenger : mob.getPassengers()) if (passenger instanceof LivingEntity living) protectFall(living);
+            for (Entity passenger : passengers(mob)) if (passenger instanceof LivingEntity living) protectFall(living);
             protectFall(mob);
             landing.put(mob.getUniqueId(), mob);
         }
+        if (seats != null) seats.remove(mob);
         mob.eject();
         stopRidingMotion(mob);
     }
@@ -513,6 +543,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     }
 
     private void endRide(Player player) {
+        if (seats != null) seats.remove(player);
         for (Mob mob : List.copyOf(riding.values())) {
             if (mob.getPassengers().contains(player)) endRide(mob);
         }
@@ -531,7 +562,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     private void flightVelocity(Mob mob, Vector motion) {
         if (!destinationLoaded(mob, motion)) { mob.setVelocity(new Vector()); return; }
         // The carrier keeps native collision/floor resolution; protect the actual swept rider volume too.
-        for (Entity passenger : mob.getPassengers()) {
+        for (Entity passenger : passengers(mob)) {
             var sweep = passenger.getBoundingBox().expandDirectional(motion);
             // Neighbor blocks can have collision shapes extending outside their own block (e.g. fences).
             for (int x = (int) Math.floor(sweep.getMinX()) - 1; x <= (int) Math.floor(sweep.getMaxX()) + 1; x++) {
@@ -545,7 +576,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             }
         }
         mob.setFallDistance(0);
-        for (Entity passenger : mob.getPassengers()) passenger.setFallDistance(0);
+        for (Entity passenger : passengers(mob)) passenger.setFallDistance(0);
         mob.setVelocity(motion);
     }
 
@@ -583,8 +614,10 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             }
             var motion = RidingRules.movement(player.getYaw(), input.isForward(), input.isBackward(), input.isLeft(), input.isRight(), ridingSpeed(mob,input.isSprint()));
             Vector velocity = new Vector(motion.x(), mob.getVelocity().getY(), motion.z());
-            mob.setVelocity(destinationLoaded(mob, velocity) ? velocity : new Vector());
-            mob.setRotation(player.getYaw(), 0);
+            if (destinationLoaded(mob, velocity) && seats.canMove(mob, velocity, player.getYaw())) {
+                mob.setVelocity(velocity);
+                mob.setRotation(player.getYaw(), 0);
+            } else mob.setVelocity(new Vector());
         }
         // Buoyancy is the final motion controller, including Stay and an absent owner.
         if (swimming != null) swimming.tick();
@@ -601,6 +634,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void dismount(EntityDismountEvent event) {
         if (event.getDismounted() instanceof Mob mob && riding.remove(mob.getUniqueId()) != null) {
+            if (seats != null) seats.remove(mob);
             if (flying.containsKey(mob.getUniqueId())) {
                 if (event.getEntity() instanceof LivingEntity living) protectFall(living);
                 protectFall(mob);

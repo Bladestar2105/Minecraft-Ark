@@ -4,19 +4,19 @@
 
 Geprüft wurde der Repository-Stand [`d2acdad87c842dc961c1175bba63ff89396b971a`](https://github.com/Bladestar2105/Minecraft-Ark/commit/d2acdad87c842dc961c1175bba63ff89396b971a), einschließlich der bereits zusammengeführten Dino-Änderungen aus PR 6. Die Korrekturen tragen die unterscheidbare Pluginversion **ArkDinos 1.2.0**. Die bestehenden Welten, Tiere und Besitzer werden nicht durch neue Weltdateien ersetzt.
 
-Es gab reproduzierbare Fehler bei Selbstverteidigung, Haustierschutz, Schwimmen, einer Zähmungsabkürzung direkt beim Spawn und mehreren Modellverbindungen. Weltweite natürliche Begegnungen und eine öffentliche Reitfreigabe fehlten. Die Meldung „alle Dinos greifen gar nicht an“ trifft dagegen nicht pauschal auf den geprüften Quellstand zu: Er enthält bereits Kampfsteuerung und Eingabehandler. Weltkonfiguration, laufende Version und die nun behobenen konkreten Fälle müssen unterschieden werden.
+Es gab reproduzierbare Fehler bei Selbstverteidigung, Haustierschutz, Schwimmen, einer Zähmungsabkürzung direkt beim Spawn und mehreren Modellverbindungen. Weltweite natürliche Begegnungen und eine öffentliche Reitfreigabe fehlten. Die bestehenden Kampf- und Eingabehandler waren im Ausgangsstand vorhanden; die Korrekturen setzen an den reproduzierten Laufzeitfällen an. Die gemeldeten Ausfälle werden an der bestätigten Version 1.1.0 und der freigeschalteten Livewelt bewertet.
 
-**Auslieferungsfalle:** Das in der bisherigen README empfohlene historische Binary-Release [`app-2026-11-07`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-07) enthält ArkDinos **1.0.0**. Der überprüfte aktuelle Hauptzweig enthielt **1.1.0**. Ein aktueller Quellstand installiert sich nicht automatisch auf einem Server. Die tatsächliche Version des Spielservers wurde nicht festgestellt; hierzu dort `version ArkDinos` und die beiden Weltlisten prüfen.
+**Bestätigte Live-Baseline:** Die gemeldeten Probleme traten laut Betreiber bereits mit **1.1.0** in der Livewelt auf, nachdem die Testweltbegrenzung entfernt wurde. Der anschließende autorisierte Portalzugriff bestätigt `version ArkDinos` = **1.1.0** und `ark` in **beiden** Weltlisten. Ein alter Pluginstand oder eine nicht freigegebene Livewelt erklärt diese Meldungen daher nicht. Das historische Binary-Release [`app-2026-11-07`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-07) enthält zwar **1.0.0** und bleibt eine allgemeine Auslieferungsfalle, ist aber nicht die beobachtete Live-Baseline.
 
 ## Die neun gemeldeten Punkte
 
 | Wunsch/Meldung | Befund | Änderung bzw. Grenze |
 |---|---|---|
-| Überall umherziehende Dinos | Wildes Wandern hatte schon keinen festen Heimatanker, aber die Welt erzeugte Tiere nur an festen Orten; der Generator umzäunte sie. | Begrenzte natürliche Begegnungen in geladenem Oberweltgelände, Auswahl nach Biom, offene neue Lichtungen. Vorhandene Zäune bleiben reale Hindernisse und werden nicht automatisch entfernt. |
+| Überall umherziehende Dinos | Wildes Wandern hatte schon keinen festen Heimatanker, aber die Welt erzeugte Tiere nur an festen Orten; der Generator umzäunte sie. | Begrenzte natürliche Begegnungen in geladenem Oberweltgelände, Auswahl nach Biom, offene neue Lichtungen. Für die alten Gehegezäune gibt es eine gesonderte, begrenzte [Migration](Fence-Migration-DE.md) mit Sicherung und Wiederherstellung. |
 | Schnellere Tiere und Flugsaurier | Alte Spielwerte lagen deutlich niedriger, Flug bei 7 Blöcken/s ohne Sprintunterschied. | Artspezifisch höhere Geh-/Lauftempi; Flug 12/18. Native Bewegungsmessungen bestätigen die Werte. |
 | Angriffe geritten und ungeritten | Eigener Schaden am gezähmten Tier löste keine verlässliche Verteidigung aus; gewöhnliche gezähmte Haustiere fehlten im Schutzfilter. Größere Sitze und öffentliche Fahrer erfordern zusätzliche Ziel-/Berechtigungslogik. | Eigene Verteidigung, Haustierschutz, tatsächlich berechtigter Fahrer als Angreifer, geschützter Eigentümer/Passagiere, korrigierte Zielstrahlen und Dilo-Mündung. Bleiben pausiert weiterhin automatische Kämpfe. |
 | Eigene Tiere öffentlich reitbar | Nur Besitzer durften aufsteigen. | Persistenter Menüschalter; Gäste erhalten Reit- und zugehörige Kampfsteuerung. Pflege, Benennen, Leinen, Verhaltensbefehle und Freilassen bleiben beim Besitzer. Widerruf beendet einen laufenden Gastritt. |
-| Zwei Reiter, sofern möglich | Native und Bedrock-Sitze haben bisher genau eine gemeinsame Position. | **Noch offen.** Zwei Passagiere einfach zuzulassen würde sie überlagern. Separate physische Sitze und die zugehörige Crossplay-/Lifecycle-Abnahme sind nicht Bestandteil dieses Fixes. |
+| Zwei Reiter, sofern möglich | Zwei direkte native Passagiere überlagern sich. Eine unabhängig bewegte Sitzentität benötigt eigene Berechtigungen, Kollisionsprüfung und Modellsynchronisierung. | Erster separater Mitfahrplatz für erwachsene T-Rex, Triceratops, Stegosaurus und Brachiosaurus; Fahrer bleibt eindeutig. 13 native Prüfgruppen und getrennte Modell-/Geyser-Paketproben bestanden. Die sichtbare Crossplay-Abnahme bleibt offen. |
 | Größere, passende Arten | Rex und Raptor hatten fast dieselbe Modelllänge. | Zentrale Artfaktoren für Rendergröße, Rücken/Sitz und Wachstum; größerer Platzbedarf beim Schlüpfen und Spawnen. Größen sind Spielproportionen, keine wissenschaftliche Rekonstruktion. |
 | Ertrinken im Wasser | Gezähmter Sniffer im Bleiben-Modus sank im nativen Basistest bis zum Boden und verlor Luft/Gesundheit. Ravager-Träger werfen außerdem untergetauchte Reiter automatisch ab. | Vom Verhalten unabhängiger Auftrieb für sieben Arten, einschließlich Offline-Besitzer/Bleiben/Reiten. Gezielte Behandlung des nativen Unterwasserabwurfs; Schleichen und Lifecycle-Ausstiege funktionieren. |
 | Sitz-/Kieferanimation und andere Verbindungen | Kein `sit`-/`rest`-Clip vorhanden. Nachgewiesen sind getrennte Raptor-Arme, Ptera-Hals/Hüften sowie auseinanderlaufende Kopf-/Kieferuhren nach bestimmten Angriffen. | Nachgewiesene Fehler korrigiert; alle exportierten Clips und Wachstumsstufen erweitert geprüft. Der genaue ursprüngliche „sitzende Kiefer“-Clientfall bleibt visuell zu reproduzieren. |
@@ -61,7 +61,7 @@ Quellen: [DinoSizes](../dino-plugin/src/main/java/de/ark/dinos/DinoSizes.java), 
 
 ### Reitfreigabe und Kämpfe
 
-Als Besitzer zu Fuß mit leerer Hand schleichen und das Tier benutzen. Der neue Sattelknopf wechselt zwischen **„Reiten: nur Besitzer“** und **„Reiten: öffentlich“**. Bestehende Tiere beginnen privat. Die Einstellung wird gespeichert. Gäste müssen weiterhin im erlaubten Survival-Modus und in derselben Welt sein; Jungtiere und bereits besetzte Tiere bleiben ausgeschlossen. Der Besitzer kann die Freigabe während eines Gastritts widerrufen.
+Als Besitzer zu Fuß mit leerer Hand schleichen und das Tier benutzen. Der neue Sattelknopf wechselt zwischen **„Reiten: nur Besitzer“** und **„Reiten: öffentlich“**. Bestehende Tiere beginnen privat. Die Einstellung wird gespeichert. Gäste müssen weiterhin im erlaubten Survival-Modus und in derselben Welt sein. Jungtiere bleiben ausgeschlossen; die vier großen Bodenarten erhalten einen zusätzlichen Mitfahrplatz. Der Besitzer kann die Freigabe während eines Gastritts widerrufen.
 
 Bei einem Gastangriff gelten dessen Team-/PvP-/Claim-Berechtigungen. Der eigentliche Eigentümer bleibt unverändert geschützt, auch wenn er offline oder im Kreativmodus ist. Bereits fliegende Dilo-Projektile behalten ihren ursprünglichen Akteur und verlieren ihre Berechtigung bei Fahrerwechsel oder Entzug; ein neuer Fahrer übernimmt keine alten Schüsse.
 
@@ -113,15 +113,24 @@ Der Ausgangsstand wurde zuerst geprüft: 199 Paneltests, 40 Skript-/Distribution
 
 Beim vollständigen Modellstack starteten Paper, BetterModel 3.6.0 und die Bridge 1.0.9; BetterModel registrierte alle acht Modelle und der Bedrock-Pack wurde erzeugt. Geyser 2.12.1-b1295 brach jedoch seine Initialisierung mit `Unable to set up encryption` ab: Der HTTPS-Aufruf an `client.discovery.minecraft-services.net` überschritt das feste Fünf-Sekunden-Zeitlimit. Ein normaler Java-Abruf über den vorhandenen Proxy und den System-Truststore scheiterte genauso. Daher blieben die Bedrock-Registries leer und die strenge Registrierungsassertion schlug fehl. Es wurde weder die Assertion abgeschwächt noch eine Sicherheitsfunktion deaktiviert. Dieser Lauf belegt keine Produktregression, aber auch keine erfolgreiche gemeinsame Modellruntime-Abnahme; diese bleibt vor einer Freigabe offen.
 
-Native Spieltests verwendeten frische lokale Paper-26.3/241-Welten und direkte Java-Protokollclients. Pflegezeitpunkte wurden teilweise gezielt durch Fixture-PDC vorgerückt; manche Lifecycle-Ereignisse werden ausdrücklich simuliert. Es wurde kein Produktionsserver geöffnet. Nicht jeder frühere vollständige Testlauf verwendete denselben späteren Packaging-Hash: Kampf/Pflege sowie die ersten Steuerungs-/Schwimmläufe prüften ihre jeweiligen vollständigen Entwicklungsstände; die finalen zusätzlichen Spawn-, Flug- und Wildlife-Regressionen verwendeten den fertigen 1.2.0-Build. Reproduktionsskripte liegen im Repository.
+Native Spieltests verwendeten frische lokale Paper-26.3/241-Welten und direkte Java-Protokollclients. Pflegezeitpunkte wurden teilweise gezielt durch Fixture-PDC vorgerückt; manche Lifecycle-Ereignisse werden ausdrücklich simuliert. Diese Spieltests laufen nicht auf dem Produktionsserver. Der spätere autorisierte Livezugriff dient der Baselineprüfung und der gesonderten Zaunmigration. Nicht jeder frühere vollständige Testlauf verwendete denselben späteren Packaging-Hash: Kampf/Pflege sowie die ersten Steuerungs-/Schwimmläufe prüften ihre jeweiligen vollständigen Entwicklungsstände; die ersten finalen Spawn-, Flug- und Wildlife-Regressionen verwendeten den folgenden 1.2.0-Build. Reproduktionsskripte liegen im Repository.
 
-Finaler ArkDinos-1.2.0-JAR-SHA-256:
+ArkDinos-1.2.0-JAR-SHA-256 des ersten Reviews, vor der Erweiterung um den zweiten Reiter:
 
 ```text
 649e89397d3ddd6ffa1b19981777e1056eade0faa8e412c58b46169466fcdedf
 ```
 
 Der unabhängige Review fand zusätzlich veraltete explizite Modell-Testquellen/Sitzerwartungen sowie die Schutzplugin- und Anleinpersistenzlücken. Diese wurden aufgenommen, statt sie hinter bestandenen älteren Tests zu verbergen. Die CI führt jetzt auch die vollständige Python-Modellsuite aus.
+
+### Nachtrag: zweiter Reiter
+
+Die Anschlussumsetzung, der neue Buildhash, 13 bestandene native Prüfgruppen,
+die Modell-/Geyser-Paketproben und die beim unabhängigen Review gefundenen
+Ausstiegsfehler stehen im [Bericht zum zweiten Reiter](Second-Rider-2026-11-10.md).
+Die oben genannten ersten Gesamtläufe bleiben als ursprünglicher Prüfstand
+erkennbar. Der Nachtrag ersetzt sie nicht durch eine pauschale Behauptung,
+dass bereits sämtliche Geräte- und Modellruntimeprüfungen abgeschlossen seien.
 
 ## Einführung in eine bestehende Installation
 
@@ -130,6 +139,6 @@ Der unabhängige Review fand zusätzlich veraltete explizite Modell-Testquellen/
 3. Vor der Aktualisierung die bestehende Welt samt Plugin-Konfigurationen sichern. Im normalen gestoppten Wartungsfenster die bisherige ArkDinos-JAR durch 1.2.0 ersetzen; keine zweite Version daneben liegen lassen und kein Plugin-Hot-Reload verwenden.
 4. Die zugehörigen vier geänderten Artenexports in BetterModel und in die Geyser-Modelleingaben übernehmen. Java- und Bedrock-Ressourcenpakete neu erzeugen, den generierten Bridge-Cache entsprechend der bestehenden Anleitung erneuern und neu verbinden. Nur die JAR zu tauschen repariert alte Clientgeometrien nicht.
 5. Die größeren Tiere auf geeignetem freiem Gelände prüfen, einschließlich bestehender Eier/Nester. Vorhandene enge Gehege bleiben eng. Neue natürliche Begegnungen lassen sich über `wild-spawning` einstellen oder abschalten.
-6. Zuerst die noch offene vollständige native Modellstack-Prüfung in einer Umgebung mit funktionierender Geyser-Discovery abschließen. Anschließend auf tatsächlichen Java-/Bedrock-/Konsolenclients sichtbare Kopf-/Kieferübergänge, große Sitzhöhen/Kamera, Flug, Wasser und Eingaben abnehmen. Die zweite Sitzposition bleibt separat offen.
+6. Zuerst die noch offene vollständige native Modellstack-Prüfung in einer Umgebung mit funktionierender Geyser-Discovery abschließen. Anschließend auf tatsächlichen Java-/Bedrock-/Konsolenclients sichtbare Kopf-/Kieferübergänge, beide Sitzpositionen/Kameras, Flug, Wasser und Eingaben abnehmen.
 
-Keine neue Weltinstallation, kein Löschen von Tieren und kein automatisches Zusammenführen oder Produktionsdeployment ist Teil dieser Änderungen.
+Das Plugin bleibt auf dem Entwurfs-PR. Der gesondert beauftragte Eingriff in die Livewelt betrifft die originalen Gehegezäune. Es wird keine neue Welt installiert und kein Tier ersetzt.

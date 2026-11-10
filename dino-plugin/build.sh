@@ -43,6 +43,7 @@ fetch geyser-spigot-2.12.1-b1295.jar b60ff8f9a007f30823cf40173532a0390e6150cdfc5
 "$task_java_home/bin/javac" --release 25 -cp build/classes -d build/test-classes src/test/java/de/ark/dinos/*.java
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.TamingRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.RidingRulesTest
+"$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.SeatRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.GroundSpeedsTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.SwimRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.DinoSizesTest

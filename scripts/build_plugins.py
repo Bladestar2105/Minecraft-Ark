@@ -44,7 +44,7 @@ def build():
     java_home = os.environ.get("JAVA_HOME")
     def java_tool(name):
         return str(Path(java_home, "bin", name)) if java_home else name
-    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest", "DinoGrowthTest", "CareRulesTest", "EggAssetsTest", "GroundSpeedsTest", "SwimRulesTest", "DinoSizesTest", "WildSpawnRulesTest"], "atlas": ["AtlasRulesTest"],
+    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SeatRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest", "DinoGrowthTest", "CareRulesTest", "EggAssetsTest", "GroundSpeedsTest", "SwimRulesTest", "DinoSizesTest", "WildSpawnRulesTest"], "atlas": ["AtlasRulesTest"],
              "panel": ["BridgeProtocolTest", "RuntimeSettingsTest"],
              "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"],
              "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest", "PortalInfoTest"],
