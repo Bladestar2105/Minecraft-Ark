@@ -56,9 +56,14 @@ export default async function run({check,command,inspect,fields,food,spawnDino,a
   return {guest,exit};
  });
  await check('Guest Sneak removes only the guest; revoking public access preserves the owner driver',async()=>{
+  await command(`effect clear ${bob.name} slow_falling`);const beforeExit=await player(bob);
+  // Native Sneak can clear the vehicle before its event, leaving the marker's exit height as the safe upper bound.
+  const drop=Math.max(Number(beforeExit.y),Number(beforeExit.vehicleY))-4;
   bob.input(32);await eventually(async()=>(await player(bob)).vehicle==='none','Guest Sneak must detach the second seat');bob.input(0);
   assert.equal((await player(alice)).vehicle,'RAVAGER');assert.equal((await player(bob)).markers,'0');
-  assert.equal((await player(bob)).slowFall,'0','A low ground dismount must not grant a long Slow Falling effect');
+  const protection=Number((await player(bob)).slowFall);
+  if(drop<=3)assert.equal(protection,0,'An exit at most three blocks above the measured flat floor needs no new fall effect');
+  else assert.ok(protection>0&&protection<=Math.ceil(drop/.1)+10,'A calibrated model seat must receive only the bounded protection for its actual drop');
   await mount(bob);assert.equal((await player(bob)).vehicle,'ARMOR_STAND');
   await command(`controlsfixture share ${tag} false`);await delay(150);
   assert.equal((await player(bob)).vehicle,'none');assert.equal((await player(alice)).vehicle,'RAVAGER');assert.equal((await player(bob)).markers,'0');
@@ -105,12 +110,13 @@ export default async function run({check,command,inspect,fields,food,spawnDino,a
  });
  await check('Turning sweeps the rear passenger arc and stops before a wall; queries do not load chunks',async()=>{
   await fresh();const before=await inspect(tag),guestBefore=await player(bob);
-  await command('setblock -1 6 0 stone');
+  const wallY=Math.floor(Number(guestBefore.y))+1;
+  await command(`setblock -1 ${wallY} 0 stone`);
   const blocked=fields(await command(`controlsfixture seat-motion ${tag} 0 0 0 -180`));assert.equal(blocked.clear,'false');assert.equal(blocked.before,blocked.after);
   alice.look(-180);await delay(250);const after=await inspect(tag),guestAfter=await player(bob);
   assert.equal(after.yaw,before.yaw,'Blocked passenger arc must also block rotation');assert.equal(guestAfter.vehicle,'ARMOR_STAND');
   assert.ok(Math.hypot(Number(guestAfter.x)-Number(guestBefore.x),Number(guestAfter.z)-Number(guestBefore.z))<.02);
-  await command('setblock -1 6 0 air');await eventually(async()=>Math.abs(Math.abs(Number((await inspect(tag)).yaw))-180)<1,'Rotation should resume when clear');
+  await command(`setblock -1 ${wallY} 0 air`);await eventually(async()=>Math.abs(Math.abs(Number((await inspect(tag)).yaw))-180)<1,'Rotation should resume when clear');
   return {before,after,blocked};
  });
  await check('Swimming checks the second rider headroom and keeps both riders aboard in open water',async()=>{
@@ -125,17 +131,75 @@ export default async function run({check,command,inspect,fields,food,spawnDino,a
   await command('fill -5 4 -5 5 10 5 air');await exit();await command('tp @a 0 4 3');
   return {driver,passenger,dino};
  });
- await check('Cancelled mounts, external teleports, mode changes, unload and carrier death remove reservations and helpers',async()=>{
+ await check('Cancelled mounts, external teleports, mode changes and carrier death remove reservations and helpers',async()=>{
   await fresh();await exit();await mount(alice);await command('controlsfixture deny-interact true');await mount(bob);
   assert.equal((await player(bob)).vehicle,'none');assert.equal((await player(bob)).markers,'0');await command('controlsfixture deny-interact false');
   await command('controlsfixture deny-seat-mount true');await mount(bob);assert.equal((await player(bob)).vehicle,'none');assert.equal((await player(bob)).markers,'0');
   await command('controlsfixture deny-seat-mount false');
   await mount(bob);await command(`tp ${bob.name} 6 4 3`);await delay(150);assert.equal((await player(bob)).vehicle,'none');assert.equal((await player(alice)).vehicle,'RAVAGER');assert.equal((await player(bob)).markers,'0');
   await mount(bob);await command(`gamemode creative ${bob.name}`);await delay(100);assert.equal((await player(bob)).vehicle,'none');assert.equal((await player(alice)).vehicle,'RAVAGER');
-  await command(`gamemode survival ${bob.name}`);await mount(bob);await command(`controlsfixture ptera-unload ${tag}`);await delay(100);
-  assert.equal((await player(alice)).vehicle,'none');assert.equal((await player(bob)).vehicle,'none');assert.equal((await player(bob)).markers,'0');
-  await command(`controlsfixture restore ${tag}`);await mount(alice);await mount(bob);assert.equal((await player(bob)).vehicle,'ARMOR_STAND');
+  await command(`gamemode survival ${bob.name}`);await mount(bob);assert.equal((await player(bob)).vehicle,'ARMOR_STAND');
   await command(`kill @e[tag=${tag}]`);await delay(100);assert.equal((await player(alice)).vehicle,'none');assert.equal((await player(bob)).vehicle,'none');assert.equal((await player(bob)).markers,'0');
+ });
+ await check('A real unloaded chunk boundary rejects passenger motion, turn and collision probes without synchronous chunk loads',async()=>{
+  await fresh();const probe=fields(await command(`controlsfixture seat-boundary ${tag}`));
+  assert.equal(probe.neighborLoaded,'false','The adjacent target chunk must actually be unloaded');
+  assert.equal(probe.near,'true','Small movement inside the loaded area must remain available');
+  for(const key of ['crossing','turning','collision'])assert.equal(probe[key],'false',key);
+  assert.equal(probe.sameChunks,'true');assert.equal(probe.queryLoads,'0','Independent ChunkLoadEvent ledger must see no load during plugin queries');
+  assert.equal(probe.attached,'true');assert.equal(probe.driver,'true');assert.ok(Math.abs(Number(probe.separation)-1.2)<.03);
+  assert.equal((await player(alice)).vehicle,'RAVAGER');assert.equal((await player(bob)).vehicle,'ARMOR_STAND');
+  return {scope:'Synchronous native attachment relocation inside preloaded fixture chunks; no server tick allows normal player ticket updates during the measured plugin queries.',...probe};
+ });
+ const world='ark_model_test',cx=128,cz=0;
+ const seatState=async uuid=>fields(await command(`controlsfixture seat-state ${world} ${cx} ${cz} ${uuid}`));
+ const emptySeats=state=>{for(const key of ['carriers','markers','guests','rides','helpers','passengers','pluginTickets','forced'])assert.equal(state[key],'0',key);assert.equal(state.driver,'null');};
+ await command('controlsfixture create-world ark');
+ for(const scenario of ['dismount','disconnect','world-change','carrier-removal'])await check(`Real chunk unload/reload after ${scenario} removes transient seats, reservations and inherited authority`,async()=>{
+  await exit();await command(`kill @e[tag=${tag}]`);tag=`seat_lifecycle_${scenario.replaceAll('-','_')}`;
+  await command('gamemode survival @a');await command(`tp @a ${cx*16+8} 4 3`);
+  await eventually(async()=>/Successfully filled|No blocks were filled/.test(await command(`fill ${cx*16+5} 3 -3 ${cx*16+11} 3 3 stone`)),'Remote fixture area did not load');
+  await spawnDino(tag,'trex',cx*16+8,alice.uuid);await command(`controlsfixture share ${tag} true`);alice.look(0);await mount(alice);await mount(bob);
+  const mob=await inspect(tag),before=await seatState(mob.uuid);
+  assert.equal(before.loaded,'true');for(const key of ['carriers','markers','guests','rides','helpers','passengers'])assert.equal(before[key],'1',key);
+  assert.equal(before.nearbyPlayers,'2');
+  assert.equal(before.pluginTickets,'0');assert.equal(before.forced,'0');
+  // Active players legitimately hold their riding chunk; unloading starts only after both leave.
+  if(scenario==='dismount'){await exit();await command('tp @a 0 4 3');}
+  if(scenario==='disconnect'){
+   alice.close();bob.close();await eventually(()=>alice.closed&&bob.closed,'Both clients must really disconnect');
+  }
+  let occupiedWorld;
+  if(scenario==='world-change'){
+   assert.match(await command('execute in minecraft:ark run tp @a 0 4 3'),/Teleported/);
+   occupiedWorld=fields(await command('controlsfixture unload-world ark'));
+   assert.equal(occupiedWorld.unloaded,'false','A world with real players must stay loaded');assert.equal(occupiedWorld.events,'0');
+  }
+  if(scenario==='carrier-removal'){await command(`controlsfixture remove-carrier ${tag}`);await command('tp @a 0 4 3');}
+  await eventually(async()=>(await seatState(mob.uuid)).nearbyPlayers==='0','All real players must leave before requesting a regular chunk unload');
+  await command(`controlsfixture chunk-unload-request ${world} ${cx} ${cz}`);
+  await eventually(async()=>{const s=await seatState(mob.uuid);return s.loaded==='false'&&Number(s.unloads)>Number(before.unloads)&&Number(s.entityUnloads)>Number(before.entityUnloads);},'Native chunk and entity unload events must finish after players leave',30000);
+  const unloaded=await seatState(mob.uuid);emptySeats(unloaded);assert.equal(unloaded.present,'false');
+  if(scenario==='disconnect'){
+   alice=new Client('ControlsOwner');bob=new Client('ControlsOther');clients.push(alice,bob);
+   await eventually(()=>alice.joined&&bob.joined,'Disconnected clients did not reconnect',30000);
+   await command('gamemode survival @a');await command('effect give @a resistance 9999 4 true');
+  }
+  assert.match(await command(`execute in minecraft:overworld run tp @a ${cx*16+8} 4 3`),/Teleported/);
+  await eventually(async()=>{const s=await seatState(mob.uuid);return s.loaded==='true'&&Number(s.loads)>Number(before.loads);},'Player arrival must actually reload the remote chunk');
+  if(scenario!=='carrier-removal')await eventually(async()=>(await seatState(mob.uuid)).present==='true','Persistent carrier must reload with its UUID');
+  const reloaded=await seatState(mob.uuid);emptySeats(reloaded);
+  assert.match(await command(`controlsfixture manual-attack ${bob.name}`),/accepted=false/,'A former passenger must have no inherited driver authority');
+  if(scenario!=='carrier-removal'){
+   assert.equal((await inspect(tag)).uuid,mob.uuid);assert.equal((await inspect(tag)).owner,alice.uuid);
+   await mount(alice);await mount(bob);assert.equal((await player(alice)).vehicle,'RAVAGER');assert.equal((await player(bob)).vehicle,'ARMOR_STAND');
+  }else assert.equal(reloaded.present,'false','Removed carrier must never return after reload');
+  await exit();await command(`kill @e[tag=${tag}]`);await command('tp @a 0 4 3');
+  return {before,unloaded,reloaded,occupiedWorld};
+ });
+ await check('A world vacated by both real riders unloads through the server API and emits WorldUnloadEvent',async()=>{
+  const result=fields(await command('controlsfixture unload-world ark'));
+  assert.equal(result.unloaded,'true');assert.equal(result.present,'false');assert.equal(result.events,'1');return result;
  });
  await check('Shutdown and a real restart leave no passenger helpers or inherited driving authority',async()=>{
   await fresh();const uuid=(await inspect(tag)).uuid;

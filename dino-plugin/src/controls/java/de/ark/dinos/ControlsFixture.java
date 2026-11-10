@@ -28,6 +28,14 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
     private boolean denyInteraction,denyClick,denyPteraDamage,zeroPteraDamage,denySeatMount;
     private final Map<java.util.UUID,Integer> playerTeleports=new java.util.HashMap<>();
     private final Map<java.util.UUID,double[]> pteraSamples=new java.util.HashMap<>();
+    private final Map<String,int[]> chunkEvents=new java.util.HashMap<>();
+    private final Map<String,Integer> worldUnloads=new java.util.HashMap<>();
+    private int[] events(org.bukkit.World world,int x,int z) { return chunkEvents.computeIfAbsent(world.getName()+":"+x+":"+z,k->new int[4]); }
+    @EventHandler(priority=EventPriority.MONITOR) public void chunkLoad(org.bukkit.event.world.ChunkLoadEvent event) { events(event.getWorld(),event.getChunk().getX(),event.getChunk().getZ())[0]++; }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true) public void chunkUnload(org.bukkit.event.world.ChunkUnloadEvent event) { events(event.getWorld(),event.getChunk().getX(),event.getChunk().getZ())[1]++; }
+    @EventHandler(priority=EventPriority.MONITOR) public void entitiesLoad(org.bukkit.event.world.EntitiesLoadEvent event) { events(event.getWorld(),event.getChunk().getX(),event.getChunk().getZ())[2]++; }
+    @EventHandler(priority=EventPriority.MONITOR) public void entitiesUnload(org.bukkit.event.world.EntitiesUnloadEvent event) { events(event.getWorld(),event.getChunk().getX(),event.getChunk().getZ())[3]++; }
+    @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true) public void worldUnload(org.bukkit.event.world.WorldUnloadEvent event) { worldUnloads.merge(event.getWorld().getName(),1,Integer::sum); }
     public void onEnable() { getServer().getPluginManager().registerEvents(this,this);getServer().getScheduler().runTaskTimer(this,()->{
         for(var world:getServer().getWorlds())for(var entity:world.getEntities())if(entity.getScoreboardTags().stream().anyMatch(t->t.startsWith("ptera_"))) {
             var sample=pteraSamples.computeIfAbsent(entity.getUniqueId(),id->new double[]{entity.getX(),entity.getZ(),0,entity.getY(),0});
@@ -38,6 +46,12 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
     private Object plugin() { return getServer().getPluginManager().getPlugin("ArkDinos"); }
     private Object module(String name) throws ReflectiveOperationException { var field=plugin().getClass().getDeclaredField(name);field.setAccessible(true);return field.get(plugin()); }
     private Object call(Object target,String name,Class<?>[] types,Object... args) throws ReflectiveOperationException { Method method=target.getClass().getDeclaredMethod(name,types);method.setAccessible(true);return method.invoke(target,args); }
+    private Map<?,?> map(Object target,String name) throws ReflectiveOperationException { var field=target.getClass().getDeclaredField(name);field.setAccessible(true);return (Map<?,?>)field.get(target); }
+    private void nativePosition(Entity entity,org.bukkit.Location location) throws ReflectiveOperationException {
+        var nativeType=Class.forName("net.minecraft.world.entity.Entity");Object handle=entity.getClass().getMethod("getHandle").invoke(entity);
+        nativeType.getMethod("setPos",double.class,double.class,double.class).invoke(handle,location.getX(),location.getY(),location.getZ());
+        for(Entity passenger:entity.getPassengers())nativeType.getMethod("positionRider",nativeType).invoke(handle,passenger.getClass().getMethod("getHandle").invoke(passenger));
+    }
     private Entity entity(String tag) { return getServer().getWorlds().stream().flatMap(w->w.getEntities().stream()).filter(e->e.getScoreboardTags().contains(tag)).findFirst().orElseThrow(); }
     private int behaviors(Mob mob) {
         if (!(mob instanceof org.bukkit.entity.Sniffer)) return -1;
@@ -89,7 +103,7 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
                 case "player" -> {
                     var p=getServer().getPlayerExact(args[1]);var v=p.getVehicle();
                     sender.sendMessage("uuid="+p.getUniqueId()+";x="+p.getX()+";y="+p.getY()+";z="+p.getZ()+";yaw="+p.getYaw()+";pitch="+p.getPitch()
-                            +";vehicle="+(v==null?"none":v.getType())+";vehicleUuid="+(v==null?"none":v.getUniqueId())+";vehicleId="+(v==null?-1:v.getEntityId())
+                            +";vehicle="+(v==null?"none":v.getType())+";vehicleUuid="+(v==null?"none":v.getUniqueId())+";vehicleId="+(v==null?-1:v.getEntityId())+";vehicleY="+(v==null?p.getY():v.getY())
                             +";health="+p.getHealth()+";air="+p.getRemainingAir()+";teleports="+playerTeleports.getOrDefault(p.getUniqueId(),0)
                             +";slowFall="+(p.getPotionEffect(org.bukkit.potion.PotionEffectType.SLOW_FALLING)==null?0:p.getPotionEffect(org.bukkit.potion.PotionEffectType.SLOW_FALLING).getDuration())
                             +";markers="+p.getWorld().getEntitiesByClass(org.bukkit.entity.ArmorStand.class).stream().filter(org.bukkit.entity.ArmorStand::isMarker).count());
@@ -107,6 +121,50 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
                     boolean clear=(boolean)call(module("seats"),"canMove",new Class<?>[]{Mob.class,org.bukkit.util.Vector.class,float.class},mob,
                             new org.bukkit.util.Vector(Double.parseDouble(args[2]),Double.parseDouble(args[3]),Double.parseDouble(args[4])),Float.parseFloat(args[5]));
                     sender.sendMessage("clear="+clear+";before="+before+";after="+mob.getWorld().getLoadedChunks().length);
+                }
+                case "seat-state" -> {
+                    var world=getServer().getWorld(args[1]);int x=Integer.parseInt(args[2]),z=Integer.parseInt(args[3]);var uuid=java.util.UUID.fromString(args[4]);
+                    var mob=getServer().getEntity(uuid);Object seats=module("seats");int[] events=events(world,x,z);
+                    sender.sendMessage("loaded="+world.isChunkLoaded(x,z)+";loads="+events[0]+";unloads="+events[1]+";entityLoads="+events[2]+";entityUnloads="+events[3]
+                            +";nearbyPlayers="+world.getPlayers().stream().filter(p->Math.abs((p.getLocation().getBlockX()>>4)-x)<=world.getViewDistance()+1&&Math.abs((p.getLocation().getBlockZ()>>4)-z)<=world.getViewDistance()+1).count()
+                            +";carriers="+map(seats,"carriers").size()+";markers="+map(seats,"markers").size()+";guests="+map(seats,"guests").size()+";rides="+map(plugin(),"riding").size()
+                            +";helpers="+world.getEntitiesByClass(org.bukkit.entity.ArmorStand.class).stream().filter(e->e.getPersistentDataContainer().has(key("passenger-seat"),PersistentDataType.STRING)).count()
+                            +";pluginTickets="+world.getPluginChunkTickets().keySet().stream().filter(p->p.getName().equals("ArkDinos")).mapToInt(p->world.getPluginChunkTickets().get(p).size()).sum()
+                            +";forced="+world.getForceLoadedChunks().size()+";present="+(mob!=null)+";passengers="+(mob==null?0:mob.getPassengers().size())
+                            +";driver="+(mob instanceof Mob?call(plugin(),"driver",new Class<?>[]{Mob.class},mob):null));
+                }
+                case "chunk-unload-request" -> {
+                    var world=getServer().getWorld(args[1]);int x=Integer.parseInt(args[2]),z=Integer.parseInt(args[3]);
+                    sender.sendMessage("players="+world.getPlayers().size()+";loaded="+world.isChunkLoaded(x,z)+";requested="+world.unloadChunkRequest(x,z));
+                }
+                case "remove-carrier" -> entity(args[1]).remove();
+                case "unload-world" -> {
+                    String name=args[1];var world=getServer().getWorld(name);
+                    boolean unloaded=world!=null&&getServer().unloadWorld(world,true);
+                    sender.sendMessage("unloaded="+unloaded+";present="+(getServer().getWorld(name)!=null)+";events="+worldUnloads.getOrDefault(name,0));
+                }
+                case "seat-boundary" -> {
+                    Mob mob=(Mob)entity(args[1]);Player driver=(Player)call(plugin(),"driver",new Class<?>[]{Mob.class},mob);
+                    Player guest=(Player)call(module("seats"),"passenger",new Class<?>[]{Mob.class},mob);Entity marker=guest.getVehicle();var world=mob.getWorld();
+                    // Relocate native attachments only during this synchronous probe, before player chunk tickets update.
+                    for(int x=63;x<=64;x++)for(int z=63;z<=65;z++)world.getChunkAt(x,z);
+                    if(world.isChunkLoaded(65,64))throw new IllegalStateException("Boundary neighbor must really be unloaded");
+                    var origin=mob.getLocation();var markerOrigin=marker.getLocation();var target=new org.bukkit.Location(world,1038.4,4,1032);
+                    nativePosition(mob,target);nativePosition(marker,markerOrigin.clone().add(target.toVector().subtract(origin.toVector())));
+                    var before=java.util.Arrays.stream(world.getLoadedChunks()).map(c->c.getX()+":"+c.getZ()).collect(java.util.stream.Collectors.toSet());
+                    int loads=chunkEvents.values().stream().mapToInt(e->e[0]).sum();
+                    try {
+                        Object seats=module("seats");var signature=new Class<?>[]{Mob.class,org.bukkit.util.Vector.class,float.class};
+                        boolean near=(boolean)call(seats,"canMove",signature,mob,new org.bukkit.util.Vector(.1,0,0),mob.getYaw());
+                        boolean crossing=(boolean)call(seats,"canMove",signature,mob,new org.bukkit.util.Vector(2,0,0),mob.getYaw());
+                        boolean turning=(boolean)call(seats,"canMove",signature,mob,new org.bukkit.util.Vector(),90f);
+                        boolean collision=(boolean)call(seats,"clear",new Class<?>[]{org.bukkit.World.class,org.bukkit.util.BoundingBox.class},world,guest.getBoundingBox().shift(2,0,0));
+                        call(seats,"tick",new Class<?>[]{});
+                        var after=java.util.Arrays.stream(world.getLoadedChunks()).map(c->c.getX()+":"+c.getZ()).collect(java.util.stream.Collectors.toSet());
+                        sender.sendMessage("neighborLoaded="+world.isChunkLoaded(65,64)+";near="+near+";crossing="+crossing+";turning="+turning+";collision="+collision
+                                +";sameChunks="+before.equals(after)+";queryLoads="+(chunkEvents.values().stream().mapToInt(e->e[0]).sum()-loads)
+                                +";attached="+(guest.getVehicle()==marker)+";driver="+(driver.getVehicle()==mob)+";separation="+driver.getLocation().distance(guest.getLocation()));
+                    } finally { nativePosition(mob,origin);nativePosition(marker,markerOrigin); }
                 }
                 case "seat-target" -> {
                     var guest=getServer().getPlayerExact(args[2]);

@@ -112,7 +112,8 @@ def main():
         nonlocal server, log
         log = (directory / "console.log").open("ab")
         offset = (directory / "console.log").stat().st_size
-        server = subprocess.Popen([str(java), "-Xms256M", "-Xmx1G", "-Dterminal.jline=false",
+        # Assertions parse WorldEdit's English console replies on every host locale.
+        server = subprocess.Popen([str(java), "-Xms256M", "-Xmx1G", "-Duser.language=en", "-Duser.country=US", "-Dterminal.jline=false",
                                    "-Dterminal.ansi=false", "-jar", "paper.jar", "--nogui"],
                                   cwd=directory, stdin=subprocess.PIPE, stdout=log, stderr=log)
 

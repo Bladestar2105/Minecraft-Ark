@@ -503,7 +503,10 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         if (scale == null) return;
         var data = mob.getPersistentDataContainer();
         if (!data.has(originalScale, PersistentDataType.DOUBLE)) {
-            data.set(originalScale, PersistentDataType.DOUBLE, modelName.equals("ark_mosasaurus") ? scale.getBaseValue() : scale.getBaseValue() / growthScale(mob));
+            double baseline = data.getOrDefault(new NamespacedKey(plugin, "growth-original-scale"), PersistentDataType.DOUBLE, Double.NaN);
+            if (!Double.isFinite(baseline) || baseline <= 0 || modelName.equals("ark_mosasaurus"))
+                baseline = modelName.equals("ark_mosasaurus") ? scale.getBaseValue() : scale.getBaseValue() / growthScale(mob);
+            data.set(originalScale, PersistentDataType.DOUBLE, baseline);
         }
         modeledCarriers.put(mob.getEntityId(), modelName);
         models.putIfAbsent(mob.getUniqueId(), new Model(mob, modelName));

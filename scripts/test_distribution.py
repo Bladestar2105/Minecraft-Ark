@@ -254,6 +254,17 @@ class InstallerTests(unittest.TestCase):
 
 
 class DistributionTests(unittest.TestCase):
+    def test_project_bundle_contains_every_dinosaur_source_and_runtime_check(self):
+        root = Path(__file__).resolve().parents[1]
+        names = set(package.source_files(root))
+        required = {str(path.relative_to(root))
+                    for pattern in ('dino-plugin/src/**/*.java', 'dino-plugin/src/**/*.yml',
+                                    'dino-plugin/src/**/*.properties', 'dino-plugin/*-test.py',
+                                    'dino-plugin/*-test.mjs', 'dino-plugin/*-checks.mjs',
+                                    'world-design/*fence*.py', 'dino-models/verify_*.py')
+                    for path in root.glob(pattern)}
+        self.assertFalse(required - names, f'Missing runnable dinosaur sources: {sorted(required - names)}')
+
     def test_editable_dinosaur_models_are_allowed_as_text_sources(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

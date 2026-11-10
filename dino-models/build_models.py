@@ -523,6 +523,13 @@ def mosasaurus():
         bone='tail' if i<2 else 'tail_mid' if i<4 else 'tail_tip'
         m.beam('tail_segment_'+str(i),a,b,w,w*.7,bone,0 if i%2==0 else 1)
         m.beam('tail_belly_'+str(i),[a[0],a[1]-w*.3,a[2]],[b[0],b[1]-w*.3,b[2]],w*.65,2,bone,2)
+        if i in (1,3):
+            # Local mesh origins keep BetterModel's rotated cuboids within Java's [-16,32] bounds.
+            for cube in m.elements[-2:]:
+                mesh=cube['name']+'_mesh';m.bone(mesh,cube['origin'],bone)
+                m.nodes[bone]['children'].remove(cube['uuid']);m.nodes[mesh]['children'].append(cube['uuid'])
+            child='tail_mid' if i==1 else 'tail_tip'
+            m.nodes[bone]['children'].remove(m.nodes[child]);m.nodes['tail_segment_'+str(i)+'_mesh']['children'].append(m.nodes[child])
     for name,a,b,color in [
             ('upper0',[-2.5,18,194],[2.5,36,219],0),('upper1',[-2,35,203],[2,49,226],1),('upper2',[-1.5,48,217],[1.5,56,232],7),
             ('lower0',[-2.5,0,194],[2.5,19,220],0),('lower1',[-2,-14,204],[2,1,228],1),('lower2',[-1.5,-24,219],[1.5,-13,232],7)]:

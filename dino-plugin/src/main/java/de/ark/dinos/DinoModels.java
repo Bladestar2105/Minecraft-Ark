@@ -106,7 +106,14 @@ final class DinoModels implements AutoCloseable {
             Long adultAt = mob.getPersistentDataContainer().get(new NamespacedKey(plugin, "adult-at"), PersistentDataType.LONG);
             Long duration = mob.getPersistentDataContainer().get(new NamespacedKey(plugin, "growth-duration"), PersistentDataType.LONG);
             var scale = mob.getAttribute(Attribute.SCALE);
-            if (adultAt != null && scale != null) scale.setBaseValue(DinoGrowth.scale(adultAt, System.currentTimeMillis(), duration == null ? DinoGrowth.DURATION_MS : duration));
+            if (adultAt != null && scale != null) {
+                var baseline = new NamespacedKey(plugin, "growth-original-scale");
+                double value = mob.getPersistentDataContainer().getOrDefault(baseline, PersistentDataType.DOUBLE, 1.0);
+                if (!Double.isFinite(value) || value <= 0) value = 1;
+                long now = System.currentTimeMillis();
+                scale.setBaseValue(value * DinoGrowth.scale(adultAt, now, duration == null ? DinoGrowth.DURATION_MS : duration));
+                if (adultAt <= now) mob.getPersistentDataContainer().remove(baseline);
+            }
         }
     }
 
@@ -127,7 +134,12 @@ final class DinoModels implements AutoCloseable {
             if (Double.isFinite(value) && value > 0) {
                 Long adultAt = data.get(new NamespacedKey(plugin, "adult-at"), PersistentDataType.LONG);
                 Long duration = data.get(new NamespacedKey(plugin, "growth-duration"), PersistentDataType.LONG);
-                scale.setBaseValue(value * DinoGrowth.scale(adultAt, System.currentTimeMillis(), duration == null ? DinoGrowth.DURATION_MS : duration));
+                long now = System.currentTimeMillis();
+                var baseline = new NamespacedKey(plugin, "growth-original-scale");
+                // Saved native size ages while unloaded; retain its adult baseline, not its old growth ratio.
+                if (adultAt != null && adultAt > now) data.set(baseline, PersistentDataType.DOUBLE, value);
+                else data.remove(baseline);
+                scale.setBaseValue(value * DinoGrowth.scale(adultAt, now, duration == null ? DinoGrowth.DURATION_MS : duration));
             }
             data.remove(key);
         }

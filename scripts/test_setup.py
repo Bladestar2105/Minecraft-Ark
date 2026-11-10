@@ -87,6 +87,8 @@ class SetupTests(unittest.TestCase):
                 initialize(root)
             self.assertEqual(before, (root / "secrets/panel.json").read_bytes())
             self.assertIn("online-mode=true", (root / "data/server.properties").read_text())
+            settings = dict(line.split("=", 1) for line in (root / "data/server.properties").read_text().splitlines() if "=" in line)
+            self.assertEqual(settings.get("view-distance"), "14")
 
     def test_portal_credentials_are_separate_and_upgrade_keeps_existing_secrets(self):
         from init import initialize_portal

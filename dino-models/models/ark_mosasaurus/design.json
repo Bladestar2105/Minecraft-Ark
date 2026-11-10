@@ -16,7 +16,7 @@
   "leg_bones": [],
   "walk_stride_blocks": 6.0,
   "cubes": 293,
-  "bones": 12,
+  "bones": 16,
   "aquatic": true,
   "swim_stride_blocks": 6.0,
   "native_carrier": "DOLPHIN",

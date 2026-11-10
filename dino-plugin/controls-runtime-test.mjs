@@ -114,8 +114,8 @@ async function stop(){clients.forEach(c=>c.close());await command('save-all flus
 try {
  for(const name of ['libraries','versions','cache'])await symlink(`${cache}/${name}`,`${directory}/${name}`);
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
- if(process.env.DINO_PTERA_MODELS==='1'||process.env.DINO_SPEED_MODELS==='1') {
-  const modelCache=`${root}output/dino-model-spike-20261107/private/server`;
+ if(process.env.DINO_PTERA_MODELS==='1'||process.env.DINO_SPEED_MODELS==='1'||process.env.DINO_SECOND_RIDER_MODELS==='1') {
+  const modelCache=process.env.DINO_MODEL_STACK_CACHE??`${root}output/dino-model-spike-20261107/private/server`;
   for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','geyser-spigot.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar'])await copyFile(`${modelCache}/plugins/${name}`,`${directory}/plugins/${name}`);
   await copyFile(process.env.DINO_GME_JAR??`${root}output/dino-round3-20261108/gme-race/GeyserModelEngine-1.0.9-publication-fixed.jar`,`${directory}/plugins/GeyserModelEngine-1.0.9.jar`);
   report.bridgeSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/GeyserModelEngine-1.0.9.jar`)).digest('hex');
@@ -399,7 +399,7 @@ try {
   await open(alice,'control_rex');await menuClick(alice,8);assert.equal((await inspect('control_rex')).owner,alice.uuid);assert.equal((await inventory(alice)).top,'9');await menuClick(alice,6);assert.equal((await inspect('control_rex')).owner,alice.uuid);
   await open(alice,'control_rex');await menuClick(alice,8);await command(`tp ${alice.name} 80 4 0`);await menuClick(alice,2);assert.equal((await inspect('control_rex')).owner,alice.uuid);
   await command('controlsfixture create-world ark');await open(alice,'control_rex');await menuClick(alice,8);await command(`execute in minecraft:ark run tp ${alice.name} 0 4 0`);await menuClick(alice,2);assert.equal((await inspect('control_rex')).owner,alice.uuid);
-  await command(`execute in minecraft:ark_model_test run tp ${alice.name} 0 4 0`);await open(alice,'control_rex');await menuClick(alice,8);await command(`data modify entity @e[tag=control_rex,limit=1] BukkitValues."arkdinos:owner" set value "${bob.uuid}"`);await menuClick(alice,2);assert.equal((await inspect('control_rex')).owner,bob.uuid);await command(`data modify entity @e[tag=control_rex,limit=1] BukkitValues."arkdinos:owner" set value "${alice.uuid}"`);await command(`controlsfixture close ${alice.name}`);
+  assert.match(await command(`execute in minecraft:overworld run tp ${alice.name} 0 4 0`),/Teleported/);await open(alice,'control_rex');await menuClick(alice,8);await command(`data modify entity @e[tag=control_rex,limit=1] BukkitValues."arkdinos:owner" set value "${bob.uuid}"`);await menuClick(alice,2);assert.equal((await inspect('control_rex')).owner,bob.uuid);await command(`data modify entity @e[tag=control_rex,limit=1] BukkitValues."arkdinos:owner" set value "${alice.uuid}"`);await command(`controlsfixture close ${alice.name}`);
  });
  await check('Adult release preserves entity identity, species, health, scale and clears ownership/progress',async()=>{
   await command(`tp ${bob.name} 80 4 4`);await open(alice,'control_rex');await menuClick(alice,2);
