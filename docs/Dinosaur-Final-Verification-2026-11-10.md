@@ -1,8 +1,10 @@
 # Abschließende Dino-Prüfung – 10. November 2026
 
+> Historischer Prüfstand vor der später ausdrücklich beauftragten Live-Installation und Abhängigkeitssynchronisierung. Der aktuelle Stand und der zusätzliche Mosasaurus-Uferfix stehen im [Produktionsnachtrag](Dinosaur-Production-Sync-2026-11-10.md).
+
 ## Ergebnis und Kandidat
 
-**Keine vollständige Freigabe.** Serverseitige Regressionen und die zusätzliche echte Clientprüfung sind unten getrennt ausgewiesen. Bedrock- und Konsolenabnahme bleiben erforderlich. Es gab keinen produktiven Pluginwechsel, Merge oder Release; die Livewelt wurde nicht verändert.
+**Keine vollständige Freigabe.** Serverseitige Regressionen und die zusätzliche echte Clientprüfung sind unten getrennt ausgewiesen. Bedrock- und Konsolenabnahme bleiben erforderlich. Bis zum Abschluss dieses ursprünglichen Prüfstands gab es keinen produktiven Pluginwechsel, Merge oder Release; die spätere Live-Installation ist im Produktionsnachtrag getrennt dokumentiert.
 
 Ausgangspunkt ist PR #7, Branch `fix/dinosaur-gameplay-20261110`, Commit `15e8debae2232e8711ff433e31ad5d40d73d1033`. Dessen Checks-Run `42775483340` und das abgeschlossene Codex-Review wurden erneut bestätigt; keine offenen Reviewthreads. Neuere Arbeit wurde nicht zurückgesetzt. Der schmutzige ursprüngliche Checkout blieb erhalten; gearbeitet wurde im bereits vorhandenen sauberen Repository-Checkout.
 

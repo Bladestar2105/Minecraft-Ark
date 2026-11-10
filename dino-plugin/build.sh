@@ -37,7 +37,7 @@ fetch bungeecord-chat.jar ce930b3ee048520a0ab538eb8d1627b301367fc1b300837235387a
 
 fetch bettermodel-3.6.0-paper.jar 66b2acc679ffcb81d9d7de686092d3e1daa38dc154da4cdaa9aaabc048a06aba https://github.com/toxicity188/BetterModel/releases/download/3.6.0/bettermodel-3.6.0-paper.jar
 fetch packetevents-spigot-2.14.0.jar 060087c58ec268eae7dd0eb1f17ac3bea1eaadda1693414141ff64e506091bd7 https://github.com/retrooper/packetevents/releases/download/v2.14.0/packetevents-spigot-2.14.0.jar
-fetch geyser-spigot-2.12.1-b1295.jar b60ff8f9a007f30823cf40173532a0390e6150cdfc577551f6f37bdd5ccd1528 https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1295/downloads/spigot
+fetch geyser-spigot-2.12.1-b1298.jar 4e5740267f8f7e1c0b5d56213e047cfdba57a93c322ace63c05286a5d486c66c https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1298/downloads/spigot
 
 "$task_java_home/bin/javac" --release 25 -sourcepath '' -cp '.deps/*' -d build/classes src/main/java/de/ark/dinos/*.java
 "$task_java_home/bin/javac" --release 25 -cp build/classes -d build/test-classes src/test/java/de/ark/dinos/*.java

@@ -37,20 +37,20 @@
   },
   {
     "project": "worldguard",
-    "name": "worldguard-bukkit-7.0.20.jar",
-    "version_id": "9YdeGXiK",
-    "version": "7.0.20",
-    "url": "https://cdn.modrinth.com/data/DKY9btbd/versions/9YdeGXiK/worldguard-bukkit-7.0.20.jar",
-    "sha512": "d7ad3f8b14c57deceb409dc8997fe3d7f0a98dd4158c52648111bfbe6934ca9be53fa42ece4d60d9c2d9da33f7d6ecf597117991bd3b8e7afbf308cd925e409c",
+    "name": "worldguard-bukkit-7.0.21.jar",
+    "version_id": "fiHLM6oY",
+    "version": "7.0.21",
+    "url": "https://cdn.modrinth.com/data/DKY9btbd/versions/fiHLM6oY/worldguard-bukkit-7.0.21.jar",
+    "sha512": "4253b97627f93ea007d91e977c15f5f4a3219865589083fa3b523d8b15a2cfe26d71076c8eb98c0122e7fde618ad3fc44cb986dbd40a222f09678b91a98245c2",
     "kind": "plugin"
   },
   {
     "project": "griefprevention",
     "name": "GriefPrevention.jar",
-    "version_id": "dGfCZHqk",
-    "version": "16.18.7",
-    "url": "https://cdn.modrinth.com/data/O4o4mKaq/versions/dGfCZHqk/GriefPrevention.jar",
-    "sha512": "c9bc692253ba3860327e5c38767ce3dc66c798264fe650a08b4ae888337ff75bc16e9bd1db7b39a514a275bf2cc2a3f1f8cd95cf080b89ae42a0f684fc2bfc66",
+    "version_id": "MtwPHMAS",
+    "version": "16.18.8",
+    "url": "https://cdn.modrinth.com/data/O4o4mKaq/versions/MtwPHMAS/GriefPrevention.jar",
+    "sha512": "248edc681e94fe333aa4262b4e8858e9e8f79e7e4872a76348ff6df213cc56e6069eea9916c5c4e6476b1513575f0d45db76c91526f5dc032e02b8806341b9e9",
     "kind": "plugin"
   },
   {
@@ -92,9 +92,9 @@
   {
     "project": "geyser",
     "name": "Geyser-Spigot.jar",
-    "version": "2.12.1-b1295",
-    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1295/downloads/spigot",
-    "sha256": "b60ff8f9a007f30823cf40173532a0390e6150cdfc577551f6f37bdd5ccd1528",
+    "version": "2.12.1-b1298",
+    "url": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1298/downloads/spigot",
+    "sha256": "4e5740267f8f7e1c0b5d56213e047cfdba57a93c322ace63c05286a5d486c66c",
     "kind": "plugin"
   },
   {
@@ -136,10 +136,13 @@
   {
     "project": "geyser-model-engine",
     "name": "GeyserModelEngine-1.0.9.jar",
-    "version": "1.0.9",
+    "version": "1.0.9+task-publication",
     "url": "https://github.com/GeyserExtensionists/GeyserModelEngine/releases/download/latest/GeyserModelEngine-1.0.9.jar",
-    "sha256": "ce4295d05517c6bcdc1d5bc0c6e51b2daf4d07a45bc834e239c1d6019df035cc",
-    "kind": "plugin"
+    "sha256": "ec18241f9a6be0cd1dfa05664cbfb27fac8c075a641973131d22e83ae1db61d8",
+    "kind": "plugin",
+    "source_sha256": "ce4295d05517c6bcdc1d5bc0c6e51b2daf4d07a45bc834e239c1d6019df035cc",
+    "patch": "geyser-model-engine-task-publication",
+    "bundled_path": "runtime-dependencies/GeyserModelEngine-1.0.9.jar"
   },
   {
     "project": "geyser-model-engine-extension",

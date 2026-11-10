@@ -6,6 +6,8 @@ Der stabile Anwendungsrelease [`app-2026-11-07`](https://github.com/Bladestar210
 
 Voraussetzungen auf dem Host: Docker mit Compose v2, Python 3.10+, ein Programm zum Entpacken und Internetzugang. **Das Binärpaket benötigt kein Host-JDK.** Java 25 läuft im Spielcontainer. Plane Platz für Weltarchiv, entpackte Welt, Kartenberechnung und private Backups ein; mindestens 8 GiB Host-RAM sind eine erste Empfehlung, keine Kapazitätszusage.
 
+Neu aus dem aktuellen Quellstand erzeugte Binärpakete enthalten zusätzlich die geprüfte, abgeleitete GeyserModelEngine-Bridge unter `runtime-dependencies/`. Sie ist getrennt von den sieben Projektplugins gekennzeichnet und wird vor der Installation auf ihre festgelegte Prüfsumme geprüft; dafür ist kein Host-JDK nötig. Original-URL, Prüfsummen, Quellpatch und Neubauprogramm bleiben enthalten. Bereits veröffentlichte Archive werden dadurch nicht verändert.
+
 ## Neues Setup
 
 1. Lade das Anwendungs-ZIP und dessen `SHA256SUMS`. Prüfe vor dem Entpacken die SHA-256-Prüfsumme.

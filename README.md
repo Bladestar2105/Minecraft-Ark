@@ -1,6 +1,6 @@
 # Minecraft ARK 🦕
 
-A prepared survival adventure world, separate creative area and Java/Bedrock crossplay. **Minecraft Java 26.3 · Paper 26.3/241 · Java 25 · no client mods.** Both webinterfaces offer English and German; existing adventure content is mainly German.
+A prepared survival adventure world, separate creative area and Java/Bedrock crossplay. **Minecraft Java 26.3 · Paper 26.3/246 · Java 25 · no client mods.** Both webinterfaces offer English and German; existing adventure content is mainly German.
 
 [Official wiki](https://github.com/Bladestar2105/Minecraft-Ark/wiki) · [Deutsch](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Home-DE) · [All-in-One guide](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One) · [Fixed world download](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/world-2026-11-06)
 

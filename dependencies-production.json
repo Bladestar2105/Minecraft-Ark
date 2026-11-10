@@ -1,0 +1,299 @@
+{
+  "format": 1,
+  "observed_at": "2026-11-10T16:30:47.853132+00:00",
+  "scope": "Public software versions and artifact fingerprints only; no host configuration or credentials.",
+  "notes": [
+    "The previous nightly maintenance updated the deployed Compose Paper build without synchronizing repository pins. This update explicitly reconciles the repository with the observed runtime.",
+    "Legacy-preserved plugins are inventoried but are not added to or configured by fresh setup.",
+    "The installed ArkDinos entry reflects the completed first deployment; the additional shoreline fix is verified separately before its next live update."
+  ],
+  "arkdinos_update": {
+    "before": {
+      "version": "1.1.0",
+      "sha256": "677dd1d1cf3074571a58d34ceae252121c7b50a3ed483b833e7931c65ae4fab7"
+    },
+    "target": {
+      "version": "1.2.0",
+      "sha256": "6bb0c5efce44532ea66c18e3cfbffa1c973c893d3fcfbd93d29a5115f47df970"
+    },
+    "status": "installed-1.2.0; additional-shoreline-fix-in-verification",
+    "installed": {
+      "version": "1.2.0",
+      "sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "view_distance": 14,
+      "new_backups": 0
+    }
+  },
+  "components": [
+    {
+      "name": "ArkAccessBridge",
+      "file": "ArkAccessBridge-1.1.1.jar",
+      "kind": "plugin",
+      "version": "1.1.1",
+      "sha256": "f5e6ac16771aade266cc0b4f04ca2b7692e309fbebcb26b3e8dd34b702bf5539",
+      "management": "project-plugin"
+    },
+    {
+      "name": "ArkAccounts",
+      "file": "ArkAccounts-1.0.2.jar",
+      "kind": "plugin",
+      "version": "1.0.2",
+      "sha256": "4f90d59416bda1bc2fa8724496dee537f82f241c0d97189199d55065dab0b0f0",
+      "management": "project-plugin"
+    },
+    {
+      "name": "ArkAtlas",
+      "file": "ArkAtlas-1.0.1.jar",
+      "kind": "plugin",
+      "version": "1.0.1",
+      "sha256": "913ec558c3f5c5fd496366cbe390483578dba3bac69a07dfa9886728fc753eee",
+      "management": "project-plugin"
+    },
+    {
+      "name": "ArkDinos",
+      "file": "ArkDinos-1.2.0.jar",
+      "kind": "plugin",
+      "version": "1.2.0",
+      "sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "management": "project-plugin"
+    },
+    {
+      "name": "ArkPanelBridge",
+      "file": "ArkPanelBridge-1.0.0.jar",
+      "kind": "plugin",
+      "version": "1.0.0",
+      "sha256": "f676c23c4f4f46d9d14c265ad9a06946ca606f1fb7cf17607a5741bd34d2dfa8",
+      "management": "project-plugin"
+    },
+    {
+      "name": "ArkSupport",
+      "file": "ArkSupport-1.0.0.jar",
+      "kind": "plugin",
+      "version": "1.0.1",
+      "sha256": "1a29c00ba6fb9efafde161e7f567e04fe714b3d8fb3d55e8efbe52a2f3ff5a3d",
+      "management": "project-plugin"
+    },
+    {
+      "name": "ArkWardrobe",
+      "file": "ArkWardrobe-1.0.0.jar",
+      "kind": "plugin",
+      "version": "1.0.0",
+      "sha256": "06f399769f57c69c80f28e47c32b7c0731b6302633075be7d7337bf855d2c9cb",
+      "management": "project-plugin"
+    },
+    {
+      "name": "AuthMe",
+      "file": "AuthMe-6.0.1-Paper.jar",
+      "kind": "plugin",
+      "version": "6.0.1-b2770",
+      "sha256": "7704335e9e73a634d9d926344f77897f4c74f78f82453a59f5aa0f8d2722450a",
+      "management": "legacy-preserved",
+      "fresh_setup_installs": false
+    },
+    {
+      "name": "Chunky",
+      "file": "Chunky-Bukkit-1.5.3.jar",
+      "kind": "plugin",
+      "version": "1.5.66",
+      "sha256": "a2c7877eaacf52605f5d2b08000656fbc43f7bec1eaf6ef9e71b6b9103a9c14f",
+      "management": "legacy-preserved",
+      "fresh_setup_installs": false
+    },
+    {
+      "name": "Geyser-Spigot",
+      "file": "Geyser-Spigot.jar",
+      "kind": "plugin",
+      "version": "2.12.1-b1298",
+      "sha256": "4e5740267f8f7e1c0b5d56213e047cfdba57a93c322ace63c05286a5d486c66c",
+      "management": "managed",
+      "runtime_manifest_name": "Geyser-Spigot.jar"
+    },
+    {
+      "name": "GeyserModelEngine",
+      "file": "GeyserModelEngine-1.0.9.jar",
+      "kind": "plugin",
+      "version": "1.0.9+task-publication",
+      "sha256": "ec18241f9a6be0cd1dfa05664cbfb27fac8c075a641973131d22e83ae1db61d8",
+      "management": "managed",
+      "runtime_manifest_name": "GeyserModelEngine-1.0.9.jar"
+    },
+    {
+      "name": "GriefPrevention",
+      "file": "GriefPrevention-16.18.7.jar",
+      "kind": "plugin",
+      "version": "16.18.8",
+      "sha256": "83d199575808ddbab49de36990b99ed1e5549a8c4e844a9906ac30e90fe51701",
+      "management": "managed"
+    },
+    {
+      "name": "Parties",
+      "file": "Parties-3.2.18.jar",
+      "kind": "plugin",
+      "version": "3.2.18",
+      "sha256": "6e399cc16a16e677a74b98c2585d9b4c092cf7bb97f58ce99fdfc269f42ee10d",
+      "management": "managed",
+      "runtime_manifest_name": "Parties-3.2.18.jar"
+    },
+    {
+      "name": "Quests",
+      "file": "Quests-5.3.2.jar",
+      "kind": "plugin",
+      "version": "5.3.2",
+      "sha256": "d969b77c5beb8f08d54538e43cdb4765507d7faf3bf08e5ffb03d1ebe39140c0",
+      "management": "managed",
+      "runtime_manifest_name": "Quests-5.3.2.jar"
+    },
+    {
+      "name": "SkinsRestorer",
+      "file": "SkinsRestorer-15.12.6.jar",
+      "kind": "plugin",
+      "version": "15.12.6",
+      "sha256": "a85b4a370f988741c9a38f4d0498262edacbf3220314790ac1c127461996359c",
+      "management": "managed",
+      "runtime_manifest_name": "SkinsRestorer-15.12.6.jar"
+    },
+    {
+      "name": "BetterModel",
+      "file": "bettermodel-3.6.0-paper.jar",
+      "kind": "plugin",
+      "version": "3.6.0",
+      "sha256": "66b2acc679ffcb81d9d7de686092d3e1daa38dc154da4cdaa9aaabc048a06aba",
+      "management": "managed",
+      "runtime_manifest_name": "bettermodel-3.6.0-paper.jar"
+    },
+    {
+      "name": "BlueMap",
+      "file": "bluemap-5.29-paper.jar",
+      "kind": "plugin",
+      "version": "5.29-paper",
+      "sha256": "7bf475936c26107d476c63151c76d5b49e865eebeada12c9e7d92155de877b9f",
+      "management": "managed",
+      "runtime_manifest_name": "bluemap-5.29-paper.jar"
+    },
+    {
+      "name": "floodgate",
+      "file": "floodgate-spigot.jar",
+      "kind": "plugin",
+      "version": "2.2.5-SNAPSHOT (b141-81b65cc)",
+      "sha256": "21570aff9ce17d6983928e8552777760e1ede5050026b04c686b0ae112e6fd7e",
+      "management": "managed",
+      "runtime_manifest_name": "floodgate-spigot-2.2.5-b141.jar"
+    },
+    {
+      "name": "GeyserUtils",
+      "file": "geyserutils-spigot-1.0-SNAPSHOT.jar",
+      "kind": "plugin",
+      "version": "1.0-SNAPSHOT",
+      "sha256": "1de02334a7449929aa0577876ea2bba12eb5fb314048e9fbc21e4171b09c2542",
+      "management": "managed",
+      "runtime_manifest_name": "geyserutils-spigot-1.0-SNAPSHOT.jar"
+    },
+    {
+      "name": "Multiverse-Core",
+      "file": "multiverse-core-5.8.2.jar",
+      "kind": "plugin",
+      "version": "5.8.2",
+      "sha256": "792252b6bbcf17c94ab8385e595281c830d7a40c946aea1832d8a010702bb630",
+      "management": "managed",
+      "runtime_manifest_name": "multiverse-core-5.8.2.jar"
+    },
+    {
+      "name": "Multiverse-Inventories",
+      "file": "multiverse-inventories-5.3.6.jar",
+      "kind": "plugin",
+      "version": "5.3.6",
+      "sha256": "6e58e89009283f4be8658abe2b7e46c482010ceccf3c8e0b0e8ca6a0a114ff92",
+      "management": "managed",
+      "runtime_manifest_name": "multiverse-inventories-5.3.6.jar"
+    },
+    {
+      "name": "Multiverse-Portals",
+      "file": "multiverse-portals-5.3.0.jar",
+      "kind": "plugin",
+      "version": "5.3.0",
+      "sha256": "345f0f296bb54e1fd98494260f93fb1ab97ba92f8ad7f6bfba129ea90021ea8d",
+      "management": "managed",
+      "runtime_manifest_name": "multiverse-portals-5.3.0.jar"
+    },
+    {
+      "name": "packetevents",
+      "file": "packetevents-spigot-2.14.0.jar",
+      "kind": "plugin",
+      "version": "2.14.0",
+      "sha256": "060087c58ec268eae7dd0eb1f17ac3bea1eaadda1693414141ff64e506091bd7",
+      "management": "managed",
+      "runtime_manifest_name": "packetevents-spigot-2.14.0.jar"
+    },
+    {
+      "name": "WorldEdit",
+      "file": "worldedit-bukkit-7.4.6.jar",
+      "kind": "plugin",
+      "version": "7.4.6",
+      "sha256": "e0ce67d870ad1fef8a40dd9d7926360caf3bb44722438545d6b20b55f82a0c91",
+      "management": "managed",
+      "runtime_manifest_name": "worldedit-bukkit-7.4.6.jar"
+    },
+    {
+      "name": "WorldGuard",
+      "file": "worldguard-bukkit-7.0.20.jar",
+      "kind": "plugin",
+      "version": "7.0.21+2424-da30a99",
+      "sha256": "070223c535629f3f5d15f002388c1e3ae615a5f4ba051e7ccfb5d716540547a9",
+      "management": "managed",
+      "runtime_manifest_name": "worldguard-bukkit-7.0.21.jar"
+    },
+    {
+      "name": "GeyserModelEngineExtension",
+      "file": "GeyserModelEngineExtension-1.0.9.jar",
+      "kind": "geyser-extension",
+      "version": "1.0.9",
+      "sha256": "71671ee8c475f194f7caf13bc1cc4d3b4d10dc4fd9df042a31ee7b29fe7a7cb5",
+      "management": "managed",
+      "runtime_manifest_name": "GeyserModelEngineExtension-1.0.9.jar"
+    },
+    {
+      "name": "GeyserUtils",
+      "file": "geyserutils-geyser-1.0-SNAPSHOT.jar",
+      "kind": "geyser-extension",
+      "version": "1.0-SNAPSHOT",
+      "sha256": "8ed7b7dbece8341277652d4ee01706913e725cdf19b9664025bbb870299ec12a",
+      "management": "managed",
+      "runtime_manifest_name": "geyserutils-geyser-1.0-SNAPSHOT.jar"
+    },
+    {
+      "name": "floodgate-sqlite-database",
+      "file": "floodgate-sqlite-database.jar",
+      "kind": "floodgate-extension",
+      "version": "2.2.5-b138",
+      "sha256": "df4ae91e452f7124f11b97d625357b00b13208c056e68c5473e1599b1e443317",
+      "management": "managed",
+      "runtime_manifest_name": "floodgate-sqlite-database.jar"
+    },
+    {
+      "name": "Dungeons and Taverns v6.1.0",
+      "file": "Dungeons and Taverns v6.1.0.zip",
+      "kind": "datapack",
+      "version": "6.1.0",
+      "sha256": "eeaff932d07f32c957df0ee5e5ac6378c9361ce32366858872590abe22b90785",
+      "management": "managed",
+      "runtime_manifest_name": "Dungeons and Taverns v6.1.0.zip"
+    },
+    {
+      "name": "Geophilic v3.7.dp",
+      "file": "Geophilic v3.7.dp.zip",
+      "kind": "datapack",
+      "version": "3.7",
+      "sha256": "4834f8c098ba89aa443d22ad270cb8ff9303a3b165336c8d6e659bacbc473a85",
+      "management": "managed",
+      "runtime_manifest_name": "Geophilic v3.7.dp.zip"
+    },
+    {
+      "name": "Paper",
+      "file": "paper-26.3-246.jar",
+      "kind": "server",
+      "version": "26.3 build 246",
+      "sha256": "d158542561e440c4026be7ccb32f551ee88313864792f38ea0ce5d1b88f1b27c",
+      "management": "managed"
+    }
+  ]
+}

@@ -46,7 +46,9 @@ export default async function run({check,command,alice,clients,Client,eventually
   for(const [kind,path] of Object.entries({java:'plugins/BetterModel/build.zip',bedrock:'plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack.zip',bedrockEggs:'plugins/Geyser-Spigot/packs/ark-dino-eggs.mcpack'})) {
    const bytes=await readFile(`${directory}/${path}`);assert.ok(bytes.length>1000);report.packs[kind]={path,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')};
   }
-  assert.match(await command('version ArkDinos'),/1\.2\.0/);return{registrations,packs:report.packs,pluginSha256:report.pluginSha256};
+  const protections=await command('dm protections');
+  for(const name of ['WorldEdit','WorldGuard','GriefPrevention'])assert.match(protections,new RegExp(`${name}=true`),`${name} must be enabled in the combined stack`);
+  assert.match(await command('version ArkDinos'),/1\.2\.0/);return{registrations,protections,packs:report.packs,pluginSha256:report.pluginSha256};
  });
  for(const [i,name] of species.entries()) {
   const type=['trex','velociraptor','dilophosaurus'].includes(name)?'ravager':name==='mosasaurus'?'dolphin':'sniffer';

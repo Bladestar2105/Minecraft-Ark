@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from init import initialize
 from build_plugins import download
@@ -123,6 +124,52 @@ class SetupTests(unittest.TestCase):
             (root / "library.jar").write_bytes(b"tampered")
             with self.assertRaises(ValueError):
                 download({"name": "library.jar", "sha256": "0" * 64}, root)
+
+    def test_reviewed_bridge_patch_publishes_and_reuses_only_verified_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "upstream.jar"
+            source.write_bytes(b"upstream fixture")
+            result = b"patched fixture"
+            item = {"name": "bridge.jar", "url": source.as_uri(),
+                    "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                    "sha256": hashlib.sha256(result).hexdigest(),
+                    "patch": "geyser-model-engine-task-publication"}
+            def transform(command, **kwargs):
+                Path(command[-1]).write_bytes(result)
+            with patch("build_plugins.subprocess.run", side_effect=transform):
+                try:
+                    target = download(item, root / "installed")
+                except ValueError as error:
+                    self.fail("Verified upstream and derived artifact should install: " + str(error))
+            self.assertEqual(target.read_bytes(), result)
+            with patch("build_plugins.subprocess.run", side_effect=AssertionError("cached patch must not run again")):
+                self.assertEqual(download(item, target.parent).read_bytes(), result)
+            self.assertEqual(sorted(path.name for path in target.parent.iterdir()), ["bridge.jar"])
+
+    def test_reviewed_bridge_patch_rejects_unverified_source_or_output(self):
+        for invalid in ("source", "output"):
+            with self.subTest(invalid=invalid), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                source = root / "upstream.jar"
+                source.write_bytes(b"upstream fixture")
+                item = {"name": "bridge.jar", "url": source.as_uri(),
+                        "source_sha256": "0" * 64 if invalid == "source" else hashlib.sha256(source.read_bytes()).hexdigest(),
+                        "sha256": hashlib.sha256(b"expected patch").hexdigest(),
+                        "patch": "geyser-model-engine-task-publication"}
+                def transform(command, **kwargs):
+                    Path(command[-1]).write_bytes(b"unverified patch")
+                with patch("build_plugins.subprocess.run", side_effect=transform), self.assertRaises(ValueError):
+                    download(item, root / "installed")
+                self.assertFalse((root / "installed/bridge.jar").exists())
+
+    def test_unknown_or_unpinned_artifact_patch_is_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            for metadata in ({"patch": "unknown"}, {"patch": "geyser-model-engine-task-publication"}):
+                with self.subTest(metadata=metadata), self.assertRaises(ValueError):
+                    download({"name": "bridge.jar", "sha256": "0" * 64, **metadata}, root)
+            self.assertEqual(list(root.iterdir()), [])
 
     def test_portal_upgrade_can_create_private_directory_but_requires_world(self):
         from init import initialize_portal

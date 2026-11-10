@@ -17,6 +17,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityRegainHealthEvent;
 import io.papermc.paper.event.player.PlayerArmSwingEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -24,6 +25,10 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class CombatFixture extends JavaPlugin implements Listener {
+    private static final String PET_TAG = "combat_fixture_pet";
+    private int markedRegens, controlRegens, cancelledMarkedRegens, cancelledControlRegens, unexpectedRegens;
+    private String lastRegenReason = "none";
+    private double lastRegenAmount;
     private final Map<String, Integer> hits = new HashMap<>();
     private final Map<String, Integer> lastTick = new HashMap<>();
     private int minimumGap = Integer.MAX_VALUE;
@@ -46,6 +51,23 @@ public final class CombatFixture extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void swingObserved(PlayerArmSwingEvent event) {
         if(event.getHand()==EquipmentSlot.HAND)swings.merge(event.getPlayer().getUniqueId(),1,Integer::sum);
+    }
+
+    // Native horse regeneration runs even with NoAI; keep combat damage observations stable.
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void isolatePetRegen(EntityRegainHealthEvent event) {
+        if (event.getRegainReason() == EntityRegainHealthEvent.RegainReason.REGEN
+                && event.getEntity().getScoreboardTags().contains(PET_TAG)) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void regenObserved(EntityRegainHealthEvent event) {
+        if (!event.getEntity().getScoreboardTags().contains("combat_regen_probe")) return;
+        boolean marked = event.getEntity().getScoreboardTags().contains(PET_TAG);
+        if (marked) { markedRegens++; if (event.isCancelled()) cancelledMarkedRegens++; }
+        else { controlRegens++; if (event.isCancelled()) cancelledControlRegens++; }
+        lastRegenReason = event.getRegainReason().name(); lastRegenAmount = event.getAmount();
+        if (event.getRegainReason() != EntityRegainHealthEvent.RegainReason.REGEN || event.getAmount() != 1) unexpectedRegens++;
     }
     @EventHandler(priority = EventPriority.MONITOR)
     public void attackObserved(io.papermc.paper.event.player.PrePlayerAttackEntityEvent event) {
@@ -125,6 +147,12 @@ public final class CombatFixture extends JavaPlugin implements Listener {
         if (!(sender instanceof org.bukkit.command.ConsoleCommandSender) && !(sender instanceof org.bukkit.command.RemoteConsoleCommandSender)) return true;
         try {
             var plugin = getServer().getPluginManager().getPlugin("ArkDinos");
+            if (args[0].equals("regen-events")) {
+                sender.sendMessage("marked=" + markedRegens + ";control=" + controlRegens
+                        + ";markedCancelled=" + cancelledMarkedRegens + ";controlCancelled=" + cancelledControlRegens
+                        + ";unexpected=" + unexpectedRegens + ";reason=" + lastRegenReason + ";amount=" + lastRegenAmount);
+                return true;
+            }
             if(args[0].equals("model-state")||args[0].equals("model-trace")||args[0].equals("model-proxy")) {
                 if(modelProbe==null)modelProbe=new CombatModelProbe(this);
                 Mob mob=(Mob)entity(args[1]);
@@ -256,6 +284,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             }
             if (args[0].equals("cleanup")) {
                 held.clear();
+                markedRegens = controlRegens = cancelledMarkedRegens = cancelledControlRegens = unexpectedRegens = 0;
                 getServer().getWorlds().forEach(world -> List.copyOf(world.getEntities()).forEach(entity -> {
                     if (entity.getScoreboardTags().stream().anyMatch(tag -> tag.startsWith("combat_"))) entity.remove();
                 })); sender.sendMessage("clean=true"); return true;
@@ -296,7 +325,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
                     default -> throw new IllegalArgumentException("Unknown fixture pet");
                 };
                 var pet = world.spawn(new Location(world, 0, 4, 2.25), type);
-                pet.addScoreboardTag(args[1]); pet.setAI(false);
+                pet.addScoreboardTag(args[1]); pet.addScoreboardTag(PET_TAG); pet.setAI(false);
                 pet.getAttribute(Attribute.MAX_HEALTH).setBaseValue(500); pet.setHealth(500);
                 if (!args[3].equals("wild")) ((org.bukkit.entity.Tameable) pet).setOwner(getServer().getPlayer(args[3]));
                 sender.sendMessage("health=" + pet.getHealth() + ";tamed=" + ((org.bukkit.entity.Tameable) pet).isTamed()); return true;

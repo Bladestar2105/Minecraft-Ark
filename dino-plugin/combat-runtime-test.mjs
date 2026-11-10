@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Disposable loopback Paper236 fixture and direct protocol777 clients; no historical world is opened.
+// Disposable loopback Paper fixture and direct protocol777 clients; no historical world is opened.
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -15,9 +15,9 @@ const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
 const scopeMode = false;
 const modelStack = process.env.DINO_COMBAT_MODELS==='1';
-const stackCache = `${root}output/dino-model-spike-20261107/private/server`;
-const cache = process.env.DINO_PAPER_CACHE ?? (modelStack ? stackCache : `${root}artifacts/renewal-20261103/server`);
-const paperJar = process.env.DINO_PAPER_JAR ?? (modelStack ? `${stackCache}/paper.jar` : `${root}artifacts/renewal-20261103/paper-26.3-236.jar`);
+const stackCache = process.env.DINO_MODEL_STACK_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
+const cache = process.env.DINO_PAPER_CACHE ?? stackCache;
+const paperJar = process.env.DINO_PAPER_JAR ?? `${cache}/paper.jar`;
 const output=process.env.DINO_COMBAT_OUTPUT??`${plugin}build`;
 await mkdir(output, { recursive: true });
 const directory = await mkdtemp(`${output}/combat-smoke-`);
@@ -119,14 +119,14 @@ try {
   await copyFile(paperJar,`${directory}/paper.jar`);
   await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
   report.jarSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
-  for(const jar of ['worldedit-bukkit-7.4.6.jar','worldguard-bukkit-7.0.20.jar']) await copyFile((jar.startsWith('worldguard-')?process.env.DINO_WORLDGUARD_JAR:process.env.DINO_WORLDEDIT_JAR)??`${root}artifacts/renewal-20261103/server/plugins/${jar}`,`${directory}/plugins/${jar}`);
-  report.worldguardSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/worldguard-bukkit-7.0.20.jar`)).digest('hex');
-  await copyFile(process.env.DINO_GRIEFPREVENTION_JAR??`${root}output/dino-round2-20261108/candidate-plugins/GriefPrevention.jar`,`${directory}/plugins/GriefPrevention.jar`);
+  for(const jar of ['worldedit-bukkit-7.4.6.jar','worldguard-bukkit-7.0.21.jar']) await copyFile((jar.startsWith('worldguard-')?process.env.DINO_WORLDGUARD_JAR:process.env.DINO_WORLDEDIT_JAR)??`${cache}/plugins/${jar}`,`${directory}/plugins/${jar}`);
+  report.worldguardSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/worldguard-bukkit-7.0.21.jar`)).digest('hex');
+  await copyFile(process.env.DINO_GRIEFPREVENTION_JAR??`${cache}/plugins/GriefPrevention.jar`,`${directory}/plugins/GriefPrevention.jar`);
   report.griefPreventionSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/GriefPrevention.jar`)).digest('hex');
   if(modelStack) {
     for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','geyser-spigot.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar'])await copyFile(`${stackCache}/plugins/${name}`,`${directory}/plugins/${name}`);
-    await copyFile(process.env.DINO_GME_JAR??`${root}output/dino-round3-20261108/gme-race/GeyserModelEngine-1.0.9-publication-fixed.jar`,`${directory}/plugins/GeyserModelEngine-1.0.9.jar`);
-    await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1295.jar`,`${directory}/plugins/geyser-spigot.jar`);
+    await copyFile(process.env.DINO_GME_JAR??`${stackCache}/plugins/GeyserModelEngine-1.0.9.jar`,`${directory}/plugins/GeyserModelEngine-1.0.9.jar`);
+    await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1298.jar`,`${directory}/plugins/geyser-spigot.jar`);
     for(const name of ['BetterModel','GeyserModelEngine','Geyser-Spigot','floodgate'])await cp(`${stackCache}/plugins/${name}`,`${directory}/plugins/${name}`,{recursive:true});
     const generated=`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack`;
     await rm(generated,{recursive:true,force:true});await rm(`${generated}.zip`,{force:true});
@@ -156,6 +156,36 @@ try {
   await eventually(()=>owner.joined&&other.joined&&rider.joined,'Native clients did not join',30000);
   await move('CombatOwner',0,0);await move('CombatOther',10,10);await command('fill -16 3 -16 40 3 40 stone');
   for(const name of ['CombatOwner','CombatOther','CombatRider']){await command(`attribute ${name} minecraft:max_health base set 500`);await command(`effect give ${name} instant_health 1 10 true`);}
+  await check('Native horse REGEN is isolated to marked fixture pets while unmarked controls still heal',async()=>{
+    await clear();
+    const pets=[];
+    for(let i=0;i<32;i++) {
+      const marked=i<16,tag=`combat_regen_${i}`;
+      await command(`combatfixture pet ${tag} horse CombatOwner`);
+      if(!marked)await command(`tag @e[tag=${tag},limit=1] remove combat_fixture_pet`);
+      await command(`tag @e[tag=${tag},limit=1] add combat_regen_probe`);
+      await command(`tp @e[tag=${tag},limit=1] ${-12+3*(i%8)} 4 ${6+3*Math.floor(i/8)}`);
+      assert.match(await command(`data get entity @e[tag=${tag},limit=1] NoAI`),/1b/);
+      assert.equal((await command(`combatfixture strike ${tag} CombatOwner`)).trim(),'health=499.0');
+      pets.push({tag,marked});
+    }
+    let events;
+    await eventually(async()=>{
+      events=Object.fromEntries((await command('combatfixture regen-events')).trim().split(';').map(field=>field.split('=')));
+      return Number(events.marked)>0&&Number(events.control)>0;
+    },'No native REGEN event observed in both wounded NoAI horse groups within sixty seconds',60000);
+    assert.equal(events.reason,'REGEN');assert.equal(Number(events.amount),1);assert.equal(Number(events.unexpected),0);
+    assert.equal(Number(events.markedCancelled),Number(events.marked),'Every marked native REGEN event must be cancelled');
+    assert.equal(Number(events.controlCancelled),0,'Unmarked native horse healing must remain enabled');
+    const observed=[];
+    for(const pet of pets) {
+      const current=await health(pet.tag);observed.push({...pet,health:current});
+      if(pet.marked)assert.equal(current,499,'A marked fixture horse must retain its exact wounded health');
+      else assert.ok(current===499||current===500,'Control horse health must reflect native one-point healing');
+    }
+    assert.ok(observed.some(pet=>!pet.marked&&pet.health===500),'At least one unmarked control must actually heal');
+    return {events,horses:observed,nativeEventsOnly:true};
+  });
   await check('Self-defense selects the permitted attacker of an unmounted tame',async()=>{
     await clear();await command('gamemode survival CombatOwner');await move('CombatOwner',0,2);
     await spawnDino('combat_owned trex CombatOwner 0 0');await command('combatfixture victim combat_enemy 2 0');

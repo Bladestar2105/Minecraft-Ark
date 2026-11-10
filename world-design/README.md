@@ -42,7 +42,7 @@ The native integration check starts only a new loopback Paper fixture:
 ```sh
 JAVA_HOME=/path/to/jdk25 \
 FENCE_PAPER_CACHE=/path/to/cached-paper-runtime \
-FENCE_PAPER_JAR=/path/to/paper-26.3-241.jar \
+FENCE_PAPER_JAR=/path/to/paper-26.3-246.jar \
 FENCE_WORLDEDIT_JAR=/path/to/worldedit-bukkit-7.4.6.jar \
 python3 world-design/fence_runtime_test.py
 ```

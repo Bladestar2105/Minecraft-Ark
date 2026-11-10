@@ -16,7 +16,7 @@ for pattern in ('**/mockito-core-*.jar', '**/byte-buddy-*.jar', '**/objenesis-*.
     matches = sorted(p for p in cache.glob(pattern) if not p.name.endswith(('-sources.jar', '-javadoc.jar')))
     assert matches, f'Missing cached test dependency: {pattern}'
     paths.extend(matches)
-paper_cache = Path(os.environ.get('DINO_MODEL_CACHE', os.environ.get('DINO_MODEL_STACK_CACHE', ROOT / 'output/dino-model-spike-20261107/private/server')))
+paper_cache = Path(os.environ.get('DINO_MODEL_CACHE', os.environ.get('DINO_MODEL_STACK_CACHE', ROOT / 'output/live-dependency-stack-20261110/private/server')))
 paths.extend(sorted(p for p in (paper_cache / 'libraries').rglob('*.jar') if not p.name.startswith('slf4j-simple-')))
 classes = OUTPUT / 'classes'
 classes.mkdir(exist_ok=True)

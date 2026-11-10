@@ -17,7 +17,7 @@ if (fallback && !['without-models','without-bridge'].includes(fallback)) throw E
 const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
-const cache = process.env.DINO_MODEL_STACK_CACHE ?? `${root}output/dino-model-spike-20261107/private/server`;
+const cache = process.env.DINO_MODEL_STACK_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
 const paperCache = process.env.DINO_MODEL_CACHE ?? cache;
 const paperJar = process.env.DINO_MODEL_PAPER ?? `${cache}/paper.jar`;
 const output = process.env.DINO_MODEL_OUTPUT ?? `${root}output/dino-adapter-runtime-20261107`;
@@ -133,8 +133,13 @@ try {
   for (const name of fallback==='without-models'?[]:fallback==='without-bridge'?['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar']:['bettermodel-3.6.0-paper.jar', 'packetevents-spigot-2.14.0.jar', 'GeyserModelEngine-1.0.9.jar', 'geyser-spigot.jar', 'floodgate-spigot.jar', 'geyserutils-spigot-1.0-SNAPSHOT.jar']) await copyFile(`${cache}/plugins/${name}`, `${directory}/plugins/${name}`);
   if(!fallback&&process.env.DINO_GME_JAR)await copyFile(process.env.DINO_GME_JAR,`${directory}/plugins/GeyserModelEngine-1.0.9.jar`);
   if(!fallback)report.bridgeSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/GeyserModelEngine-1.0.9.jar`)).digest('hex');
-  if (!fallback) await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1295.jar`, `${directory}/plugins/geyser-spigot.jar`);
+  if (!fallback) await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1298.jar`, `${directory}/plugins/geyser-spigot.jar`);
   if (gameplay) {
+    report.protectionSha256={};
+    for(const name of ['worldedit-bukkit-7.4.6.jar','worldguard-bukkit-7.0.21.jar','GriefPrevention.jar']) {
+      await copyFile(`${cache}/plugins/${name}`,`${directory}/plugins/${name}`);
+      report.protectionSha256[name]=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/${name}`)).digest('hex');
+    }
     await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.0.jar`, `${directory}/plugins/ArkDinos.jar`);
     report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
     report.limits=['Direct Java protocol777 clients verify real ArkDinos gameplay and actual model/registry/packet state; visible Java/Bedrock/console rendering is a separate acceptance step.', 'Bridge pose checks enroll these Java clients in the actual Bridge viewer sets to receive real encoded GeyserUtils actors; they do not establish real Geyser/Bedrock sessions.'];
@@ -249,7 +254,7 @@ try {
     const registered=(await command('dm model-registrations')).trim().split(';');
     report.modelRegistrations=registered;
     assert.deepEqual(registered,species.map(name=>`${name}:java=true,bedrock=true`));
-    assert.match(log,/Using BetterModel handler!/);return {paper:log.match(/This server is running Paper version ([^ ]+)/)?.[1],betterModel:'3.6.0',bridge:'1.0.9',geyser:'2.12.1-b1295',packetEvents:'2.14.0',registered};
+    assert.match(log,/Using BetterModel handler!/);return {paper:log.match(/This server is running Paper version ([^ ]+)/)?.[1],betterModel:'3.6.0',bridge:'1.0.9',geyser:'2.12.1-b1298',packetEvents:'2.14.0',registered};
   });
   if(process.env.DINO_MODEL_NAMES_ONLY) {
     await (await import('./name-runtime-checks.mjs')).default({check,command,alice,clients,Client,eventually,delay,inspect,species,nativeIds,readVi,spawns,report});

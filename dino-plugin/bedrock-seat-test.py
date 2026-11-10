@@ -14,15 +14,15 @@ ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = Path(os.environ.get('DINO_SEAT_OUTPUT', ROOT / 'output/dino-visual-quality-20261108'))
 OUTPUT.mkdir(parents=True, exist_ok=True)
 JDK = Path(os.environ.get('JAVA_HOME', ROOT / 'dino-plugin/.tools/jdk-25.0.5+8/Contents/Home')) / 'bin'
-GEYSER = ROOT / 'dino-plugin/.deps/geyser-spigot-2.12.1-b1295.jar'
-assert hashlib.sha256(GEYSER.read_bytes()).hexdigest() == 'b60ff8f9a007f30823cf40173532a0390e6150cdfc577551f6f37bdd5ccd1528'
+GEYSER = ROOT / 'dino-plugin/.deps/geyser-spigot-2.12.1-b1298.jar'
+assert hashlib.sha256(GEYSER.read_bytes()).hexdigest() == '4e5740267f8f7e1c0b5d56213e047cfdba57a93c322ace63c05286a5d486c66c'
 paths = [GEYSER, *sorted(p for p in (ROOT / 'dino-plugin/.deps').glob('*.jar') if not p.name.endswith('-sources.jar'))]
 cache = Path(os.environ.get('DINO_MODEL_TEST_LIBS', Path.home() / '.gradle/caches/modules-2/files-2.1'))
 for pattern in ('**/mockito-core-*.jar', '**/byte-buddy-*.jar', '**/objenesis-*.jar'):
     matches = sorted(p for p in cache.glob(pattern) if not p.name.endswith(('-sources.jar', '-javadoc.jar')))
     assert matches, f'Missing cached test dependency: {pattern}'
     paths.extend(matches)
-paper_cache = Path(os.environ.get('DINO_MODEL_CACHE', os.environ.get('DINO_MODEL_STACK_CACHE', ROOT / 'output/dino-model-spike-20261107/private/server')))
+paper_cache = Path(os.environ.get('DINO_MODEL_CACHE', os.environ.get('DINO_MODEL_STACK_CACHE', ROOT / 'output/live-dependency-stack-20261110/private/server')))
 paths.extend(sorted(p for p in (paper_cache / 'libraries').rglob('*.jar') if not p.name.startswith('slf4j-simple-')))
 classes = OUTPUT / 'seat-classes'
 classes.mkdir(exist_ok=True)

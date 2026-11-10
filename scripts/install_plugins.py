@@ -149,7 +149,7 @@ def install(root=ROOT, modules=None):
         if not safe_path(root, source).is_file():
             raise ValueError("Missing configuration template: " + source)
     for item in items:
-        download(item, root / folders[item["kind"]])
+        download(item, root / folders[item["kind"]], root=root)
     (root / "data/plugins").mkdir(parents=True, exist_ok=True)
     for item in own:
         shutil.copyfile(root / item["path"], root / "data/plugins" / Path(item["path"]).name)

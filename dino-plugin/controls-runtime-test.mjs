@@ -14,8 +14,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
-const cache = process.env.DINO_PAPER_CACHE ?? `${root}artifacts/renewal-20261103/server`;
-const paperJar = process.env.DINO_PAPER_JAR ?? `${root}artifacts/renewal-20261103/paper-26.3-236.jar`;
+const cache = process.env.DINO_PAPER_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
+const paperJar = process.env.DINO_PAPER_JAR ?? `${cache}/paper.jar`;
 const output=process.env.DINO_CONTROLS_OUTPUT ?? `${plugin}build`;
 await mkdir(output, { recursive: true });
 const directory = await mkdtemp(`${output}/controls-smoke-`);
@@ -115,11 +115,11 @@ try {
  for(const name of ['libraries','versions','cache'])await symlink(`${cache}/${name}`,`${directory}/${name}`);
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
  if(process.env.DINO_PTERA_MODELS==='1'||process.env.DINO_SPEED_MODELS==='1'||process.env.DINO_SECOND_RIDER_MODELS==='1') {
-  const modelCache=process.env.DINO_MODEL_STACK_CACHE??`${root}output/dino-model-spike-20261107/private/server`;
+  const modelCache=process.env.DINO_MODEL_STACK_CACHE??`${root}output/live-dependency-stack-20261110/private/server`;
   for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','geyser-spigot.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar'])await copyFile(`${modelCache}/plugins/${name}`,`${directory}/plugins/${name}`);
-  await copyFile(process.env.DINO_GME_JAR??`${root}output/dino-round3-20261108/gme-race/GeyserModelEngine-1.0.9-publication-fixed.jar`,`${directory}/plugins/GeyserModelEngine-1.0.9.jar`);
+  await copyFile(process.env.DINO_GME_JAR??`${modelCache}/plugins/GeyserModelEngine-1.0.9.jar`,`${directory}/plugins/GeyserModelEngine-1.0.9.jar`);
   report.bridgeSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/GeyserModelEngine-1.0.9.jar`)).digest('hex');
-  await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1295.jar`,`${directory}/plugins/geyser-spigot.jar`);
+  await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1298.jar`,`${directory}/plugins/geyser-spigot.jar`);
   for(const name of ['BetterModel','GeyserModelEngine','Geyser-Spigot','floodgate'])await cp(`${modelCache}/plugins/${name}`,`${directory}/plugins/${name}`,{recursive:true});
   const generated=`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack`;await rm(generated,{recursive:true,force:true});await rm(`${generated}.zip`,{force:true});
   const geyserConfig=`${directory}/plugins/Geyser-Spigot/config.yml`;await writeFile(geyserConfig,(await readFile(geyserConfig,'utf8')).replace(/^port: .*/m,`port: ${await freePort()}`));
@@ -130,7 +130,7 @@ try {
   report.pteraModelSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/BetterModel/models/ark_pteranodon.bbmodel`)).digest('hex');
  }
 
- if(process.env.DINO_WILDLIFE_ONLY==='1'){for(const name of ['worldedit-bukkit-7.4.6.jar','worldguard-bukkit-7.0.20.jar','GriefPrevention.jar'])await copyFile(`${cache}/plugins/${name}`,`${directory}/plugins/${name}`);}
+ if(process.env.DINO_WILDLIFE_ONLY==='1'){for(const name of ['worldedit-bukkit-7.4.6.jar','worldguard-bukkit-7.0.21.jar','GriefPrevention.jar'])await copyFile(`${cache}/plugins/${name}`,`${directory}/plugins/${name}`);}
  await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
  report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
  await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\nwild-spawning:\n  enabled: false\n'+(process.env.DINO_WILDLIFE_ONLY==='1'?'  per-player: 2\n  world-limit: 4\n  nearby-limit: 2\n':''));

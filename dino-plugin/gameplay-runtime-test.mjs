@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Disposable loopback Paper236 fixture and direct protocol777 clients; no historical world is opened.
+// Disposable loopback Paper246 fixture and direct protocol777 clients; no historical world is opened.
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -15,10 +15,10 @@ const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
 const scopeMode = process.env.DINO_PROTOTYPE_SCOPE === '1';
 const modelStack = process.env.DINO_MODEL_STACK === '1' || scopeMode;
-const stackCache = `${root}output/dino-model-spike-20261107/private/server`;
-const cache = process.env.DINO_PAPER_CACHE ?? (modelStack ? stackCache : `${root}artifacts/renewal-20261103/server`);
-const paperJar = process.env.DINO_PAPER_JAR ?? (modelStack ? `${stackCache}/paper.jar` : `${root}artifacts/renewal-20261103/paper-26.3-236.jar`);
-const paperBuild = process.env.DINO_PAPER_JAR?.match(/paper-26\.3-([0-9]+)\.jar$/)?.[1] ?? (modelStack ? '241' : '236');
+const stackCache = process.env.DINO_MODEL_STACK_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
+const cache = process.env.DINO_PAPER_CACHE ?? (modelStack ? stackCache : `${root}output/live-dependency-stack-20261110/private/server`);
+const paperJar = process.env.DINO_PAPER_JAR ?? (modelStack ? `${stackCache}/paper.jar` : `${cache}/paper.jar`);
+const paperBuild = process.env.DINO_PAPER_JAR?.match(/paper-26\.3-([0-9]+)\.jar$/)?.[1] ?? '246';
 await mkdir(`${plugin}build`, { recursive: true });
 const directory = await mkdtemp(`${plugin}build/gameplay-smoke-`);
 const report = { startedAt: new Date().toISOString(), fixture: directory, checks: [], limits: [
@@ -129,7 +129,7 @@ try {
   await copyFile(`${plugin}build/ArkDinos-1.2.0.jar`, `${directory}/plugins/ArkDinos.jar`);
   if(modelStack){
     for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','GeyserModelEngine-1.0.9.jar','geyser-spigot.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar']) await copyFile(`${stackCache}/plugins/${name}`,`${directory}/plugins/${name}`);
-    await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1295.jar`,`${directory}/plugins/geyser-spigot.jar`);
+    await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1298.jar`,`${directory}/plugins/geyser-spigot.jar`);
     for(const name of ['BetterModel','GeyserModelEngine','Geyser-Spigot','floodgate']) await cp(`${stackCache}/plugins/${name}`,`${directory}/plugins/${name}`,{recursive:true});
     const generatedPack=`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack`;
     await rm(generatedPack,{recursive:true,force:true});await rm(`${generatedPack}.zip`,{force:true});

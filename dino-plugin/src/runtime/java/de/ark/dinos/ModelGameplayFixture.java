@@ -86,6 +86,14 @@ public final class ModelGameplayFixture extends JavaPlugin {
                     }
                     sender.sendMessage(String.join(";",rows)+";eggs="+eggs+";bedrockEggs="+bedrockEggs+";protocols="+org.geysermc.geyser.registry.Registries.ITEMS.get().size()+";packs="+org.geysermc.geyser.registry.Registries.RESOURCE_PACKS.get().size());
                 }
+                case "protections" -> {
+                    var rows=new ArrayList<String>();
+                    for(String name:new String[]{"WorldEdit","WorldGuard","GriefPrevention"}) {
+                        var installed=getServer().getPluginManager().getPlugin(name);
+                        rows.add(name+"="+(installed!=null&&installed.isEnabled()));
+                    }
+                    sender.sendMessage(String.join(";",rows));
+                }
                 case "ids" -> {
                     var version=PacketEvents.getAPI().getPlayerManager().getUser(getServer().getPlayerExact(args[1])).getClientVersion();
                     sender.sendMessage("passengers="+PacketType.Play.Server.SET_PASSENGERS.getId(version)+";sync="+PacketType.Play.Server.ENTITY_POSITION_SYNC.getId(version)+";pluginMessage="+PacketType.Play.Client.PLUGIN_MESSAGE.getId(version));

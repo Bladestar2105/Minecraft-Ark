@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Disposable loopback Paper236 fixture and direct protocol777 clients; no historical world is opened.
+// Disposable loopback Paper246 fixture and direct protocol777 clients; no historical world is opened.
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -13,8 +13,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
-const cache = process.env.DINO_PAPER_CACHE ?? `${root}artifacts/renewal-20261103/server`;
-const paperJar = process.env.DINO_PAPER_JAR ?? `${root}artifacts/renewal-20261103/paper-26.3-236.jar`;
+const cache = process.env.DINO_PAPER_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
+const paperJar = process.env.DINO_PAPER_JAR ?? `${cache}/paper.jar`;
 const output=process.env.DINO_CARE_OUTPUT ?? `${plugin}build`;
 await mkdir(output, { recursive: true });
 const directory = await mkdtemp(`${output}/care-smoke-`);
