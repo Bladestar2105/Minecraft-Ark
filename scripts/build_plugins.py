@@ -44,13 +44,13 @@ def build():
     java_home = os.environ.get("JAVA_HOME")
     def java_tool(name):
         return str(Path(java_home, "bin", name)) if java_home else name
-    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest", "DinoGrowthTest", "CareRulesTest", "EggAssetsTest", "GroundSpeedsTest"], "atlas": ["AtlasRulesTest"],
+    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest", "DinoGrowthTest", "CareRulesTest", "EggAssetsTest", "GroundSpeedsTest", "SwimRulesTest", "DinoSizesTest", "WildSpawnRulesTest"], "atlas": ["AtlasRulesTest"],
              "panel": ["BridgeProtocolTest", "RuntimeSettingsTest"],
              "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"],
              "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest", "PortalInfoTest"],
              "wardrobe": ["WardrobeTest", "SignersTest", "CommandPolicyTest", "WardrobeRoutesTest"],
              "support": ["SupportTest", "SupportRoutesTest", "SupportDeleteTest"]}
-    versions = {"dino": "ArkDinos-1.1.0", "atlas": "ArkAtlas-1.0.1",
+    versions = {"dino": "ArkDinos-1.2.0", "atlas": "ArkAtlas-1.0.1",
                 "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.2",
                 "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.1"}
     packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",

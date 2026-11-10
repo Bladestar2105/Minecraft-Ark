@@ -18,7 +18,7 @@ class SetupTests(unittest.TestCase):
             (root / 'data/ark').mkdir(parents=True)
             (root / 'data/ark/level.dat').write_bytes(b'fixture')
             (root / 'data/plugins').mkdir()
-            (root / 'data/plugins/ArkDinos-1.1.0.jar').write_bytes(b'fixture')
+            (root / 'data/plugins/ArkDinos-1.2.0.jar').write_bytes(b'fixture')
             (root / '.env.example').write_text('EULA=FALSE\n')
             with contextlib.redirect_stdout(io.StringIO()):
                 initialize(root, portal_url='https://portal.example:8443/?welcome=1')

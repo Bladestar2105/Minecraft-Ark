@@ -164,6 +164,17 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                 case "bridge-race" -> {sender.sendMessage(BridgeRaceProbe.begin(mob,getServer().getPlayerExact(args[2])));return true;}
                 case "bridge-race-replace" -> {sender.sendMessage(BridgeRaceProbe.replace());return true;}
                 case "bridge-race-finish" -> {BridgeRaceProbe.finish();sender.sendMessage("finished=true");return true;}
+                case "model-registrations" -> {
+                    var rows=new ArrayList<String>();
+                    for(String species:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","mosasaurus"}) {
+                        String model="ark_"+species;
+                        boolean java=BetterModel.model(model).isPresent();
+                        boolean bedrock=org.geysermc.geyser.registry.Registries.BEDROCK_ENTITY_DEFINITIONS.get()
+                                .containsKey(org.geysermc.geyser.api.util.Identifier.of("modelengine:"+model));
+                        rows.add(species+":java="+java+",bedrock="+bedrock);
+                    }
+                    sender.sendMessage(String.join(";",rows));return true;
+                }
                 case "egg-mappings" -> {
                     try (var resource=getResource("egg-assets.properties");var zip=new java.util.zip.ZipFile(new java.io.File("plugins/BetterModel/build.zip"))) {
                         var expected=EggAssets.read(resource);

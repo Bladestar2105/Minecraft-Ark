@@ -31,6 +31,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
     private final Map<java.lang.reflect.Field,Object> brokenProtectionFields = new HashMap<>();
     private Object brokenProtection;
     private boolean cancelLaunch, cancelHit, cancelDamage, zeroDamage, holdShots;
+    private String incomingDamage = "allow";
     private int launches, impacts;
     private String lastImpact = "none";
     private double launchHeight, launchForward, launchSide;
@@ -82,6 +83,10 @@ public final class CombatFixture extends JavaPlugin implements Listener {
     public void cancelDamage(EntityDamageByEntityEvent event) {
         if (cancelDamage && event.getDamager() instanceof Mob && event.getDamager().getPersistentDataContainer().has(NamespacedKey.fromString("arkdinos:species"))) event.setCancelled(true);
         if (zeroDamage && event.getDamager() instanceof Mob && event.getDamager().getPersistentDataContainer().has(NamespacedKey.fromString("arkdinos:species"))) event.setDamage(0);
+        if (event.getEntity() instanceof Mob && event.getEntity().getPersistentDataContainer().has(NamespacedKey.fromString("arkdinos:species"))) {
+            if (incomingDamage.equals("cancel")) event.setCancelled(true);
+            if (incomingDamage.equals("zero")) event.setDamage(0);
+        }
     }
     @EventHandler(priority = EventPriority.LOWEST)
     public void launch(org.bukkit.event.entity.ProjectileLaunchEvent event) {
@@ -210,13 +215,14 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             if (args[0].equals("model-calibrated")) {
                 var mob = (Mob) entity(args[1]);
                 mob.getPersistentDataContainer().set(NamespacedKey.fromString("arkdinos:model-original-scale"), PersistentDataType.DOUBLE, 1.0);
-                mob.getAttribute(Attribute.SCALE).setBaseValue(.5265701657458564);
+                mob.getAttribute(Attribute.SCALE).setBaseValue(.6055556906077348);
                 sender.sendMessage("calibrated=true"); return true;
             }
             if (args[0].equals("cancel-launch")) { cancelLaunch = Boolean.parseBoolean(args[1]); sender.sendMessage("cancel-launch=" + cancelLaunch); return true; }
             if (args[0].equals("cancel-hit")) { cancelHit = Boolean.parseBoolean(args[1]); sender.sendMessage("cancel-hit=" + cancelHit); return true; }
             if (args[0].equals("cancel-damage")) { cancelDamage = Boolean.parseBoolean(args[1]); sender.sendMessage("cancel-damage=" + cancelDamage); return true; }
             if (args[0].equals("zero-damage")) { zeroDamage = Boolean.parseBoolean(args[1]); sender.sendMessage("zero-damage=" + zeroDamage); return true; }
+            if (args[0].equals("incoming-damage")) { incomingDamage = args[1]; sender.sendMessage("incoming-damage=" + incomingDamage); return true; }
             if (args[0].equals("hold-shots")) { holdShots = Boolean.parseBoolean(args[1]); sender.sendMessage("hold-shots=" + holdShots); return true; }
             if (args[0].equals("release-shots")) {
                 holdShots = false;
@@ -281,6 +287,20 @@ public final class CombatFixture extends JavaPlugin implements Listener {
                 victim.addScoreboardTag(args[1]); victim.setAI(false); victim.getAttribute(Attribute.MAX_HEALTH).setBaseValue(500); victim.setHealth(500);
                 sender.sendMessage("health=" + victim.getHealth()); return true;
             }
+            if (args[0].equals("pet")) {
+                var world = getServer().getWorlds().getFirst();
+                Class<? extends Mob> type = switch(args[2]) {
+                    case "wolf" -> org.bukkit.entity.Wolf.class;
+                    case "cat" -> org.bukkit.entity.Cat.class;
+                    case "horse" -> org.bukkit.entity.Horse.class;
+                    default -> throw new IllegalArgumentException("Unknown fixture pet");
+                };
+                var pet = world.spawn(new Location(world, 0, 4, 2.25), type);
+                pet.addScoreboardTag(args[1]); pet.setAI(false);
+                pet.getAttribute(Attribute.MAX_HEALTH).setBaseValue(500); pet.setHealth(500);
+                if (!args[3].equals("wild")) ((org.bukkit.entity.Tameable) pet).setOwner(getServer().getPlayer(args[3]));
+                sender.sendMessage("health=" + pet.getHealth() + ";tamed=" + ((org.bukkit.entity.Tameable) pet).isTamed()); return true;
+            }
             if (args[0].equals("strike")) {
                 LivingEntity victim = args[1].startsWith("combat_") ? (LivingEntity) entity(args[1]) : getServer().getPlayer(args[1]);
                 Entity attacker = args[2].startsWith("combat_") ? entity(args[2]) : getServer().getPlayer(args[2]);
@@ -316,9 +336,10 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             if (args[0].equals("muzzle-wall")) {
                 var source = (Mob) entity(args[1]); var target = (LivingEntity) entity(args[2]);
                 double yaw = Math.toRadians(source.getBodyYaw());
-                var mouth = source.getLocation().add(-Math.sin(yaw) * 1.9125, 1.4288648081, Math.cos(yaw) * 1.9125);
-                var middle = source.getEyeLocation().toVector().add(mouth.toVector()).multiply(.5);
-                var block = source.getWorld().getBlockAt(middle.getBlockX(), middle.getBlockY(), middle.getBlockZ());
+                var mouth = source.getLocation().add(-Math.sin(yaw) * 2.199375, 1.643194529315, Math.cos(yaw) * 2.199375);
+                // At the enlarged muzzle the low target remains visible below the block.
+                // A midpoint block would also obstruct native sight and miss the muzzle guard.
+                var block = source.getWorld().getBlockAt(mouth.getBlockX(), mouth.getBlockY(), mouth.getBlockZ());
                 block.setType(org.bukkit.Material.STONE); sender.sendMessage("wall=" + block.getX() + "," + block.getY() + "," + block.getZ() + ";los=" + source.hasLineOfSight(target)
                         + ";sourceEye=" + source.getEyeLocation() + ";targetEye=" + target.getEyeLocation()); return true;
             }
@@ -358,6 +379,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
                 mob.getPersistentDataContainer().set(NamespacedKey.fromString("arkdinos:growth-duration"),PersistentDataType.LONG,900000L);
                 mob.getPersistentDataContainer().set(NamespacedKey.fromString("arkdinos:adult-at"), PersistentDataType.LONG, System.currentTimeMillis() + Long.parseLong(args[2]));
             }
+            if (args[0].equals("scale")) mob.getAttribute(Attribute.SCALE).setBaseValue(Double.parseDouble(args[2]));
             var field = plugin.getClass().getDeclaredField("combat"); field.setAccessible(true); Object combat = field.get(plugin);
             if (args[0].equals("break-protection") || args[0].equals("break-gp-protection")) {
                 var protectionField = combat.getClass().getDeclaredField("protection"); protectionField.setAccessible(true);

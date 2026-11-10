@@ -52,7 +52,8 @@ public final class BedrockSeatProbe {
             when(plugins.isPluginEnabled("Geyser-Spigot")).thenReturn(true);
             Object seats = baseline ? null : Class.forName("de.ark.dinos.BedrockSeats").getDeclaredConstructor(JavaPlugin.class).newInstance(plugin);
             String[] species = {"trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon", "dilophosaurus"};
-            float[] expected = {2.880854f, 2.95751f, 2.89501f, 3.52001f, 2.509677f, 2.639064f, 2.211375f};
+            // Independent adult acceptance values: species back height + 1.62001 - 0.6.
+            float[] expected = {4.9277824f, 3.829385f, 3.92626f, 6.39501f, 2.509677f, 2.639064f, 2.39007975f};
             Entity mountedAtClose = null;
             for (int i = 0; i < species.length; i++) {
                 var session = mock(GeyserSession.class);

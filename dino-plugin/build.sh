@@ -44,11 +44,14 @@ fetch geyser-spigot-2.12.1-b1295.jar b60ff8f9a007f30823cf40173532a0390e6150cdfc5
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.TamingRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.RidingRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.GroundSpeedsTest
+"$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.SwimRulesTest
+"$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.DinoSizesTest
+"$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.WildSpawnRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.SpeciesRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.FlightRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.DinoPassengerOrderTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.DinoGrowthTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.CareRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.EggAssetsTest src/main/resources/egg-assets.properties
-"$task_java_home/bin/jar" --create --date 2026-11-03T00:00:00Z --file build/ArkDinos-1.1.0.jar -C build/classes . -C src/main/resources .
-shasum -a 256 build/ArkDinos-1.1.0.jar
+"$task_java_home/bin/jar" --create --date 2026-11-03T00:00:00Z --file build/ArkDinos-1.2.0.jar -C build/classes . -C src/main/resources .
+shasum -a 256 build/ArkDinos-1.2.0.jar

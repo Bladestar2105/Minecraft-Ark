@@ -24,8 +24,16 @@ final class CareRules {
     }
     static int requiredFeeds(String species) {
         return switch(species) {
+            case "trex" -> 12;
             case "triceratops","stegosaurus","brachiosaurus" -> 8;
             default -> 5;
+        };
+    }
+    static long feedCooldown(String species) {
+        return switch(species) {
+            case "trex" -> 20_000;
+            case "triceratops","stegosaurus","brachiosaurus" -> 15_000;
+            default -> FEED_COOLDOWN_MS;
         };
     }
     static boolean finisher(String species,String item) { return item!=null && item.equals(finisher(species)); }
@@ -45,7 +53,7 @@ final class CareRules {
         if(primary(species,item)) {
             if(p!=null && p.feeds()>=required)return new Feeding(Action.READY,p);
             if(p!=null && p.nextFeedAt()>now)return new Feeding(Action.WAIT,p);
-            return new Feeding(Action.FEED,new Progress(actor,p==null?1:p.feeds()+1,now+(required==8?15_000:FEED_COOLDOWN_MS),now+PROGRESS_EXPIRY_MS));
+            return new Feeding(Action.FEED,new Progress(actor,p==null?1:p.feeds()+1,now+feedCooldown(species),now+PROGRESS_EXPIRY_MS));
         }
         if(finisher(species,item))return new Feeding(p!=null && p.feeds()==required ? Action.FINISH : Action.NEED_FEEDS,p);
         return new Feeding(Action.IGNORE,p);

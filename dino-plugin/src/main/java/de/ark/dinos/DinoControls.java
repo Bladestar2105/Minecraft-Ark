@@ -70,7 +70,7 @@ final class DinoControls implements Listener, AutoCloseable {
                 && CareRules.SPECIES.contains(plugin.species(mob)) && plugin.owner(mob).equals(player.getUniqueId().toString())
                 && plugin.survival(player) && player.getWorld().equals(mob.getWorld())
                 && player.getLocation().distanceSquared(mob.getLocation()) <= 36
-                && !player.isInsideVehicle() && mob.getPassengers().isEmpty();
+                && !player.isInsideVehicle();
     }
 
     private ItemStack button(Material type, String name, String description) {
@@ -96,6 +96,8 @@ final class DinoControls implements Listener, AutoCloseable {
             menu.inventory.setItem(0, button(Material.LEAD, "Folgen", "Folgt dir. Aktuell: " + mode));
             menu.inventory.setItem(2, button(Material.ANVIL, "Bleiben", "Stoppt Bewegung und Verteidigung sofort."));
             menu.inventory.setItem(4, button(Material.GRASS_BLOCK, "Freilauf", "Wandert selbstständig und verteidigt dich weiterhin."));
+            menu.inventory.setItem(6, button(Material.SADDLE, plugin.publicRide(mob) ? "Reiten: öffentlich" : "Reiten: nur Besitzer",
+                    "Umschalten: Andere dürfen reiten; Besitz und Pflege bleiben bei dir."));
             menu.inventory.setItem(8, button(Material.IRON_BARS, "Freilassen …", "Nur erwachsene Tiere; danach erneut bestätigen."));
         }
         player.openInventory(menu.inventory);
@@ -109,11 +111,23 @@ final class DinoControls implements Listener, AutoCloseable {
                 || event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT
                 || event.getRawSlot() < 0 || event.getRawSlot() >= 9) return;
         int slot = event.getRawSlot();
-        if (menu.confirmation ? slot != 2 && slot != 6 : slot != 0 && slot != 2 && slot != 4 && slot != 8) return;
+        if (menu.confirmation ? slot != 2 && slot != 6 : slot != 0 && slot != 2 && slot != 4 && slot != 6 && slot != 8) return;
         menu.clicked = true;
         plugin.getServer().getScheduler().runTask(plugin, () -> {
             Entity entity = plugin.getServer().getEntity(menu.dino);
             if (!(entity instanceof Mob mob) || !valid(player, mob) || player.getOpenInventory().getTopInventory() != menu.inventory) return;
+            if (!menu.confirmation && slot == 6) {
+                plugin.publicRide(mob, !plugin.publicRide(mob));
+                player.closeInventory();
+                player.sendActionBar(Component.text(plugin.publicRide(mob) ? "Dein Urtier ist für alle zum Reiten freigegeben."
+                        : "Nur du darfst dein Urtier reiten."));
+                return;
+            }
+            if (!mob.getPassengers().isEmpty()) {
+                player.closeInventory();
+                player.sendActionBar(Component.text("Bitte zuerst absteigen. Die Reitfreigabe kannst du jederzeit ändern."));
+                return;
+            }
             if (menu.confirmation) {
                 player.closeInventory();
                 if (slot == 2) {

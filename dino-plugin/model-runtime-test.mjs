@@ -6,7 +6,7 @@ import zlib from 'node:zlib';
 import crypto from 'node:crypto';
 import { EventEmitter, once } from 'node:events';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, writeFile, copyFile, symlink, cp, rm } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, readFile, writeFile, copyFile, symlink, cp, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 
@@ -15,10 +15,26 @@ if (fallback && !['without-models','without-bridge'].includes(fallback)) throw E
 const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
-const cache = `${root}output/dino-model-spike-20261107/private/server`;
+const cache = process.env.DINO_MODEL_STACK_CACHE ?? `${root}output/dino-model-spike-20261107/private/server`;
 const paperCache = process.env.DINO_MODEL_CACHE ?? cache;
 const paperJar = process.env.DINO_MODEL_PAPER ?? `${cache}/paper.jar`;
 const output = process.env.DINO_MODEL_OUTPUT ?? `${root}output/dino-adapter-runtime-20261107`;
+// Independent acceptance values from the agreed adult proportions, not the implementation under test.
+const adultFactors={trex:2.1,triceratops:1.45,stegosaurus:1.55,brachiosaurus:2.15,velociraptor:1,pteranodon:1,dilophosaurus:1.15};
+const backs={trex:1.860844,triceratops:1.9375,stegosaurus:1.875,brachiosaurus:2.5,velociraptor:1.489667,pteranodon:1.619054,dilophosaurus:1.191365};
+const ravager=name=>['trex','velociraptor','dilophosaurus'].includes(name);
+const expectedNativeScale=name=>backs[name]*adultFactors[name]/(ravager(name)?2.2625:2.09375);
+// Java's plugin dependency resolver does not read the inherited proxy environment itself.
+const javaNetworkArgs=[];
+for(const [scheme,key] of [['http','HTTP_PROXY'],['https','HTTPS_PROXY']]) {
+  const configured=process.env[key]??process.env[key.toLowerCase()];
+  if(configured){const proxy=new URL(configured);javaNetworkArgs.push(`-D${scheme}.proxyHost=${proxy.hostname}`,`-D${scheme}.proxyPort=${proxy.port||(proxy.protocol==='https:'?'443':'80')}`);}
+}
+if(javaNetworkArgs.length){
+  javaNetworkArgs.push('-Dhttp.nonProxyHosts=localhost|127.*|[::1]');
+  const trustStore=process.env.DINO_MODEL_JAVA_TRUST_STORE??'/etc/ssl/certs/java/cacerts';
+  if(await access(trustStore).then(()=>true,()=>false))javaNetworkArgs.push(`-Djavax.net.ssl.trustStore=${trustStore}`);
+}
 await mkdir(`${output}/private`, { recursive: true });
 const directory = await mkdtemp(`${output}/private/model-`);
 const report = { startedAt: new Date().toISOString(), fixture: directory, checks: [], limits: [
@@ -103,7 +119,7 @@ async function check(name, action) { try { const detail = await action(); report
 
 async function start() {
   const offset=log.length;
-  server = spawn(`${javaHome}/bin/java`, ['-Xms256M', '-Xmx1G', '-XX:ActiveProcessorCount=3', '-Dterminal.jline=false', '-Dterminal.ansi=false', '-jar', 'paper.jar', '--nogui'], { cwd: directory, stdio: ['pipe', 'pipe', 'pipe'] });
+  server = spawn(`${javaHome}/bin/java`, ['-Xms256M', '-Xmx1G', '-XX:ActiveProcessorCount=3', ...javaNetworkArgs, '-Dterminal.jline=false', '-Dterminal.ansi=false', '-jar', 'paper.jar', '--nogui'], { cwd: directory, stdio: ['pipe', 'pipe', 'pipe'] });
   server.stdout.on('data', bytes => { log += bytes.toString(); }); server.stderr.on('data', bytes => { log += bytes.toString(); });
   await eventually(() => log.slice(offset).includes('Done (') || (server.exitCode !== null && assert.fail(log.slice(-4000))), 'Isolated Paper did not boot', 90000);
 }
@@ -118,13 +134,14 @@ try {
   if (!fallback) await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1295.jar`, `${directory}/plugins/geyser-spigot.jar`);
   for (const name of ['BetterModel', 'GeyserModelEngine', 'Geyser-Spigot', 'floodgate']) await cp(`${cache}/plugins/${name}`, `${directory}/plugins/${name}`, { recursive: true });
   if (!fallback) execFileSync('python3', ['-c',
-    'import sys; from pathlib import Path; sys.path.insert(0,sys.argv[1]); from install_plugins import dino_item_files; root=Path(sys.argv[2]); server=Path(sys.argv[3]); [(p.parent.mkdir(parents=True,exist_ok=True),p.write_bytes(content)) for name,content in dino_item_files(root) for p in [server/name.removeprefix("data/")]]',
-    `${root}publication/repository/scripts`, root, directory]);
+    // PNG previews are untracked; use the installer's embedded-texture extraction on a fresh checkout.
+    'import sys; from pathlib import Path; sys.path.insert(0,sys.argv[1]); from install_plugins import dino_item_files,dino_model_files; root=Path(sys.argv[2]); server=Path(sys.argv[3]); files=dino_item_files(root)+[(name,content) for name,content in dino_model_files(root) if name.endswith(".png") and "/ark_egg_" not in name]; [(p.parent.mkdir(parents=True,exist_ok=True),p.write_bytes(content)) for name,content in files for p in [server/name.removeprefix("data/")]]',
+    `${root}scripts`, root, directory]);
   const generatedPack = `${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack`;
   await rm(generatedPack, { recursive: true, force: true });
   await rm(`${generatedPack}.zip`, { force: true });
   const geyserConfig = `${directory}/plugins/Geyser-Spigot/config.yml`;
-  await writeFile(geyserConfig, (await readFile(geyserConfig, 'utf8')).replace(/^port: .*/m, `port: ${await freePort()}`));
+  execFileSync('python3', ['-c', 'import pathlib,sys,yaml; p=pathlib.Path(sys.argv[1]); c=yaml.safe_load(p.read_text()); c["bedrock"]["address"]="127.0.0.1"; c["bedrock"]["port"]=int(sys.argv[2]); p.write_text(yaml.safe_dump(c,sort_keys=False))', geyserConfig, String(await freePort())]);
   await mkdir(`${directory}/plugins/BetterModel/models`, { recursive: true });
   const rideSpecies = ['trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus'];
   const species = [...rideSpecies, 'mosasaurus'];
@@ -135,13 +152,14 @@ try {
   await copyFile(`${root}dino-models/models/ark_trex/ark_trex.bbmodel`,`${directory}/plugins/BetterModel/models/shared_fixture.bbmodel`);
   if(process.env.DINO_SAVED_MODEL_WORLD)await cp(process.env.DINO_SAVED_MODEL_WORLD,`${directory}/ark`,{recursive:true});
   await mkdir(`${directory}/fixture-classes`);
-  execFileSync(`${javaHome}/bin/javac`, ['--release', '25', '-sourcepath', '', '-cp', `${plugin}.deps/*:${directory}/plugins/GeyserModelEngine-1.0.9.jar`, '-d', `${directory}/fixture-classes`, ...['DinoModels', 'BetterModelAdapter', 'BetterModelCleanup', 'DinoPassengerOrder', 'BedrockSeats', 'DinoGrowth', 'EggAssets'].map(name => `${plugin}src/main/java/de/ark/dinos/${name}.java`), ...(!fallback?[`${plugin}src/runtime/java/de/ark/dinos/BridgeRaceProbe.java`]:[]), `${plugin}src/runtime/java/de/ark/dinos/${fallback?'ModelFallbackFixture':'ModelFixture'}.java`]);
+  execFileSync(`${javaHome}/bin/javac`, ['--release', '25', '-sourcepath', '', '-cp', `${plugin}.deps/*:${directory}/plugins/GeyserModelEngine-1.0.9.jar`, '-d', `${directory}/fixture-classes`, ...['DinoModels', 'BetterModelAdapter', 'BetterModelCleanup', 'DinoPassengerOrder', 'BedrockSeats', 'DinoGrowth', 'DinoSizes', 'EggAssets'].map(name => `${plugin}src/main/java/de/ark/dinos/${name}.java`), ...(!fallback?[`${plugin}src/runtime/java/de/ark/dinos/BridgeRaceProbe.java`]:[]), `${plugin}src/runtime/java/de/ark/dinos/${fallback?'ModelFallbackFixture':'ModelFixture'}.java`]);
   await mkdir(`${directory}/fixture-resources`);
   await copyFile(`${plugin}src/main/resources/egg-assets.properties`,`${directory}/fixture-resources/egg-assets.properties`);
   let fixtureYaml = 'name: ModelFixture\nversion: 1.0.0\nmain: de.ark.dinos.ModelFixture\napi-version: \'26.3\'\ndepend: [BetterModel, packetevents, GeyserModelEngine]\ncommands:\n  dm: {}\n';
   if(fallback)fixtureYaml=fixtureYaml.replace('main: de.ark.dinos.ModelFixture','main: de.ark.dinos.ModelFallbackFixture').replace('depend: [BetterModel, packetevents, GeyserModelEngine]',fallback==='without-models'?'':'depend: [BetterModel, packetevents]');
   await writeFile(`${directory}/fixture-resources/plugin.yml`,fixtureYaml);
   execFileSync(`${javaHome}/bin/jar`, ['--create', '--file', `${directory}/plugins/ModelFixture.jar`, '-C', `${directory}/fixture-classes`, '.', '-C', `${directory}/fixture-resources`, '.']);
+  report.fixtureSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ModelFixture.jar`)).digest('hex');
   await writeFile(`${directory}/eula.txt`, 'eula=true\n');
   await writeFile(`${directory}/server.properties`, `server-ip=127.0.0.1\nserver-port=${port}\nonline-mode=false\nlevel-name=ark\nlevel-type=minecraft:flat\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\ngenerate-structures=false\nview-distance=3\nsimulation-distance=3\nspawn-protection=0\nmax-tick-time=-1\nenable-rcon=true\nrcon.port=${rconPort}\nrcon.password=${password}\nenforce-secure-profile=false\nallow-flight=true\n`);
   await start();
@@ -201,8 +219,10 @@ try {
     });
   } else {
   await check('Pinned model stack registers all eight models',async()=>{
-    for(const name of species)assert.match(log,new RegExp(`Defined entity: modelengine:ark_${name}`));
-    assert.match(log,/Using BetterModel handler!/);return {paper:log.match(/This server is running Paper version ([^ ]+)/)?.[1],betterModel:'3.6.0',bridge:'1.0.9',geyser:'2.12.1-b1295',packetEvents:'2.14.0'};
+    const registered=(await command('dm model-registrations')).trim().split(';');
+    report.modelRegistrations=registered;
+    assert.deepEqual(registered,species.map(name=>`${name}:java=true,bedrock=true`));
+    assert.match(log,/Using BetterModel handler!/);return {paper:log.match(/This server is running Paper version ([^ ]+)/)?.[1],betterModel:'3.6.0',bridge:'1.0.9',geyser:'2.12.1-b1295',packetEvents:'2.14.0',registered};
   });
   if(process.env.DINO_MODEL_NAMES_ONLY) {
     await (await import('./name-runtime-checks.mjs')).default({check,command,alice,clients,Client,eventually,delay,inspect,species,nativeIds,readVi,spawns,report});
@@ -219,8 +239,8 @@ try {
     const state=await inspect('early');report.earlyStartup=state;
     report.earlyStartupTrace=await command('dm startup early');
     assert.equal(state.valid,'true');assert.equal(state.dead,'false');assert.ok(Number(state.health)>0);
-    assert.equal(Number(state.scale),1.860844/2.2625,'Startup carrier must retain native model scale');
-    assert.equal(state.trackers,'1');assert.equal(state.render,'1.0');return state;
+    assert.equal(Number(state.scale),expectedNativeScale('trex'),'Startup carrier must retain native model scale');
+    assert.equal(state.trackers,'1');assert.equal(Number(state.render),adultFactors.trex);return state;
   });
   await check('Unmodified BetterModel emitted packet reproduces display-first real rider',async()=>{
     await command('dm spawn baseline -7');await delay(500);await command('dm mount baseline ModelRider');await delay(400);
@@ -230,18 +250,19 @@ try {
   });
   report.measurements = {};
   const bodyMids={trex:1.423344,triceratops:1.25,stegosaurus:1.21875,brachiosaurus:1.90625,velociraptor:1.145916,pteranodon:1.306554,dilophosaurus:.9};
-  const backs={trex:1.860844,triceratops:1.9375,stegosaurus:1.875,brachiosaurus:2.5,velociraptor:1.489667,pteranodon:1.619054,dilophosaurus:1.191365};
   await check('Seven actual native seat and collision measurements; emitted player-first passenger packets',async()=>{
     for (const [i, name] of rideSpecies.entries()) {
       await command(`dm spawn ${name} ${i*7}`); await delay(500);
       await command(`dm mount ${name} ModelRider`); await delay(400);
       const state=await inspect(name);report.measurements[name]=state;
-      assert.equal(state.trackers,'1');assert.equal(state.render,'1.0');assert.ok(Number(state.displays)>=7);assert.equal(Number(state.flags)&32,32);
-      assert.ok(Math.abs(Number(state.riderY)+.6-backs[name])<.00001,`${name} back and seated pelvis differ`);
-      assert.ok(Number(state.width)>(name==='dilophosaurus'?.9:1.2)&&Number(state.width)<2.3);assert.ok(Number(state.height)>(name==='dilophosaurus'?1:1.3)&&Number(state.height)<2.1);
+      assert.equal(state.trackers,'1');assert.equal(Number(state.render),adultFactors[name]);assert.ok(Number(state.displays)>=7);assert.equal(Number(state.flags)&32,32);
+      assert.ok(Math.abs(Number(state.riderY)+.6-backs[name]*adultFactors[name])<.00001,`${name} back and seated pelvis differ`);
+      assert.ok(Math.abs(Number(state.scale)-expectedNativeScale(name))<.000001,`${name} native scale differs`);
+      assert.ok(Math.abs(Number(state.width)-(ravager(name)?1.95:1.9)*expectedNativeScale(name))<.00001,`${name} native width differs`);
+      assert.ok(Math.abs(Number(state.height)-(ravager(name)?2.2:1.75)*expectedNativeScale(name))<.00001,`${name} native height differs`);
       const wire=mountPackets(alice,state).findLast(packet=>packet.passengers.includes(alice.entityId));assert.ok(wire);assert.equal(wire.passengers[0],alice.entityId);assert.equal(wire.passengers.length,Number(state.displays)+1);state.wire=wire;
       await command(`dm dismount ${name}`);
-      assert.equal(await command(`dm ray ${name} ${bodyMids[name]}`),`ray=${state.id}\n`);
+      assert.equal(await command(`dm ray ${name} ${bodyMids[name]*adultFactors[name]}`),`ray=${state.id}\n`);
       // The protocol interaction targets the real native carrier, never a visual display/proxy.
       await command(`tp ModelRider ${i*7} 4 2`);alice.interact(Number(state.id));await delay(200);
       assert.equal((await inspect(name)).clicked,state.id);
@@ -368,7 +389,7 @@ try {
     for(const name of species)await eventually(async()=>/active=1;stale=0/.test(await command(`dm bridge-state ${name}`)),`${name} GME tracker identity was not replaced after adapter reset`);
     await command('dm unload trex');await eventually(async()=>/active=0;stale=0/.test(await command('dm bridge-state trex')),'Unloaded GME actor survived its tracker');
     await command('dm attach trex');await eventually(async()=>/active=1;stale=0/.test(await command('dm bridge-state trex')),'Reattached GME actor does not use the current tracker');
-    await command('dm attach early');assert.equal(Number((await inspect('early')).scale),1.860844/2.2625);
+    await command('dm attach early');assert.equal(Number((await inspect('early')).scale),expectedNativeScale('trex'));
     return 'No duplicate trackers; unload and reset restore caller scale; all seven reattach';
   });
   await check('Only owned bridge actor spawn factories change, including an initially uncached actor',async()=>{
@@ -476,12 +497,12 @@ try {
       const adult=await inspect(name);await command(`dm prepare-juvenile ${name}`);const birth=await inspect(name);
       assert.equal(birth.scale,'0.45');assert.equal(birth.trackers,'0');
       await command(`dm attach ${name}`);await delay(100);const juvenile=await inspect(name);
-      assert.ok(Math.abs(Number(juvenile.scale)-Number(adult.scale)*.45)<.002,`${name} native juvenile scale differs`);
-      assert.ok(Math.abs(Number(juvenile.render)-.45)<.002,`${name} model juvenile scale differs`);
+      assert.ok(Math.abs(Number(juvenile.scale)-expectedNativeScale(name)*.45)<.002,`${name} native juvenile scale differs`);
+      assert.ok(Math.abs(Number(juvenile.render)-adultFactors[name]*.45)<.002,`${name} model juvenile scale differs`);
       await command(`dm age ${name} 450000`);const halfway=await inspect(name);
-      assert.ok(Math.abs(Number(halfway.scale)-Number(adult.scale)*.725)<.002);assert.ok(Math.abs(Number(halfway.render)-.725)<.002);
+      assert.ok(Math.abs(Number(halfway.scale)-expectedNativeScale(name)*.725)<.002);assert.ok(Math.abs(Number(halfway.render)-adultFactors[name]*.725)<.002);
       await command(`dm unload ${name}`);const nativeHalfway=await inspect(name);assert.ok(Math.abs(Number(nativeHalfway.scale)-.725)<.002);assert.equal(nativeHalfway.trackers,'0');
-      await command(`dm attach ${name}`);await command(`dm age ${name} -1`);const restored=await inspect(name);assert.equal(restored.scale,adult.scale);assert.equal(restored.render,'1.0');
+      await command(`dm attach ${name}`);await command(`dm age ${name} -1`);const restored=await inspect(name);assert.equal(Number(restored.scale),expectedNativeScale(name));assert.equal(Number(restored.render),adultFactors[name]);
       await command(`dm unload ${name}`);const nativeAdult=await inspect(name);assert.ok(Math.abs(Number(nativeAdult.scale)-1)<.002,'Growing carrier must restore its original adult baseline');await command(`dm adult ${name}`);await command(`dm attach ${name}`);
       samples[name]={adult,birth,juvenile,halfway,nativeHalfway,restored,nativeAdult};
     }
@@ -541,7 +562,7 @@ try {
     for(const name of species)await eventually(async()=>/active=1;stale=0/.test(await command(`dm bridge-state ${name}`)),`${name} GME tracker identity was not replaced after BetterModel reload`);
     for(const name of species)await verifyBridgeSpawn(name,true);
     report.earlyReload=await inspect('early');assert.equal(report.earlyReload.valid,'true');assert.equal(report.earlyReload.dead,'false');
-    assert.equal(Number(report.earlyReload.scale),1.860844/2.2625);assert.equal(report.earlyReload.trackers,'1');
+    assert.equal(Number(report.earlyReload.scale),expectedNativeScale('trex'));assert.equal(Number(report.earlyReload.render),adultFactors.trex);assert.equal(report.earlyReload.trackers,'1');
     await command('dm phase pteranodon flap');await delay(200);
     const state=await inspect('pteranodon');assert.equal(state.ground,'false');assert.equal(state.trackers,'1');assert.equal(state.render,'1.0');assert.match(state.running,/name=flap/);
     return state;

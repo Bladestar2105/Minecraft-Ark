@@ -123,7 +123,7 @@ async function stop(){clients.forEach(c=>c.close());await command('save-all flus
 try {
  for(const name of ['libraries','versions','cache'])await symlink(`${cache}/${name}`,`${directory}/${name}`);
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
- await copyFile(process.env.DINO_EGG_PLUGIN_JAR??`${plugin}build/ArkDinos-1.1.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+ await copyFile(process.env.DINO_EGG_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
  const modelCache=`${root}output/dino-model-spike-20261107/private/server`;
  if(!process.env.DINO_EGG_FALLBACK){
   for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar'])await copyFile(`${modelCache}/plugins/${name}`,`${directory}/plugins/${name}`);
@@ -140,7 +140,7 @@ try {
   }
  }
 
- await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\n');
+ await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\nwild-spawning:\n  enabled: false\n');
  await mkdir(`${directory}/fixture-classes`);
  execFileSync(`${javaHome}/bin/javac`,['--release','25','-sourcepath','','-cp',`${plugin}.deps/*`,'-d',`${directory}/fixture-classes`,`${plugin}src/care/java/de/ark/dinos/CareFixture.java`]);
  execFileSync(`${javaHome}/bin/jar`,['--create','--file',`${directory}/plugins/CareFixture.jar`,'-C',`${directory}/fixture-classes`,'.','-C',`${plugin}src/care/resources`,'.']);

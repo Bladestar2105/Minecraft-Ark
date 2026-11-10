@@ -367,7 +367,8 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         modeledCarriers.put(mob.getEntityId(), modelName);
         models.putIfAbsent(mob.getUniqueId(), new Model(mob, modelName));
         var tracker = renderer.getOrCreate(BukkitAdapter.adapt(mob), TrackerModifier.DEFAULT,
-                created -> created.scaler(ModelScaler.value(modelName.equals("ark_mosasaurus") ? 1 : (float) growthScale(mob))));
+                created -> created.scaler(ModelScaler.value((float) (DinoSizes.adultScale(modelName)
+                        * (modelName.equals("ark_mosasaurus") ? 1 : growthScale(mob))))));
         String phase = previous == null || previous.phase == null ? "idle" : previous.phase;
         Model current = models.get(mob.getUniqueId());
         if (current.tracker != tracker) { current.phase = null; current.detailStage = null; current.customName = null; }
@@ -446,7 +447,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         }
         if (Double.isFinite(model.growth) && Math.abs(value - model.growth) < .001 && value != 1) return;
         if (value == model.growth) return;
-        model.tracker.scaler(ModelScaler.value((float) value));
+        model.tracker.scaler(ModelScaler.value((float) (DinoSizes.adultScale(model.name) * value)));
         mob.getAttribute(Attribute.SCALE).setBaseValue(nativeScale(model.name) * value);
         bedrockSeats.put(mob.getUniqueId(), (float) (backHeight(model.name) * value + 1.62001 - .6));
         model.growth = value;
@@ -454,7 +455,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
 
     // Native attachment height times SCALE is the seat; player feet sit 0.6 blocks below it.
     static double nativeScale(String name) {
-        return backHeight(name) / (name.equals("ark_trex") || name.equals("ark_velociraptor") || name.equals("ark_dilophosaurus") ? 2.2625 : 2.09375);
+        return DinoSizes.nativeScale(name);
     }
 
     static float bedrockSeatY(String name) {
@@ -463,16 +464,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
     }
 
     private static double backHeight(String name) {
-        return switch (name) {
-            case "ark_trex" -> 1.860844;
-            case "ark_triceratops" -> 1.9375;
-            case "ark_stegosaurus" -> 1.875;
-            case "ark_brachiosaurus" -> 2.5;
-            case "ark_velociraptor" -> 1.489667;
-            case "ark_pteranodon" -> 1.619054;
-            case "ark_dilophosaurus" -> 1.191365;
-            default -> throw new IllegalArgumentException("Unknown dinosaur model " + name);
-        };
+        return DinoSizes.backHeight(name);
     }
 
     void animation(Mob mob, String phase) {

@@ -23,18 +23,34 @@ public final class CareRulesTest {
             check(result.action()==CareRules.Action.FEED && result.progress().feeds()==n,"Eight mixed plant feeds");herb=result.progress();
         }
         check(CareRules.feed("triceratops","TORCHFLOWER_SEEDS","alice",herb,now+120_000).action()==CareRules.Action.FINISH,"Seeds finish only after eight plant feeds");
-        var first=CareRules.feed("trex", "BEEF", "alice", null, now);
+        var rex=CareRules.feed("trex", "BEEF", "alice", null, now).progress();
+        check(CareRules.feed("trex", "BEEF", "alice", rex, now+19_999).action()==CareRules.Action.WAIT,
+                "Rex feeding must reject the old ten-second interval and wait twenty seconds");
+        for(int n=2;n<=12;n++) {
+            check(CareRules.feed("trex", "BONE", "alice", rex, now+(n-1)*20_000).action()==CareRules.Action.NEED_FEEDS,
+                    "A Rex bone cannot bypass any of its twelve required meat feeds");
+            var result=CareRules.feed("trex", n%2==0?"MUTTON":"BEEF", "alice", rex, now+(n-1)*20_000);
+            check(result.action()==CareRules.Action.FEED && result.progress().feeds()==n, "Rex accepts its next meat feed at twenty seconds");
+            rex=result.progress();
+        }
+        check(CareRules.feed("trex", "BONE", "alice", rex, now+220_000).action()==CareRules.Action.FINISH,
+                "Twelve Rex feeds finish no earlier than three minutes forty seconds");
+        check(CareRules.feed("trex", "BONE", "bob", rex, now+220_000).action()==CareRules.Action.LOCKED,
+                "Another player cannot finish a fed Rex");
+        check(CareRules.feed("trex", "BEEF", "alice", rex, now+240_000).action()==CareRules.Action.READY,
+                "A fully fed Rex does not consume a thirteenth meat item");
+        var first=CareRules.feed("velociraptor", "BEEF", "alice", null, now);
         check(first.action()==CareRules.Action.FEED && first.progress().feeds()==1, "First feeding records progress");
-        check(CareRules.feed("trex", "BEEF", "alice", first.progress(), now+9_999).action()==CareRules.Action.WAIT, "Ten-second feeding cooldown");
-        check(CareRules.feed("trex", "BONE", "alice", first.progress(), now+10_000).action()==CareRules.Action.NEED_FEEDS, "Bone cannot skip five feeds");
-        check(CareRules.feed("trex", "BEEF", "bob", first.progress(), now+10_000).action()==CareRules.Action.LOCKED, "Progress cannot be stolen");
+        check(CareRules.feed("velociraptor", "BEEF", "alice", first.progress(), now+9_999).action()==CareRules.Action.WAIT, "Ten-second feeding cooldown");
+        check(CareRules.feed("velociraptor", "BONE", "alice", first.progress(), now+10_000).action()==CareRules.Action.NEED_FEEDS, "Bone cannot skip five feeds");
+        check(CareRules.feed("velociraptor", "BEEF", "bob", first.progress(), now+10_000).action()==CareRules.Action.LOCKED, "Progress cannot be stolen");
         var progress=first.progress();
-        for(int i=1;i<5;i++) progress=CareRules.feed("trex", "BEEF", "alice", progress, now+i*10_000).progress();
+        for(int i=1;i<5;i++) progress=CareRules.feed("velociraptor", "BEEF", "alice", progress, now+i*10_000).progress();
         check(progress.feeds()==5, "Five primary feeds");
-        check(CareRules.feed("trex", "BEEF", "alice", progress, now+50_000).action()==CareRules.Action.READY, "Extra primary food is retained");
-        check(CareRules.feed("trex", "BONE", "bob", progress, now+50_000).action()==CareRules.Action.LOCKED, "Finisher cannot steal ownership");
-        check(CareRules.feed("trex", "BONE", "alice", progress, now+40_000).action()==CareRules.Action.FINISH, "Finisher accepted after fifth feed");
-        var expired=CareRules.feed("trex", "BEEF", "bob", progress, progress.expiresAt());
+        check(CareRules.feed("velociraptor", "BEEF", "alice", progress, now+50_000).action()==CareRules.Action.READY, "Extra primary food is retained");
+        check(CareRules.feed("velociraptor", "BONE", "bob", progress, now+50_000).action()==CareRules.Action.LOCKED, "Finisher cannot steal ownership");
+        check(CareRules.feed("velociraptor", "BONE", "alice", progress, now+40_000).action()==CareRules.Action.FINISH, "Finisher accepted after fifth feed");
+        var expired=CareRules.feed("velociraptor", "BEEF", "bob", progress, progress.expiresAt());
         check(expired.action()==CareRules.Action.FEED && expired.progress().actor().equals("bob") && expired.progress().feeds()==1, "Expired progress starts over");
         var adult=new CareRules.Parent("trex", "alice", true, now+60_000, 0);
         check(CareRules.pair(adult,adult,36,now), "Same owner's adult pair within six blocks");
@@ -49,6 +65,6 @@ public final class CareRulesTest {
         check(CareRules.deadline(now+180_000,300_000,CareRules.GROWTH_MS)==now+780_000, "Old five-minute juveniles retain two elapsed minutes under normal growth");
         check(CareRules.deadline(now+780_000,900_000,CareRules.GROWTH_MS)==now+780_000, "Normalized growth does not extend again");
         check(!CareRules.SPECIES.contains("mosasaurus") && !CareRules.primary("mosasaurus","COD") && !CareRules.finisher("mosasaurus","SEAGRASS"), "Wild Mosa is excluded from care");
-        System.out.println("PASS care foods, five feeds, cooldown, expiry, owner isolation and adult breeding rules");
+        System.out.println("PASS care foods, twelve-feed Rex, unchanged five-feed raptors, cooldown, expiry, owner isolation and adult breeding rules");
     }
 }

@@ -175,6 +175,9 @@ class Model:
         else:raise ValueError(self.name)
         if self.name in ['ark_triceratops','ark_stegosaurus','ark_brachiosaurus']:
             tracks['jaw']=rotate_clip([[-18,0,0],[-4,0,0],[-10,0,0]])
+            # BetterModel resets overridden phase iterators per bone. Include the
+            # head even when still so jaw/head resume idle on the same clock.
+            tracks.setdefault('head',rotate_clip([[0,0,0],[0,0,0],[0,0,0]]))
         self.animate('attack',.75,tracks,loop='once')
     def export(self):
         out=ROOT/'models'/self.name;out.mkdir(parents=True,exist_ok=True);tex=png_texture(self.colors)
@@ -373,7 +376,8 @@ def velociraptor():
     for side,x in [('left',-4.7),('right',4.7)]:
         digitigrade(m,side,x,18,4,.73,True)
         m.mass('thigh_muscle_'+side,[x-2.1,11.5,1],[x+2.1,20,7],'leg_'+side)
-        m.bone('arm_'+side,[x,22,-6],'body');m.beam('upper_arm_'+side,[x,22,-7],[x*1.5,16,-9],1.7,bone='arm_'+side,color=1);m.beam('forearm_'+side,[x*1.5,16,-9],[x*1.8,17,-18],1.4,bone='arm_'+side)
+        # Start the shoulder at its rotation joint so the rake cannot pull it off the torso.
+        m.bone('arm_'+side,[x,22,-6],'body');m.beam('upper_arm_'+side,[x,22,-6],[x*1.5,16,-9],1.7,bone='arm_'+side,color=1);m.beam('forearm_'+side,[x*1.5,16,-9],[x*1.8,17,-18],1.4,bone='arm_'+side)
         sign=-1 if x<0 else 1
         for i,z in enumerate([-11,-13.5,-16]):m.beam(f'feather_{side}_{i}',[x*1.55,16.5,z],[x*1.55+sign*(4-i*.4),15,z+4],1.1,.65,'arm_'+side,7)
         for dx in [-.5,.5]:m.tapered('hand_claw_'+side+str(dx),[x*1.8+dx,17,-18],[x*1.8+dx,16,-20],.55,'arm_'+side,6,2)
@@ -382,7 +386,8 @@ def velociraptor():
 def pteranodon():
     m=Model('ark_pteranodon','Pteranodon',['#726e60','#938875','#b6ab91','#494a3e','#dab85c','#242a21','#c7b58c','#8b6d56'],'Verbundene ledrige Flughaut · langer Schnabel · schlanker Hinterkopfkamm')
     m.bone('body',[0,21,1]);m.mass('torso',[-4.3,16,-6],[4.3,26,7]);m.mass('breast',[-3.6,15,-5],[3.6,20,5],color=2)
-    m.bone('neck',[0,23,-5],'body');m.beam('neck',[0,23,-5],[0,29,-14],4.2,bone='neck',color=1)
+    # The skull's three-unit beak jab still needs an overlapping neck connection.
+    m.bone('neck',[0,23,-5],'body');m.beam('neck',[0,23,-5],[0,29,-15],4.2,bone='neck',color=1)
     m.bone('head',[0,29,-14],'neck');m.mass('skull',[-3.1,27,-23],[3.1,33,-12],'head',1)
     m.tapered('long_beak',[0,28.8,-23],[0,28,-49],4,'head',6,6);m.tapered('lower_beak',[0,27.1,-23],[0,26.9,-46],2.2,'head',2,5)
     m.tapered('head_crest',[0,32,-20],[0,42,-8],3.7,'head',7,6);m.growth_detail('growth_head_crest',[0,32,-20],'head','head_crest');m.eyes(3.15,29,-20,size=1.3)
@@ -400,6 +405,8 @@ def pteranodon():
             a,b=next((a,b) for a,b in zip(profile,profile[1:]) if a[0]<=mid<=b[0]);f=(mid-a[0])/(b[0]-a[0]);front=a[1]*(1-f)+b[1]*f;back=a[2]*(1-f)+b[2]*f;y=22.7-(x1-4)*.045
             lo,hi=sorted([sign*x1,sign*x2]);m.cube(f'membrane_{side}_{i}',[lo,y-.22,front],[hi,y+.1,max(front+.4,back)],wing if mid<16 else outer,7)
         m.beam('membrane_trailing_root_'+side,[sign*4,18,9],[sign*17,22,14],.7,bone=wing,color=1)
+        # Stationary hip flesh covers the walking leg's vertical floor compensation.
+        m.mass('hip_joint_'+side,[sign*3.8-1.1,14.5,5.5],[sign*3.8+1.1,18.5,8.5])
         digitigrade(m,side,sign*3.8,16,7,.42)
     m.finish()
     # Twist the outer membranes vertically beside the body, then fold the long fingers back.

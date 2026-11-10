@@ -77,7 +77,8 @@ final class DinoAquatic implements Listener {
         dolphin.getAttribute(Attribute.SCALE).setBaseValue(4);
         dolphin.getAttribute(Attribute.ATTACK_DAMAGE).setBaseValue(16);
         dolphin.getAttribute(Attribute.FOLLOW_RANGE).setBaseValue(16);
-        dolphin.setPersistent(true); dolphin.setRemoveWhenFarAway(false); dolphin.setCanPickupItems(false);
+        dolphin.setPersistent(!dolphin.getScoreboardTags().contains(DinoWildSpawns.NATURAL_TAG));
+        dolphin.setRemoveWhenFarAway(false); dolphin.setCanPickupItems(false);
         dolphin.setHasFish(false); dolphin.setTarget(null); dolphin.setAware(true);
         dolphin.setRemainingAir(dolphin.getMaximumAir()); dolphin.setMoistness(2400);
         var swimmer=new Swimmer(dolphin, wander);swimmers.put(mob.getUniqueId(), swimmer);

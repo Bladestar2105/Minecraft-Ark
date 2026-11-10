@@ -22,9 +22,13 @@ weiterhin den persönlichen Rang und die fehlenden Punkte zum nächsten Rang.
 
 ## Dinos
 
-ArkDinos 1.1.0 gibt den 24 Tieren in zwölf Habitaten sechs eigene Modelle: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor und Pteranodon. Nimm auf Java und Bedrock die Server-Ressourcenpakete an, um sie zu sehen. **Fackelliliensamen + Benutzen** zähmt ein unbesessenes Tier und verbraucht einen Samen. **Schleichen + Benutzen** schaltet eigene Tiere zwischen Folgen/Bleiben um. Gezähmte Tiere greifen Spieler nicht an. Sie folgen in derselben Welt bis 48 Blöcke und laden keine entfernten Chunks.
+ArkDinos 1.2.0 hat acht eigene Arten: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor, Pteranodon, Dilophosaurus und den wilden Mosasaurus. Nimm die Server-Ressourcenpakete auf Java und Bedrock an. Wilde Tiere können in geladenen, geeigneten Gebieten der eingerichteten Dino-Welten entstehen und ohne festes Heimrevier weiterwandern. In alten Weltständen vorhandene Zäune bleiben echte Hindernisse.
 
-Der Besitzer steigt mit **leerer Haupthand + Benutzen** auf einen freien eigenen Dino. Normale Bewegung lenkt, Schleichen steigt ab. Ein gezähmter Pteranodon hebt mit Springen ab, fliegt entlang der Blickrichtung und schwebt beim Loslassen der Bewegung. [Dino-Reitregeln, Landung und offene Geräteabnahme](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding-DE).
+In Dino-Welten zähmst du nach Art mit mehreren Fütterungen und einem Abschlussitem: **T-Rex zwölfmal rohes Fleisch im Abstand von zwanzig Sekunden, dann ein Knochen**; Raptor und Dilo fünfmal Fleisch im Abstand von zehn Sekunden, dann ein Knochen. Für Fisch- und Pflanzenfresser gelten die [vollständigen Futterregeln](Dino-Riding-DE.md). Nur außerhalb der Prototypwelten bleibt das alte Ein-Samen-System aktiv.
+
+**Leere Haupthand + Benutzen** steigt auf ein freies erwachsenes Reittier. **Schleichen + Benutzen** öffnet für den Besitzer das Menü mit Folgen, Bleiben, Freilauf, Reitfreigabe und bestätigtem Freilassen. Standardmäßig reitet nur der Besitzer; „Reiten: öffentlich“ erlaubt auch Gästen das Reiten, ohne ihnen Besitz oder Pflege zu übertragen. Es gibt weiterhin einen Sitz. Sprinten beschleunigt; Schleichen steigt ab. Pteranodon hebt mit Springen ab und fliegt mit zwölf, beim Sprinten mit achtzehn Blöcken pro Sekunde.
+
+Landdinos steigen in freiem Wasser zur Oberfläche, auch mit Reiter, in Bleiben oder bei ausgeloggtem Besitzer. Wilde Jäger greifen Survival-Spieler an. Eigene erwachsene Tiere verteidigen ihren Besitzer und sich selbst; Bleiben pausiert automatische Kämpfe. Beim Reiten löst die Angriffstaste einen gezielten Angriff aus. Eigentümer und gezähmte Haustiere sind geschützt, gegen andere Spieler gelten die Server-Schutzregeln. Tiere laden keine entfernten Chunks und teleportieren sich nicht hinterher. [Reitregeln und Grenzen](Dino-Riding-DE.md).
 
 ## Grundstücke, Missionen und Kreativ
 

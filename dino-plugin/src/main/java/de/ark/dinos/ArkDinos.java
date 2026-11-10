@@ -55,12 +55,15 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     private DinoCombat combat;
     private DinoAquatic aquatic;
     private DinoPtera ptera;
+    private DinoSwimming swimming;
+    private DinoWildSpawns wildSpawns;
     private NamespacedKey speciesKey;
     private NamespacedKey flightKey;
     private boolean stopUnavailable;
     private final TamingRules rules = new TamingRules();
     private NamespacedKey ownerKey;
     private NamespacedKey stayKey;
+    private NamespacedKey publicRideKey;
     private List<String> survivalWorlds;
     private List<String> prototypeWorlds;
 
@@ -72,6 +75,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 ? getConfig().getStringList("prototype-worlds") : survivalWorlds;
         ownerKey = new NamespacedKey(this, "owner");
         stayKey = new NamespacedKey(this, "stay");
+        publicRideKey = new NamespacedKey(this, "public-ride");
         speciesKey = new NamespacedKey(this, "species");
         flightKey = new NamespacedKey(this, "flight");
         models = new DinoModels(this);
@@ -80,9 +84,11 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         aquatic = new DinoAquatic(this);
         controls = new DinoControls(this);
         ptera = new DinoPtera(this);
+        swimming = new DinoSwimming(this);
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(care, this);
         getServer().getWorlds().forEach(world -> world.getEntities().forEach(this::restore));
+        wildSpawns = new DinoWildSpawns(this);
         getServer().getScheduler().runTaskTimer(this, this::follow, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, this::ride, 1L, 1L);
     }
@@ -94,6 +100,8 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         if (combat != null) combat.close();
         if (aquatic != null) aquatic.close();
         if (ptera != null) ptera.close();
+        if (swimming != null) swimming.close();
+        if (wildSpawns != null) wildSpawns.close();
         flying.clear();
         landing.clear();
         if (models != null) models.close();
@@ -127,6 +135,29 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     String owner(Entity entity) {
         var data = entity.getPersistentDataContainer();
         return data.has(ownerKey, PersistentDataType.STRING) ? data.get(ownerKey, PersistentDataType.STRING) : "";
+    }
+
+    boolean publicRide(Entity entity) {
+        return owned(entity) && entity.getPersistentDataContainer()
+                .getOrDefault(publicRideKey, PersistentDataType.BYTE, (byte) 0) == 1;
+    }
+
+    void publicRide(Mob mob, boolean shared) {
+        mob.getPersistentDataContainer().set(publicRideKey, PersistentDataType.BYTE, (byte) (shared ? 1 : 0));
+        if (riding.containsKey(mob.getUniqueId()) && driver(mob) == null) endRide(mob);
+    }
+
+    boolean canRide(Mob mob, Player player) {
+        return owned(mob) && mob.isValid() && !mob.isDead() && adult(mob)
+                && player.isOnline() && !player.isDead() && mob.getWorld().equals(player.getWorld())
+                && RidingRules.canRide(owner(mob), player.getUniqueId().toString(), publicRide(mob), survival(player));
+    }
+
+    Player driver(Mob mob) {
+        if (riding.get(mob.getUniqueId()) != mob) return null;
+        var passengers = mob.getPassengers();
+        return passengers.size() == 1 && passengers.getFirst() instanceof Player player
+                && canRide(mob, player) && !player.getCurrentInput().isSneak() ? player : null;
     }
 
     boolean staying(Entity entity) {
@@ -220,6 +251,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         controls.released(mob, previousOwner);
         mob.getPersistentDataContainer().remove(ownerKey);
         mob.getPersistentDataContainer().remove(stayKey);
+        mob.getPersistentDataContainer().remove(publicRideKey);
         mob.removeScoreboardTag("ark_dino_tamed"); mob.addScoreboardTag("ark_dino_wild");
         loaded.remove(mob.getUniqueId());
         combat.restore(mob);
@@ -251,7 +283,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 ravager.setCanJoinRaid(false);
             }
             mob.setAI(true);
-            mob.setPersistent(true);
+            mob.setPersistent(!mob.getScoreboardTags().contains(DinoWildSpawns.NATURAL_TAG));
             mob.setRemoveWhenFarAway(false);
             mob.setCanPickupItems(false);
             mob.setDespawnInPeacefulOverride(TriState.FALSE);
@@ -264,6 +296,26 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     String species(Entity entity) {
         return entity.getPersistentDataContainer().get(speciesKey, PersistentDataType.STRING);
+    }
+
+    Mob spawnWild(org.bukkit.Location point, String species) {
+        if (!prototype(point.getWorld()) || !CareRules.SPECIES.contains(species) && !"mosasaurus".equals(species)) return null;
+        Class<? extends Mob> carrier = switch (species) {
+            case "trex", "velociraptor", "dilophosaurus" -> Ravager.class;
+            case "mosasaurus" -> Dolphin.class;
+            default -> Sniffer.class;
+        };
+        Mob mob = point.getWorld().spawn(point, carrier, CreatureSpawnEvent.SpawnReason.NATURAL, false, entity -> {
+            entity.addScoreboardTag("ark_dino");
+            entity.addScoreboardTag("ark_dino_wild");
+            entity.addScoreboardTag(DinoWildSpawns.NATURAL_TAG);
+            entity.getPersistentDataContainer().set(speciesKey, PersistentDataType.STRING, species);
+            entity.setPersistent(false);
+            entity.setRemoveWhenFarAway(false);
+        });
+        if (!mob.isValid()) return null; // A protection plugin may cancel the native spawn event.
+        restore(mob);
+        return mob;
     }
 
     private void identify(Entity entity) {
@@ -291,12 +343,15 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             if (prepare(mob)) loaded.put(entity.getUniqueId(), mob);
         }
         if (entity instanceof Mob mob) combat.restore(mob);
+        if (swimming != null) swimming.restore(entity);
     }
 
     boolean tame(Mob mob, Player player) {
         if (!supported(mob) || owned(mob) || !survival(player) || !prepare(mob)) return false;
         combat.cancel(mob);
         controls.clearMode(mob);
+        DinoWildSpawns.preserve(mob);
+        mob.getPersistentDataContainer().remove(publicRideKey);
         mob.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, player.getUniqueId().toString());
         mob.getPersistentDataContainer().set(stayKey, PersistentDataType.BYTE, (byte) 0);
         mob.removeScoreboardTag("ark_dino_wild");
@@ -326,6 +381,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             Mob mob = loaded.remove(entity.getUniqueId());
             if (mob != null) { endRide(mob); if (flying.containsKey(mob.getUniqueId())) restoreGravity(mob); }
             models.unload(entity);
+            if (swimming != null) swimming.unload(entity);
         });
     }
 
@@ -340,6 +396,11 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 event.setCancelled(true);
                 player.sendActionBar(Component.text("Nur der Besitzer kann sein Urtier benennen."));
             }
+            if (!event.isCancelled() && entity.getScoreboardTags().contains(DinoWildSpawns.NATURAL_TAG)) {
+                getServer().getScheduler().runTask(this, () -> {
+                    if (entity.isValid() && entity.customName() != null) DinoWildSpawns.preserve((Mob) entity);
+                });
+            }
             return;
         }
         if (aquatic(entity)) {
@@ -352,6 +413,13 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         if (!supported(entity) || (!owned(entity) && !entity.getScoreboardTags().contains("ark_dino"))) return;
         if (event.getHand() != EquipmentSlot.HAND) {
             if (owned(entity)) event.setCancelled(true);
+            return;
+        }
+        // Summons are identified on the next tick. Never let that gap select legacy one-seed taming.
+        if (prototype(entity) && species(entity) == null) identify(entity);
+        if (prototype(entity) && (species(entity) == null || !CareRules.SPECIES.contains(species(entity)))) {
+            event.setCancelled(true);
+            player.sendActionBar(Component.text("Dieses Urtier ist noch nicht bereit. Bitte erneut versuchen."));
             return;
         }
         if (owned(entity) && player.isInsideVehicle()) {
@@ -372,6 +440,9 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         boolean seed = item.getType() == Material.TORCHFLOWER_SEEDS && item.getAmount() > 0;
         var action = rules.interact(owned(entity) ? owner(entity) : null, player.getUniqueId().toString(),
                 survival(player), seed, player.isSneaking(), staying(entity));
+        // Sharing grants mounting only. Feeding, naming and the control menu keep their owner checks.
+        if (owned(entity) && publicRide(entity) && item.getType().isAir() && !player.isSneaking()
+                && canRide((Mob) entity, player)) action = TamingRules.Action.IGNORE;
         if (owned(entity) || action != TamingRules.Action.IGNORE) event.setCancelled(true);
         if (action == TamingRules.Action.DENY) {
             player.sendActionBar(Component.text("Nur der Besitzer kann sein Urtier im Survival steuern."));
@@ -393,7 +464,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             player.sendActionBar(Component.text(stay ? "Dein Urtier bleibt hier." : "Dein Urtier folgt dir."));
         } else if (loaded.containsKey(entity.getUniqueId()) && entity.getScoreboardTags().contains("ark_dino_tamed")
                 && RidingRules.canMount(owned(entity) ? owner(entity) : null, player.getUniqueId().toString(),
-                survival(player), item.getType().isAir(), player.isSneaking(), !entity.getPassengers().isEmpty(), player.isInsideVehicle())) {
+                publicRide(entity), survival(player), item.getType().isAir(), player.isSneaking(), !entity.getPassengers().isEmpty(), player.isInsideVehicle())) {
             Mob mob = (Mob) entity;
             if (!adult(mob)) {
                 player.sendActionBar(Component.text("Dein Jungtier wächst noch und kann noch nicht geritten werden."));
@@ -484,10 +555,8 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             else flightVelocity(mob, new Vector(0, -.16, 0));
         }
         for (Mob mob : List.copyOf(riding.values())) {
-            var passengers = mob.getPassengers();
-            if (!mob.isValid() || mob.isDead() || passengers.size() != 1 || !(passengers.getFirst() instanceof Player player)
-                    || !player.isOnline() || player.isDead() || !owner(mob).equals(player.getUniqueId().toString())
-                    || !survival(player) || !player.getWorld().equals(mob.getWorld()) || player.getCurrentInput().isSneak()) {
+            Player player = driver(mob);
+            if (player == null) {
                 endRide(mob);
                 continue;
             }
@@ -502,7 +571,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 }
                 if (flying.containsKey(mob.getUniqueId())) {
                     var motion = FlightRules.movement(player.getYaw(), player.getPitch(), input.isForward(), input.isBackward(),
-                            input.isLeft(), input.isRight(), input.isJump(), mob.getLocation().getY(), flying.get(mob.getUniqueId()));
+                            input.isLeft(), input.isRight(), input.isJump(), input.isSprint(), mob.getLocation().getY(), flying.get(mob.getUniqueId()));
                     if (mob.isInWater() || mob.isOnGround() && !input.isJump() && motion.y() <= 0) restoreGravity(mob);
                     else {
                         flightVelocity(mob, new Vector(motion.x(), motion.y(), motion.z()));
@@ -517,14 +586,16 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             mob.setVelocity(destinationLoaded(mob, velocity) ? velocity : new Vector());
             mob.setRotation(player.getYaw(), 0);
         }
+        // Buoyancy is the final motion controller, including Stay and an absent owner.
+        if (swimming != null) swimming.tick();
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void mount(EntityMountEvent event) {
         if (aquatic(event.getMount())) { event.setCancelled(true); return; }
         if (owned(event.getMount()) && (riding.get(event.getMount().getUniqueId()) != event.getMount()
-                || !(event.getEntity() instanceof Player player) || !owner(event.getMount()).equals(player.getUniqueId().toString())
-                || !survival(player) || !event.getMount().getPassengers().isEmpty())) event.setCancelled(true);
+                || !(event.getEntity() instanceof Player player) || !canRide((Mob) event.getMount(), player)
+                || !event.getMount().getPassengers().isEmpty())) event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
@@ -537,6 +608,16 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             }
             stopRidingMotion(mob);
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void swimmingDismount(EntityDismountEvent event) {
+        // Vanilla's Ravager tag forces an exit every submerged tick. Keep an active,
+        // authorized rider aboard while buoyancy raises it. Sneak still exits; all
+        // lifecycle/revocation paths clear the riding reservation before ejecting.
+        if (event.isCancellable() && event.getDismounted() instanceof Ravager mob && prototype(mob)
+                && event.getEntity() instanceof Player player && driver(mob) == player
+                && mob.isInWater() && DinoSwimming.eyeInWater(player) && !player.isSneaking()) event.setCancelled(true);
     }
 
     @EventHandler
@@ -554,6 +635,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         Mob mob = loaded.remove(event.getEntity().getUniqueId());
         if (mob != null) { endRide(mob); restoreGravity(mob); }
         models.unload(event.getEntity());
+        if (swimming != null) swimming.unload(event.getEntity());
     }
 
     private void follow() {
@@ -620,6 +702,13 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     public void leash(PlayerLeashEntityEvent event) {
         if (aquatic(event.getEntity())) { event.setCancelled(true); return; }
         if (owned(event.getEntity()) && !owner(event.getEntity()).equals(event.getPlayer().getUniqueId().toString())) event.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void preserveLeashed(PlayerLeashEntityEvent event) {
+        if (event.getEntity() instanceof Mob mob && mob.getScoreboardTags().contains(DinoWildSpawns.NATURAL_TAG)) {
+            DinoWildSpawns.preserve(mob);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

@@ -1,17 +1,17 @@
 package de.ark.dinos;
 
-/** Conservative gameplay paces in blocks/second, not claims about extinct animals' maximum speeds. */
+/** Gameplay paces in blocks/second, not claims about extinct animals' maximum speeds. */
 final class GroundSpeeds {
     record Pace(double walk,double run) {double speed(boolean running){return running?run:walk;}}
     static Pace pace(String species) {
         return switch(species) {
-            case "brachiosaurus" -> new Pace(1,2);
-            case "stegosaurus" -> new Pace(1,2.8);
-            case "triceratops" -> new Pace(1.4,4.6);
-            case "trex" -> new Pace(1.5,6);
-            case "velociraptor" -> new Pace(2,7);
-            case "dilophosaurus" -> new Pace(1.8,6);
-            case "pteranodon" -> new Pace(1.4,3);
+            case "brachiosaurus" -> new Pace(1.4,3.5);
+            case "stegosaurus" -> new Pace(1.5,4.5);
+            case "triceratops" -> new Pace(2,7);
+            case "trex" -> new Pace(2.5,9);
+            case "velociraptor" -> new Pace(3,12);
+            case "dilophosaurus" -> new Pace(2.8,10);
+            case "pteranodon" -> new Pace(2,4.5);
             case null,default -> null;
         };
     }

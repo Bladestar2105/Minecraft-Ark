@@ -116,12 +116,12 @@ async function boot() {
 try {
   await symlink(`${cache}/libraries`,`${directory}/libraries`);for(const item of ['versions','cache'])await cp(`${cache}/${item}`,`${directory}/${item}`,{recursive:true});
   await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await mkdir(`${directory}/plugins/WorldGuard/worlds/ark`,{recursive:true});
-  await copyFile(paperJar,`${directory}/paper.jar`);await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.1.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+  await copyFile(paperJar,`${directory}/paper.jar`);await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
   report.jarSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
   await copyFile(`${root}artifacts/renewal-20261103/server/plugins/worldedit-bukkit-7.4.6.jar`,`${directory}/plugins/WorldEdit.jar`);
   await copyFile(process.env.DINO_WORLDGUARD_JAR??`${root}output/dino-round2-20261108/candidate-plugins/worldguard-bukkit-7.0.21.jar`,`${directory}/plugins/WorldGuard.jar`);
   await copyFile(process.env.DINO_GRIEFPREVENTION_JAR??`${root}output/dino-round2-20261108/candidate-plugins/GriefPrevention.jar`,`${directory}/plugins/GriefPrevention.jar`);
-  await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\nprototype-worlds:\n  - ark\n');
+  await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\nprototype-worlds:\n  - ark\nwild-spawning:\n  enabled: false\n');
   await writeFile(`${directory}/plugins/WorldGuard/worlds/ark/regions.yml`,JSON.stringify({regions:{__global__:{type:'global',priority:0,owners:{},members:{},flags:{'mob-damage':'allow','damage-animals':'allow',pvp:'deny'}}}}));
   await mkdir(`${directory}/fixture-classes`);execFileSync(`${javaHome}/bin/javac`,['--release','25','-sourcepath','','-cp',`${plugin}.deps/*`,'-d',`${directory}/fixture-classes`,`${plugin}src/aquatic/java/de/ark/dinos/AquaticFixture.java`]);
   execFileSync(`${javaHome}/bin/jar`,['--create','--file',`${directory}/plugins/AquaticFixture.jar`,'-C',`${directory}/fixture-classes`,'.','-C',`${plugin}src/aquatic/resources`,'.']);
