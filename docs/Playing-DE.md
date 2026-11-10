@@ -12,17 +12,25 @@ Beim ersten Survivalbesuch erhältst du einen Atlas. `/atlas` gibt bei freiem In
 
 Die Welt enthält 16 Dörfer mit 64 Häusern: neun mit normalen Plündererüberfällen und sieben geschützte Dörfer. Dorfbewohner können in Überfalldörfern sterben. Überfälle laufen nicht endlos automatisch. Es gibt acht Händlerlager sowie je sechs Hexenlager, Piratenlager und Bossarenen. Das Anfängergebiet schützt vor feindlichen Kreaturen.
 
+## Rangliste
+
+Am Survival-Spawn schwebt eine farbige Top-10-Rangliste nach Abenteuerpunkten.
+Sie wird alle fünf Sekunden aktualisiert und berücksichtigt auch Offline-Spieler.
+Mit **`/rangliste`** oder **`/leaderboard`** zeigt jeder Spieler dieselbe Top 10
+und den eigenen Platz im Chat, auch in anderen Welten. **`/trigger rang`** zeigt
+weiterhin den persönlichen Rang und die fehlenden Punkte zum nächsten Rang.
+
 ## Dinos
 
-Zwölf Habitate enthalten 24 besondere Sniffer/Ravager mit Vanilla-Modellen. **Fackelliliensamen + Benutzen** zähmt ein unbesessenes Tier und verbraucht einen Samen. **Schleichen + Benutzen** schaltet eigene Tiere zwischen Folgen/Bleiben um. Gezähmte Ravager greifen Spieler nicht an. Tiere folgen in derselben Welt bis 48 Blöcke und laden keine entfernten Chunks.
+ArkDinos 1.1.0 gibt den 24 Tieren in zwölf Habitaten sechs eigene Modelle: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor und Pteranodon. Nimm auf Java und Bedrock die Server-Ressourcenpakete an, um sie zu sehen. **Fackelliliensamen + Benutzen** zähmt ein unbesessenes Tier und verbraucht einen Samen. **Schleichen + Benutzen** schaltet eigene Tiere zwischen Folgen/Bleiben um. Gezähmte Tiere greifen Spieler nicht an. Sie folgen in derselben Welt bis 48 Blöcke und laden keine entfernten Chunks.
 
-Mit dem ArkDinos-Reitupdate steigt der Besitzer mit **leerer Haupthand + Benutzen** auf einen freien eigenen Dino. Normale Bewegung lenkt, Schleichen steigt ab. [Dino-Reitregeln und Grenzen](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding-DE).
+Der Besitzer steigt mit **leerer Haupthand + Benutzen** auf einen freien eigenen Dino. Normale Bewegung lenkt, Schleichen steigt ab. Ein gezähmter Pteranodon hebt mit Springen ab, fliegt entlang der Blickrichtung und schwebt beim Loslassen der Bewegung. [Dino-Reitregeln, Landung und offene Geräteabnahme](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding-DE).
 
 ## Grundstücke, Missionen und Kreativ
 
 Wähle mit einer Goldschaufel gegenüberliegende Grundstücksecken; ein Stock zeigt vorhandene Grundstücke. Befehle: `/claimslist`, `/trust Name`, `/untrust Name`, `/trustlist`, `/abandonclaim`. Anfangs gibt es 1.000 Anspruchsblöcke, weitere 100 je aktiver Stunde bis 10.000. Öffentliche Bauten haben getrennten Schutz.
 
-`/quests list` zeigt zehn Missionen. Beispiel: `/quests take Werkzeugmacher`, danach mit `Ja` bestätigen. Gruppen: `/party create Name`, `/party invite Name`, `/party accept`. Jeder muss dieselbe Mission selbst annehmen. Kreativaktionen zählen nicht. `/trigger rang` zeigt die bestehenden Abenteuerpunkte des Welt-Datapacks; Ränge verleihen keine Kampfboni.
+`/quests list` zeigt verfügbare Missionen. Die Nummern sind nur Listenplätze, keine Quest-IDs: `/quests take` erwartet den **angezeigten Namen**, zum Beispiel `/quests take Nachtwache`, nicht `/quests take 7`. Nachtwache setzt weiterhin Material fürs Lager voraus. Beispiel: `/quests take Werkzeugmacher`, danach mit `Ja` bestätigen. Gruppen: `/party create Name`, `/party invite Name`, `/party accept`. Jeder muss dieselbe Mission selbst annehmen. Kreativaktionen zählen nicht. `/trigger rang` zeigt die bestehenden Abenteuerpunkte des Welt-Datapacks; Ränge verleihen keine Kampfboni.
 
 Das Spawnportal führt zur getrennten flachen Kreativwelt und zurück. Inventar, Rüstung, Nebenhand, Endertruhe und Erfahrung bleiben in ihrer Weltgruppe. Fahrzeuge, Kreaturen und gedroppte Gegenstände nutzen die Portale nicht. Der Ankunftspavillon ist geschützt; außerhalb darf gebaut werden.
 

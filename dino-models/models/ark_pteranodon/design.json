@@ -1,0 +1,42 @@
+{
+  "name": "ark_pteranodon",
+  "label": "Pteranodon",
+  "palette": [
+    "#726e60",
+    "#938875",
+    "#b6ab91",
+    "#494a3e",
+    "#dab85c",
+    "#242a21",
+    "#c7b58c",
+    "#8b6d56"
+  ],
+  "description": "Verbundene ledrige Flughaut \u00b7 langer Schnabel \u00b7 schlanker Hinterkopfkamm",
+  "ground_parts": [
+    "toe_left_0_base",
+    "toe_left_0_tip",
+    "claw_left_0",
+    "toe_left_1_base",
+    "toe_left_1_tip",
+    "claw_left_1",
+    "toe_left_2_base",
+    "toe_left_2_tip",
+    "claw_left_2",
+    "toe_right_0_base",
+    "toe_right_0_tip",
+    "claw_right_0",
+    "toe_right_1_base",
+    "toe_right_1_tip",
+    "claw_right_1",
+    "toe_right_2_base",
+    "toe_right_2_tip",
+    "claw_right_2"
+  ],
+  "leg_bones": [
+    "leg_left",
+    "leg_right"
+  ],
+  "walk_stride_blocks": 0.899698,
+  "cubes": 128,
+  "bones": 12
+}

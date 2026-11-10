@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "ark_egg_pteranodon",
+  "model_identifier": "ark_egg_pteranodon",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "name": "species_shell",
+      "type": "cube",
+      "uuid": "a829d046-46ae-542f-8c7b-bab13dbc0087",
+      "box_uv": false,
+      "from": [
+        -7.02,
+        -0.02,
+        -6.02
+      ],
+      "to": [
+        7.02,
+        16.02,
+        6.02
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            16,
+            0,
+            32,
+            16
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            32,
+            0,
+            48,
+            16
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            48,
+            0,
+            64,
+            16
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            0,
+            16,
+            16,
+            32
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            16,
+            16,
+            32,
+            32
+          ],
+          "texture": 0
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "shell",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "uuid": "0815d6c8-3e83-5f3f-ae20-70e5914656bf",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "0815d6c8-3e83-5f3f-ae20-70e5914656bf",
+      "isOpen": true,
+      "children": [
+        "a829d046-46ae-542f-8c7b-bab13dbc0087"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "ark_egg_pteranodon.png",
+      "id": "0",
+      "uuid": "630806eb-3872-505f-abf1-329200a76b97",
+      "width": 64,
+      "height": 64,
+      "uv_width": 64,
+      "uv_height": 64,
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABF0lEQVR42u3XsQ3CMBCF4ZuKDeiyAR0DsAFNxAJ0dCyA6FLRsRgRSEYWcsLZIO5O/EUUBLyz9aEkPNmfL7d/PgQAAMofdOvdR4Oj5IsAy9X2+fowXB/nRbdRLx4pPwmQhqRz7Qai5GUunL/XH0+qTUTLA1Aa8HoDqd1ApLxobiDpGtJuIFJ+FiAf1LKBCHkVQOsvECEvU1++XzP5UfMYipQXzZCaxaPl5d2QlsUj5SlDAAAAgMs+bwpg3eddAFj2eVMA6zoLgAcAyz7vAsCyz7sCsOjzLgF+2eddPAat+7yLf4LWfd5FF7Du85QhAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgC8cI2qWyaH14tkJAAAAAElFTkSuQmCC"
+    }
+  ],
+  "animations": [
+    {
+      "uuid": "4b2e6423-09ba-5539-86c0-18abcd08a48e",
+      "name": "idle",
+      "loop": "loop",
+      "override": false,
+      "length": 1,
+      "snapping": 20,
+      "animators": {
+        "0815d6c8-3e83-5f3f-ae20-70e5914656bf": {
+          "name": "shell",
+          "type": "bone",
+          "keyframes": [
+            {
+              "channel": "rotation",
+              "time": 0,
+              "uuid": "5b7c6fab-634b-5644-8694-816c7872fa8d",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 1,
+              "uuid": "47a5c18f-c32a-50e5-b339-f6c9e5c5abfb",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

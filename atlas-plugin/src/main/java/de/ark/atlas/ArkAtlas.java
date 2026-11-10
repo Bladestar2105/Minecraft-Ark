@@ -55,6 +55,7 @@ public final class ArkAtlas extends JavaPlugin implements Listener {
     private Terrain terrain;
     private MapView map;
     private AtlasRenderer renderer;
+    private SpawnLeaderboard leaderboard;
 
     @Override public void onEnable() {
         atlasKey = new NamespacedKey(this, "ark_atlas");
@@ -62,6 +63,7 @@ public final class ArkAtlas extends JavaPlugin implements Listener {
         saveDefaultConfig();
         if (!new File(getDataFolder(), "sites.yml").exists()) saveResource("sites.yml", false);
         Bukkit.getPluginManager().registerEvents(this, this);
+        leaderboard = new SpawnLeaderboard(this);
         try { loadTerrain(); }
         catch (IOException | InvalidConfigurationException | IllegalArgumentException e) {
             getLogger().warning("Atlas wird vorbereitet: " + e.getMessage());
@@ -71,6 +73,7 @@ public final class ArkAtlas extends JavaPlugin implements Listener {
     }
 
     @Override public void onDisable() {
+        if (leaderboard != null) leaderboard.close();
         if (map != null && renderer != null) map.removeRenderer(renderer);
         states.clear();
     }
@@ -289,6 +292,11 @@ public final class ArkAtlas extends JavaPlugin implements Listener {
     }
 
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (command.getName().equals("rangliste")) {
+            if (args.length != 0) { sender.sendMessage(Component.text("/rangliste")); return true; }
+            leaderboard.show(sender);
+            return true;
+        }
         if (command.getName().equals("arkatlas")) {
             if (!sender.hasPermission("arkatlas.admin")) { sender.sendMessage(Component.text("Dafür fehlt dir die Berechtigung.", NamedTextColor.RED)); return true; }
             if (args.length != 1 || !args[0].equalsIgnoreCase("reload")) { sender.sendMessage(Component.text("/arkatlas reload")); return true; }

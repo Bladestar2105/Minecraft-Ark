@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "ark_egg_brachiosaurus",
+  "model_identifier": "ark_egg_brachiosaurus",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "name": "species_shell",
+      "type": "cube",
+      "uuid": "6c65fa46-74b9-5a38-b70f-00857e4ac78f",
+      "box_uv": false,
+      "from": [
+        -7.02,
+        -0.02,
+        -6.02
+      ],
+      "to": [
+        7.02,
+        16.02,
+        6.02
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            16,
+            0,
+            32,
+            16
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            32,
+            0,
+            48,
+            16
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            48,
+            0,
+            64,
+            16
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            0,
+            16,
+            16,
+            32
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            16,
+            16,
+            32,
+            32
+          ],
+          "texture": 0
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "shell",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "uuid": "ebcf52d7-851e-5e14-b397-7c15f8f24bd6",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "ebcf52d7-851e-5e14-b397-7c15f8f24bd6",
+      "isOpen": true,
+      "children": [
+        "6c65fa46-74b9-5a38-b70f-00857e4ac78f"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "ark_egg_brachiosaurus.png",
+      "id": "0",
+      "uuid": "b1a48fc7-8573-5639-834d-c56848b5e98c",
+      "width": 64,
+      "height": 64,
+      "uv_width": 64,
+      "uv_height": 64,
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABPklEQVR42u3XMc5BQRTF8dmi2IBoRGMFdDqdxA4kComOzlpUVPZAZpKRZzxjgjhz41/ciPjOzeT3vec5brmbXf55HAAAtH8wnA4+Wmwl/wDQn/TCxPfr/Ty8dkedMK8WWsu7NHw8bMKkf7hYjcPkDmExfwfgg6lguiB3CIv5O4DzaXtTfOcAFvOuqRfHL0ovLR/KHcJqPvsYjF8g8Uuk5L9gLV/0O8AvaoZLD2Ah70oeJaX3oMW8y10ibWrPDmA179IlbcHmgpy+xbzLLUqn9J6zlKcMAQAAAFX2eRmAus9LAdR9Xg6g7vNyAHWflwKo+3yVj0F1n6/md4C6z/8cQN3nJQDqPl/FFaDu89XcAuo+TxkCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+OJcARt1m+L2yNPsAAAAAElFTkSuQmCC"
+    }
+  ],
+  "animations": [
+    {
+      "uuid": "c6815fbd-7a43-5c15-a912-5c53f3e2fc83",
+      "name": "idle",
+      "loop": "loop",
+      "override": false,
+      "length": 1,
+      "snapping": 20,
+      "animators": {
+        "ebcf52d7-851e-5e14-b397-7c15f8f24bd6": {
+          "name": "shell",
+          "type": "bone",
+          "keyframes": [
+            {
+              "channel": "rotation",
+              "time": 0,
+              "uuid": "32cb4179-0093-5ffd-a1be-2ed646698b97",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 1,
+              "uuid": "9f56c200-e4d2-59fc-8353-c8dc785bd3bd",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

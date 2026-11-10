@@ -1,0 +1,13 @@
+{
+  "head_rotation": true,
+  "material": "entity_alphatest_change_color_one_sided",
+  "blend_transition": true,
+  "binding_bones": {
+    "ark_stegosaurus": [
+      "*"
+    ]
+  },
+  "anim_textures": {},
+  "texture_materials": {},
+  "disable_part_visibility": true
+}

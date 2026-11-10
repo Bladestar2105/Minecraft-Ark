@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "ark_egg_dilophosaurus",
+  "model_identifier": "ark_egg_dilophosaurus",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "name": "species_shell",
+      "type": "cube",
+      "uuid": "85a8a9e3-3bb1-5b31-9a24-bc35dfadd969",
+      "box_uv": false,
+      "from": [
+        -7.02,
+        -0.02,
+        -6.02
+      ],
+      "to": [
+        7.02,
+        16.02,
+        6.02
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            16,
+            0,
+            32,
+            16
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            32,
+            0,
+            48,
+            16
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            48,
+            0,
+            64,
+            16
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            0,
+            16,
+            16,
+            32
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            16,
+            16,
+            32,
+            32
+          ],
+          "texture": 0
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "shell",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "uuid": "52b537f0-ffa2-5034-9176-cc65bb395fbc",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "52b537f0-ffa2-5034-9176-cc65bb395fbc",
+      "isOpen": true,
+      "children": [
+        "85a8a9e3-3bb1-5b31-9a24-bc35dfadd969"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "ark_egg_dilophosaurus.png",
+      "id": "0",
+      "uuid": "68c0cfba-116f-5ee4-b3b4-ad3fa88fe5cc",
+      "width": 64,
+      "height": 64,
+      "uv_width": 64,
+      "uv_height": 64,
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABKElEQVR42u3XQQrCMBCF4TmWN3ClJxA3rl3pCdwJggcQXAjuvIHn8DxKCoFIUhuNODP4LwK19MXwGds+OWyO938eAgAAAGQnZ+NlN8LxaXvujiejefWknvJSCt+ul+zC3WpftQhveSmFU8F4PoSHFuEx/wSwmK6bFuAxX9wBYaKWX8BTPgNIP4cbSPofqlmAt/xLgHSiTxbgIV8EaLkJectnj8FwQRypWhxDjyFveembJIZrtp7nvNRIvvPl3vJ0AQAAAAAAa31eFUC7z6sCaPd5dQDtPm9mB2j1eRMAmn3eHMCv+7wZAK0+b+IxqN3nTbwIafd5E6/C2n2eLgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwpfEAYVLPh8C8jycAAAAASUVORK5CYII="
+    }
+  ],
+  "animations": [
+    {
+      "uuid": "73c943d0-b1ea-5d18-96e9-8bfe5f891a5a",
+      "name": "idle",
+      "loop": "loop",
+      "override": false,
+      "length": 1,
+      "snapping": 20,
+      "animators": {
+        "52b537f0-ffa2-5034-9176-cc65bb395fbc": {
+          "name": "shell",
+          "type": "bone",
+          "keyframes": [
+            {
+              "channel": "rotation",
+              "time": 0,
+              "uuid": "8f20aa52-8a1e-555b-bff7-0e534ffbd64b",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 1,
+              "uuid": "614f2306-7aee-5dbb-9ed1-6b66769e4a7c",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

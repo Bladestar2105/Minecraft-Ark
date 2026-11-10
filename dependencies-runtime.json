@@ -124,5 +124,53 @@
     "url": "https://github.com/SkinsRestorer/SkinsRestorer/releases/download/15.12.6/SkinsRestorer.jar",
     "sha256": "a85b4a370f988741c9a38f4d0498262edacbf3220314790ac1c127461996359c",
     "kind": "plugin"
+  },
+  {
+    "project": "bettermodel",
+    "name": "bettermodel-3.6.0-paper.jar",
+    "version": "3.6.0",
+    "url": "https://github.com/toxicity188/BetterModel/releases/download/3.6.0/bettermodel-3.6.0-paper.jar",
+    "sha256": "66b2acc679ffcb81d9d7de686092d3e1daa38dc154da4cdaa9aaabc048a06aba",
+    "kind": "plugin"
+  },
+  {
+    "project": "geyser-model-engine",
+    "name": "GeyserModelEngine-1.0.9.jar",
+    "version": "1.0.9",
+    "url": "https://github.com/GeyserExtensionists/GeyserModelEngine/releases/download/latest/GeyserModelEngine-1.0.9.jar",
+    "sha256": "ce4295d05517c6bcdc1d5bc0c6e51b2daf4d07a45bc834e239c1d6019df035cc",
+    "kind": "plugin"
+  },
+  {
+    "project": "geyser-model-engine-extension",
+    "name": "GeyserModelEngineExtension-1.0.9.jar",
+    "version": "1.0.9",
+    "url": "https://github.com/GeyserExtensionists/GeyserModelEngine/releases/download/latest/GeyserModelEngineExtension-1.0.9.jar",
+    "sha256": "71671ee8c475f194f7caf13bc1cc4d3b4d10dc4fd9df042a31ee7b29fe7a7cb5",
+    "kind": "geyser-extension"
+  },
+  {
+    "project": "geyser-utils-spigot",
+    "name": "geyserutils-spigot-1.0-SNAPSHOT.jar",
+    "version": "1.0-SNAPSHOT",
+    "url": "https://github.com/GeyserExtensionists/GeyserUtils/releases/download/latest/geyserutils-spigot-1.0-SNAPSHOT.jar",
+    "sha256": "1de02334a7449929aa0577876ea2bba12eb5fb314048e9fbc21e4171b09c2542",
+    "kind": "plugin"
+  },
+  {
+    "project": "geyser-utils-geyser",
+    "name": "geyserutils-geyser-1.0-SNAPSHOT.jar",
+    "version": "1.0-SNAPSHOT",
+    "url": "https://github.com/GeyserExtensionists/GeyserUtils/releases/download/latest/geyserutils-geyser-1.0-SNAPSHOT.jar",
+    "sha256": "8ed7b7dbece8341277652d4ee01706913e725cdf19b9664025bbb870299ec12a",
+    "kind": "geyser-extension"
+  },
+  {
+    "project": "packetevents",
+    "name": "packetevents-spigot-2.14.0.jar",
+    "version": "2.14.0",
+    "url": "https://github.com/retrooper/packetevents/releases/download/v2.14.0/packetevents-spigot-2.14.0.jar",
+    "sha256": "060087c58ec268eae7dd0eb1f17ac3bea1eaadda1693414141ff64e506091bd7",
+    "kind": "plugin"
   }
 ]

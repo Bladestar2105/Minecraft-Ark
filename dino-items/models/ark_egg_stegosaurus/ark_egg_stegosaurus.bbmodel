@@ -1,0 +1,179 @@
+{
+  "meta": {
+    "format_version": "5.0",
+    "model_format": "free",
+    "box_uv": false
+  },
+  "name": "ark_egg_stegosaurus",
+  "model_identifier": "ark_egg_stegosaurus",
+  "resolution": {
+    "width": 64,
+    "height": 64
+  },
+  "elements": [
+    {
+      "name": "species_shell",
+      "type": "cube",
+      "uuid": "90c7d147-e395-563d-98d0-0ad479674de6",
+      "box_uv": false,
+      "from": [
+        -7.02,
+        -0.02,
+        -6.02
+      ],
+      "to": [
+        7.02,
+        16.02,
+        6.02
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            16,
+            16
+          ],
+          "texture": 0
+        },
+        "south": {
+          "uv": [
+            16,
+            0,
+            32,
+            16
+          ],
+          "texture": 0
+        },
+        "east": {
+          "uv": [
+            32,
+            0,
+            48,
+            16
+          ],
+          "texture": 0
+        },
+        "west": {
+          "uv": [
+            48,
+            0,
+            64,
+            16
+          ],
+          "texture": 0
+        },
+        "up": {
+          "uv": [
+            0,
+            16,
+            16,
+            32
+          ],
+          "texture": 0
+        },
+        "down": {
+          "uv": [
+            16,
+            16,
+            32,
+            32
+          ],
+          "texture": 0
+        }
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "shell",
+      "origin": [
+        0,
+        0,
+        0
+      ],
+      "uuid": "16ef08ac-4c64-5985-b73d-5ba367aa499d",
+      "rotation": [
+        0,
+        0,
+        0
+      ],
+      "export": true
+    }
+  ],
+  "outliner": [
+    {
+      "uuid": "16ef08ac-4c64-5985-b73d-5ba367aa499d",
+      "isOpen": true,
+      "children": [
+        "90c7d147-e395-563d-98d0-0ad479674de6"
+      ]
+    }
+  ],
+  "textures": [
+    {
+      "name": "ark_egg_stegosaurus.png",
+      "id": "0",
+      "uuid": "86d4853f-b5ce-5bde-9197-97bacf5a3a62",
+      "width": 64,
+      "height": 64,
+      "uv_width": 64,
+      "uv_height": 64,
+      "source": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAABNUlEQVR42u3XwQkCMRCF4WlIsADBg2IDliA2IN70Zj12sDfL8WYDSoRIyIaYXcWZwf8QWMi+MXzETUa63fr+z0MAAKA8cVgtPirsJV8E2M9nrxELbaeT5h/3lJdaOB3nzbJpEd7ykoev3fE50nCYCwXeLcJjXvL/TSwQC8a5lgV4zBd3wO1yGrUAj/keQPocRIduQW/5IkD+AQmFhizAU766A8Z8hLzle8dgeCF9OT63HkPe8lIrkhdrvYh4ykutSDqGXkW95GmGAAAAAJP9vCqAdj+vCqDdz6sCaPfz6gDa/byZHaDVz5sA0OznzQBo9fPmdsCv+3kTx6B2P2/iIqTdz5u4Cmv38zRDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF8aD0acRGBbs/XAAAAAAElFTkSuQmCC"
+    }
+  ],
+  "animations": [
+    {
+      "uuid": "2d56c411-9d18-5caf-b6e5-8bc4d172a7b9",
+      "name": "idle",
+      "loop": "loop",
+      "override": false,
+      "length": 1,
+      "snapping": 20,
+      "animators": {
+        "16ef08ac-4c64-5985-b73d-5ba367aa499d": {
+          "name": "shell",
+          "type": "bone",
+          "keyframes": [
+            {
+              "channel": "rotation",
+              "time": 0,
+              "uuid": "e2150a7f-1125-5418-a5e7-4ae1f4ac44c0",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 1,
+              "uuid": "752bf2b4-f5d0-553f-841d-f7d3f29a94a4",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

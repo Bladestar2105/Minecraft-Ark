@@ -18,6 +18,8 @@ Lege `.env`, `data`, `secrets` oder `panel-state` **nicht** vor dem neuen Setup 
 
 Bei einem geprüften Binär-ZIP entfällt der JDK-/Bauschritt; siehe [All-in-One](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One-DE). Das Setup akzeptiert keine EULA und startet keine Dienste.
 
+Mit dem Dino-Modul gib beim Setup eine für Spieler erreichbare Adresse an: `python3 scripts/setup.py --portal-url https://mc.example.org/`. Java lädt das erzeugte Modellpaket über `/resources/dinos.zip`; `localhost` eignet sich nur für lokale Tests. Das voreingestellte Profil `admin` muss dafür laufen. Ohne dieses Profil musst du das erzeugte `data/plugins/BetterModel/build.zip` selbst bereitstellen und `resource-pack` in `data/server.properties` anpassen. Java und Bedrock verlangen das jeweilige Ressourcenpaket. Die sechs Modelle und Flugsteuerung sind ein Prototyp; die Sichtprüfung auf echten Java-/Bedrock-Geräten steht noch aus.
+
 ## Prüfen und starten
 
 Lies die [Minecraft-EULA](https://www.minecraft.net/en-us/eula) und setze erst nach Zustimmung `EULA=TRUE` in der erzeugten `.env`. Prüfe `JAVA_PORT`, `BEDROCK_PORT`, erlaubte Hosts, Compose-Profil und Linux-Rechte nach [Verwaltung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE).

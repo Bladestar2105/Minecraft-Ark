@@ -1,6 +1,11 @@
 name: ArkDinos
-version: 1.0.0
+version: 1.1.0
 main: de.ark.dinos.ArkDinos
 api-version: '26.3'
-description: Persistent ownership, follow/stay and owner-only riding for tagged ARK Sniffers and Ravagers.
+description: Eight persistent ARK dinosaurs with native riding, flight and optional crossplay models.
 author: ARK
+softdepend: [BetterModel, packetevents, GeyserModelEngine, Geyser-Spigot, WorldGuard, GriefPrevention]
+commands:
+  dinoeier:
+    description: Dino-Eier im Kreativmodus einer Dino-Welt auswählen
+    usage: /dinoeier

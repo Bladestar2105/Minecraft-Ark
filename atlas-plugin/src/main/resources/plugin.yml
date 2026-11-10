@@ -1,11 +1,16 @@
 name: ArkAtlas
-version: 1.0.0
+version: 1.0.1
 main: de.ark.atlas.ArkAtlas
 api-version: '26.3'
 author: ARK
-description: Native in-game terrain atlas for the Survival world ark.
+description: Native world atlas and adventure leaderboard for ARK.
 softdepend: [Multiverse-Core, Multiverse-Inventories]
 commands:
+  rangliste:
+    aliases: [leaderboard]
+    description: Abenteuer-Rangliste anzeigen / Show the adventure leaderboard
+    usage: /rangliste
+    permission: arkatlas.leaderboard
   atlas:
     description: ARK-Weltatlas in Survival erhalten
     usage: /atlas
@@ -15,6 +20,8 @@ commands:
     usage: /arkatlas reload
     permission: arkatlas.admin
 permissions:
+  arkatlas.leaderboard:
+    default: true
   arkatlas.use:
     default: true
   arkatlas.admin:

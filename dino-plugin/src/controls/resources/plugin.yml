@@ -1,0 +1,7 @@
+name: ControlsFixture
+version: 1.0
+main: de.ark.dinos.ControlsFixture
+api-version: '26.3'
+depend: [ArkDinos]
+commands:
+  controlsfixture: {}

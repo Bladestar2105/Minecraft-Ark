@@ -12,7 +12,12 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Dolphin;
 import org.bukkit.entity.Mob;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Ravager;
 import org.bukkit.entity.Sniffer;
@@ -42,18 +47,41 @@ import org.bukkit.util.Vector;
 public final class ArkDinos extends JavaPlugin implements Listener {
     private final Map<UUID, Mob> loaded = new HashMap<>();
     private final Map<UUID, Mob> riding = new HashMap<>();
+    private final Map<UUID, Double> flying = new HashMap<>();
+    private final Map<UUID, Mob> landing = new HashMap<>();
+    private DinoModels models;
+    private DinoCare care;
+    private DinoControls controls;
+    private DinoCombat combat;
+    private DinoAquatic aquatic;
+    private DinoPtera ptera;
+    private NamespacedKey speciesKey;
+    private NamespacedKey flightKey;
+    private boolean stopUnavailable;
     private final TamingRules rules = new TamingRules();
     private NamespacedKey ownerKey;
     private NamespacedKey stayKey;
     private List<String> survivalWorlds;
+    private List<String> prototypeWorlds;
 
     @Override
     public void onEnable() {
         saveDefaultConfig();
         survivalWorlds = getConfig().getStringList("survival-worlds");
+        prototypeWorlds = getConfig().contains("prototype-worlds")
+                ? getConfig().getStringList("prototype-worlds") : survivalWorlds;
         ownerKey = new NamespacedKey(this, "owner");
         stayKey = new NamespacedKey(this, "stay");
+        speciesKey = new NamespacedKey(this, "species");
+        flightKey = new NamespacedKey(this, "flight");
+        models = new DinoModels(this);
+        care = new DinoCare(this);
+        combat = new DinoCombat(this);
+        aquatic = new DinoAquatic(this);
+        controls = new DinoControls(this);
+        ptera = new DinoPtera(this);
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(care, this);
         getServer().getWorlds().forEach(world -> world.getEntities().forEach(this::restore));
         getServer().getScheduler().runTaskTimer(this, this::follow, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, this::ride, 1L, 1L);
@@ -61,39 +89,144 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        loaded.values().forEach(this::endRide);
+        List.copyOf(loaded.values()).forEach(this::endRide);
+        List.copyOf(landing.values()).forEach(this::restoreGravity);
+        if (combat != null) combat.close();
+        if (aquatic != null) aquatic.close();
+        if (ptera != null) ptera.close();
+        flying.clear();
+        landing.clear();
+        if (models != null) models.close();
+        if (care != null) care.close();
+        if (controls != null) controls.close();
         riding.clear();
         loaded.clear();
+    }
+
+    @Override public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command command,
+                                       String label, String[] args) {
+        if (!command.getName().equalsIgnoreCase("dinoeier")) return false;
+        if (sender instanceof Player player) return care.command(player);
+        sender.sendMessage("Dino-Eier bitte im Kreativmodus mit /dinoeier auswählen.");
+        return true;
     }
 
     private boolean supported(Entity entity) {
         return entity instanceof Sniffer || entity instanceof Ravager;
     }
 
-    private boolean owned(Entity entity) {
+    private boolean aquatic(Entity entity) {
+        return entity instanceof Dolphin && "mosasaurus".equals(species(entity))
+                && entity.getScoreboardTags().contains("ark_dino");
+    }
+
+    boolean owned(Entity entity) {
         return supported(entity) && entity.getPersistentDataContainer().has(ownerKey);
     }
 
-    private String owner(Entity entity) {
+    String owner(Entity entity) {
         var data = entity.getPersistentDataContainer();
         return data.has(ownerKey, PersistentDataType.STRING) ? data.get(ownerKey, PersistentDataType.STRING) : "";
     }
 
-    private boolean staying(Entity entity) {
+    boolean staying(Entity entity) {
         var data = entity.getPersistentDataContainer();
         return data.has(stayKey, PersistentDataType.BYTE) && data.get(stayKey, PersistentDataType.BYTE) != 0;
     }
 
-    private boolean survival(Player player) {
+    boolean survival(Player player) {
         return player.getGameMode() == GameMode.SURVIVAL && survivalWorlds.contains(player.getWorld().getName());
     }
 
-    private void stop(Mob mob) {
-        mob.getPathfinder().stopPathfinding();
-        mob.setAware(false);
+    boolean prototype(Entity entity) {
+        return prototype(entity.getWorld());
     }
 
-    private boolean prepare(Mob mob) {
+    boolean prototype(org.bukkit.World world) {
+        return prototypeWorlds.contains(world.getName());
+    }
+
+    java.util.Collection<Mob> companions() {
+        return List.copyOf(loaded.values());
+    }
+
+    boolean adult(Entity entity) {
+        return care.adult(entity);
+    }
+
+    Entity combatTarget(Entity target) { return models.resolveTarget(target); }
+
+    void attackAnimation(Mob mob, boolean spit) {
+        models.attack(mob, spit);
+    }
+
+    void animation(Mob mob, String phase) {
+        models.animation(mob, phase);
+    }
+
+    void stop(Mob mob) {
+        double vertical = mob.getVelocity().getY();
+        mob.getPathfinder().stopPathfinding();
+        mob.setTarget(null);
+        try {
+            // Paper awareness skips MoveControl; clear its retained movement input before disabling it.
+            Object handle = mob.getClass().getMethod("getHandle").invoke(mob);
+            handle.getClass().getMethod("stopInPlace").invoke(handle);
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException error) {
+            mob.setAI(false);
+            if (!stopUnavailable) { getLogger().severe("Dino movement controller unavailable; movement disabled: " + error); stopUnavailable = true; }
+        }
+        mob.setAware(false);
+        mob.setVelocity(new Vector(0, vertical, 0));
+    }
+
+    boolean formerOwner(Entity entity, Entity target) { return controls.formerOwner(entity, target); }
+
+    void wanderWild(Mob mob) { controls.wander(mob); }
+
+    boolean roaming(Mob mob) { return controls.roaming(mob); }
+    boolean aerial(Mob mob) { return ptera!=null&&ptera.controls(mob); }
+    boolean roamPtera(Mob mob) { return ptera!=null&&ptera.roam(mob); }
+    void landPtera(Mob mob) { if(ptera!=null)ptera.land(mob); }
+    boolean combatActive(Mob mob) { return combat.active(mob); }
+    double groundSpeed(Mob mob,boolean running) {
+        var pace=prototype(mob)?GroundSpeeds.pace(species(mob)):null;
+        return pace==null?(running?1.15:.85):GroundSpeeds.pathMultiplier(pace,running,mob.getAttribute(org.bukkit.attribute.Attribute.MOVEMENT_SPEED).getBaseValue());
+    }
+    double ridingSpeed(Mob mob,boolean sprint) {
+        var pace=prototype(mob)?GroundSpeeds.pace(species(mob)):null;
+        return pace==null?(sprint?.34:.22):pace.speed(sprint)/20;
+    }
+    void aerialVelocity(Mob mob,Vector motion) { flightVelocity(mob,motion); }
+    void recoverAerial(Mob mob) { protectFall(mob);restoreGravity(mob); }
+    boolean takeAerialRide(Mob mob) {
+        if(!riding.containsKey(mob.getUniqueId()))return false;
+        flying.put(mob.getUniqueId(),Math.min(mob.getY()+48,mob.getWorld().getMaxHeight()-mob.getHeight()-3));
+        mob.getPersistentDataContainer().set(flightKey,PersistentDataType.BYTE,(byte)1);return true;
+    }
+
+    void controlMode(Mob mob, boolean stay) {
+        mob.getPersistentDataContainer().set(stayKey, PersistentDataType.BYTE, (byte) (stay ? 1 : 0));
+        stop(mob); combat.cancel(mob);
+        landPtera(mob);
+    }
+
+    boolean release(Mob mob) {
+        String previousOwner = owner(mob);
+        if (!owned(mob) || !adult(mob) || !mob.getPassengers().isEmpty()) return false;
+        endRide(mob); combat.cancel(mob);
+        if (mob.getPersistentDataContainer().has(flightKey)) { protectFall(mob); restoreGravity(mob); }
+        if (!prepare(mob)) return false;
+        controls.released(mob, previousOwner);
+        mob.getPersistentDataContainer().remove(ownerKey);
+        mob.getPersistentDataContainer().remove(stayKey);
+        mob.removeScoreboardTag("ark_dino_tamed"); mob.addScoreboardTag("ark_dino_wild");
+        loaded.remove(mob.getUniqueId());
+        combat.restore(mob);
+        return true;
+    }
+
+    boolean prepare(Mob mob) {
         stop(mob);
         try {
             if (mob instanceof Sniffer sniffer) {
@@ -129,11 +262,57 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         }
     }
 
-    private void restore(Entity entity) {
+    String species(Entity entity) {
+        return entity.getPersistentDataContainer().get(speciesKey, PersistentDataType.STRING);
+    }
+
+    private void identify(Entity entity) {
+        if (!(supported(entity) || entity instanceof Dolphin) || !prototype(entity)) return;
+        var result = SpeciesRules.resolve(species(entity), entity.getScoreboardTags(),
+                entity.getPersistentDataContainer().has(ownerKey), entity instanceof Ravager, entity instanceof Dolphin);
+        if (result.species() == null) return;
+        if (result.conflict()) getLogger().warning("Conflicting habitat tags for " + entity.getUniqueId() + "; using " + result.species());
+        entity.getPersistentDataContainer().set(speciesKey, PersistentDataType.STRING, result.species());
+        models.attach((Mob) entity, "ark_" + result.species());
+    }
+
+    void restore(Entity entity) {
+        care.restore(entity);
+        if (entity instanceof Dolphin dolphin) aquatic.restore(dolphin);
+        identify(entity);
+        if(ptera!=null)ptera.restore(entity);
         if (owned(entity)) {
-            endRide((Mob) entity);
-            if (prepare((Mob) entity)) loaded.put(entity.getUniqueId(), (Mob) entity);
+            Mob mob = (Mob) entity;
+            endRide(mob);
+            if (mob.getPersistentDataContainer().has(flightKey) || prototype(mob) && "pteranodon".equals(species(mob)) && !mob.hasGravity()) {
+                protectFall(mob);
+                restoreGravity(mob);
+            }
+            if (prepare(mob)) loaded.put(entity.getUniqueId(), mob);
         }
+        if (entity instanceof Mob mob) combat.restore(mob);
+    }
+
+    boolean tame(Mob mob, Player player) {
+        if (!supported(mob) || owned(mob) || !survival(player) || !prepare(mob)) return false;
+        combat.cancel(mob);
+        controls.clearMode(mob);
+        mob.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, player.getUniqueId().toString());
+        mob.getPersistentDataContainer().set(stayKey, PersistentDataType.BYTE, (byte) 0);
+        mob.removeScoreboardTag("ark_dino_wild");
+        mob.addScoreboardTag("ark_dino_tamed");
+        loaded.put(mob.getUniqueId(), mob);
+        identify(mob);
+        combat.restore(mob);
+        mob.getWorld().spawnParticle(Particle.HEART, mob.getLocation().add(0, 2, 0), 8, .5, .5, .5);
+        return true;
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void spawn(CreatureSpawnEvent event) {
+        if (!(supported(event.getEntity()) || event.getEntity() instanceof Dolphin)) return;
+        // Summon tags/PDC are available after the native spawn event completes.
+        getServer().getScheduler().runTask(this, () -> { if (event.getEntity().isValid()) restore(event.getEntity()); });
     }
 
     @EventHandler
@@ -145,20 +324,47 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     public void unload(EntitiesUnloadEvent event) {
         event.getEntities().forEach(entity -> {
             Mob mob = loaded.remove(entity.getUniqueId());
-            if (mob != null) endRide(mob);
+            if (mob != null) { endRide(mob); if (flying.containsKey(mob.getUniqueId())) restoreGravity(mob); }
+            models.unload(entity);
         });
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void interact(PlayerInteractEntityEvent event) {
         Entity entity = event.getRightClicked();
+        Player player = event.getPlayer();
+        if ((aquatic(entity) || supported(entity) && (owned(entity) || entity.getScoreboardTags().contains("ark_dino")))
+                && player.getInventory().getItem(event.getHand()).getType() == Material.NAME_TAG) {
+            // Native naming must run before feeding, staying or mounting can consume this interaction.
+            if (owned(entity) && !owner(entity).equals(player.getUniqueId().toString())) {
+                event.setCancelled(true);
+                player.sendActionBar(Component.text("Nur der Besitzer kann sein Urtier benennen."));
+            }
+            return;
+        }
+        if (aquatic(entity)) {
+            event.setCancelled(true);
+            if (event.getHand() == EquipmentSlot.HAND) {
+                event.getPlayer().sendActionBar(Component.text("Der Mosasaurus bleibt wild und kann nicht gezähmt oder geritten werden."));
+            }
+            return;
+        }
         if (!supported(entity) || (!owned(entity) && !entity.getScoreboardTags().contains("ark_dino"))) return;
         if (event.getHand() != EquipmentSlot.HAND) {
             if (owned(entity)) event.setCancelled(true);
             return;
         }
-        Player player = event.getPlayer();
         if (owned(entity) && player.isInsideVehicle()) {
+            event.setCancelled(true);
+            return;
+        }
+        if (owned(entity) && prototype(entity) && player.isSneaking()) {
+            event.setCancelled(true);
+            if (player.getInventory().getItemInMainHand().getType().isAir()) controls.open(player, (Mob) entity);
+            else player.sendActionBar(Component.text("Schleichen + leere Hand: Urtier-Menü öffnen."));
+            return;
+        }
+        if (!(owned(entity) && player.isSneaking()) && care.interact((Mob) entity, player)) {
             event.setCancelled(true);
             return;
         }
@@ -171,49 +377,112 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             player.sendActionBar(Component.text("Nur der Besitzer kann sein Urtier im Survival steuern."));
         } else if (action == TamingRules.Action.TAME) {
             Mob mob = (Mob) entity;
-            if (!prepare(mob)) {
+            if (!tame(mob, player)) {
                 player.sendActionBar(Component.text("Zähmen gerade nicht möglich. Bitte Admin informieren."));
                 return;
             }
-            entity.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, player.getUniqueId().toString());
-            entity.getPersistentDataContainer().set(stayKey, PersistentDataType.BYTE, (byte) 0);
-            entity.removeScoreboardTag("ark_dino_wild");
-            entity.addScoreboardTag("ark_dino_tamed");
-            loaded.put(entity.getUniqueId(), mob);
             if (action.consumesSeed()) {
                 item.setAmount(item.getAmount() - 1);
                 player.getInventory().setItemInMainHand(item);
             }
-            entity.getWorld().spawnParticle(Particle.HEART, entity.getLocation().add(0, 2, 0), 8, 0.5, 0.5, 0.5);
             player.sendActionBar(Component.text("Gezähmt! Schleichen + Interagieren: Bleiben / Folgen."));
         } else if (action == TamingRules.Action.STAY || action == TamingRules.Action.FOLLOW) {
             boolean stay = action == TamingRules.Action.STAY;
-            entity.getPersistentDataContainer().set(stayKey, PersistentDataType.BYTE, (byte) (stay ? 1 : 0));
-            stop((Mob) entity);
+            controls.clearMode(entity);
+            controlMode((Mob) entity, stay);
             player.sendActionBar(Component.text(stay ? "Dein Urtier bleibt hier." : "Dein Urtier folgt dir."));
         } else if (loaded.containsKey(entity.getUniqueId()) && entity.getScoreboardTags().contains("ark_dino_tamed")
                 && RidingRules.canMount(owned(entity) ? owner(entity) : null, player.getUniqueId().toString(),
                 survival(player), item.getType().isAir(), player.isSneaking(), !entity.getPassengers().isEmpty(), player.isInsideVehicle())) {
             Mob mob = (Mob) entity;
+            if (!adult(mob)) {
+                player.sendActionBar(Component.text("Dein Jungtier wächst noch und kann noch nicht geritten werden."));
+                return;
+            }
+            combat.cancel(mob);
             stop(mob);
             riding.put(mob.getUniqueId(), mob);
+            landing.remove(mob.getUniqueId());
             if (!mob.addPassenger(player)) endRide(mob);
         }
     }
 
+    private void protectFall(LivingEntity entity) {
+        // Bounded flight exit protection also survives unload/disable; ordinary falling is unchanged.
+        entity.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING,
+                (int) Math.max(20, Math.ceil((entity.getLocation().getY() - entity.getWorld().getMinHeight() + 16) / .1)),
+                0, false, false));
+    }
+
+    private void restoreGravity(Mob mob) {
+        flying.remove(mob.getUniqueId());
+        landing.remove(mob.getUniqueId());
+        mob.getPersistentDataContainer().remove(flightKey);
+        mob.setGravity(true);
+        mob.setVelocity(new Vector());
+        models.animation(mob, "idle");
+    }
+
     private void endRide(Mob mob) {
         riding.remove(mob.getUniqueId());
+        if (flying.containsKey(mob.getUniqueId())) {
+            for (Entity passenger : mob.getPassengers()) if (passenger instanceof LivingEntity living) protectFall(living);
+            protectFall(mob);
+            landing.put(mob.getUniqueId(), mob);
+        }
         mob.eject();
+        stopRidingMotion(mob);
+    }
+
+    private void stopRidingMotion(Mob mob) {
         stop(mob);
-        var velocity = mob.getVelocity();
-        mob.setVelocity(new Vector(0, velocity.getY(), 0));
+        boolean airborne = flying.containsKey(mob.getUniqueId());
+        mob.setVelocity(new Vector(0, airborne ? 0 : mob.getVelocity().getY(), 0));
+        if (!airborne) models.animation(mob, "idle");
     }
 
     private void endRide(Player player) {
-        if (player.getVehicle() instanceof Mob mob && owned(mob)) endRide(mob);
+        for (Mob mob : List.copyOf(riding.values())) {
+            if (mob.getPassengers().contains(player)) endRide(mob);
+        }
+    }
+
+    private boolean destinationLoaded(Mob mob, Vector motion) {
+        var box = mob.getBoundingBox().expandDirectional(motion).expand(.1);
+        for (int x = (int) Math.floor(box.getMinX()) >> 4; x <= (int) Math.floor(box.getMaxX()) >> 4; x++) {
+            for (int z = (int) Math.floor(box.getMinZ()) >> 4; z <= (int) Math.floor(box.getMaxZ()) >> 4; z++) {
+                if (!mob.getWorld().isChunkLoaded(x, z)) return false;
+            }
+        }
+        return true;
+    }
+
+    private void flightVelocity(Mob mob, Vector motion) {
+        if (!destinationLoaded(mob, motion)) { mob.setVelocity(new Vector()); return; }
+        // The carrier keeps native collision/floor resolution; protect the actual swept rider volume too.
+        for (Entity passenger : mob.getPassengers()) {
+            var sweep = passenger.getBoundingBox().expandDirectional(motion);
+            // Neighbor blocks can have collision shapes extending outside their own block (e.g. fences).
+            for (int x = (int) Math.floor(sweep.getMinX()) - 1; x <= (int) Math.floor(sweep.getMaxX()) + 1; x++) {
+                for (int z = (int) Math.floor(sweep.getMinZ()) - 1; z <= (int) Math.floor(sweep.getMaxZ()) + 1; z++) {
+                    if (!mob.getWorld().isChunkLoaded(x >> 4, z >> 4)) { mob.setVelocity(new Vector()); return; }
+                    for (int y = (int) Math.floor(sweep.getMinY()) - 1; y <= (int) Math.floor(sweep.getMaxY()) + 1; y++) {
+                        var shape = mob.getWorld().getBlockAt(x, y, z).getCollisionShape();
+                        if (shape.overlaps(sweep.clone().shift(-x, -y, -z))) { mob.setVelocity(new Vector()); return; }
+                    }
+                }
+            }
+        }
+        mob.setFallDistance(0);
+        for (Entity passenger : mob.getPassengers()) passenger.setFallDistance(0);
+        mob.setVelocity(motion);
     }
 
     private void ride() {
+        for (Mob mob : List.copyOf(landing.values())) {
+            if (!mob.isValid() || mob.isDead() || mob.isOnGround() || mob.isInWater()) restoreGravity(mob);
+            else flightVelocity(mob, new Vector(0, -.16, 0));
+        }
         for (Mob mob : List.copyOf(riding.values())) {
             var passengers = mob.getPassengers();
             if (!mob.isValid() || mob.isDead() || passengers.size() != 1 || !(passengers.getFirst() instanceof Player player)
@@ -224,20 +493,35 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             }
             stop(mob);
             var input = player.getCurrentInput();
-            var motion = RidingRules.movement(player.getYaw(), input.isForward(), input.isBackward(), input.isLeft(), input.isRight());
-            var location = mob.getLocation();
-            // Never step into an unloaded chunk; native collisions and gravity still apply.
-            int chunkX = (int) Math.floor(location.getX() + motion.x() + Math.signum(motion.x()) * mob.getWidth()) >> 4;
-            int chunkZ = (int) Math.floor(location.getZ() + motion.z() + Math.signum(motion.z()) * mob.getWidth()) >> 4;
-            var velocity = mob.getVelocity();
-            mob.setVelocity(mob.getWorld().isChunkLoaded(chunkX, chunkZ)
-                    ? new Vector(motion.x(), velocity.getY(), motion.z()) : new Vector(0, velocity.getY(), 0));
+            if (prototype(mob) && "pteranodon".equals(species(mob))) {
+                if (input.isJump() && !mob.isInWater() && !flying.containsKey(mob.getUniqueId())) {
+                    flying.put(mob.getUniqueId(), Math.min(mob.getLocation().getY() + 48, mob.getWorld().getMaxHeight() - mob.getHeight() - 3));
+                    landing.remove(mob.getUniqueId());
+                    mob.getPersistentDataContainer().set(flightKey, PersistentDataType.BYTE, (byte) 1);
+                    mob.setGravity(false);
+                }
+                if (flying.containsKey(mob.getUniqueId())) {
+                    var motion = FlightRules.movement(player.getYaw(), player.getPitch(), input.isForward(), input.isBackward(),
+                            input.isLeft(), input.isRight(), input.isJump(), mob.getLocation().getY(), flying.get(mob.getUniqueId()));
+                    if (mob.isInWater() || mob.isOnGround() && !input.isJump() && motion.y() <= 0) restoreGravity(mob);
+                    else {
+                        flightVelocity(mob, new Vector(motion.x(), motion.y(), motion.z()));
+                        mob.setRotation(player.getYaw(), 0);
+                        models.animation(mob, input.isJump() ? "flap" : "glide");
+                        continue;
+                    }
+                }
+            }
+            var motion = RidingRules.movement(player.getYaw(), input.isForward(), input.isBackward(), input.isLeft(), input.isRight(), ridingSpeed(mob,input.isSprint()));
+            Vector velocity = new Vector(motion.x(), mob.getVelocity().getY(), motion.z());
+            mob.setVelocity(destinationLoaded(mob, velocity) ? velocity : new Vector());
             mob.setRotation(player.getYaw(), 0);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void mount(EntityMountEvent event) {
+        if (aquatic(event.getMount())) { event.setCancelled(true); return; }
         if (owned(event.getMount()) && (riding.get(event.getMount().getUniqueId()) != event.getMount()
                 || !(event.getEntity() instanceof Player player) || !owner(event.getMount()).equals(player.getUniqueId().toString())
                 || !survival(player) || !event.getMount().getPassengers().isEmpty())) event.setCancelled(true);
@@ -246,8 +530,12 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void dismount(EntityDismountEvent event) {
         if (event.getDismounted() instanceof Mob mob && riding.remove(mob.getUniqueId()) != null) {
-            stop(mob);
-            mob.setVelocity(new Vector(0, mob.getVelocity().getY(), 0));
+            if (flying.containsKey(mob.getUniqueId())) {
+                if (event.getEntity() instanceof LivingEntity living) protectFall(living);
+                protectFall(mob);
+                landing.put(mob.getUniqueId(), mob);
+            }
+            stopRidingMotion(mob);
         }
     }
 
@@ -264,7 +552,8 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     public void death(EntityDeathEvent event) {
         if (event.getEntity() instanceof Player player) endRide(player);
         Mob mob = loaded.remove(event.getEntity().getUniqueId());
-        if (mob != null) endRide(mob);
+        if (mob != null) { endRide(mob); restoreGravity(mob); }
+        models.unload(event.getEntity());
     }
 
     private void follow() {
@@ -275,8 +564,11 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 iterator.remove();
                 continue;
             }
+            models.growth(mob);
+            if (combat.active(mob)) continue;
             mob.setTarget(null);
-            if (riding.containsKey(mob.getUniqueId())) continue;
+            if (riding.containsKey(mob.getUniqueId()) || flying.containsKey(mob.getUniqueId()) || aerial(mob)) continue;
+            if (controls.roaming(mob) && !staying(mob)) { controls.wander(mob); continue; }
             Player player;
             try {
                 player = getServer().getPlayer(UUID.fromString(owner(mob)));
@@ -294,34 +586,39 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 continue;
             }
             mob.setAware(true);
-            mob.getPathfinder().moveTo(player, 1.15);
+            mob.getPathfinder().moveTo(player, groundSpeed(mob,true));
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void target(EntityTargetLivingEntityEvent event) {
-        if (owned(event.getEntity()) && event.getTarget() != null) event.setTarget(null);
+        if (event.getTarget() != null && (owned(event.getEntity()) || formerOwner(event.getEntity(), event.getTarget()))) event.setTarget(null);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void damage(EntityDamageByEntityEvent event) {
-        if (owned(event.getDamager())) event.setCancelled(true);
+        if (event.getDamager() instanceof Mob mob && formerOwner(mob, event.getEntity())) { event.setCancelled(true); return; }
+        if (event.getDamager() instanceof Mob mob && (owned(mob)
+                || prototype(mob) && SpeciesRules.ravager(species(mob)))) {
+            if (!combat.permits(mob, event.getEntity())) event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void portal(EntityPortalEvent event) {
-        if (owned(event.getEntity())) event.setCancelled(true);
+        if (owned(event.getEntity()) || aquatic(event.getEntity())) event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void teleport(EntityTeleportEvent event) {
-        if (owned(event.getEntity()) && event.getTo() != null && !event.getFrom().getWorld().equals(event.getTo().getWorld())) {
+        if ((owned(event.getEntity()) || aquatic(event.getEntity())) && event.getTo() != null && !event.getFrom().getWorld().equals(event.getTo().getWorld())) {
             event.setCancelled(true);
         }
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void leash(PlayerLeashEntityEvent event) {
+        if (aquatic(event.getEntity())) { event.setCancelled(true); return; }
         if (owned(event.getEntity()) && !owner(event.getEntity()).equals(event.getPlayer().getUniqueId().toString())) event.setCancelled(true);
     }
 

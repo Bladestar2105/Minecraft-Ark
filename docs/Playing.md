@@ -23,15 +23,27 @@ endlessly. There are also eight trader camps and six each of witch camps, pirate
 camps and boss arenas. The beginner area around spawn protects against hostile
 creatures; combat locations are farther away.
 
+## Leaderboard
+
+A floating, colored top-ten adventure-points leaderboard sits at the Survival
+spawn. It refreshes every five seconds and includes offline players. Everyone
+can use **`/leaderboard`** or **`/rangliste`** in any world to see the top ten
+and their own position in chat. **`/trigger rang`** still shows personal rank
+progress and points needed for the next rank.
+
 ## Dinosaurs
 
-Twelve habitats contain 24 special sniffers/ravagers using vanilla models.
+ArkDinos 1.1.0 gives the 24 animals in twelve habitats six original models:
+T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor and Pteranodon.
+Accept the server resource packs on Java and Bedrock to see them.
 **Torchflower seeds + use** tames an unowned animal and consumes one seed.
 **Sneak + use** switches your own animal between following and staying.
 Tamed ravagers do not attack players. Animals follow within the same world up to
 48 blocks and do not load distant chunks. With the ArkDinos riding update,
 **empty hand + use** mounts your own unoccupied pet; normal movement steers and
-sneak dismounts. See [Dino riding](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding) for controls and limits.
+sneak dismounts. A tamed Pteranodon takes off with jump, flies along your view
+direction and hovers when movement is released. See [Dino riding](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding)
+for controls, landing and remaining real-device acceptance checks.
 
 ## Claims, quests and groups
 
@@ -40,7 +52,7 @@ claims. Manage your land with `/claimslist`, `/trust Name`, `/untrust Name`,
 `/trustlist` and `/abandonclaim`. Starting budget: 1,000 blocks, increasing by 100
 per active hour up to 10,000. Public structures have separate protection.
 
-`/quests list` shows ten quests. Example: `/quests take Werkzeugmacher`, then
+`/quests list` shows available quests. The numbers are list positions, not quest IDs: use the **display name**, such as `/quests take Nachtwache`, rather than `/quests take 7`. Nachtwache still requires Material fürs Lager. Example: `/quests take Werkzeugmacher`, then
 confirm with `Ja` (German for yes). Parties: `/party create Name`, `/party invite Name`,
 `/party accept`. Every member must accept the same quest individually. Creative
 actions do not count. Parties must be installed successfully for group commands.

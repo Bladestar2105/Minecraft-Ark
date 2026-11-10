@@ -1,0 +1,42 @@
+{
+  "name": "ark_velociraptor",
+  "label": "Velociraptor",
+  "palette": [
+    "#8b8067",
+    "#aa9b7a",
+    "#c5b99c",
+    "#514b3d",
+    "#dabb60",
+    "#22291e",
+    "#d8cdae",
+    "#69614e"
+  ],
+  "description": "Waagerechter K\u00f6rper \u00b7 S-Hals \u00b7 schmaler Fang \u00b7 Sichelkrallen",
+  "ground_parts": [
+    "toe_left_0_base",
+    "toe_left_0_tip",
+    "claw_left_0",
+    "toe_left_1_base",
+    "toe_left_1_tip",
+    "claw_left_1",
+    "toe_left_2_base",
+    "toe_left_2_tip",
+    "claw_left_2",
+    "toe_right_0_base",
+    "toe_right_0_tip",
+    "claw_right_0",
+    "toe_right_1_base",
+    "toe_right_1_tip",
+    "claw_right_1",
+    "toe_right_2_base",
+    "toe_right_2_tip",
+    "claw_right_2"
+  ],
+  "leg_bones": [
+    "leg_left",
+    "leg_right"
+  ],
+  "walk_stride_blocks": 0.969712,
+  "cubes": 136,
+  "bones": 10
+}

@@ -1,0 +1,30 @@
+{
+  "name": "ark_mosasaurus",
+  "label": "Mosasaurus",
+  "palette": [
+    "#344e60",
+    "#536d7a",
+    "#c5c9b6",
+    "#263a49",
+    "#b8a557",
+    "#111e27",
+    "#eee5c8",
+    "#657b83"
+  ],
+  "description": "24 Meter langer Meeresr\u00e4uber \u00b7 vier kr\u00e4ftige Ruderflossen \u00b7 senkrechte Schwanzflosse \u00b7 dunkler Fleckenr\u00fccken und heller Bauch",
+  "ground_parts": [],
+  "leg_bones": [],
+  "walk_stride_blocks": 6.0,
+  "cubes": 293,
+  "bones": 12,
+  "aquatic": true,
+  "swim_stride_blocks": 6.0,
+  "native_carrier": "DOLPHIN",
+  "native_collision_scale": 4,
+  "rideable": false,
+  "mouth_anchor_blocks": [
+    0,
+    1.0625,
+    -9.4375
+  ]
+}

@@ -1477,6 +1477,11 @@ def create_app(test_config=None):
         finally:
             connection.close()
 
+    @app.get("/resources/dinos.zip")
+    def dino_resource_pack():
+        return send_file(file_path("plugins/BetterModel/build.zip"), mimetype="application/zip",
+                         download_name="ark-dinos.zip", conditional=True, max_age=0)
+
     @app.get("/api/map/viewer")
     def map_viewer():
         upstream = requests.Session()

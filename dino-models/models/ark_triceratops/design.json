@@ -1,0 +1,42 @@
+{
+  "name": "ark_triceratops",
+  "label": "Triceratops",
+  "palette": [
+    "#87725a",
+    "#a28b6b",
+    "#b7a488",
+    "#554d3f",
+    "#d5ae67",
+    "#25271f",
+    "#ded1ad",
+    "#76634e"
+  ],
+  "description": "F\u00e4cherf\u00f6rmiger Nackenschild \u00b7 drei H\u00f6rner \u00b7 schwere Schuppenhaut",
+  "ground_parts": [
+    "sole_front_left",
+    "nail_front_left-0.28",
+    "nail_front_left0",
+    "nail_front_left0.28",
+    "sole_back_right",
+    "nail_back_right-0.28",
+    "nail_back_right0",
+    "nail_back_right0.28",
+    "sole_front_right",
+    "nail_front_right-0.28",
+    "nail_front_right0",
+    "nail_front_right0.28",
+    "sole_back_left",
+    "nail_back_left-0.28",
+    "nail_back_left0",
+    "nail_back_left0.28"
+  ],
+  "leg_bones": [
+    "leg_front_left",
+    "leg_back_right",
+    "leg_front_right",
+    "leg_back_left"
+  ],
+  "walk_stride_blocks": 0.603235,
+  "cubes": 124,
+  "bones": 12
+}

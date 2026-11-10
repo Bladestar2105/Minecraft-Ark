@@ -1,0 +1,42 @@
+{
+  "name": "ark_brachiosaurus",
+  "label": "Brachiosaurus",
+  "palette": [
+    "#7b8071",
+    "#969b86",
+    "#bcb69b",
+    "#535c50",
+    "#d8bc77",
+    "#273128",
+    "#dfd5b3",
+    "#666e5d"
+  ],
+  "description": "Hoher Schulterbogen \u00b7 verj\u00fcngter Langhals \u00b7 gefaltete graugr\u00fcne Haut",
+  "ground_parts": [
+    "sole_front_left",
+    "nail_front_left-0.28",
+    "nail_front_left0",
+    "nail_front_left0.28",
+    "sole_back_right",
+    "nail_back_right-0.28",
+    "nail_back_right0",
+    "nail_back_right0.28",
+    "sole_front_right",
+    "nail_front_right-0.28",
+    "nail_front_right0",
+    "nail_front_right0.28",
+    "sole_back_left",
+    "nail_back_left-0.28",
+    "nail_back_left0",
+    "nail_back_left0.28"
+  ],
+  "leg_bones": [
+    "leg_front_left",
+    "leg_back_right",
+    "leg_front_right",
+    "leg_back_left"
+  ],
+  "walk_stride_blocks": 1.000753,
+  "cubes": 91,
+  "bones": 10
+}

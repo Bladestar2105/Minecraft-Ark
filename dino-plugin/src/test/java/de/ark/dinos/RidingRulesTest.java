@@ -19,12 +19,17 @@ public final class RidingRulesTest {
         movement(0, true, true, true, true, 0, 0, "Opposed keys cancel");
         movement(45, true, false, true, false, 0, 0.22, "Diagonal movement is normalized");
         movement(0, false, false, false, false, 0, 0, "Released controls stop horizontal movement");
-        System.out.println("PASS: 17 riding ownership, input and movement checks");
+        var sprint = RidingRules.movement(0, true, false, false, false, true);
+        check(Math.abs(sprint.z() - .34) < .000001, "Sprint increases ground speed");
+        var diagonalSprint = RidingRules.movement(45, true, false, true, false, true);
+        check(Math.abs(Math.hypot(diagonalSprint.x(), diagonalSprint.z()) - .34) < .000001, "Sprint diagonals remain normalized");
+        check(RidingRules.movement(0, false, false, false, false, true).equals(new RidingRules.Motion(0, 0)), "Sprint without movement stays still");
+        System.out.println("PASS: 20 riding ownership, input and movement checks");
     }
 
     private static void movement(float yaw, boolean forward, boolean backward, boolean left, boolean right,
                                  double x, double z, String message) {
-        var motion = RidingRules.movement(yaw, forward, backward, left, right);
+        var motion = RidingRules.movement(yaw, forward, backward, left, right, false);
         check(Math.abs(motion.x() - x) < 0.000001 && Math.abs(motion.z() - z) < 0.000001, message);
     }
 

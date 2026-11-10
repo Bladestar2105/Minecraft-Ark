@@ -1,0 +1,119 @@
+{
+  "java": {
+    "assets/arkdinos/textures/item/egg_trex.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVR42mNgGL7AKsT2v7GvGRyTpBmkoXlyNBh3zUoC0yp26v+J1oxsAAyDDCBoCEzzoaPdKJpBYiDNJS0++A0B+RukGd0AEAZpxmsAzGYQPnlmEk4DcBqCze+gAISJE2UAuq0wzSCDKDKAKC+AACyk8WGCUQmLb2waiU5MyAaRrJFUAAB3sOSUr8YoQgAAAABJRU5ErkJggg==",
+    "assets/arkdinos/items/egg_trex.json": "eyJtb2RlbCI6eyJ0eXBlIjoibWluZWNyYWZ0Om1vZGVsIiwibW9kZWwiOiJhcmtkaW5vczppdGVtL2VnZ190cmV4In19Cg==",
+    "assets/arkdinos/models/item/egg_trex.json": "eyJwYXJlbnQiOiJtaW5lY3JhZnQ6aXRlbS9nZW5lcmF0ZWQiLCJ0ZXh0dXJlcyI6eyJsYXllcjAiOiJhcmtkaW5vczppdGVtL2VnZ190cmV4In19Cg==",
+    "assets/arkdinos/textures/item/egg_triceratops.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgElEQVR42mNgGAU4QVm47X8Qro1zAdMkazy2qgKMYex0Dz0wJqj53YNtYIxuwPbZmWCM0xCQwq/P94I1Y3MBTDNOQ2C2wwyCGQDDMM0EDUB2wdmN9XADiHIBuq0wDDIIZjtZBiAHIt6ARPYnTCE2MbxRiU0TsmFEJyiYBpI1kgoAAGMHYPjnCG8AAAAASUVORK5CYII=",
+    "assets/arkdinos/items/egg_triceratops.json": "eyJtb2RlbCI6eyJ0eXBlIjoibWluZWNyYWZ0Om1vZGVsIiwibW9kZWwiOiJhcmtkaW5vczppdGVtL2VnZ190cmljZXJhdG9wcyJ9fQo=",
+    "assets/arkdinos/models/item/egg_triceratops.json": "eyJwYXJlbnQiOiJtaW5lY3JhZnQ6aXRlbS9nZW5lcmF0ZWQiLCJ0ZXh0dXJlcyI6eyJsYXllcjAiOiJhcmtkaW5vczppdGVtL2VnZ190cmljZXJhdG9wcyJ9fQo=",
+    "assets/arkdinos/textures/item/egg_stegosaurus.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAeklEQVR42mNgGL6g2s35f4m9DRyTpBlZI8igPUXB/1MNdP+TrBkZr012IWwISOHrPTVgjKwZ5AKQAQQNATkXZgBIE0wz0QbAXPDpcDP5BsA0wAKQJC/AFKMHIMggslxAciCCAEgBsmIYmyjN6IagG0ZSagRpQMY0yzMAqeXOpLMQK8cAAAAASUVORK5CYII=",
+    "assets/arkdinos/items/egg_stegosaurus.json": "eyJtb2RlbCI6eyJ0eXBlIjoibWluZWNyYWZ0Om1vZGVsIiwibW9kZWwiOiJhcmtkaW5vczppdGVtL2VnZ19zdGVnb3NhdXJ1cyJ9fQo=",
+    "assets/arkdinos/models/item/egg_stegosaurus.json": "eyJwYXJlbnQiOiJtaW5lY3JhZnQ6aXRlbS9nZW5lcmF0ZWQiLCJ0ZXh0dXJlcyI6eyJsYXllcjAiOiJhcmtkaW5vczppdGVtL2VnZ19zdGVnb3NhdXJ1cyJ9fQo=",
+    "assets/arkdinos/textures/item/egg_brachiosaurus.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAjElEQVR42mNgGL4gsyX9f1JtAhwTrRGmYcm2bjBevXcSmA7OCwRjgpqf3l8HxjADYHjq8howxmkITDO6C9ANwGkISNObZ1v/wwwiyQBkp4MwyCBkzSB5kCachmBzMnIAwgKRZAOQDULWjNMbyE5GN5RgIGJzIjZb8UYlLLGga0Q2gGBiQjYIHdMkzwAAtXBQb/uIRE4AAAAASUVORK5CYII=",
+    "assets/arkdinos/items/egg_brachiosaurus.json": "eyJtb2RlbCI6eyJ0eXBlIjoibWluZWNyYWZ0Om1vZGVsIiwibW9kZWwiOiJhcmtkaW5vczppdGVtL2VnZ19icmFjaGlvc2F1cnVzIn19Cg==",
+    "assets/arkdinos/models/item/egg_brachiosaurus.json": "eyJwYXJlbnQiOiJtaW5lY3JhZnQ6aXRlbS9nZW5lcmF0ZWQiLCJ0ZXh0dXJlcyI6eyJsYXllcjAiOiJhcmtkaW5vczppdGVtL2VnZ19icmFjaGlvc2F1cnVzIn19Cg==",
+    "assets/arkdinos/textures/item/egg_velociraptor.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAcklEQVR42mNgGNQgPcjuPwiTpTkv0vX/0cUxYEyyISANMM0wgyKc9f8Trfnl9bkotoPobVN8iTME2QBkl9DXgDOrklE0k2wAzHaQQWQZgG47yCCQZpJiAtkAkqIRBECKQU6GYZJsx2YIyZqRDSFbM7EAAKrguQbnqr5QAAAAAElFTkSuQmCC",
+    "assets/arkdinos/items/egg_velociraptor.json": "eyJtb2RlbCI6eyJ0eXBlIjoibWluZWNyYWZ0Om1vZGVsIiwibW9kZWwiOiJhcmtkaW5vczppdGVtL2VnZ192ZWxvY2lyYXB0b3IifX0K",
+    "assets/arkdinos/models/item/egg_velociraptor.json": "eyJwYXJlbnQiOiJtaW5lY3JhZnQ6aXRlbS9nZW5lcmF0ZWQiLCJ0ZXh0dXJlcyI6eyJsYXllcjAiOiJhcmtkaW5vczppdGVtL2VnZ192ZWxvY2lyYXB0b3IifX0K",
+    "assets/arkdinos/textures/item/egg_pteranodon.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAaklEQVR42mNgGNTANbr2PwiTpdknqeX/xHW7wZhkQ0AaYJpnbD0Eps188v6T7HSY7SQZgKwZ2QtN89cQZwhVDEAOQLIMQA9AWBiQbACyQRQZQJILQACkEORnZExSOkA3hGTNyIaQrZlYAACDOsPFGdlUrgAAAABJRU5ErkJggg==",
+    "assets/arkdinos/items/egg_pteranodon.json": "eyJtb2RlbCI6eyJ0eXBlIjoibWluZWNyYWZ0Om1vZGVsIiwibW9kZWwiOiJhcmtkaW5vczppdGVtL2VnZ19wdGVyYW5vZG9uIn19Cg==",
+    "assets/arkdinos/models/item/egg_pteranodon.json": "eyJwYXJlbnQiOiJtaW5lY3JhZnQ6aXRlbS9nZW5lcmF0ZWQiLCJ0ZXh0dXJlcyI6eyJsYXllcjAiOiJhcmtkaW5vczppdGVtL2VnZ19wdGVyYW5vZG9uIn19Cg==",
+    "assets/arkdinos/textures/item/egg_dilophosaurus.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAb0lEQVR42mNgGN4gxj33PwiTrXF207z/izqXgtm+FnH/idZ8dfcasGZk3FPcT9gQmGZkF4AwzAUEDUn2K6HMAJgLQAaRbQCyv0EBiBwGJBuAbBBJBpAdBiAAUgDDyLbCMFFpAVkzUU4n5BKSNZMCAIwT28/cEGfDAAAAAElFTkSuQmCC",
+    "assets/arkdinos/items/egg_dilophosaurus.json": "eyJtb2RlbCI6eyJ0eXBlIjoibWluZWNyYWZ0Om1vZGVsIiwibW9kZWwiOiJhcmtkaW5vczppdGVtL2VnZ19kaWxvcGhvc2F1cnVzIn19Cg==",
+    "assets/arkdinos/models/item/egg_dilophosaurus.json": "eyJwYXJlbnQiOiJtaW5lY3JhZnQ6aXRlbS9nZW5lcmF0ZWQiLCJ0ZXh0dXJlcyI6eyJsYXllcjAiOiJhcmtkaW5vczppdGVtL2VnZ19kaWxvcGhvc2F1cnVzIn19Cg==",
+    "assets/arkdinos/textures/item/egg_mosasaurus.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgklEQVR42mNgGAU4gYZv6n8Q1g/JAdMkawzqm4mCJe3CwJig5i3XD4MxugHO9V1gjNMQkObd907BDYC5BOYaZAOwGoKsAeRvZNtBYjCNWF2B7HRkL0ROXYDhBaxewRZoyBhkEF4DsBlCchjAJJD9iq4JZxigG4LuXIK2E3IN0RrJAQB0bvdgPCgauAAAAABJRU5ErkJggg==",
+    "assets/arkdinos/items/egg_mosasaurus.json": "eyJtb2RlbCI6eyJ0eXBlIjoibWluZWNyYWZ0Om1vZGVsIiwibW9kZWwiOiJhcmtkaW5vczppdGVtL2VnZ19tb3Nhc2F1cnVzIn19Cg==",
+    "assets/arkdinos/models/item/egg_mosasaurus.json": "eyJwYXJlbnQiOiJtaW5lY3JhZnQ6aXRlbS9nZW5lcmF0ZWQiLCJ0ZXh0dXJlcyI6eyJsYXllcjAiOiJhcmtkaW5vczppdGVtL2VnZ19tb3Nhc2F1cnVzIn19Cg=="
+  },
+  "bedrock": {
+    "textures/items/arkdinos/egg_trex.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVR42mNgGL7AKsT2v7GvGRyTpBmkoXlyNBh3zUoC0yp26v+J1oxsAAyDDCBoCEzzoaPdKJpBYiDNJS0++A0B+RukGd0AEAZpxmsAzGYQPnlmEk4DcBqCze+gAISJE2UAuq0wzSCDKDKAKC+AACyk8WGCUQmLb2waiU5MyAaRrJFUAAB3sOSUr8YoQgAAAABJRU5ErkJggg==",
+    "textures/items/arkdinos/egg_triceratops.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgElEQVR42mNgGAU4QVm47X8Qro1zAdMkazy2qgKMYex0Dz0wJqj53YNtYIxuwPbZmWCM0xCQwq/P94I1Y3MBTDNOQ2C2wwyCGQDDMM0EDUB2wdmN9XADiHIBuq0wDDIIZjtZBiAHIt6ARPYnTCE2MbxRiU0TsmFEJyiYBpI1kgoAAGMHYPjnCG8AAAAASUVORK5CYII=",
+    "textures/items/arkdinos/egg_stegosaurus.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAeklEQVR42mNgGL6g2s35f4m9DRyTpBlZI8igPUXB/1MNdP+TrBkZr012IWwISOHrPTVgjKwZ5AKQAQQNATkXZgBIE0wz0QbAXPDpcDP5BsA0wAKQJC/AFKMHIMggslxAciCCAEgBsmIYmyjN6IagG0ZSagRpQMY0yzMAqeXOpLMQK8cAAAAASUVORK5CYII=",
+    "textures/items/arkdinos/egg_brachiosaurus.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAjElEQVR42mNgGL4gsyX9f1JtAhwTrRGmYcm2bjBevXcSmA7OCwRjgpqf3l8HxjADYHjq8howxmkITDO6C9ANwGkISNObZ1v/wwwiyQBkp4MwyCBkzSB5kCachmBzMnIAwgKRZAOQDULWjNMbyE5GN5RgIGJzIjZb8UYlLLGga0Q2gGBiQjYIHdMkzwAAtXBQb/uIRE4AAAAASUVORK5CYII=",
+    "textures/items/arkdinos/egg_velociraptor.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAcklEQVR42mNgGNQgPcjuPwiTpTkv0vX/0cUxYEyyISANMM0wgyKc9f8Trfnl9bkotoPobVN8iTME2QBkl9DXgDOrklE0k2wAzHaQQWQZgG47yCCQZpJiAtkAkqIRBECKQU6GYZJsx2YIyZqRDSFbM7EAAKrguQbnqr5QAAAAAElFTkSuQmCC",
+    "textures/items/arkdinos/egg_pteranodon.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAaklEQVR42mNgGNTANbr2PwiTpdknqeX/xHW7wZhkQ0AaYJpnbD0Eps188v6T7HSY7SQZgKwZ2QtN89cQZwhVDEAOQLIMQA9AWBiQbACyQRQZQJILQACkEORnZExSOkA3hGTNyIaQrZlYAACDOsPFGdlUrgAAAABJRU5ErkJggg==",
+    "textures/items/arkdinos/egg_dilophosaurus.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAb0lEQVR42mNgGN4gxj33PwiTrXF207z/izqXgtm+FnH/idZ8dfcasGZk3FPcT9gQmGZkF4AwzAUEDUn2K6HMAJgLQAaRbQCyv0EBiBwGJBuAbBBJBpAdBiAAUgDDyLbCMFFpAVkzUU4n5BKSNZMCAIwT28/cEGfDAAAAAElFTkSuQmCC",
+    "textures/items/arkdinos/egg_mosasaurus.png": "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAgklEQVR42mNgGAU4gYZv6n8Q1g/JAdMkawzqm4mCJe3CwJig5i3XD4MxugHO9V1gjNMQkObd907BDYC5BOYaZAOwGoKsAeRvZNtBYjCNWF2B7HRkL0ROXYDhBaxewRZoyBhkEF4DsBlCchjAJJD9iq4JZxigG4LuXIK2E3IN0RrJAQB0bvdgPCgauAAAAABJRU5ErkJggg==",
+    "textures/item_texture.json": "eyJyZXNvdXJjZV9wYWNrX25hbWUiOiJhcmtfZGlub19lZ2dzIiwidGV4dHVyZV9uYW1lIjoiYXRsYXMuaXRlbXMiLCJ0ZXh0dXJlX2RhdGEiOnsiYXJrZGlub3MuZWdnX3RyZXgiOnsidGV4dHVyZXMiOiJ0ZXh0dXJlcy9pdGVtcy9hcmtkaW5vcy9lZ2dfdHJleCJ9LCJhcmtkaW5vcy5lZ2dfdHJpY2VyYXRvcHMiOnsidGV4dHVyZXMiOiJ0ZXh0dXJlcy9pdGVtcy9hcmtkaW5vcy9lZ2dfdHJpY2VyYXRvcHMifSwiYXJrZGlub3MuZWdnX3N0ZWdvc2F1cnVzIjp7InRleHR1cmVzIjoidGV4dHVyZXMvaXRlbXMvYXJrZGlub3MvZWdnX3N0ZWdvc2F1cnVzIn0sImFya2Rpbm9zLmVnZ19icmFjaGlvc2F1cnVzIjp7InRleHR1cmVzIjoidGV4dHVyZXMvaXRlbXMvYXJrZGlub3MvZWdnX2JyYWNoaW9zYXVydXMifSwiYXJrZGlub3MuZWdnX3ZlbG9jaXJhcHRvciI6eyJ0ZXh0dXJlcyI6InRleHR1cmVzL2l0ZW1zL2Fya2Rpbm9zL2VnZ192ZWxvY2lyYXB0b3IifSwiYXJrZGlub3MuZWdnX3B0ZXJhbm9kb24iOnsidGV4dHVyZXMiOiJ0ZXh0dXJlcy9pdGVtcy9hcmtkaW5vcy9lZ2dfcHRlcmFub2RvbiJ9LCJhcmtkaW5vcy5lZ2dfZGlsb3Bob3NhdXJ1cyI6eyJ0ZXh0dXJlcyI6InRleHR1cmVzL2l0ZW1zL2Fya2Rpbm9zL2VnZ19kaWxvcGhvc2F1cnVzIn0sImFya2Rpbm9zLmVnZ19tb3Nhc2F1cnVzIjp7InRleHR1cmVzIjoidGV4dHVyZXMvaXRlbXMvYXJrZGlub3MvZWdnX21vc2FzYXVydXMifX19Cg==",
+    "manifest.json": "eyJmb3JtYXRfdmVyc2lvbiI6MiwiaGVhZGVyIjp7Im5hbWUiOiJBUksgRGlub3NhdXIgRWdncyIsImRlc2NyaXB0aW9uIjoiRWlnaHQgb3JpZ2luYWwgc3BlY2llcyBlZ2cgc3ByaXRlcyIsInV1aWQiOiI0YjZkNWRkOC05MjUwLTQ4Y2YtYmM4Ny00ODI1MWNmYWY3NDQiLCJ2ZXJzaW9uIjpbMSwwLDBdLCJtaW5fZW5naW5lX3ZlcnNpb24iOlsxLDIxLDBdfSwibW9kdWxlcyI6W3sidHlwZSI6InJlc291cmNlcyIsInV1aWQiOiI3MDhkMDRhNS01ZGM3LTQ5MGUtYmI0Ny0wYTI4MjIxNGRkYzIiLCJ2ZXJzaW9uIjpbMSwwLDBdfV19Cg=="
+  },
+  "geyser": {
+    "format_version": 2,
+    "items": {
+      "minecraft:sniffer_egg": [
+        {
+          "type": "definition",
+          "model": "arkdinos:egg_trex",
+          "bedrock_identifier": "arkdinos:egg_trex",
+          "display_name": "T-Rex-Ei",
+          "bedrock_options": {
+            "icon": "arkdinos.egg_trex"
+          }
+        },
+        {
+          "type": "definition",
+          "model": "arkdinos:egg_triceratops",
+          "bedrock_identifier": "arkdinos:egg_triceratops",
+          "display_name": "Triceratops-Ei",
+          "bedrock_options": {
+            "icon": "arkdinos.egg_triceratops"
+          }
+        },
+        {
+          "type": "definition",
+          "model": "arkdinos:egg_stegosaurus",
+          "bedrock_identifier": "arkdinos:egg_stegosaurus",
+          "display_name": "Stegosaurus-Ei",
+          "bedrock_options": {
+            "icon": "arkdinos.egg_stegosaurus"
+          }
+        },
+        {
+          "type": "definition",
+          "model": "arkdinos:egg_brachiosaurus",
+          "bedrock_identifier": "arkdinos:egg_brachiosaurus",
+          "display_name": "Brachiosaurus-Ei",
+          "bedrock_options": {
+            "icon": "arkdinos.egg_brachiosaurus"
+          }
+        },
+        {
+          "type": "definition",
+          "model": "arkdinos:egg_velociraptor",
+          "bedrock_identifier": "arkdinos:egg_velociraptor",
+          "display_name": "Velociraptor-Ei",
+          "bedrock_options": {
+            "icon": "arkdinos.egg_velociraptor"
+          }
+        },
+        {
+          "type": "definition",
+          "model": "arkdinos:egg_pteranodon",
+          "bedrock_identifier": "arkdinos:egg_pteranodon",
+          "display_name": "Pteranodon-Ei",
+          "bedrock_options": {
+            "icon": "arkdinos.egg_pteranodon"
+          }
+        },
+        {
+          "type": "definition",
+          "model": "arkdinos:egg_dilophosaurus",
+          "bedrock_identifier": "arkdinos:egg_dilophosaurus",
+          "display_name": "Dilophosaurus-Ei",
+          "bedrock_options": {
+            "icon": "arkdinos.egg_dilophosaurus"
+          }
+        },
+        {
+          "type": "definition",
+          "model": "arkdinos:egg_mosasaurus",
+          "bedrock_identifier": "arkdinos:egg_mosasaurus",
+          "display_name": "Mosasaurus Spawn-Ei",
+          "bedrock_options": {
+            "icon": "arkdinos.egg_mosasaurus"
+          }
+        }
+      ]
+    }
+  }
+}

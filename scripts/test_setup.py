@@ -12,6 +12,20 @@ from build_plugins import download
 
 
 class SetupTests(unittest.TestCase):
+    def test_dino_module_uses_the_public_portal_origin_for_java_resource_pack(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / 'data/ark').mkdir(parents=True)
+            (root / 'data/ark/level.dat').write_bytes(b'fixture')
+            (root / 'data/plugins').mkdir()
+            (root / 'data/plugins/ArkDinos-1.1.0.jar').write_bytes(b'fixture')
+            (root / '.env.example').write_text('EULA=FALSE\n')
+            with contextlib.redirect_stdout(io.StringIO()):
+                initialize(root, portal_url='https://portal.example:8443/?welcome=1')
+            properties = (root / 'data/server.properties').read_text()
+            self.assertIn('resource-pack=https://portal.example:8443/resources/dinos.zip\n', properties)
+            self.assertIn('require-resource-pack=true\n', properties)
+
     def test_public_portal_url_is_initialized_once_and_invalid_url_fails_before_credentials(self):
         for url in ['https://portal.example/', 'http://localhost:8090/', 'https://[::1]:8443/']:
             with self.subTest(url=url), tempfile.TemporaryDirectory() as tmp:
