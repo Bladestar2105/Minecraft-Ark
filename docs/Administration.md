@@ -30,6 +30,12 @@ Every administrative request checks current OP status with ArkAccounts on the se
 
 The locally generated operator bootstrap account uses the same form and remains available when Minecraft/ArkAccounts is down. It is a separate emergency administrator credential, not a player's shared server password. Its account dialog changes only that local password; players including OPs change their shared password under **Account**. Local cookies retain the fixed 30-day lifetime and persistent credential state in `panel-state`. Player cookies now use path `/`; old `/play/` links redirect to the root and an upgrade may require one new login.
 
+## Add previous players to the whitelist
+
+Under **Players → Previously connected players**, administrators can also see players who are currently offline. **Add to whitelist** submits the selected name directly, then reloads its status from the server. Bedrock names retain their leading dot. Adding a player does not enable the whitelist automatically.
+
+The list uses successful joins from retained server logs, including compressed archives, and cached names backed by saved player data. A name in the profile cache alone or a rejected connection is not a successful join. Deleted history may be missing; unreadable files produce a warning.
+
 ## Accounts, tickets and skins
 
 The player service remains isolated internally on port8091, without a Docker socket, RCON secret, world mount or admin service key. The shared root interface calls its allowed personal routes through `/api/player/*`. **ArkAccounts** owns player identity/password/session data; [Wardrobe](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Wardrobe) and [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support) are optional extensions. Read [Modules](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules).

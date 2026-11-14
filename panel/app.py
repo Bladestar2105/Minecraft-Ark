@@ -1,5 +1,6 @@
 import hashlib
 import base64
+import gzip
 import hmac
 import http.client
 import json
@@ -11,8 +12,10 @@ import stat
 import tempfile
 import threading
 import time
+import zlib
 from collections import OrderedDict
 from datetime import datetime, timedelta, timezone
+from functools import lru_cache
 from http.cookies import SimpleCookie
 from pathlib import Path
 from urllib.parse import quote, urlsplit
@@ -73,6 +76,52 @@ PLUGIN_SETTINGS = {
 MAX_CONFIG = 256 * 1024
 MAX_OUTPUT = 128 * 1024
 HOP_HEADERS = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "te", "trailer", "transfer-encoding", "upgrade"}
+PLAYER_NAME = re.compile(r"[A-Za-z0-9_.]{1,64}")
+PLAYER_LOGIN = re.compile(
+    r"^\[\d{2}:\d{2}:\d{2}\] \[Server thread/INFO\]: (?:System chat: )?"
+    r"([A-Za-z0-9_.]{1,64})(?: joined the game\s*$|\[/[^\r\n]*\] logged in with entity id \d+ at )")
+
+
+@lru_cache(maxsize=256)
+def player_log_names(path, size, modified):
+    # File size and modification time invalidate cached names when a log changes.
+    opener = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rt", encoding="utf-8", errors="replace") as log:
+        return frozenset(match[1] for line in log if (match := PLAYER_LOGIN.match(line)))
+
+
+def connected_player_names(data_dir):
+    names, incomplete = {}, False
+    for path in sorted((data_dir / "logs").glob("*")):
+        if not path.name.endswith((".log", ".log.gz")):
+            continue
+        try:
+            if path.resolve() != path or not path.is_file():
+                raise ValueError("Linked log")
+            info = path.stat()
+            for name in sorted(player_log_names(path, info.st_size, info.st_mtime_ns)):
+                names.setdefault(name.casefold(), name)
+        except (OSError, EOFError, ValueError, zlib.error):
+            incomplete = True
+    cache = data_dir / "usercache.json"
+    if cache.exists():
+        try:
+            if cache.resolve() != cache or cache.stat().st_size > 4 * 1024 * 1024:
+                raise ValueError("Invalid profile cache")
+            profiles = json.loads(cache.read_text(encoding="utf-8"))
+            if not isinstance(profiles, list):
+                raise ValueError("Invalid profile cache")
+            # Support both legacy and current Paper player directories.
+            saved = {path.stem.lower() for pattern in ["*/playerdata/*.dat", "*/stats/*.json", "*/players/data/*.dat", "*/players/stats/*.json"]
+                     for path in data_dir.glob(pattern) if path.resolve() == path and path.is_file()}
+            for profile in profiles:
+                if (isinstance(profile, dict) and isinstance(profile.get("name"), str)
+                        and PLAYER_NAME.fullmatch(profile["name"]) and isinstance(profile.get("uuid"), str)
+                        and profile["uuid"].lower() in saved):
+                    names[profile["name"].casefold()] = profile["name"]
+        except (OSError, UnicodeError, ValueError):
+            incomplete = True
+    return names, incomplete
 
 
 class PanelSessionInterface(SecureCookieSessionInterface):
@@ -1297,7 +1346,16 @@ def create_app(test_config=None):
 
     @app.get("/api/players")
     def player_admin():
-        return jsonify(bridge("players"))
+        result = bridge("players")
+        names, incomplete = connected_player_names(data_dir)
+        online = {player["name"].casefold(): player["name"] for player in result.get("players", [])}
+        names.update(online)
+        whitelist = {name.casefold() for name in result.get("whitelist", [])}
+        banned = {name.casefold() for name in result.get("banned", [])}
+        result["known_players"] = [dict(name=name, online=key in online, whitelisted=key in whitelist, banned=key in banned)
+                                   for key, name in sorted(names.items())]
+        result["history_warning"] = translate("Ein Teil der Spielerhistorie konnte nicht gelesen werden.") if incomplete else ""
+        return jsonify(result)
 
     @app.post("/api/players/action")
     def player_action():

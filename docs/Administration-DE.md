@@ -30,6 +30,12 @@ Jede Verwaltungsanfrage prüft den aktuellen OP-Status über ArkAccounts auf dem
 
 Das lokal erzeugte Betreiber-Notfallkonto verwendet dasselbe Formular und bleibt bei ausgefallenem Minecraft/ArkAccounts erreichbar. Es ist ein getrennter Verwaltungszugang und kein gemeinsames Spielerpasswort. Sein Kontodialog ändert nur das lokale Passwort; Spieler einschließlich OPs ändern ihr gemeinsames Passwort unter **Konto**. Lokale Cookies gelten weiterhin fest 30 Tage; der Zugangszustand liegt in `panel-state`. Spielercookies gelten jetzt unter `/`; alte `/play/`-Links leiten zur Hauptadresse weiter und nach dem Update kann einmaliges Neuanmelden nötig sein.
 
+## Frühere Spieler zur Whitelist hinzufügen
+
+Unter **Spielerverwaltung → Bisher verbundene Spieler** stehen auch frühere, aktuell abgemeldete Spieler. **Zur Whitelist hinzufügen** übernimmt den gewählten Namen direkt; der Status wird anschließend vom Server neu geladen. Bedrock-Namen behalten ihren führenden Punkt. Das Hinzufügen aktiviert die Whitelist nicht automatisch.
+
+Die Liste verwendet erfolgreiche Beitritte aus erhaltenen Serverlogs einschließlich komprimierter Archive sowie zwischengespeicherte Namen mit gespeicherten Spielerdaten. Ein Name allein im Namenscache oder ein abgewiesener Verbindungsversuch gilt nicht als Beitritt. Gelöschte Historie kann fehlen; unlesbare Dateien erzeugen einen Hinweis.
+
 ## Konten, Anfragen und Skins
 
 Der Spielerprozess bleibt intern auf Port8091 getrennt, ohne Docker-Socket, RCON-Schlüssel, Weltzugriff oder Admin-Dienstschlüssel. Die gemeinsame Oberfläche unter der Hauptadresse nutzt seine erlaubten persönlichen Routen über `/api/player/*`. **ArkAccounts** verwaltet Spieleridentität, Passwort und Sitzungen; [Wardrobe](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Wardrobe-DE) und [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support-DE) sind optionale Erweiterungen. Siehe [Module](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules-DE).

@@ -1,4 +1,5 @@
 import base64
+import gzip
 import json
 import unittest
 from unittest.mock import patch
@@ -93,6 +94,56 @@ class AdminTests(unittest.TestCase):
         self.assertEqual(self.mutate('/api/players/action', {'action': 'kick', 'player': '.BedrockUser', 'reason': 'Test'}, method='post').status_code, 200)
         self.assertEqual(self.containers.items['minecraft-ark'].commands[-1][-1], 'kick .BedrockUser Test')
         self.assertEqual(self.mutate('/api/players/action', {'action': 'op', 'player': 'name\nstop'}).status_code, 400)
+
+    def test_player_history_combines_retained_logins_and_saved_profiles(self):
+        self.bridge(players={'players': [{'name': '.BedrockUser'}], 'whitelist': ['OldPlayer'], 'banned': ['BannedPlayer']})
+        logs = self.data / 'logs'
+        logs.mkdir()
+        with gzip.open(logs / '2026-11-01-1.log.gz', 'wt') as log:
+            log.write('[12:00:00] [Server thread/INFO]: OldPlayer[/127.0.0.1:123] logged in with entity id 1 at ([ark]0, 64, 0)\n')
+            log.write('[12:01:00] [Server thread/INFO]: System chat: BannedPlayer joined the game\n')
+        (logs / 'latest.log').write_text(
+            '[12:02:00] [Server thread/INFO]: oldplayer[/127.0.0.1:123] logged in with entity id 2 at ([ark]0, 64, 0)\n'
+            '[12:03:00] [Server thread/INFO]: <ChatUser> FakePlayer joined the game\n'
+            '[12:04:00] [Server thread/INFO]: RejectedPlayer lost connection: You are not whitelisted\n')
+        profile = '12345678-1234-1234-1234-123456789abc'
+        self.data.joinpath('usercache.json').write_text(json.dumps([
+            {'name': 'SavedPlayer', 'uuid': profile}, {'name': 'OnlyCached', 'uuid': 'a' * 36},
+            {'name': 'unsafe\nstop', 'uuid': profile}]))
+        saved = self.data / 'ark/players/data'
+        saved.mkdir(parents=True)
+        (saved / (profile + '.dat')).write_bytes(b'player data')
+        self.assertEqual(self.client.get('/api/players').status_code, 401)
+        self.login()
+        response = self.client.get('/api/players')
+        self.assertEqual(response.status_code, 200)
+        history = response.json['known_players']
+        self.assertEqual([p['name'] for p in history], ['.BedrockUser', 'BannedPlayer', 'OldPlayer', 'SavedPlayer'])
+        self.assertTrue(history[0]['online'])
+        self.assertTrue(history[1]['banned'])
+        self.assertTrue(history[2]['whitelisted'])
+        self.assertFalse(history[3]['online'])
+        self.assertEqual(response.json['whitelist'], ['OldPlayer'])
+        self.assertNotIn('127.0.0.1', response.get_data(as_text=True))
+        self.assertEqual(self.mutate('/api/players/action', {'action': 'whitelist-add', 'player': 'OldPlayer'}).status_code, 200)
+        self.assertEqual(self.containers.items['minecraft-ark'].commands[-1][-1], 'whitelist add OldPlayer')
+
+    def test_player_history_skips_bad_or_linked_files_and_refreshes_changed_logs(self):
+        self.login()
+        self.bridge()
+        logs = self.data / 'logs'
+        logs.mkdir()
+        (logs / 'broken.log.gz').write_bytes(b'not gzip')
+        (logs / 'linked.log').symlink_to(self.properties)
+        current = logs / 'latest.log'
+        current.write_text('[12:00:00] [Server thread/INFO]: First joined the game\n')
+        response = self.client.get('/api/players')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json['history_warning'])
+        self.assertIn('First', [p['name'] for p in response.json['known_players']])
+        with current.open('a') as log:
+            log.write('[12:01:00] [Server thread/INFO]: Second joined the game\n')
+        self.assertIn('Second', [p['name'] for p in self.client.get('/api/players').json['known_players']])
 
     def test_completion_only_uses_encoded_read_protocol(self):
         self.login()

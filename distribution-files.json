@@ -299,6 +299,7 @@
   "panel/test_operator_auth.py",
   "panel/test_photo_skin.mjs",
   "panel/test_player_app.py",
+  "panel/test_player_history_ui.mjs",
   "panel/test_player_ui.mjs",
   "panel/test_rate_limit.py",
   "panel/test_rcon_client.py",
