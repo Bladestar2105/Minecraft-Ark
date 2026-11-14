@@ -1,11 +1,28 @@
 """Aquatic motion stays cyclic while the bite leaves the carrier body fixed."""
 import unittest
 
-from build_models import mosasaurus
+from build_models import mosasaurus, rotate
 from test_model_poses import pose
 
 
 class MosasaurusMotionTest(unittest.TestCase):
+    def test_tail_cuboids_fit_java_model_limits_after_engine_rotation(self):
+        model=mosasaurus()
+        for bone,node in model.nodes.items():
+            cubes=[c for c in model.elements if c['uuid'] in node['children']]
+            if not cubes:continue
+            origin=model.groups[bone]['origin']
+            scale=max(1,max(abs(v-origin[i]) for c in cubes for field in ('from','to') for i,v in enumerate(c[field]))/16)
+            for cube in cubes:
+                if not cube['name'].startswith('tail_'):continue
+                # BetterModel 3.6.0 Cube.buildJson rotates the local pivot before centralizing the cuboid.
+                self.assertEqual(cube['rotation'][1:],[0,0])
+                pivot=[(v-origin[i])/scale for i,v in enumerate(cube['origin'])]
+                rotated=rotate(pivot,[-cube['rotation'][0],0,0])
+                for field in ('from','to'):
+                    values=[8+(v-origin[i])/scale+rotated[i]-pivot[i] for i,v in enumerate(cube[field])]
+                    self.assertTrue(all(-16<=v<=32 for v in values),(cube['name'],field,values))
+
     def test_five_explicit_hitboxes_do_not_add_visible_geometry(self):
         model=mosasaurus()
         colliders=getattr(model,'colliders',[])

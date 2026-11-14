@@ -6,6 +6,8 @@ The stable application release [`app-2026-11-07`](https://github.com/Bladestar21
 
 Requirements on the host: Docker with Compose v2, Python 3.10+, an archive extractor and internet access. **No host JDK is required for the binary package.** Java 25 runs inside the game container. Allow space for the world archive, extracted world, map rendering and private backups; at least 8 GiB host RAM is a starting recommendation, not a capacity guarantee.
 
+New binary packages built from the current sources additionally include the verified derived GeyserModelEngine bridge under `runtime-dependencies/`, separate from the seven project plugins. Setup checks its pinned checksum before installation and needs no host JDK. The original URL, checksums, source patch and rebuild program remain included. Existing published archives are unchanged.
+
 ## Fresh setup
 
 1. Download the application ZIP and its release `SHA256SUMS`. Verify its SHA-256 before extracting.

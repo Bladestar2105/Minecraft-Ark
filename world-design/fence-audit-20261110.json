@@ -1,0 +1,424 @@
+{
+  "date": "2026-11-10",
+  "dimension": "minecraft:overworld",
+  "bukkit_world": "ark",
+  "sites": [
+    {
+      "id": "habitat_01",
+      "center": [
+        -9584,
+        70,
+        -6212
+      ],
+      "marker_position": [
+        -9583.5,
+        71,
+        -6211.5
+      ],
+      "audit_bounds": [
+        -9602,
+        66,
+        -6230,
+        -9566,
+        76,
+        -6194
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "moss_block_count": 816,
+      "iron_bars_count": 0,
+      "verification": "Minecraft fence/gate tags and independent explicit fence IDs; native moss/grass/air probes",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        19,
+        20,
+        29
+      ],
+      "observed_at": "2026-11-10T07:01:42.626338+00:00"
+    },
+    {
+      "id": "habitat_02",
+      "center": [
+        -5956,
+        63,
+        -9256
+      ],
+      "marker_position": [
+        -5955.5,
+        64,
+        -9255.5
+      ],
+      "audit_bounds": [
+        -5974,
+        59,
+        -9274,
+        -5938,
+        69,
+        -9238
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "verification": "Minecraft fence and gate tags; native moss/air probes",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        36,
+        37
+      ],
+      "observed_at": "2026-11-10T07:02:56.519526+00:00"
+    },
+    {
+      "id": "habitat_03",
+      "center": [
+        -1056,
+        68,
+        -5844
+      ],
+      "marker_position": [
+        -1055.5,
+        69.0,
+        -5843.5
+      ],
+      "audit_bounds": [
+        -1074,
+        64,
+        -5862,
+        -1038,
+        74,
+        -5826
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:06:02.274538+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        43
+      ]
+    },
+    {
+      "id": "habitat_04",
+      "center": [
+        5632,
+        71,
+        -8432
+      ],
+      "marker_position": [
+        5632.5,
+        72.0,
+        -8431.5
+      ],
+      "audit_bounds": [
+        5614,
+        67,
+        -8450,
+        5650,
+        77,
+        -8414
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:06:38.875440+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        49
+      ]
+    },
+    {
+      "id": "habitat_05",
+      "center": [
+        -7036,
+        71,
+        0
+      ],
+      "marker_position": [
+        -7035.5,
+        72.0,
+        0.5
+      ],
+      "audit_bounds": [
+        -7054,
+        67,
+        -18,
+        -7018,
+        77,
+        18
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:07:15.026158+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        55
+      ]
+    },
+    {
+      "id": "habitat_06",
+      "center": [
+        -664,
+        72,
+        -3944
+      ],
+      "marker_position": [
+        -663.5,
+        73.0,
+        -3943.5
+      ],
+      "audit_bounds": [
+        -682,
+        68,
+        -3962,
+        -646,
+        78,
+        -3926
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:08:21.775205+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        61
+      ]
+    },
+    {
+      "id": "habitat_07",
+      "center": [
+        5044,
+        76,
+        -4848
+      ],
+      "marker_position": [
+        5044.5,
+        77.0,
+        -4847.5
+      ],
+      "audit_bounds": [
+        5026,
+        72,
+        -4866,
+        5062,
+        82,
+        -4830
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:08:58.322284+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        67
+      ]
+    },
+    {
+      "id": "habitat_08",
+      "center": [
+        8820,
+        86,
+        1452
+      ],
+      "marker_position": [
+        8820.5,
+        87.0,
+        1452.5
+      ],
+      "audit_bounds": [
+        8802,
+        82,
+        1434,
+        8838,
+        92,
+        1470
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:09:36.474298+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        73
+      ]
+    },
+    {
+      "id": "habitat_09",
+      "center": [
+        -9076,
+        75,
+        9536
+      ],
+      "marker_position": [
+        -9075.5,
+        76.0,
+        9536.5
+      ],
+      "audit_bounds": [
+        -9094,
+        71,
+        9518,
+        -9058,
+        81,
+        9554
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:12:07.722631+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        79
+      ]
+    },
+    {
+      "id": "habitat_10",
+      "center": [
+        -4288,
+        69,
+        3336
+      ],
+      "marker_position": [
+        -4287.5,
+        70.0,
+        3336.5
+      ],
+      "audit_bounds": [
+        -4306,
+        65,
+        3318,
+        -4270,
+        75,
+        3354
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:12:59.972025+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        85
+      ]
+    },
+    {
+      "id": "habitat_11",
+      "center": [
+        544,
+        82,
+        8844
+      ],
+      "marker_position": [
+        544.5,
+        83.0,
+        8844.5
+      ],
+      "audit_bounds": [
+        526,
+        78,
+        8826,
+        562,
+        88,
+        8862
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:13:52.173185+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        91
+      ]
+    },
+    {
+      "id": "habitat_12",
+      "center": [
+        6936,
+        68,
+        3016
+      ],
+      "marker_position": [
+        6936.5,
+        69.0,
+        3016.5
+      ],
+      "audit_bounds": [
+        6918,
+        64,
+        2998,
+        6954,
+        74,
+        3034
+      ],
+      "audit_volume": 15059,
+      "fence_and_gate_count": 0,
+      "status": "already_fence_free",
+      "observed_at": "2026-11-10T07:14:24.772326+00:00",
+      "migration_applied": false,
+      "zero_count_journal_lines": [
+        97
+      ]
+    }
+  ],
+  "world_blocks_changed": 0,
+  "cleanup": {
+    "at": "2026-11-10T07:15:26.649389+00:00",
+    "results": [
+      {
+        "command": "worldedit:/gmask",
+        "output": "Global mask disabled.\n"
+      },
+      {
+        "command": "worldedit:/sel",
+        "output": "Selection cleared.\n"
+      },
+      {
+        "command": "worldedit:/world",
+        "output": "Removed world override.\n"
+      },
+      {
+        "command": "execute in minecraft:overworld run forceload query",
+        "output": "No force loaded chunks were found in minecraft:overworld"
+      },
+      {
+        "command": "list",
+        "output": "There are 0 of a max of 10 players online: "
+      },
+      {
+        "command": "save-all flush",
+        "output": "Saving the game (this may take a moment!)Saved the game"
+      }
+    ],
+    "remaining_force_loaded_chunks": 0,
+    "players_online_at_finish": 0,
+    "worldedit_session_cleared": true,
+    "journal_chunk_ticket_acquisitions": 205,
+    "journal_chunk_ticket_releases": 205,
+    "ticket_ledger_note": "Counts include the initial diagnostic loads and later per-site audit loads; each acquisition has a matching release."
+  },
+  "result": "All twelve original habitat areas were already free of fences and fence gates; no removal was needed or performed.",
+  "original_generator_commit": "360677edc18725b0b1673d86b32aafb895c8acc6",
+  "coordinate_source": "Live Atlas X/Z entries, confirmed by the exact original ark_renewal_habitat_01 through _12 markers.",
+  "original_manifest_available": false,
+  "audit_method": {
+    "selection_dimensions": [
+      37,
+      11,
+      37
+    ],
+    "horizontal_radius": 18,
+    "vertical_range_relative_to_ground": [
+      -4,
+      6
+    ],
+    "coverage": "All original fence and gate positions, both lamp bases, and their upper fence posts are inside each read-only selection.",
+    "material_scope": "Minecraft fence and fence-gate tags, independently confirmed with explicit vanilla fence IDs at habitat_01; a combined list of 25 vanilla fence/gate IDs at habitats 03 through 12.",
+    "palette_assumption": "No habitat wood palette was guessed. A zero count across all fence and gate types establishes that no original fence removal is required."
+  },
+  "evidence_commands_file": "fence-audit-20261110.commands.jsonl",
+  "evidence_completed_commands": 104,
+  "limits": [
+    "The counts describe the twelve listed habitat areas at the recorded times, not the entire world.",
+    "The absence of fences does not establish when or by whom earlier world changes were made.",
+    "No backup schematic or undo snapshot was needed because no world block was changed."
+  ]
+}

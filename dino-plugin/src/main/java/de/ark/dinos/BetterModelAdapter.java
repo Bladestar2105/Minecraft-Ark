@@ -15,6 +15,7 @@ import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSp
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerDestroyEntities;
 import com.github.retrooper.packetevents.protocol.entity.EntityPositionData;
 import com.github.retrooper.packetevents.protocol.entity.type.EntityTypes;
+import com.github.retrooper.packetevents.protocol.player.User;
 import com.github.retrooper.packetevents.protocol.teleport.RelativeFlag;
 import com.github.retrooper.packetevents.util.Vector3d;
 import kr.toxicity.model.api.BetterModel;
@@ -78,8 +79,12 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
     private final ModelEventListener eggAssets;
     private final Map<Integer, String> modeledCarriers = new ConcurrentHashMap<>();
     private final Set<Integer> players = ConcurrentHashMap.newKeySet();
+    private final Map<UUID, Player> onlineViewers = new ConcurrentHashMap<>();
     private final Set<Integer> riddenCarriers = ConcurrentHashMap.newKeySet();
     private final Map<Integer, Integer> visualCarriers = new ConcurrentHashMap<>();
+    private final Map<UUID, Set<Integer>> visibleActors = new ConcurrentHashMap<>();
+    private final Map<Integer, ExtraSeat> extraSeats = new ConcurrentHashMap<>();
+    private final Map<Integer, ExtraSeat> seatCarriers = new ConcurrentHashMap<>();
     private final Map<UUID, Map<Integer, CarrierPose>> synchronizedViewers = new ConcurrentHashMap<>();
     private final Map<?, ?> bridgeModels;
     private final Object bridgeManager;
@@ -87,6 +92,11 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
     private final PacketListenerAbstract packets;
     private final BukkitTask animationTask;
     private final BedrockSeats bedrockSeats;
+    private volatile boolean bridgeReloading;
+    private volatile boolean closed;
+
+    // Only immutable IDs and offsets cross from the server thread to packet threads.
+    private record ExtraSeat(int carrier, int entity, double rearDistance, double relativeY) {}
 
     private static final class CarrierPose {
         EntityPositionData nativePose;
@@ -136,14 +146,16 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
             bedrockSeats.close();
             throw new IllegalStateException("Dinosaur movement bridge unavailable", error);
         }
-        for (Player player : plugin.getServer().getOnlinePlayers()) players.add(player.getEntityId());
+        for (Player player : plugin.getServer().getOnlinePlayers()) rememberPlayer(player);
         packets = new PacketListenerAbstract(PacketListenerPriority.HIGHEST) {
             @Override public void onPacketSend(PacketSendEvent event) {
+                if (closed) return;
                 UUID viewer = event.getUser().getUUID();
                 if (viewer == null) return;
                 if (event.getPacketType() == PacketType.Play.Server.SPAWN_ENTITY) {
                     var packet = new WrapperPlayServerSpawnEntity(event);
                     if (packet.getEntityType() == EntityTypes.PIG && bridgeCarrier(packet.getEntityId(), viewer) != null) {
+                        visibleActors.computeIfAbsent(viewer, ignored -> ConcurrentHashMap.newKeySet()).add(packet.getEntityId());
                         // Geyser's Pig factory skips interpolation for client-predicted vehicles.
                         // Keep the custom definition/ID, with the same interpolation as our carriers.
                         packet.setEntityType(EntityTypes.RAVAGER);
@@ -152,29 +164,51 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
                     if (pose != null) synchronized (pose) {
                         pose.nativePose = new EntityPositionData(packet.getPosition(), Vector3d.zero(), packet.getYaw(), packet.getPitch());
                         pose.mirrored = false;
+                        pose.lastBridgePose = 0;
                     }
                     return;
                 }
                 if (event.getPacketType() == PacketType.Play.Server.DESTROY_ENTITIES) {
                     Map<Integer, CarrierPose> poses = synchronizedViewers.get(viewer);
-                    if (poses != null) for (int id : new WrapperPlayServerDestroyEntities(event).getEntityIds()) poses.remove(id);
+                    Set<Integer> actors = visibleActors.get(viewer);
+                    int[] destroyed = new WrapperPlayServerDestroyEntities(event).getEntityIds();
+                    // Drop every destroyed native vehicle before restoring surviving riders of an actor.
+                    if (poses != null) for (int id : destroyed) poses.remove(id);
+                    for (int id : destroyed) {
+                        Integer carrier = visualCarriers.get(id);
+                        if (carrier != null && actors != null && actors.remove(id)) {
+                            restoreViewerCarrier(event.getUser(), viewer, carrier, false);
+                            ExtraSeat seat = extraSeats.get(carrier);
+                            if (seat != null) restoreViewerCarrier(event.getUser(), viewer, seat.entity, false);
+                        }
+                        ExtraSeat seat = extraSeats.get(id);
+                        if (seat != null) restoreViewerCarrier(event.getUser(), viewer, seat.entity, false);
+                    }
                     return;
                 }
                 if (event.getPacketType() == PacketType.Play.Server.ENTITY_POSITION_SYNC) {
                     var packet = new WrapperPlayServerEntityPositionSync(event);
                     Integer carrier = visualCarriers.get(packet.getId());
-                    if (carrier != null && riddenCarriers.contains(carrier)) {
-                        CarrierPose pose = carrierPose(viewer, carrier, false);
-                        if (pose != null) synchronized (pose) {
-                            if (pose.nativePose != null) {
-                                pose.lastBridgePose = System.nanoTime();
-                                pose.mirrored = true;
-                                // The visible bridge actor and its rider must use the same pose clock.
-                                event.getUser().sendPacketSilently(new WrapperPlayServerEntityPositionSync(carrier, packet.getValues(), packet.isOnGround()));
+                    if (carrier != null) {
+                        Set<Integer> actors = visibleActors.get(viewer);
+                        if (actors != null && actors.contains(packet.getId())) {
+                            long now = System.nanoTime();
+                            // The visible bridge actor and both rider vehicles share one pose clock.
+                            if (mirrorCarrier(event.getUser(), viewer, carrier, packet.getValues(), packet.isOnGround(), now, null)) {
+                                ExtraSeat seat = extraSeats.get(carrier);
+                                if (seat != null) {
+                                    var source = packet.getValues();
+                                    double yaw = Math.toRadians(source.getYaw());
+                                    var position = source.getPosition().add(Math.sin(yaw) * seat.rearDistance,
+                                            seat.relativeY, -Math.cos(yaw) * seat.rearDistance);
+                                    // The native marker stays unrotated; rotating it also rotates Geyser's rider offset.
+                                    var values = new EntityPositionData(position, Vector3d.zero(), 0, 0);
+                                    mirrorCarrier(event.getUser(), viewer, seat.entity, values, packet.isOnGround(), now, seat);
+                                }
                             }
                         }
                     } else {
-                        CarrierPose pose = carrierPose(viewer, packet.getId(), true);
+                        CarrierPose pose = carrierPose(viewer, packet.getId(), !seatCarriers.containsKey(packet.getId()));
                         if (pose != null) synchronized (pose) {
                             pose.nativePose = packet.getValues();
                             pose.onGround = packet.isOnGround();
@@ -203,7 +237,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
                     moving = packet.getEntityId();teleport = packet.getValues();flags = packet.getRelativeFlags();ground = packet.isOnGround();
                 }
                 if (moving >= 0) {
-                    CarrierPose pose = carrierPose(viewer, moving, teleport != null);
+                    CarrierPose pose = carrierPose(viewer, moving, teleport != null && !seatCarriers.containsKey(moving));
                     if (pose != null) synchronized (pose) {
                         EntityPositionData previous = pose.nativePose;
                         if (teleport != null && (flags.getFullMask() == 0 || previous != null)) {
@@ -235,14 +269,20 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         };
         try (var resource = plugin.getResource("egg-assets.properties")) {
             var assets = EggAssets.read(resource);
-            eggAssets = BetterModel.eventBus().subscribe(plugin::isEnabled, PluginStartReloadEvent.class, event ->
-                    assets.forEach((path, bytes) -> event.zipper().assets().add(path, bytes.length, () -> bytes)));
+            eggAssets = BetterModel.eventBus().subscribe(plugin::isEnabled, PluginStartReloadEvent.class, event -> {
+                bridgeReloading = true;
+                visibleActors.clear();
+                visualCarriers.clear();
+                plugin.getServer().getScheduler().runTask(plugin, this::restoreExpiredCarriers);
+                assets.forEach((path, bytes) -> event.zipper().assets().add(path, bytes.length, () -> bytes));
+            });
         } catch (java.io.IOException | IllegalArgumentException error) {
             bedrockSeats.close();
             throw new IllegalStateException("Dinosaur egg graphics unavailable", error);
         }
         reload = BetterModel.eventBus().subscribe(plugin::isEnabled, PluginEndReloadEvent.class, event ->
                 plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (closed) return;
                     var reloadModels = new HashMap<>(models);
                     reloadModels.putAll(pending);
                     for (Model model : reloadModels.values()) {
@@ -254,18 +294,73 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
                             plugin.getLogger().warning("Dinosaur model reload failed: " + error.getMessage());
                         }
                     }
+                    bridgeReloading = false;
                 }));
         PacketEvents.getAPI().getEventManager().registerListener(packets);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         animationTask = plugin.getServer().getScheduler().runTaskTimer(plugin, this::updateAnimations, 1, 1);
     }
 
-    @EventHandler public void join(PlayerJoinEvent event) { players.add(event.getPlayer().getEntityId()); }
-    @EventHandler public void quit(PlayerQuitEvent event) { players.remove(event.getPlayer().getEntityId()); synchronizedViewers.remove(event.getPlayer().getUniqueId()); }
+    private void rememberPlayer(Player player) {
+        players.add(player.getEntityId());
+        onlineViewers.put(player.getUniqueId(), player);
+    }
+
+    @EventHandler public void join(PlayerJoinEvent event) { rememberPlayer(event.getPlayer()); }
+    @EventHandler public void quit(PlayerQuitEvent event) {
+        players.remove(event.getPlayer().getEntityId());
+        UUID viewer = event.getPlayer().getUniqueId();
+        onlineViewers.remove(viewer);
+        synchronizedViewers.remove(viewer);
+        visibleActors.remove(viewer);
+    }
+
+    void seat(Mob carrier, Entity seat, double rearDistance, double relativeSeatY) {
+        if (!Double.isFinite(rearDistance) || rearDistance < 0 || !Double.isFinite(relativeSeatY))
+            throw new IllegalArgumentException("Invalid dinosaur passenger offset");
+        if (closed) return;
+        int carrierId = carrier.getEntityId(), seatId = seat.getEntityId();
+        if (carrierId == seatId) throw new IllegalArgumentException("Dinosaur passenger needs its own vehicle");
+        var replacement = new ExtraSeat(carrierId, seatId, rearDistance, relativeSeatY);
+        ExtraSeat previous = extraSeats.put(carrierId, replacement);
+        if (previous != null && previous.entity != seatId) {
+            seatCarriers.remove(previous.entity, previous);
+            restoreCarrier(previous.entity);
+        }
+        seatCarriers.put(seatId, replacement);
+        if (previous == null || previous.entity != seatId) {
+            // World.spawn can publish before this hook. Seed only viewers already tracking the
+            // just-created marker; later viewers obtain their baseline from its spawn packet.
+            Set<Player> trackedBy = seat.getTrackedBy();
+            if (!trackedBy.isEmpty()) {
+                Location location = seat.getLocation();
+                boolean onGround = seat.isOnGround();
+                for (Player viewer : trackedBy) {
+                    CarrierPose pose = carrierPose(viewer.getUniqueId(), seatId, true);
+                    synchronized (pose) {
+                        if (pose.nativePose == null) {
+                            pose.nativePose = new EntityPositionData(new Vector3d(location.getX(), location.getY(), location.getZ()),
+                                    Vector3d.zero(), location.getYaw(), location.getPitch());
+                            pose.onGround = onGround;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void clearSeat(Mob carrier) { clearSeat(carrier.getEntityId()); }
+
+    private void clearSeat(int carrier) {
+        ExtraSeat seat = extraSeats.remove(carrier);
+        if (seat == null) return;
+        seatCarriers.remove(seat.entity, seat);
+        restoreCarrier(seat.entity);
+    }
 
     private CarrierPose carrierPose(UUID viewer, int carrier, boolean create) {
         Map<Integer, CarrierPose> poses = synchronizedViewers.get(viewer);
-        if (create && modeledCarriers.containsKey(carrier)) {
+        if (create && (modeledCarriers.containsKey(carrier) || seatCarriers.containsKey(carrier))) {
             poses = synchronizedViewers.computeIfAbsent(viewer, ignored -> new ConcurrentHashMap<>());
             return poses.computeIfAbsent(carrier, ignored -> new CarrierPose());
         }
@@ -274,22 +369,66 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
 
     private void synchronizeCarrier(PacketSendEvent event, int carrier, CarrierPose pose) {
         if (!pose.mirrored) return;
-        if (!riddenCarriers.contains(carrier) || System.nanoTime() - pose.lastBridgePose >= 250_000_000) {
+        if (!activeCarrier(carrier) || System.nanoTime() - pose.lastBridgePose >= 250_000_000) {
             // Keep consuming vanilla deltas while mirrored, then resume its original baseline.
-            event.getUser().sendPacketSilently(new WrapperPlayServerEntityPositionSync(carrier, pose.nativePose, pose.onGround));
-            pose.mirrored = false;
+            restorePose(event.getUser(), carrier, pose);
         }
         event.setCancelled(true);
     }
 
+    private boolean activeCarrier(int carrier) {
+        ExtraSeat seat = seatCarriers.get(carrier);
+        int source = seat == null ? carrier : seat.carrier;
+        return !closed && !bridgeReloading && modeledCarriers.containsKey(source) && riddenCarriers.contains(source);
+    }
+
+    private boolean mirrorCarrier(User user, UUID viewer, int carrier, EntityPositionData values, boolean onGround, long now, ExtraSeat seat) {
+        CarrierPose pose = carrierPose(viewer, carrier, false);
+        if (pose == null) return false;
+        synchronized (pose) {
+            if (pose.nativePose == null || carrierPose(viewer, carrier, false) != pose || !activeCarrier(carrier)
+                    || (seat != null && (extraSeats.get(seat.carrier) != seat || seatCarriers.get(carrier) != seat))) return false;
+            pose.lastBridgePose = now;
+            pose.mirrored = true;
+            user.sendPacketSilently(new WrapperPlayServerEntityPositionSync(carrier, values, onGround));
+            return true;
+        }
+    }
+
+    private void restorePose(User user, int carrier, CarrierPose pose) {
+        if (pose.mirrored && pose.nativePose != null && user != null)
+            user.sendPacketSilently(new WrapperPlayServerEntityPositionSync(carrier, pose.nativePose, pose.onGround));
+        pose.mirrored = false;
+        pose.lastBridgePose = 0;
+    }
+
+    private void restoreViewerCarrier(User user, UUID viewer, int carrier, boolean forget) {
+        Map<Integer, CarrierPose> poses = synchronizedViewers.get(viewer);
+        CarrierPose pose = poses == null ? null : forget ? poses.remove(carrier) : poses.get(carrier);
+        if (pose != null) synchronized (pose) {
+            if (forget || poses.get(carrier) == pose) restorePose(user, carrier, pose);
+        }
+    }
+
     private void restoreCarrier(int carrier) {
-        for (Player player : plugin.getServer().getOnlinePlayers()) {
-            Map<Integer, CarrierPose> poses = synchronizedViewers.get(player.getUniqueId());
-            CarrierPose pose = poses == null ? null : poses.remove(carrier);
-            if (pose != null) synchronized (pose) {
-                if (pose.mirrored) PacketEvents.getAPI().getPlayerManager().getUser(player).sendPacketSilently(
-                        new WrapperPlayServerEntityPositionSync(carrier, pose.nativePose, pose.onGround));
-                pose.mirrored = false;
+        for (var viewer : onlineViewers.entrySet()) {
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer.getValue());
+            restoreViewerCarrier(user, viewer.getKey(), carrier, true);
+        }
+    }
+
+    private void restoreExpiredCarriers() {
+        if (closed) return;
+        long now = System.nanoTime();
+        for (var viewer : onlineViewers.entrySet()) {
+            Map<Integer, CarrierPose> poses = synchronizedViewers.get(viewer.getKey());
+            if (poses == null) continue;
+            User user = PacketEvents.getAPI().getPlayerManager().getUser(viewer.getValue());
+            for (var entry : poses.entrySet()) synchronized (entry.getValue()) {
+                CarrierPose pose = entry.getValue();
+                if (poses.get(entry.getKey()) == pose && pose.mirrored
+                        && (!activeCarrier(entry.getKey()) || now - pose.lastBridgePose >= 250_000_000))
+                    restorePose(user, entry.getKey(), pose);
             }
         }
     }
@@ -306,7 +445,9 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
                     var entity = data.getClass().getMethod("getEntity").invoke(data);
                     if ((int) entity.getClass().getMethod("getEntityId").invoke(entity) != actor) continue;
                     var viewers = (Set<?>) data.getClass().getMethod("getViewers").invoke(data);
-                    if (viewers.stream().noneMatch(value -> value instanceof Player player && player.getUniqueId().equals(viewer))) return null;
+                    // The Bukkit player identity was captured on join, never read from the packet thread.
+                    Player player = onlineViewers.get(viewer);
+                    if (player == null || viewers.stream().noneMatch(value -> value == player)) return null;
                     visualCarriers.put(actor, owned.getKey());
                     return owned.getKey();
                 }
@@ -362,12 +503,16 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         if (scale == null) return;
         var data = mob.getPersistentDataContainer();
         if (!data.has(originalScale, PersistentDataType.DOUBLE)) {
-            data.set(originalScale, PersistentDataType.DOUBLE, modelName.equals("ark_mosasaurus") ? scale.getBaseValue() : scale.getBaseValue() / growthScale(mob));
+            double baseline = data.getOrDefault(new NamespacedKey(plugin, "growth-original-scale"), PersistentDataType.DOUBLE, Double.NaN);
+            if (!Double.isFinite(baseline) || baseline <= 0 || modelName.equals("ark_mosasaurus"))
+                baseline = modelName.equals("ark_mosasaurus") ? scale.getBaseValue() : scale.getBaseValue() / growthScale(mob);
+            data.set(originalScale, PersistentDataType.DOUBLE, baseline);
         }
         modeledCarriers.put(mob.getEntityId(), modelName);
         models.putIfAbsent(mob.getUniqueId(), new Model(mob, modelName));
         var tracker = renderer.getOrCreate(BukkitAdapter.adapt(mob), TrackerModifier.DEFAULT,
-                created -> created.scaler(ModelScaler.value(modelName.equals("ark_mosasaurus") ? 1 : (float) growthScale(mob))));
+                created -> created.scaler(ModelScaler.value((float) (DinoSizes.adultScale(modelName)
+                        * (modelName.equals("ark_mosasaurus") ? 1 : growthScale(mob))))));
         String phase = previous == null || previous.phase == null ? "idle" : previous.phase;
         Model current = models.get(mob.getUniqueId());
         if (current.tracker != tracker) { current.phase = null; current.detailStage = null; current.customName = null; }
@@ -446,7 +591,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         }
         if (Double.isFinite(model.growth) && Math.abs(value - model.growth) < .001 && value != 1) return;
         if (value == model.growth) return;
-        model.tracker.scaler(ModelScaler.value((float) value));
+        model.tracker.scaler(ModelScaler.value((float) (DinoSizes.adultScale(model.name) * value)));
         mob.getAttribute(Attribute.SCALE).setBaseValue(nativeScale(model.name) * value);
         bedrockSeats.put(mob.getUniqueId(), (float) (backHeight(model.name) * value + 1.62001 - .6));
         model.growth = value;
@@ -454,7 +599,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
 
     // Native attachment height times SCALE is the seat; player feet sit 0.6 blocks below it.
     static double nativeScale(String name) {
-        return backHeight(name) / (name.equals("ark_trex") || name.equals("ark_velociraptor") || name.equals("ark_dilophosaurus") ? 2.2625 : 2.09375);
+        return DinoSizes.nativeScale(name);
     }
 
     static float bedrockSeatY(String name) {
@@ -463,16 +608,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
     }
 
     private static double backHeight(String name) {
-        return switch (name) {
-            case "ark_trex" -> 1.860844;
-            case "ark_triceratops" -> 1.9375;
-            case "ark_stegosaurus" -> 1.875;
-            case "ark_brachiosaurus" -> 2.5;
-            case "ark_velociraptor" -> 1.489667;
-            case "ark_pteranodon" -> 1.619054;
-            case "ark_dilophosaurus" -> 1.191365;
-            default -> throw new IllegalArgumentException("Unknown dinosaur model " + name);
-        };
+        return DinoSizes.backHeight(name);
     }
 
     void animation(Mob mob, String phase) {
@@ -563,6 +699,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
     }
 
     private void updateAnimations() {
+        restoreExpiredCarriers();
         for (Model model : models.values().toArray(Model[]::new)) {
             try {
                 if (model.mob.isDead()) {
@@ -600,6 +737,9 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
     }
 
     void unload(Entity entity) {
+        clearSeat(entity.getEntityId());
+        ExtraSeat seat = seatCarriers.get(entity.getEntityId());
+        if (seat != null) clearSeat(seat.carrier);
         pending.remove(entity.getUniqueId());
         Model model = models.remove(entity.getUniqueId());
         if (model != null && model.label != null) model.label.remove();
@@ -633,16 +773,21 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
     }
 
     @Override public void close() {
+        if (closed) return;
+        closed = true;
         animationTask.cancel();
         reload.unregister();
         eggAssets.unregister();
         pending.clear();
         for (Model model : models.values().toArray(Model[]::new)) unload(model.mob);
+        for (int carrier : extraSeats.keySet()) clearSeat(carrier);
         bedrockSeats.close();
         PacketEvents.getAPI().getEventManager().unregisterListener(packets);
         HandlerList.unregisterAll(this);
         players.clear();
+        onlineViewers.clear();
         visualCarriers.clear();
+        visibleActors.clear();
         riddenCarriers.clear();
         synchronizedViewers.clear();
     }

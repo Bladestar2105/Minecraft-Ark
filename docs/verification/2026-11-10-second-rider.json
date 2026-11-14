@@ -1,0 +1,116 @@
+{
+  "date": "2026-11-10",
+  "paper": "26.3 build 241",
+  "plugin": "ArkDinos 1.2.0",
+  "plugin_sha256": "1a7a30aa010ca6a01460a9816f7c625f2819e16a5bfac99b167a980d07b4ca27",
+  "native": {
+    "passed": 13,
+    "failed": 0,
+    "checks": [
+      {
+        "name": "Public adult dinosaur accepts a second rider in a distinct native seat, while private access remains denied",
+        "status": "passed"
+      },
+      {
+        "name": "The passenger follows movement and turns without self teleport spam and keeps independent look direction",
+        "status": "passed"
+      },
+      {
+        "name": "Only the driver commands dinosaur attacks and the dinosaur cannot target its co-rider",
+        "status": "passed"
+      },
+      {
+        "name": "Forced passenger exit preserves safe feet below a low ceiling without resistance masking collision",
+        "status": "passed"
+      },
+      {
+        "name": "Guest Sneak removes only the guest; revoking public access preserves the owner driver",
+        "status": "passed"
+      },
+      {
+        "name": "Driver Sneak ends both seats without promoting the passenger",
+        "status": "passed"
+      },
+      {
+        "name": "High-seat exit protection follows actual ground distance and preserves longer or infinite effects",
+        "status": "passed"
+      },
+      {
+        "name": "All four large adult species accept exactly two riders; small species and juveniles remain excluded",
+        "status": "passed"
+      },
+      {
+        "name": "Revoking a public driver ends both seats even when the owner is the passenger",
+        "status": "passed"
+      },
+      {
+        "name": "Turning sweeps the rear passenger arc and stops before a wall; queries do not load chunks",
+        "status": "passed"
+      },
+      {
+        "name": "Swimming checks the second rider headroom and keeps both riders aboard in open water",
+        "status": "passed"
+      },
+      {
+        "name": "Cancelled mounts, external teleports, mode changes, unload and carrier death remove reservations and helpers",
+        "status": "passed"
+      },
+      {
+        "name": "Shutdown and a real restart leave no passenger helpers or inherited driving authority",
+        "status": "passed"
+      }
+    ]
+  },
+  "model_packet_probe": {
+    "ok": true,
+    "groups": 9,
+    "optional_dependencies_absent": true
+  },
+  "red_regressions": [
+    {
+      "case": "Previous 1.2.0 without second seat",
+      "observed": "Guest vehicle none instead of ARMOR_STAND"
+    },
+    {
+      "case": "Unaligned forced marker exit",
+      "observed": "Player bounding box intersects low ceiling immediately after access revocation"
+    },
+    {
+      "case": "World-depth dismount protection",
+      "observed": "855 ticks of Slow Falling after an ordinary low ground dismount"
+    }
+  ],
+  "limits": [
+    "Native tests use disposable loopback Paper worlds and protocol777 Java clients, not official rendered clients.",
+    "The unload lifecycle check dispatches EntitiesUnloadEvent; it does not establish real distant mounted-chunk unload behavior.",
+    "The rotation query compares the loaded chunk count near spawn, not at an unloaded boundary.",
+    "The model probe uses the actual packet listener/wrappers with controlled engine discovery, scheduling and networking; reload checks clock state, not a full model rebuild.",
+    "The full Geyser/BetterModel runtime and official Java/Bedrock/console visual acceptance remain separate release gates.",
+    "The candidate plugin was not deployed to the live server."
+  ],
+  "regressions": {
+    "controls": {
+      "passed": 17,
+      "failed": 0
+    },
+    "combat": {
+      "passed": 35,
+      "failed": 0
+    },
+    "same_plugin_sha256": true
+  },
+  "build": {
+    "all_project_plugins": 7,
+    "passed": true,
+    "dino_rule_programs": 13,
+    "same_plugin_sha256": true
+  },
+  "bedrock_marker_probe": {
+    "ok": true,
+    "pinned_geyser": "2.12.1-b1295",
+    "seat_offset_y": 1.02001,
+    "uncorrected_offset_y": 1.27001,
+    "local_and_remote_players": true,
+    "optional_geyser_absent": true
+  }
+}

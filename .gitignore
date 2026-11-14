@@ -6,6 +6,7 @@
 /.cache/
 /dist/
 /own-plugins.json
+/runtime-dependencies/
 /.venv/
 /output/
 /dino-models/verification.json

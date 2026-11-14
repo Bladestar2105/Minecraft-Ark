@@ -11,6 +11,16 @@ public final class RidingRulesTest {
         check(!RidingRules.canMount("alice", "alice", true, true, true, false, false), "Sneak interaction retains stay/follow");
         check(!RidingRules.canMount("alice", "alice", true, true, false, true, false), "Occupied pet refuses mounting");
         check(!RidingRules.canMount("alice", "alice", true, true, false, false, true), "Already mounted player cannot mount again");
+        check(RidingRules.canRide("alice", "bob", true, true), "Public permission allows another survival rider");
+        check(!RidingRules.canRide("alice", "bob", false, true), "Revoking public access takes effect immediately");
+        check(RidingRules.canRide("alice", "alice", false, true), "Owner retains private access");
+        check(!RidingRules.canRide(null, "bob", true, true), "Public flag cannot make a wild dino rideable");
+        check(!RidingRules.canRide("", "bob", true, true), "Empty ownership fails closed even when public");
+        check(!RidingRules.canRide("alice", null, true, true), "Missing rider cannot use public access");
+        check(!RidingRules.canRide("alice", "bob", true, false), "Public access retains game mode and world restrictions");
+        check(RidingRules.canMount("alice", "bob", true, true, true, false, false, false), "Public rider can mount with empty hand");
+        check(!RidingRules.canMount("alice", "bob", true, true, true, false, true, false), "Public access does not displace the current rider");
+        check(!RidingRules.canMount("alice", "bob", true, true, true, true, false, false), "Public access does not grant control menu access");
         movement(0, true, false, false, false, 0, 0.22, "Forward follows yaw");
         movement(90, true, false, false, false, -0.22, 0, "Turning follows yaw");
         movement(0, false, true, false, false, 0, -0.22, "Backward reverses movement");
@@ -24,7 +34,7 @@ public final class RidingRulesTest {
         var diagonalSprint = RidingRules.movement(45, true, false, true, false, true);
         check(Math.abs(Math.hypot(diagonalSprint.x(), diagonalSprint.z()) - .34) < .000001, "Sprint diagonals remain normalized");
         check(RidingRules.movement(0, false, false, false, false, true).equals(new RidingRules.Motion(0, 0)), "Sprint without movement stays still");
-        System.out.println("PASS: 20 riding ownership, input and movement checks");
+        System.out.println("PASS: riding ownership, public access, revocation, input and movement checks");
     }
 
     private static void movement(float yaw, boolean forward, boolean backward, boolean left, boolean right,

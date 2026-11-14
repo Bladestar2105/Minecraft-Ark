@@ -9,7 +9,7 @@ import shutil
 import stat
 import tempfile
 import zipfile
-from build_plugins import ROOT
+from build_plugins import ROOT, BUNDLED_BRIDGE, download
 from fetch_world import safe_path
 from install_plugins import PLUGINS, sha256, verify_own_plugins
 
@@ -53,13 +53,24 @@ def package(root=ROOT, version=None):
     target = safe_path(root, "dist/" + version)
     if target.exists():
         raise ValueError("Release output already exists: " + str(target))
+    bundled = {}
+    if "dependencies-runtime.json" in names:
+        for item in json.loads((root / "dependencies-runtime.json").read_text()):
+            if "bundled_path" not in item:
+                continue
+            if item["bundled_path"] != BUNDLED_BRIDGE or BUNDLED_BRIDGE in bundled:
+                raise ValueError("Unexpected or duplicate bundled dependency")
+            source = download(item, root / ".deps", root=root)
+            if sha256(source) != item["sha256"]:
+                raise ValueError("Bundled dependency checksum mismatch")
+            bundled[BUNDLED_BRIDGE] = source
     dist.mkdir(exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".package-", dir=dist))
     try:
         archive = staging / f"Minecraft-Ark-{version}-all-in-one.zip"
         with zipfile.ZipFile(archive, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as bundle:
-            for name in sorted(names):
-                source = safe_path(root, name)
+            for name in sorted(names + list(bundled)):
+                source = bundled.get(name) or safe_path(root, name)
                 info = zipfile.ZipInfo(name, TIMESTAMP)
                 info.create_system = 3
                 info.external_attr = (stat.S_IFREG | 0o644) << 16

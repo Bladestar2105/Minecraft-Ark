@@ -33,17 +33,13 @@ progress and points needed for the next rank.
 
 ## Dinosaurs
 
-ArkDinos 1.1.0 gives the 24 animals in twelve habitats six original models:
-T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor and Pteranodon.
-Accept the server resource packs on Java and Bedrock to see them.
-**Torchflower seeds + use** tames an unowned animal and consumes one seed.
-**Sneak + use** switches your own animal between following and staying.
-Tamed ravagers do not attack players. Animals follow within the same world up to
-48 blocks and do not load distant chunks. With the ArkDinos riding update,
-**empty hand + use** mounts your own unoccupied pet; normal movement steers and
-sneak dismounts. A tamed Pteranodon takes off with jump, flies along your view
-direction and hovers when movement is released. See [Dino riding](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding)
-for controls, landing and remaining real-device acceptance checks.
+ArkDinos 1.2.0 includes eight original species: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor, Pteranodon, Dilophosaurus and wild Mosasaurus. Accept the server resource packs on Java and Bedrock. Wild animals can appear throughout suitable loaded terrain in configured dinosaur worlds and wander without a fixed home territory. Fences already present in older worlds remain physical obstacles.
+
+Taming in dinosaur worlds requires species food and a finishing item. **T-Rex needs twelve raw-meat feeds, twenty seconds apart, then a bone**; Raptor and Dilo need five meat feeds, ten seconds apart, then a bone. See [all food recipes](Dino-Riding.md) for fish eaters and herbivores. The legacy single-seed system only applies outside prototype worlds.
+
+**Empty main hand + use** mounts an available adult. For its owner, **sneak + use** opens Follow, Stay, Free wander, riding permission and separately confirmed Release. Pets start private; “Reiten: öffentlich” allows guests to ride without transferring ownership or care rights. There is still one seat. Sprint accelerates and sneak dismounts. Pteranodon takes off with jump and flies at twelve blocks per second, or eighteen while sprinting.
+
+Land dinosaurs rise to an open water surface while ridden, in Stay and with an offline owner. Wild predators hunt Survival players. Owned adults defend their owner and themselves; Stay pauses automatic combat. The attack button commands an aimed mounted attack. Owners and tame pets are protected, and server protection rules apply to other players. Animals neither load distant chunks nor teleport after you. See [riding details and limits](Dino-Riding.md).
 
 ## Claims, quests and groups
 

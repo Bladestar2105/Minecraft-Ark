@@ -148,8 +148,8 @@ final class DinoPtera implements Listener,AutoCloseable {
                 if(bird.phase==1) {bird.phase=2;bird.waypoint=bird.landing.clone();bird.waypoint.setY(point.getY());}
                 else if(bird.phase==2) {bird.phase=3;bird.waypoint=bird.landing;}
             }
-            var direction=bird.waypoint.toVector().subtract(point.toVector());double speed=bird.phase==3?.16:.24;
-            var motion=direction.lengthSquared()==0?new Vector():direction.normalize().multiply(Math.min(speed,point.distance(bird.waypoint)));
+            var direction=bird.waypoint.toVector().subtract(point.toVector());double speed=FlightRules.autonomousSpeed(bird.phase,point.distance(bird.waypoint));
+            var motion=direction.lengthSquared()==0?new Vector():direction.normalize().multiply(speed);
             double floor=bird.phase==1?bird.launch.getY():bird.phase==3?bird.landing.getY():Double.NEGATIVE_INFINITY;
             if(!clear(mob,body(point,floor).union(body(point.clone().add(motion),floor)))) {recover(mob);bird.phase=0;continue;}
             plugin.stop(mob);mob.setAI(true);mob.setGravity(false);

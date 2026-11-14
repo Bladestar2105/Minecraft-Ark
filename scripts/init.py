@@ -110,7 +110,7 @@ def initialize(root=ROOT, portal_url=DEFAULT_PORTAL_URL):
         (private / "rcon-password").write_text(rcon + "\n")
         properties.write_text("level-name=ark\nonline-mode=true\nenforce-secure-profile=false\n"
             "enable-rcon=true\nrcon.port=25575\nrcon.password=" + rcon + "\n"
-            "difficulty=normal\ngamemode=survival\nmax-players=10\nspawn-protection=0\n"
+            "difficulty=normal\ngamemode=survival\nmax-players=10\nview-distance=14\nspawn-protection=0\n"
             "motd=Minecraft ARK\nallow-flight=true\n")
         if any((root / "data/plugins").glob("ArkDinos-*.jar")):
             portal = urlsplit(portal_url)

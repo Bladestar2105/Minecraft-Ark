@@ -7,12 +7,15 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 from urllib.request import Request, urlopen
+from fetch_world import safe_path
 
 ROOT = Path(__file__).resolve().parents[1]
+BUNDLED_BRIDGE = "runtime-dependencies/GeyserModelEngine-1.0.9.jar"
 
 
-def download(item, folder):
+def download(item, folder, *, root=ROOT):
     folder.mkdir(parents=True, exist_ok=True)
     if Path(item["name"]).name != item["name"] or item["name"] in {".", ".."}:
         raise ValueError("Unsafe artifact filename")
@@ -20,12 +23,35 @@ def download(item, folder):
     if target.is_symlink():
         raise ValueError("Artifact symlink")
     algorithm = "sha512" if "sha512" in item else "sha256"
+    patch = item.get("patch")
+    if patch is not None and patch != "geyser-model-engine-task-publication":
+        raise ValueError("Unknown artifact patch")
+    if patch and (algorithm != "sha256" or not isinstance(item.get("source_sha256"), str)
+                  or len(item["source_sha256"]) != 64 or any(c not in "0123456789abcdef" for c in item["source_sha256"])):
+        raise ValueError("Patched artifact requires a pinned upstream SHA-256")
+    if "bundled_path" in item and (not patch or item["bundled_path"] != BUNDLED_BRIDGE):
+        raise ValueError("Unexpected bundled dependency path")
+    bundled = safe_path(root, item["bundled_path"]) if "bundled_path" in item else None
     if not target.exists():
-        request = Request(item["url"], headers={"User-Agent": "Minecraft-Ark/1.0"})
-        with urlopen(request, timeout=120) as response:
-            content = response.read()
+        if bundled is not None and bundled.exists():
+            content = bundled.read_bytes()
+        else:
+            request = Request(item["url"], headers={"User-Agent": "Minecraft-Ark/1.0"})
+            with urlopen(request, timeout=120) as response:
+                content = response.read()
+            if hashlib.new(algorithm, content).hexdigest() != (item["source_sha256"] if patch else item[algorithm]):
+                raise ValueError("Checksum mismatch: " + item["name"])
+            if patch:
+                with tempfile.TemporaryDirectory(prefix=".bridge-build-", dir=folder) as temporary:
+                    source, output = Path(temporary) / "upstream.jar", Path(temporary) / "patched.jar"
+                    source.write_bytes(content)
+                    java_home = os.environ.get("JAVA_HOME")
+                    java = str(Path(java_home, "bin", "java")) if java_home else "java"
+                    subprocess.run([java, str(Path(root) / "dino-plugin/upstream-patches/GeyserModelEngineTaskPublicationFix.java"),
+                                    str(source), str(output)], check=True, capture_output=True, text=True)
+                    content = output.read_bytes()
         if hashlib.new(algorithm, content).hexdigest() != item[algorithm]:
-            raise ValueError("Checksum mismatch: " + item["name"])
+            raise ValueError("Artifact checksum mismatch: " + item["name"])
         temporary = target.with_suffix(target.suffix + ".tmp")
         temporary.write_bytes(content)
         temporary.replace(target)
@@ -44,13 +70,13 @@ def build():
     java_home = os.environ.get("JAVA_HOME")
     def java_tool(name):
         return str(Path(java_home, "bin", name)) if java_home else name
-    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest", "DinoGrowthTest", "CareRulesTest", "EggAssetsTest", "GroundSpeedsTest"], "atlas": ["AtlasRulesTest"],
+    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SeatRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest", "DinoGrowthTest", "CareRulesTest", "EggAssetsTest", "GroundSpeedsTest", "SwimRulesTest", "DinoSizesTest", "WildSpawnRulesTest"], "atlas": ["AtlasRulesTest"],
              "panel": ["BridgeProtocolTest", "RuntimeSettingsTest"],
              "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"],
              "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest", "PortalInfoTest"],
              "wardrobe": ["WardrobeTest", "SignersTest", "CommandPolicyTest", "WardrobeRoutesTest"],
              "support": ["SupportTest", "SupportRoutesTest", "SupportDeleteTest"]}
-    versions = {"dino": "ArkDinos-1.1.0", "atlas": "ArkAtlas-1.0.1",
+    versions = {"dino": "ArkDinos-1.2.0", "atlas": "ArkAtlas-1.0.1",
                 "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.2",
                 "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.1"}
     packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",

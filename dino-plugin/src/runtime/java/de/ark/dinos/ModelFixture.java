@@ -17,12 +17,14 @@ import java.util.*;
 
 public final class ModelFixture extends JavaPlugin implements Listener {
     private DinoModels models;
+    private volatile boolean captureJoints;
+    private final java.util.Queue<Map<String,Object>> jointPackets=new java.util.concurrent.ConcurrentLinkedQueue<>();
     private final Map<String, Mob> mobs = new HashMap<>();
     private final Map<UUID, org.bukkit.util.Vector> motion = new HashMap<>();
     private final List<String> startup = new ArrayList<>();
     private final Set<Integer> traceEntities = java.util.concurrent.ConcurrentHashMap.newKeySet();
     private final List<String> movementPackets = new java.util.concurrent.CopyOnWriteArrayList<>();
-    private final Map<String,List<Map<String,Object>>> detailSamples = new HashMap<>();
+    private final Map<String,List<Map<String,Object>>> detailSamples = new java.util.concurrent.ConcurrentHashMap<>();
     private final Map<Integer,List<Integer>> animationMasks = new java.util.concurrent.ConcurrentHashMap<>();
     private Object bridgeCodec;
     private Set<Player> bridgeViewers;
@@ -54,6 +56,11 @@ public final class ModelFixture extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         observer = new PacketListenerAbstract(PacketListenerPriority.MONITOR) {
             @Override public void onPacketSend(PacketSendEvent event) {
+
+                if(captureJoints && event.getPacketType()==PacketType.Play.Server.SPAWN_ENTITY) {
+                    var packet=new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerSpawnEntity(event);
+                    jointPackets.add(Map.of("packet","spawn","id",packet.getEntityId(),"position",packet.getPosition().toString(),"type",packet.getEntityType().toString(),"nanos",System.nanoTime()));
+                }
                 if(event.getPacketType()==PacketType.Play.Server.PLUGIN_MESSAGE){
                     var packet=new com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerPluginMessage(event);
                     if(packet.getChannelName().equals("geyserutils:main"))try{
@@ -77,6 +84,7 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                 }
                 if (event.getPacketType() == PacketType.Play.Server.ENTITY_METADATA) {
                     var packet = new WrapperPlayServerEntityMetadata(event);
+                    if(captureJoints)jointPackets.add(Map.of("packet","metadata","id",packet.getEntityId(),"nanos",System.nanoTime(),"values",packet.getEntityMetadata().stream().map(data->Map.of("index",data.getIndex(),"value",metadataValue(data.getValue()))).toList()));
                     packet.getEntityMetadata().stream().filter(data->data.getIndex()==0&&data.getValue() instanceof Byte)
                         .forEach(data->flags.put(packet.getEntityId(),(Byte)data.getValue()));
                 }
@@ -102,6 +110,11 @@ public final class ModelFixture extends JavaPlugin implements Listener {
             int id=(int)packet.getClass().getMethod("getEntityId").invoke(packet);
             animationMasks.computeIfAbsent(id,ignored->new java.util.concurrent.CopyOnWriteArrayList<>()).add((int)packet.getClass().getMethod("getValue").invoke(packet));
         }
+    }
+    private static Object metadataValue(Object value) {
+        if(value instanceof com.github.retrooper.packetevents.util.Vector3f vector)return List.of(vector.x,vector.y,vector.z);
+        if(value instanceof com.github.retrooper.packetevents.util.Quaternion4f rotation)return List.of(rotation.getX(),rotation.getY(),rotation.getZ(),rotation.getW());
+        return value instanceof Number ? value : String.valueOf(value);
     }
     private static Object field(Object object, String name) throws ReflectiveOperationException {
         var field=object.getClass().getDeclaredField(name);field.setAccessible(true);return field.get(object);
@@ -144,6 +157,27 @@ public final class ModelFixture extends JavaPlugin implements Listener {
         field=bridge.getClass().getDeclaredField("carriers");field.setAccessible(true);
         return Objects.toString(((Map<?,?>)field.get(bridge)).get(mob.getUniqueId()),"none");
     }
+    private void sampleJoints(String name, Mob mob) {
+        if(!captureJoints)jointPackets.clear();captureJoints=true;
+        detailSamples.put(name,new java.util.concurrent.CopyOnWriteArrayList<>());
+        var tracker=BetterModel.registry(mob.getUniqueId()).orElseThrow().tracker("ark_"+name);
+        var samples=new java.util.concurrent.atomic.AtomicInteger();
+        tracker.tick(1,(current,bundler)->{
+            int sample=samples.getAndIncrement();
+            if(sample<=60)for(String joint:new String[]{"neck","head","jaw"})try{
+                var bone=tracker.bone(joint);var row=detailFrame(bone);var position=bone.worldPosition();var rotation=bone.worldRotation();
+                row.put("display",bone.getDisplay()==null?-1:bone.getDisplay().id());row.put("tick",sample);row.put("worldPosition",List.of(position.x,position.y,position.z));row.put("worldRotation",List.of(rotation.x,rotation.y,rotation.z));
+                var global=field(bone,"globalState");var movement=(kr.toxicity.model.api.bone.BoneMovement)field(global,"current");var move=movement.position();
+                row.put("transform",List.of(move.x,move.y,move.z));
+                var before=(kr.toxicity.model.api.bone.BoneMovement)field(global,"before");
+                var progress=global.getClass().getDeclaredMethod("progress");progress.setAccessible(true);
+                var interpolated=before.lerp(movement,(float)progress.invoke(global),new kr.toxicity.model.api.bone.BoneMovement());
+                var ip=interpolated.position();var ir=interpolated.rotation();
+                row.put("interpolatedTransform",List.of(ip.x,ip.y,ip.z));row.put("interpolatedRotation",List.of(ir.x,ir.y,ir.z,ir.w));
+                detailSamples.get(name).add(row);
+            }catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
+        });
+    }
     @SuppressWarnings("unchecked")
     @Override public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         try {
@@ -164,6 +198,17 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                 case "bridge-race" -> {sender.sendMessage(BridgeRaceProbe.begin(mob,getServer().getPlayerExact(args[2])));return true;}
                 case "bridge-race-replace" -> {sender.sendMessage(BridgeRaceProbe.replace());return true;}
                 case "bridge-race-finish" -> {BridgeRaceProbe.finish();sender.sendMessage("finished=true");return true;}
+                case "model-registrations" -> {
+                    var rows=new ArrayList<String>();
+                    for(String species:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","mosasaurus"}) {
+                        String model="ark_"+species;
+                        boolean java=BetterModel.model(model).isPresent();
+                        boolean bedrock=org.geysermc.geyser.registry.Registries.BEDROCK_ENTITY_DEFINITIONS.get()
+                                .containsKey(org.geysermc.geyser.api.util.Identifier.of("modelengine:"+model));
+                        rows.add(species+":java="+java+",bedrock="+bedrock);
+                    }
+                    sender.sendMessage(String.join(";",rows));return true;
+                }
                 case "egg-mappings" -> {
                     try (var resource=getResource("egg-assets.properties");var zip=new java.util.zip.ZipFile(new java.io.File("plugins/BetterModel/build.zip"))) {
                         var expected=EggAssets.read(resource);
@@ -203,7 +248,8 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                     sender.sendMessage("pluginMessage="+PacketType.Play.Client.PLUGIN_MESSAGE.getId(version)+";pig="+com.github.retrooper.packetevents.protocol.entity.type.EntityTypes.PIG.getId(version)+";ravager="+com.github.retrooper.packetevents.protocol.entity.type.EntityTypes.RAVAGER.getId(version)+";sniffer="+com.github.retrooper.packetevents.protocol.entity.type.EntityTypes.SNIFFER.getId(version)+";dolphin="+com.github.retrooper.packetevents.protocol.entity.type.EntityTypes.DOLPHIN.getId(version)+";textDisplay="+com.github.retrooper.packetevents.protocol.entity.type.EntityTypes.TEXT_DISPLAY.getId(version)+";destroy="+PacketType.Play.Server.DESTROY_ENTITIES.getId(version));return true;
                 }
                 case "pig" -> {mob=(Mob)getServer().getWorlds().getFirst().spawnEntity(new org.bukkit.Location(getServer().getWorlds().getFirst(),35,4,12),EntityType.PIG);mob.setAI(false);mob.setRemoveWhenFarAway(false);mobs.put(name,mob);}
-                case "spawn" -> {
+                case "spawn", "spawn-joints" -> {
+                    if(op.equals("spawn-joints")){jointPackets.clear();captureJoints=true;}
                     EntityType type = name.equals("trex") || name.equals("velociraptor") || name.equals("dilophosaurus") ? EntityType.RAVAGER : name.equals("mosasaurus") ? EntityType.DOLPHIN : EntityType.SNIFFER;
                     var location = getServer().getWorlds().getFirst().getSpawnLocation().clone();
                     location.set(args.length > 2 ? Double.parseDouble(args[2]) : 0, 4,
@@ -216,6 +262,7 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                     if (name.equals("baseline")) BetterModel.model("ark_trex").orElseThrow().create(kr.toxicity.model.api.bukkit.platform.BukkitAdapter.adapt(mob));
                     else if (!name.equals("missing")) models.attach(mob, "ark_" + name);
                     else models.attach(mob, "ark_missing");
+                    if(op.equals("spawn-joints"))sampleJoints(name,mob);
                 }
                 case "attach" -> models.attach(mob, name.equals("early") ? "ark_trex" : "ark_" + name);
                 case "scale" -> mob.getAttribute(Attribute.SCALE).setBaseValue(Double.parseDouble(args[2]));
@@ -228,6 +275,7 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                 case "unload" -> models.unload(mob);
                 case "phase" -> models.animation(mob, args[2]);
                 case "attack" -> models.attack(mob,args.length>2&&args[2].equals("spit"));
+                case "cancel-attack" -> BetterModel.registry(mob.getUniqueId()).orElseThrow().tracker("ark_"+name).stopAnimation("attack");
                 case "startup" -> { sender.sendMessage(startup.toString());return true; }
                 case "bridge-state" -> {
                     var bridge=getServer().getPluginManager().getPlugin("GeyserModelEngine");
@@ -285,11 +333,22 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                     location.set(Double.parseDouble(args[2]), Double.parseDouble(args[3]), Double.parseDouble(args[4]));
                     mob.teleport(location);
                 }
+                case "sample-joints" -> {sampleJoints(name,mob);return true;}
+                case "joint-packets" -> {
+                    captureJoints=false;
+                    var gson=Class.forName("com.google.gson.Gson").getConstructor().newInstance();
+                    java.nio.file.Files.writeString(getDataFolder().toPath().resolve("joint-packets.json"),(String)gson.getClass().getMethod("toJson",Object.class).invoke(gson,new ArrayList<>(jointPackets)));
+                    sender.sendMessage("packets="+jointPackets.size());return true;
+                }
                 case "sample-details" -> {
-                    detailSamples.put(name,new ArrayList<>());Mob actor=mob;
-                    for(int tick=0;tick<=30;tick++){int sample=tick;getServer().getScheduler().runTaskLater(this,()->{
-                        try{sampleDetails(name,actor,sample);}catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
-                    },tick);}return true;
+                    detailSamples.put(name,new java.util.concurrent.CopyOnWriteArrayList<>());Mob actor=mob;
+                    var tracker=BetterModel.registry(mob.getUniqueId()).orElseThrow().tracker("ark_"+name);
+                    var samples=new java.util.concurrent.atomic.AtomicInteger();
+                    // Inspect complete engine frames, never half of a parent/child update on Bukkit's thread.
+                    tracker.tick(1,(current,bundler)->{
+                        int sample=samples.getAndIncrement();
+                        if(sample<=30)try{sampleDetails(name,actor,sample);}catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
+                    });return true;
                 }
                 case "detail-samples" -> {var gson=Class.forName("com.google.gson.Gson").getConstructor().newInstance();java.nio.file.Files.createDirectories(getDataFolder().toPath());java.nio.file.Files.writeString(getDataFolder().toPath().resolve("detail-"+name+".json"),(String)gson.getClass().getMethod("toJson",Object.class).invoke(gson,detailSamples.get(name)));sender.sendMessage("samples="+detailSamples.get(name).size());return true;}
                 case "detail-state" -> {
@@ -367,7 +426,7 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                 var tracker=registry == null ? null : registry.tracker(name.equals("early")?"ark_trex":"ark_"+name);
                 String rider = mob.getPassengers().isEmpty() ? "none" : String.format(java.util.Locale.ROOT,"%.6f",mob.getPassengers().getFirst().getLocation().getY()-mob.getLocation().getY());
                 var box=mob.getBoundingBox();
-                sender.sendMessage("id="+mob.getEntityId()+";uuid="+mob.getUniqueId()+";valid="+mob.isValid()+";dead="+mob.isDead()+";health="+mob.getHealth()+";eyeY="+mob.getEyeHeight()+";x="+mob.getX()+";y="+mob.getY()+";z="+mob.getZ()+";ground="+mob.isOnGround()+";water="+mob.isInWater()+";pitch="+mob.getPitch()+";modelPitch="+(tracker==null?"none":tracker.rotation().x())+";original="+Objects.toString(mob.getPersistentDataContainer().get(new org.bukkit.NamespacedKey(this,"model-original-scale"),org.bukkit.persistence.PersistentDataType.DOUBLE),"none")+";seat="+seat(mob)+";scale="+mob.getAttribute(Attribute.SCALE).getBaseValue()+";width="+box.getWidthX()+";height="+box.getHeight()+";riderY="+rider+";riderBox="+(mob.getPassengers().isEmpty()?"none":mob.getPassengers().getFirst().getBoundingBox().toString())+";riderX="+(mob.getPassengers().isEmpty()?"none":mob.getPassengers().getFirst().getX()-mob.getX())+";riderZ="+(mob.getPassengers().isEmpty()?"none":mob.getPassengers().getFirst().getZ()-mob.getZ())+";trackers="+(registry==null?0:registry.trackers().size())+";render="+(tracker==null?"none":tracker.scaler().scale(tracker))+";flags="+flags.get(mob.getEntityId())+";running="+(tracker==null?"none":tracker.bones().stream().map(bone->String.valueOf(bone.runningAnimation())).distinct().sorted().toList())+";displays="+(tracker==null?0:tracker.displays().count())+";packetId="+passengerPacketId+";packet="+packets.get(mob.getEntityId())+";clicked="+clicked);
+                sender.sendMessage("id="+mob.getEntityId()+";uuid="+mob.getUniqueId()+";valid="+mob.isValid()+";dead="+mob.isDead()+";health="+mob.getHealth()+";eyeY="+mob.getEyeHeight()+";x="+mob.getX()+";y="+mob.getY()+";z="+mob.getZ()+";ground="+mob.isOnGround()+";water="+mob.isInWater()+";pitch="+mob.getPitch()+";modelPitch="+(tracker==null?"none":tracker.rotation().x())+";original="+Objects.toString(mob.getPersistentDataContainer().get(new org.bukkit.NamespacedKey(this,"model-original-scale"),org.bukkit.persistence.PersistentDataType.DOUBLE),"none")+";seat="+seat(mob)+";scale="+mob.getAttribute(Attribute.SCALE).getBaseValue()+";width="+box.getWidthX()+";height="+box.getHeight()+";riderY="+rider+";riderBox="+(mob.getPassengers().isEmpty()?"none":mob.getPassengers().getFirst().getBoundingBox().toString())+";riderX="+(mob.getPassengers().isEmpty()?"none":mob.getPassengers().getFirst().getX()-mob.getX())+";riderZ="+(mob.getPassengers().isEmpty()?"none":mob.getPassengers().getFirst().getZ()-mob.getZ())+";time="+System.currentTimeMillis()+";adultAt="+mob.getPersistentDataContainer().get(new org.bukkit.NamespacedKey(this,"adult-at"),org.bukkit.persistence.PersistentDataType.LONG)+";trackers="+(registry==null?0:registry.trackers().size())+";render="+(tracker==null?"none":tracker.scaler().scale(tracker))+";flags="+flags.get(mob.getEntityId())+";running="+(tracker==null?"none":tracker.bones().stream().map(bone->String.valueOf(bone.runningAnimation())).distinct().sorted().toList())+";displays="+(tracker==null?0:tracker.displays().count())+";packetId="+passengerPacketId+";packet="+packets.get(mob.getEntityId())+";clicked="+clicked);
             }
         } catch (Throwable error) { error.printStackTrace(); sender.sendMessage("ERROR "+error); }
         return true;

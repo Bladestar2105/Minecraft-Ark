@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Disposable loopback Paper236 fixture and direct protocol777 clients; no historical world is opened.
+// Disposable loopback Paper246 fixture and direct protocol777 clients; no historical world is opened.
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -13,15 +13,15 @@ import { setTimeout as delay } from 'node:timers/promises';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
-const cache = process.env.DINO_PAPER_CACHE ?? `${root}artifacts/renewal-20261103/server`;
-const paperJar = process.env.DINO_PAPER_JAR ?? `${root}artifacts/renewal-20261103/paper-26.3-236.jar`;
+const cache = process.env.DINO_PAPER_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
+const paperJar = process.env.DINO_PAPER_JAR ?? `${cache}/paper.jar`;
 const output=process.env.DINO_CARE_OUTPUT ?? `${plugin}build`;
 await mkdir(output, { recursive: true });
 const directory = await mkdtemp(`${output}/care-smoke-`);
 const report = {startedAt:new Date().toISOString(),fixture:directory,checks:[],limits:[
   'Direct protocol777 Java clients exercise real entity interactions, inventory ItemStacks and persistence; no official/Bedrock/PS5 client.',
   'Inventory clicks, protected placement, breaking and growth/fade use dispatched native Paper events against actual inventories/blocks.',
-  'Cooldown and hatch deadlines advance through fixture-only PDC edits; real server restart verifies persistence.',
+  'The dedicated wall-clock Rex check never edits feeding deadlines; other cooldown/hatch checks advance fixture PDC. Real restart verifies persistence.',
 ]};
 const reportPath=`${output}/care-runtime-report.json`;
 const clients=[];let server,log='';
@@ -95,7 +95,7 @@ async function command(text) {
   });
 }
 async function eventually(test, message, timeout = 15000) { const deadline = Date.now() + timeout; while (Date.now() < deadline) { for (const client of clients) if (client.failure) throw client.failure; if (await test()) return; await delay(100); } throw Error(message); }
-async function check(name, action) { try { const detail = await action(); report.checks.push({ name, status: 'passed', detail }); console.log(`PASS ${name}`); } catch (error) { report.checks.push({ name, status: 'failed', error: error.stack }); throw error; } finally { await writeFile(reportPath, JSON.stringify(report, null, 2)); } }
+async function check(name, action) { if(process.env.DINO_CARE_FOCUS&&!process.env.DINO_CARE_FOCUS.split('|').some(part=>name.includes(part)))return;try { const detail = await action(); report.checks.push({ name, status: 'passed', detail }); console.log(`PASS ${name}`); } catch (error) { report.checks.push({ name, status: 'failed', error: error.stack }); throw error; } finally { await writeFile(reportPath, JSON.stringify(report, null, 2)); } }
 const fields=text=>Object.fromEntries(text.trim().split(';').map(v=>{const i=v.indexOf('=');return[v.slice(0,i),v.slice(i+1)];}));
 const inspect=async tag=>fields(await command(`carefixture inspect ${tag}`));
 const inventory=async client=>fields(await command(`carefixture inventory ${client.name}`));
@@ -106,7 +106,8 @@ async function spawnDino(tag,species,x=0,owner){
  await command(`summon ${type} ${x} 4 0 {Tags:["${tag}","ark_dino"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"${species}"${owner?`,"arkdinos:owner":"${owner}","arkdinos:stay":1b`:''}}}`);await delay(200);
 }
 async function tame(client,tag,primary,secondary){
- const count=['triceratops','stegosaurus','brachiosaurus'].includes((await inspect(tag)).species)?8:5;
+ const species=(await inspect(tag)).species;
+ const count=species==='trex'?12:['triceratops','stegosaurus','brachiosaurus'].includes(species)?8:5;
  await food(client,primary,count);
  for(let n=0;n<count;n++){if(n)await command(`carefixture time ${tag} tame-next 0`);await click(client,tag);assert.equal((await inspect(tag)).feeds,String(n+1));}
  await food(client,secondary,1);await click(client,tag);assert.equal((await inspect(tag)).owner,client.uuid);assert.equal((await inventory(client)).amount,'0');
@@ -122,8 +123,9 @@ async function stop(){clients.forEach(c=>c.close());await command('save-all flus
 try {
  for(const name of ['libraries','versions','cache'])await symlink(`${cache}/${name}`,`${directory}/${name}`);
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
- await copyFile(`${plugin}build/ArkDinos-1.1.0.jar`,`${directory}/plugins/ArkDinos.jar`);
- await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\n');
+ await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+ report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
+ await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\nwild-spawning:\n  enabled: false\n');
  await mkdir(`${directory}/fixture-classes`);
  execFileSync(`${javaHome}/bin/javac`,['--release','25','-sourcepath','','-cp',`${plugin}.deps/*`,'-d',`${directory}/fixture-classes`,`${plugin}src/care/java/de/ark/dinos/CareFixture.java`]);
  execFileSync(`${javaHome}/bin/jar`,['--create','--file',`${directory}/plugins/CareFixture.jar`,'-C',`${directory}/fixture-classes`,'.','-C',`${plugin}src/care/resources`,'.']);
@@ -133,15 +135,80 @@ try {
  let alice=new Client('CareOwner'),bob=new Client('CareOther');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Care clients did not join',30000);
  await command('gamemode survival @a');await command('effect give @a resistance 9999 4 true');await command('tp @a 0 4 3');await delay(500);
  await eventually(async()=>/Successfully filled/.test(await command('fill -16 3 -16 32 3 32 stone')),'Care fixture platform chunks did not load');
- await check('Raw meat progress, real consumption, ten-second rejection and protected taming owner',async()=>{
+ await check('Spawn-tick Rex identification prevents legacy one-seed taming before deferred restore',async()=>{
+  const tag='care_spawn_tick';
+  try {
+   const initial=fields(await command(`carefixture spawn-taming-race ${alice.name} ${tag}`));
+   assert.equal(initial.speciesBefore,'null','The native spawn must begin without species PDC');
+   assert.equal(initial.interactionTick,initial.spawnTick,'The seed interaction must run in the native spawn tick');
+   assert.equal(initial.species,'trex','Interaction must identify the tagged Ravager before choosing its recipe');
+   assert.equal(initial.owner,'null','A same-tick seed interaction must not enter legacy instant taming');
+   assert.equal(initial.feeds,'0');assert.equal(initial.actor,'null');assert.equal(initial.cancelled,'true');
+   assert.equal(initial.hand,'TORCHFLOWER_SEEDS');assert.equal(initial.amount,'1','Rejected seed must stay in the actual inventory');
+   assert.equal(initial.wild,'true');assert.equal(initial.tamed,'false');
+   await food(alice,'BEEF',1);await click(alice,tag);
+   const firstFeed=await inspect(tag);
+   assert.equal(firstFeed.species,'trex');assert.equal(firstFeed.owner,'null');assert.equal(firstFeed.feeds,'1');assert.equal(firstFeed.actor,alice.uuid);
+   assert.equal((await inventory(alice)).amount,'0','The first accepted meat item must be consumed');
+   assert.ok(Number(firstFeed.nextFeedAt)>Date.now()+17_000 && Number(firstFeed.nextFeedAt)<=Date.now()+20_000,'The first of twelve Rex feeds must use its twenty-second cooldown');
+   return {initial,firstFeed};
+  } finally { await command(`kill @e[tag=${tag},limit=1]`); }
+ });
+ await check('Hatch clearance covers the enlarged baby neck and tail before spawning',async()=>{
+  await command('setblock 20 8 20 stone');
+  assert.match(await command('carefixture hatch-space ark_model_test 20 4 20 brachiosaurus'),/clear=false/,'A low ceiling intersects the enlarged Brachiosaurus hatchling neck');
+  await command('setblock 20 8 20 air');assert.match(await command('carefixture hatch-space ark_model_test 20 4 20 brachiosaurus'),/clear=true/);
+  await command('setblock 20 4 23 stone');
+  assert.match(await command('carefixture hatch-space ark_model_test 20 4 20 trex'),/clear=false/,'A side block intersects the Rex hatchling tail despite a clear carrier box');
+  await command('setblock 20 4 23 air');assert.match(await command('carefixture hatch-space ark_model_test 20 4 20 trex'),/clear=true/);
+ });
+ await check('Rex requires twelve real meat items with twenty-second spacing and protected taming owner',async()=>{
   await spawnDino('care_rex','trex');await food(alice,'TORCHFLOWER_SEEDS',1);await click(alice,'care_rex');assert.equal((await inspect('care_rex')).owner,'null');assert.equal((await inventory(alice)).amount,'1');
-  await food(alice,'BEEF',10);await click(alice,'care_rex');assert.equal((await inspect('care_rex')).feeds,'1');assert.equal((await inventory(alice)).amount,'9');
-  await click(alice,'care_rex');assert.equal((await inventory(alice)).amount,'9','Cooldown must retain food');
+  await food(alice,'BEEF',14);await click(alice,'care_rex');assert.equal((await inspect('care_rex')).feeds,'1');assert.equal((await inventory(alice)).amount,'13');
+  const nextFeedAt=Number((await inspect('care_rex')).nextFeedAt);
+  assert.ok(nextFeedAt>Date.now()+17_000 && nextFeedAt<=Date.now()+20_000,'The accepted Rex feed must persist a twenty-second cooldown');
+  await click(alice,'care_rex');assert.equal((await inventory(alice)).amount,'13','Cooldown must retain food');
   await food(bob,'BEEF',2);await click(bob,'care_rex');assert.equal((await inspect('care_rex')).actor,alice.uuid);assert.equal((await inventory(bob)).amount,'2');
   for(let n=2;n<=5;n++){await command('carefixture time care_rex tame-next 0');await click(alice,'care_rex');assert.equal((await inspect('care_rex')).feeds,String(n));}
+  await food(alice,'BONE',1);await click(alice,'care_rex');assert.equal((await inspect('care_rex')).owner,'null','The former five-feed recipe must no longer tame a Rex');assert.equal((await inventory(alice)).amount,'1');
+  await food(alice,'BEEF',7);
+  for(let n=6;n<=12;n++){await command('carefixture time care_rex tame-next 0');await click(alice,'care_rex');assert.equal((await inspect('care_rex')).feeds,String(n));}
   await food(bob,'BONE',1);await click(bob,'care_rex');assert.equal((await inspect('care_rex')).owner,'null');
   await food(alice,'BONE',1);await click(alice,'care_rex');assert.equal((await inspect('care_rex')).owner,alice.uuid);assert.equal((await inventory(alice)).amount,'0');
   await command('data modify entity @e[tag=care_rex,limit=1] BukkitValues."arkdinos:stay" set value 1b');
+ });
+ await check('Wall-clock Rex taming waits twenty seconds per feed and consumes twelve meat items then one bone',async()=>{
+  const tag='care_rex_wall_clock',accepted=[];
+  await spawnDino(tag,'trex',-10);
+  // Keep the timed food check on its platform; protocol clients do not simulate falling after following a roaming animal.
+  await command(`data merge entity @e[tag=${tag},limit=1] {NoAI:1b}`);
+  assert.match(await command(`data get entity @e[tag=${tag},limit=1] NoAI`),/1b/);
+  try {
+   for(let n=1;n<=12;n++) {
+    if(n>1)await delay(Math.max(0,Number((await inspect(tag)).nextFeedAt)-Date.now()+100));
+    assert.ok(!alice.closed,'The real feeding client must remain connected');
+    await food(alice,'BEEF',13-n);await click(alice,tag);
+    const state=await inspect(tag),observedAt=Date.now();
+    assert.equal(state.feeds,String(n));assert.equal(state.owner,'null');
+    assert.equal((await inventory(alice)).amount,String(12-n),'Each accepted feed consumes exactly one real item');
+    const acceptedAt=Number(state.nextFeedAt)-20_000;
+    assert.ok(acceptedAt<=observedAt&&observedAt-acceptedAt<3000,'Each deadline must be twenty seconds after the real interaction');
+    if(n>1)assert.ok(acceptedAt-accepted.at(-1).acceptedAt>=20_000,'No feeding interval may be shortened');
+    accepted.push({feed:n,acceptedAt,observedAt,nextFeedAt:Number(state.nextFeedAt)});
+    await food(alice,'BONE',1);await click(alice,tag);
+    if(n<12) {
+     assert.equal((await inspect(tag)).owner,'null');assert.equal((await inventory(alice)).amount,'1','A premature finisher is retained');
+     await food(alice,'BEEF',1);await click(alice,tag);
+     assert.equal((await inspect(tag)).feeds,String(n));assert.equal((await inventory(alice)).amount,'1','Early meat is retained');
+     await food(alice,'WHEAT',1);await click(alice,tag);
+     assert.equal((await inspect(tag)).feeds,String(n));assert.equal((await inventory(alice)).amount,'1','Wrong food is retained');
+    } else {
+     assert.equal((await inspect(tag)).owner,alice.uuid);assert.equal((await inventory(alice)).amount,'0');
+    }
+   }
+   assert.ok(accepted.at(-1).acceptedAt-accepted[0].acceptedAt>=220_000,'Twelve feeds require at least 220 seconds from first to last');
+   return {accepted,elapsedMs:accepted.at(-1).acceptedAt-accepted[0].acceptedAt,deadlineEdits:0};
+  } finally {await command(`kill @e[tag=${tag},limit=1]`);}
  });
  await check('Pteranodon fish/seagrass, eight plant feeds/seeds and expired progress',async()=>{
   await spawnDino('care_ptera','pteranodon',5);await tame(alice,'care_ptera','COD','SEAGRASS');

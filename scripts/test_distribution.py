@@ -1,6 +1,7 @@
 import hashlib
 import base64
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -12,7 +13,7 @@ import install_plugins
 import package
 
 
-PLUGINS = {"dino": ("ArkDinos", "1.1.0"), "atlas": ("ArkAtlas", "1.0.1"),
+PLUGINS = {"dino": ("ArkDinos", "1.2.0"), "atlas": ("ArkAtlas", "1.0.1"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
            "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.1"),
            "access": ("ArkAccessBridge", "1.1.1")}
@@ -110,7 +111,7 @@ class InstallerTests(unittest.TestCase):
                     {'kind': 'geyser-extension', 'project': 'geyser-model-engine-extension', 'name': 'Bridge.jar'},
                     {'kind': 'plugin', 'project': 'packetevents', 'name': 'PacketEvents.jar'}]))
                 fetched = []
-                def download(item, folder):
+                def download(item, folder, **kwargs):
                     fetched.append((item['name'], folder.relative_to(root.resolve()).as_posix()))
                 with patch.object(install_plugins, 'download', side_effect=download):
                     install_plugins.install(root, modules)
@@ -193,7 +194,7 @@ class InstallerTests(unittest.TestCase):
             root = Path(tmp)
             install_fixture(root)
             fetched = []
-            def download(item, folder):
+            def download(item, folder, **kwargs):
                 fetched.append(item["name"])
                 folder.mkdir(parents=True, exist_ok=True)
                 (folder / item["name"]).write_bytes(b"dependency")
@@ -254,6 +255,61 @@ class InstallerTests(unittest.TestCase):
 
 
 class DistributionTests(unittest.TestCase):
+    def test_binary_dino_setup_uses_verified_bundled_bridge_without_host_java(self):
+        from build_plugins import download
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package_fixture(root)
+            derived = root / ".deps/bridge.jar"
+            derived.parent.mkdir()
+            derived.write_bytes(b"verified derived bridge fixture")
+            item = {"kind": "plugin", "project": "geyser-model-engine", "name": "GeyserModelEngine-1.0.9.jar",
+                    "url": "https://example.org/upstream.jar", "source_sha256": "0" * 64,
+                    "sha256": hashlib.sha256(derived.read_bytes()).hexdigest(),
+                    "patch": "geyser-model-engine-task-publication",
+                    "bundled_path": "runtime-dependencies/GeyserModelEngine-1.0.9.jar"}
+            (root / "dependencies-runtime.json").write_text(json.dumps([item]))
+            names = sorted(json.loads((root / "distribution-files.json").read_text()) + ["dependencies-runtime.json"])
+            (root / "distribution-files.json").write_text(json.dumps(names))
+            with patch("package.download", return_value=derived, create=True):
+                output = package.package(root, "bundled-bridge")
+            with zipfile.ZipFile(next(output.glob("*.zip"))) as bundle:
+                self.assertIn(item["bundled_path"], bundle.namelist())
+                self.assertEqual(bundle.read(item["bundled_path"]), derived.read_bytes())
+                extracted = root / "extracted"
+                bundle.extractall(extracted)
+            (extracted / "data/ark").mkdir(parents=True)
+            (extracted / "data/ark/level.dat").write_bytes(b"world")
+            (extracted / "config").mkdir()
+            for name in ("geyser.yml", "floodgate.yml", "permissions.yml"):
+                (extracted / "config" / name).write_text("fixture: true\n")
+            dino_models_fixture(extracted)
+            (extracted / "dependencies-runtime.json").write_text(json.dumps([item]))
+            with patch.dict(os.environ, {"PATH": ""}, clear=True), \
+                    patch("build_plugins.urlopen", side_effect=AssertionError("bundled install must not download")):
+                install_plugins.install(extracted, modules=["dino"])
+                self.assertEqual((extracted / "data/plugins" / item["name"]).read_bytes(), derived.read_bytes())
+                (extracted / item["bundled_path"]).write_bytes(b"tampered")
+                with self.assertRaises(ValueError):
+                    download(item, extracted / "rejected", root=extracted)
+                self.assertFalse((extracted / "rejected" / item["name"]).exists())
+            self.assertEqual(len(list(output.glob("*.jar"))), 7)
+            derived.write_bytes(b"tampered before packaging")
+            with patch("package.download", return_value=derived), self.assertRaisesRegex(ValueError, "Bundled dependency checksum"):
+                package.package(root, "rejected-bridge")
+            self.assertFalse((root / "dist/rejected-bridge").exists())
+
+    def test_project_bundle_contains_every_dinosaur_source_and_runtime_check(self):
+        root = Path(__file__).resolve().parents[1]
+        names = set(package.source_files(root))
+        required = {str(path.relative_to(root))
+                    for pattern in ('dino-plugin/src/**/*.java', 'dino-plugin/src/**/*.yml',
+                                    'dino-plugin/src/**/*.properties', 'dino-plugin/*-test.py',
+                                    'dino-plugin/*-test.mjs', 'dino-plugin/*-checks.mjs',
+                                    'world-design/*fence*.py', 'dino-models/verify_*.py')
+                    for path in root.glob(pattern)}
+        self.assertFalse(required - names, f'Missing runnable dinosaur sources: {sorted(required - names)}')
+
     def test_editable_dinosaur_models_are_allowed_as_text_sources(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

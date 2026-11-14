@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Disposable loopback Paper236 fixture and direct protocol777 clients; no historical world is opened.
+// Disposable loopback Paper246 fixture and direct protocol777 clients; no historical world is opened.
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -15,10 +15,10 @@ const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
 const scopeMode = process.env.DINO_PROTOTYPE_SCOPE === '1';
 const modelStack = process.env.DINO_MODEL_STACK === '1' || scopeMode;
-const stackCache = `${root}output/dino-model-spike-20261107/private/server`;
-const cache = process.env.DINO_PAPER_CACHE ?? (modelStack ? stackCache : `${root}artifacts/renewal-20261103/server`);
-const paperJar = process.env.DINO_PAPER_JAR ?? (modelStack ? `${stackCache}/paper.jar` : `${root}artifacts/renewal-20261103/paper-26.3-236.jar`);
-const paperBuild = process.env.DINO_PAPER_JAR?.match(/paper-26\.3-([0-9]+)\.jar$/)?.[1] ?? (modelStack ? '241' : '236');
+const stackCache = process.env.DINO_MODEL_STACK_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
+const cache = process.env.DINO_PAPER_CACHE ?? (modelStack ? stackCache : `${root}output/live-dependency-stack-20261110/private/server`);
+const paperJar = process.env.DINO_PAPER_JAR ?? (modelStack ? `${stackCache}/paper.jar` : `${cache}/paper.jar`);
+const paperBuild = process.env.DINO_PAPER_JAR?.match(/paper-26\.3-([0-9]+)\.jar$/)?.[1] ?? '246';
 await mkdir(`${plugin}build`, { recursive: true });
 const directory = await mkdtemp(`${plugin}build/gameplay-smoke-`);
 const report = { startedAt: new Date().toISOString(), fixture: directory, checks: [], limits: [
@@ -125,11 +125,11 @@ try {
   for (const item of ['libraries', 'versions', 'cache']) await symlink(`${cache}/${item}`, `${directory}/${item}`);
   await mkdir(`${directory}/plugins`, { recursive: true });
   await copyFile(paperJar, `${directory}/paper.jar`);
-  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${plugin}build/ArkDinos-1.1.0.jar`)).digest('hex');
-  await copyFile(`${plugin}build/ArkDinos-1.1.0.jar`, `${directory}/plugins/ArkDinos.jar`);
+  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${plugin}build/ArkDinos-1.2.0.jar`)).digest('hex');
+  await copyFile(`${plugin}build/ArkDinos-1.2.0.jar`, `${directory}/plugins/ArkDinos.jar`);
   if(modelStack){
     for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','GeyserModelEngine-1.0.9.jar','geyser-spigot.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar']) await copyFile(`${stackCache}/plugins/${name}`,`${directory}/plugins/${name}`);
-    await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1295.jar`,`${directory}/plugins/geyser-spigot.jar`);
+    await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1298.jar`,`${directory}/plugins/geyser-spigot.jar`);
     for(const name of ['BetterModel','GeyserModelEngine','Geyser-Spigot','floodgate']) await cp(`${stackCache}/plugins/${name}`,`${directory}/plugins/${name}`,{recursive:true});
     const generatedPack=`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack`;
     await rm(generatedPack,{recursive:true,force:true});await rm(`${generatedPack}.zip`,{force:true});
@@ -140,7 +140,8 @@ try {
       await cp(`${root}dino-models/models/ark_${name}`,`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/input/ark_${name}`,{recursive:true});
     }
   }
-  if(scopeMode){await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\n  - ark_model_test\nprototype-worlds:\n  - ark_model_test\n');}
+  if(scopeMode){await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\n  - ark_model_test\nprototype-worlds:\n  - ark_model_test\nwild-spawning:\n  enabled: false\n');}
+  else {await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\nwild-spawning:\n  enabled: false\n');}
   await mkdir(`${directory}/fixture-classes`);
   execFileSync(`${javaHome}/bin/javac`, ['--release', '25', '-sourcepath', '', '-cp', `${plugin}.deps/*`, '-d', `${directory}/fixture-classes`, `${plugin}src/gameplay/java/de/ark/dinos/GameplayFixture.java`]);
   execFileSync(`${javaHome}/bin/jar`, ['--create', '--file', `${directory}/plugins/RidingFixture.jar`, '-C', `${directory}/fixture-classes`, '.', '-C', `${plugin}src/gameplay/resources`, '.']);
@@ -213,8 +214,8 @@ try {
         const fraction=remaining===780000?.45+.55*2/15:.45+.55*7/15;
         assert.equal(state.uuid,before.uuid);assert.equal(state.owner,alice.uuid);assert.ok(state.duration==='null' || state.duration==='900000');
         assert.ok(Math.abs(Number(state.original)-base)<.001,`Historical adult base changed: ${JSON.stringify(state)}`);
-        assert.ok(Math.abs(Number(state.render)-fraction)<.001);assert.ok(Math.abs(Number(state.fallback)-base*fraction)<.001);
-        assert.equal(Number(state.adultRender),1);assert.ok(Math.abs(Number(state.adultFallback)-base)<.001);
+        const adultFactor=name==='trex'?2.1:1.45;assert.ok(Math.abs(Number(state.render)-adultFactor*fraction)<.001);assert.ok(Math.abs(Number(state.fallback)-base*fraction)<.001);
+        assert.ok(Math.abs(Number(state.adultRender)-adultFactor)<.001);assert.ok(Math.abs(Number(state.adultFallback)-base)<.001);
         samples.push({name,base,remaining,before,state});await command(`execute in ${world} run kill @e[tag=${tag}]`);
       }
       return samples;

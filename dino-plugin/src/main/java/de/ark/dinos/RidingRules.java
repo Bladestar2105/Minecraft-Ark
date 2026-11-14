@@ -1,9 +1,19 @@
 package de.ark.dinos;
 
 final class RidingRules {
+    static boolean canRide(String owner, String actor, boolean shared, boolean survival) {
+        return owner != null && !owner.isBlank() && actor != null && !actor.isBlank()
+                && survival && (owner.equals(actor) || shared);
+    }
+
     static boolean canMount(String owner, String actor, boolean survival, boolean emptyHand,
                             boolean sneaking, boolean occupied, boolean alreadyRiding) {
-        return owner != null && owner.equals(actor) && survival && emptyHand && !sneaking && !occupied && !alreadyRiding;
+        return canMount(owner, actor, false, survival, emptyHand, sneaking, occupied, alreadyRiding);
+    }
+
+    static boolean canMount(String owner, String actor, boolean shared, boolean survival, boolean emptyHand,
+                            boolean sneaking, boolean occupied, boolean alreadyRiding) {
+        return canRide(owner, actor, shared, survival) && emptyHand && !sneaking && !occupied && !alreadyRiding;
     }
 
     record Motion(double x, double z) { }

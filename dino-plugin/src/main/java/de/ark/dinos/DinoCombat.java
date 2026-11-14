@@ -37,11 +37,12 @@ final class DinoCombat implements Listener {
     private final BukkitTask task;
     private Mob attacking;
     private LivingEntity attackTarget;
+    private Player attackActor;
     private boolean landed;
 
     DinoCombat(ArkDinos plugin) {
         this.plugin = plugin;
-        protection = new DinoProtection(plugin);
+        protection = new DinoProtection(plugin, this);
         spit = new DinoSpit(plugin, this);
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         task = plugin.getServer().getScheduler().runTaskTimer(plugin, this::tick, 2L, 2L);
@@ -69,13 +70,20 @@ final class DinoCombat implements Listener {
         catch (IllegalArgumentException invalid) { return null; }
     }
 
+    Player actor(Mob mob) {
+        Player driver = plugin.driver(mob);
+        return driver != null ? driver : plugin.passengers(mob).isEmpty() ? owner(mob) : null;
+    }
+
+    Player damageActor(Mob mob) { return attacking == mob ? attackActor : null; }
+
     private boolean available(Mob mob) {
         return mob.isValid() && !mob.isDead() && plugin.prototype(mob) && meleeDamage(mob) > 0 && plugin.adult(mob);
     }
 
     private double meleeDamage(Mob mob) {
         return switch (plugin.species(mob)) {
-            case "trex" -> 12;
+            case "trex" -> 20;
             case "velociraptor" -> 6;
             case "dilophosaurus" -> 5;
             case "triceratops", "stegosaurus" -> 8;
@@ -94,17 +102,24 @@ final class DinoCombat implements Listener {
     }
 
     boolean validTarget(Mob mob, LivingEntity target) {
-        if (!available(mob) || !target.isValid() || target.isDead() || target.equals(mob)
+        return validTarget(mob, target, actor(mob));
+    }
+
+    boolean validTarget(Mob mob, LivingEntity target, Player actor) {
+        if (!available(mob) || !target.isValid() || target.isDead() || target.equals(mob) || DinoSeats.isSeat(target)
+                || plugin.passengers(mob).contains(target)
                 || !target.getWorld().equals(mob.getWorld()) || mob.getLocation().distanceSquared(target.getLocation()) > 24 * 24) return false;
         if (!plugin.owned(mob)) return predator(mob) && !plugin.formerOwner(mob, target)
                 && target instanceof Player player && player.isOnline() && plugin.survival(player);
-        Player owner = owner(mob);
-        if (owner == null || (plugin.staying(mob) && !mob.getPassengers().contains(owner)) || !owner.isOnline() || owner.isDead() || !plugin.survival(owner)
-                || !owner.getWorld().equals(mob.getWorld()) || owner.getLocation().distanceSquared(mob.getLocation()) > 48 * 48
-                || target.equals(owner) || plugin.owned(target)) return false;
+        if (actor == null || !actor.equals(actor(mob)) || (plugin.staying(mob) && plugin.driver(mob) == null)
+                || !actor.isOnline() || actor.isDead() || !plugin.survival(actor)
+                || !actor.getWorld().equals(mob.getWorld()) || actor.getLocation().distanceSquared(mob.getLocation()) > 48 * 48
+                || target.equals(actor) || target.getUniqueId().toString().equals(plugin.owner(mob))
+                || plugin.owned(target)
+                || target instanceof org.bukkit.entity.Tameable pet && pet.isTamed()) return false;
         if (target instanceof Player player && (!player.isOnline() || !plugin.survival(player)
-                || !Boolean.TRUE.equals(mob.getWorld().getGameRuleValue(org.bukkit.GameRules.PVP)) || sameTeamBlocks(owner, player))) return false;
-        return protection.allows(owner, mob, target);
+                || !Boolean.TRUE.equals(mob.getWorld().getGameRuleValue(org.bukkit.GameRules.PVP)) || sameTeamBlocks(actor, player))) return false;
+        return protection.allows(actor, mob, target);
     }
 
     boolean active(Mob mob) {
@@ -117,7 +132,7 @@ final class DinoCombat implements Listener {
 
     boolean permits(Mob mob, Entity target) {
         return attacking == mob && target instanceof LivingEntity living
-                && living.equals(attackTarget) && validTarget(mob, living);
+                && living.equals(attackTarget) && validTarget(mob, living, attackActor);
     }
 
     void cancel(Mob mob) {
@@ -130,9 +145,24 @@ final class DinoCombat implements Listener {
         return mob.getBoundingBox().expand(1.5, 1, 1.5).overlaps(contact.getBoundingBox());
     }
 
+    private double aimRange(Mob mob, org.bukkit.Location eye) {
+        // The rider's eyes may sit above the old five-block ray on large species.
+        // Cover the existing melee volume; meleeReach still decides whether a hit is possible.
+        var box = mob.getBoundingBox().expand(1.5, 1, 1.5);
+        double x = Math.max(Math.abs(eye.getX() - box.getMinX()), Math.abs(eye.getX() - box.getMaxX()));
+        double y = Math.max(Math.abs(eye.getY() - box.getMinY()), Math.abs(eye.getY() - box.getMaxY()));
+        double z = Math.max(Math.abs(eye.getZ() - box.getMinZ()), Math.abs(eye.getZ() - box.getMaxZ()));
+        double range = Math.max(5, Math.sqrt(x * x + y * y + z * z));
+        return "dilophosaurus".equals(plugin.species(mob)) ? Math.max(range, 8 + eye.distance(mob.getLocation())) : range;
+    }
+
     boolean damage(Mob mob, LivingEntity target, double amount, boolean nativeMelee) {
-        if (!validTarget(mob, target)) return false;
-        attacking = mob; attackTarget = target; landed = false;
+        return damage(mob, target, amount, nativeMelee, actor(mob));
+    }
+
+    boolean damage(Mob mob, LivingEntity target, double amount, boolean nativeMelee, Player actor) {
+        if (!validTarget(mob, target, actor)) return false;
+        attacking = mob; attackTarget = target; attackActor = actor; landed = false;
         try {
             if (nativeMelee && mob instanceof org.bukkit.entity.Ravager) {
                 var attribute = mob.getAttribute(org.bukkit.attribute.Attribute.ATTACK_DAMAGE);
@@ -142,7 +172,7 @@ final class DinoCombat implements Listener {
                 finally { attribute.setBaseValue(previous); }
             } else target.damage(amount, mob);
             return landed;
-        } finally { attacking = null; attackTarget = null; }
+        } finally { attacking = null; attackTarget = null; attackActor = null; }
     }
 
     private boolean attack(Mob mob, LivingEntity target) {
@@ -188,7 +218,7 @@ final class DinoCombat implements Listener {
         for (Mob mob : java.util.stream.Stream.concat(wild.values().stream(), plugin.companions().stream()).toList()) {
             if (!active(mob)) continue;
             if(plugin.aerial(mob)) {plugin.landPtera(mob);continue;}
-            if (!mob.getPassengers().isEmpty()) { cancel(mob); continue; }
+            if (!plugin.passengers(mob).isEmpty()) { cancel(mob); continue; }
             LivingEntity target = targets.get(mob.getUniqueId());
             if ("dilophosaurus".equals(plugin.species(mob)) && !meleeReach(mob, target)
                     && mob.getLocation().distanceSquared(target.getLocation()) <= 8 * 8 && mob.hasLineOfSight(target)) {
@@ -212,17 +242,23 @@ final class DinoCombat implements Listener {
     private void defend(Player owner, LivingEntity target) {
         if (!owner.isOnline() || !plugin.survival(owner) || target == null) return;
         for (Mob mob : plugin.companions()) {
-            if (plugin.owner(mob).equals(owner.getUniqueId().toString()) && mob.getPassengers().isEmpty() && validTarget(mob, target)) {
-                targets.put(mob.getUniqueId(), target);
-            }
+            if (plugin.owner(mob).equals(owner.getUniqueId().toString())) defend(mob, target);
+        }
+    }
+
+    private void defend(Mob mob, LivingEntity target) {
+        if (target != null && plugin.owned(mob) && plugin.passengers(mob).isEmpty() && validTarget(mob, target)) {
+            targets.put(mob.getUniqueId(), target);
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void damage(EntityDamageByEntityEvent event) {
-        if (event.getDamager().equals(attacking) && event.getEntity().equals(attackTarget) && event.getFinalDamage() > 0) landed = true;
+        if (event.getFinalDamage() <= 0) return;
+        if (event.getDamager().equals(attacking) && event.getEntity().equals(attackTarget)) landed = true;
         LivingEntity source = attacker(event.getDamager());
         if (event.getEntity() instanceof Player victim) defend(victim, source);
+        if (event.getEntity() instanceof Mob victim) defend(victim, source);
         if (source instanceof Player owner && event.getEntity() instanceof LivingEntity target) defend(owner, target);
     }
 
@@ -244,12 +280,12 @@ final class DinoCombat implements Listener {
 
     private boolean manualAttack(Player player) {
         if (!(player.getVehicle() instanceof Mob mob) || !plugin.survival(player)
-                || !plugin.owned(mob) || !plugin.owner(mob).equals(player.getUniqueId().toString()) || !available(mob)) return false;
+                || !plugin.owned(mob) || !player.equals(plugin.driver(mob)) || !available(mob)) return false;
         int tick=Bukkit.getCurrentTick();
         Integer previous=lastAttack.get(mob.getUniqueId());
         if(previous!=null&&tick-previous<20)return true;
         var eye = player.getEyeLocation();
-        var hit = player.getWorld().rayTrace(eye, eye.getDirection(), "dilophosaurus".equals(plugin.species(mob)) ? 8 : 5, FluidCollisionMode.NEVER, true, .2,
+        var hit = player.getWorld().rayTrace(eye, eye.getDirection(), aimRange(mob, eye), FluidCollisionMode.NEVER, true, .2,
                 entity -> plugin.combatTarget(entity) instanceof LivingEntity target && !target.equals(player) && !target.equals(mob));
         Entity contact=hit==null?null:hit.getHitEntity();
         if (contact != null && plugin.combatTarget(contact) instanceof LivingEntity target && validTarget(mob, target)) {
@@ -264,7 +300,7 @@ final class DinoCombat implements Listener {
 
     private void playerUnavailable(Player player) {
         for (Mob mob : java.util.stream.Stream.concat(wild.values().stream(), plugin.companions().stream()).toList()) {
-            if (plugin.owner(mob).equals(player.getUniqueId().toString()) || player.equals(targets.get(mob.getUniqueId()))) cancel(mob);
+            if (player.equals(actor(mob)) || player.equals(targets.get(mob.getUniqueId()))) cancel(mob);
         }
     }
 

@@ -18,7 +18,8 @@ def pose(model, animation, time, detail_stage=None):
     def channel(name,kind):
         frames=[k for k in tracks.get(model.groups[name]['uuid'],{}).get('keyframes',[]) if k['channel']==kind]
         if not frames:return [1,1,1] if kind=='scale' else [0,0,0]
-        if len(frames)==1:return [float(frames[0]['data_points'][0][axis]) for axis in 'xyz']
+        if len(frames)==1 or time>=frames[-1]['time']:
+            return [float(frames[-1]['data_points'][0][axis]) for axis in 'xyz']
         a,b=next((a,b) for a,b in zip(frames,frames[1:]) if a['time']<=time<=b['time'])
         f=(time-a['time'])/(b['time']-a['time'])
         return [float(a['data_points'][0][axis])*(1-f)+float(b['data_points'][0][axis])*f for axis in 'xyz']
@@ -72,7 +73,27 @@ def exported_model(species):
 
 
 class ModelPoseTest(unittest.TestCase):
-    def test_exported_jaws_keep_flesh_contact_during_bites(self):
+    def test_attack_override_branches_keep_head_and_jaw_clocks_together(self):
+        # BetterModel 3.6 resets a replaced bone's phase iterator. Replacing only
+        # the jaw leaves it sampling a differently timed head after the attack.
+        for species in ['trex','triceratops','stegosaurus','brachiosaurus','velociraptor','dilophosaurus','mosasaurus']:
+            model=exported_model(species)
+            for clip in model.animations:
+                if clip['loop']!='once':continue
+                affected=set()
+                def visit(name,inherited=False):
+                    active=inherited or model.groups[name]['uuid'] in clip['animators']
+                    if active:affected.add(name)
+                    for child in model.nodes[name]['children']:
+                        if isinstance(child,dict):
+                            child_name=next(n for n,g in model.groups.items() if g['uuid']==child['uuid'])
+                            visit(child_name,active)
+                visit('body')
+                with self.subTest(species=species,clip=clip['name']):
+                    self.assertEqual('head' in affected,'jaw' in affected,
+                                     'A finite jaw overlay must switch and resume its head on the same animation clock')
+
+    def test_exported_jaws_keep_flesh_contact_in_every_clip_and_growth_stage(self):
         heads={'trex':('skull','snout','cheek_'),'triceratops':('head','snout','beak','frill_'),
                'stegosaurus':('head','beak','neck'),'brachiosaurus':('skull','muzzle','nasal_rise'),
                'velociraptor':('skull','snout'),'dilophosaurus':('skull','snout'),
@@ -84,11 +105,37 @@ class ModelPoseTest(unittest.TestCase):
             skull=[c['name'] for c in model.elements if owners[c['uuid']]=='head' and c['name'].startswith(prefixes)]
             stages=['baby','juvenile','adult'] if 'growth_adult' in {a['name'] for a in model.animations} else [None]
             for stage in stages:
-                for step in range(31):
-                    with self.subTest(species=species,stage=stage,step=step):
-                        points=pose(model,'attack',.75*step/30,stage)
-                        self.assertTrue(any(posed_boxes_overlap(points[jaw],points[head]) for jaw in jaws for head in skull),
-                                        'Opening the mouth must leave the lower jaw joined to head flesh')
+                for clip in model.animations:
+                    if clip['name'].startswith('growth_'):continue
+                    for step in range(31):
+                        with self.subTest(species=species,stage=stage,clip=clip['name'],step=step):
+                            points=pose(model,clip['name'],clip['length']*step/30,stage)
+                            self.assertTrue(any(posed_boxes_overlap(points[jaw],points[head]) for jaw in jaws for head in skull),
+                                            'The lower jaw must remain joined to head flesh throughout every pose')
+
+    def test_exported_anatomical_joints_stay_connected_in_every_clip(self):
+        decorations=('eye','pupil','nostril','gums','tooth','oral','mouth','plate','feather','crest','brow','flank','back_mottle','lateral')
+        for species in ['trex','triceratops','stegosaurus','brachiosaurus','velociraptor','pteranodon','dilophosaurus','mosasaurus']:
+            model=exported_model(species)
+            owners={child:name for name,node in model.nodes.items() for child in node['children'] if isinstance(child,str)}
+            parents={child['uuid']:name for name,node in model.nodes.items() for child in node['children'] if isinstance(child,dict)}
+            flesh={name:[c['name'] for c in model.elements if owners[c['uuid']]==name and not c['name'].startswith(decorations)] for name in model.groups}
+            joints=[]
+            for name in model.groups:
+                if name not in {'head','neck','tail','tail_mid','tail_tip'} and not name.startswith(('arm_','leg_','wing_','flipper_')):continue
+                parent=parents.get(model.groups[name]['uuid'])
+                if parent and flesh[name] and flesh[parent]:joints.append((name,parent))
+            self.assertTrue(joints,species+' needs actual anatomical connections')
+            for clip in model.animations:
+                if clip['name'].startswith('growth_'):continue
+                times={clip['length']*step/30 for step in range(31)}
+                times.update(k['time'] for track in clip['animators'].values() for k in track['keyframes'])
+                for time in sorted(times):
+                    points=pose(model,clip['name'],time)
+                    for bone,parent in joints:
+                        with self.subTest(species=species,clip=clip['name'],time=time,bone=bone,parent=parent):
+                            self.assertTrue(any(posed_boxes_overlap(points[part],points[support]) for part in flesh[bone] for support in flesh[parent]),
+                                            'Animated anatomy must remain joined to its supporting flesh')
 
     def test_exported_growing_crests_keep_contact_with_head_flesh(self):
         for species,bones in [('pteranodon',['growth_head_crest']),('dilophosaurus',['growth_crest_left','growth_crest_right'])]:

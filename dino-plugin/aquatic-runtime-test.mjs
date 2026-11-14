@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Disposable loopback Paper244 fixture and direct protocol777 clients; no historical world is opened.
+// Disposable loopback Paper246 fixture and direct protocol777 clients; no historical world is opened.
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -15,9 +15,9 @@ const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
 const scopeMode = false;
 const modelStack = false;
-const stackCache = `${root}output/dino-model-spike-20261107/private/server`;
-const cache = process.env.DINO_PAPER_CACHE ?? `${root}output/dino-round2-20261108/paper244-cache`;
-const paperJar = process.env.DINO_PAPER_JAR ?? `${root}output/dino-round2-20261108/paper-26.3-244.jar`;
+const stackCache = `${root}output/live-dependency-stack-20261110/private/server`;
+const cache = process.env.DINO_PAPER_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
+const paperJar = process.env.DINO_PAPER_JAR ?? `${root}output/live-dependency-stack-20261110/private/server/paper.jar`;
 const output=process.env.DINO_AQUATIC_OUTPUT ?? `${plugin}build`;
 await mkdir(output, { recursive: true });
 const directory = await mkdtemp(`${output}/aquatic-smoke-`);
@@ -116,12 +116,12 @@ async function boot() {
 try {
   await symlink(`${cache}/libraries`,`${directory}/libraries`);for(const item of ['versions','cache'])await cp(`${cache}/${item}`,`${directory}/${item}`,{recursive:true});
   await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await mkdir(`${directory}/plugins/WorldGuard/worlds/ark`,{recursive:true});
-  await copyFile(paperJar,`${directory}/paper.jar`);await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.1.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+  await copyFile(paperJar,`${directory}/paper.jar`);await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
   report.jarSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
   await copyFile(`${root}artifacts/renewal-20261103/server/plugins/worldedit-bukkit-7.4.6.jar`,`${directory}/plugins/WorldEdit.jar`);
   await copyFile(process.env.DINO_WORLDGUARD_JAR??`${root}output/dino-round2-20261108/candidate-plugins/worldguard-bukkit-7.0.21.jar`,`${directory}/plugins/WorldGuard.jar`);
   await copyFile(process.env.DINO_GRIEFPREVENTION_JAR??`${root}output/dino-round2-20261108/candidate-plugins/GriefPrevention.jar`,`${directory}/plugins/GriefPrevention.jar`);
-  await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\nprototype-worlds:\n  - ark\n');
+  await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\nprototype-worlds:\n  - ark\nwild-spawning:\n  enabled: false\n');
   await writeFile(`${directory}/plugins/WorldGuard/worlds/ark/regions.yml`,JSON.stringify({regions:{__global__:{type:'global',priority:0,owners:{},members:{},flags:{'mob-damage':'allow','damage-animals':'allow',pvp:'deny'}}}}));
   await mkdir(`${directory}/fixture-classes`);execFileSync(`${javaHome}/bin/javac`,['--release','25','-sourcepath','','-cp',`${plugin}.deps/*`,'-d',`${directory}/fixture-classes`,`${plugin}src/aquatic/java/de/ark/dinos/AquaticFixture.java`]);
   execFileSync(`${javaHome}/bin/jar`,['--create','--file',`${directory}/plugins/AquaticFixture.jar`,'-C',`${directory}/fixture-classes`,'.','-C',`${plugin}src/aquatic/resources`,'.']);
@@ -179,7 +179,7 @@ try {
     assert.match(await command('aquaticfixture chunk 6 2'),/loaded=false;forced=0/);const before=await inspect('aquatic_mosa');assert.equal(before.managed,'true');assert.equal(before.blockWater,'true');assert.match(await command('aquaticfixture boundary-move aquatic_mosa'),/cancelled=true/);await command('aquaticfixture velocity aquatic_mosa 0 0 2');await delay(700);const after=await inspect('aquatic_mosa');assert.equal(after.ai,'false');assert.equal(after.path,'false');assert.equal(Number(after.velocity),0);assert.equal(Number(after.z),Number(before.z));assert.match(await command('aquaticfixture chunk 6 2'),/loaded=false;forced=0/);
     await command('aquaticfixture breach aquatic_mosa');await delay(300);const denied=await inspect('aquatic_mosa');assert.equal(denied.breachOrigin,'null');assert.equal(denied.ai,'false');await command('aquaticfixture breach aquatic_mosa 1200');
     await move('AquaticObserver',110,10,0);await eventually(async()=>/safe=true;navigation=true/.test(await command('aquaticfixture safety aquatic_mosa')),'Approach did not naturally load the navigation perimeter',20000);
-    const distance=Number((await inspect('aquatic_mosa')).distance);await delay(5000);const resumed=await inspect('aquatic_mosa');assert.ok(Number(resumed.distance)>distance+1,'Mosa did not keep swimming when the observer approached');assert.ok(Math.hypot(Number(resumed.x)-Number(before.x),Number(resumed.z)-Number(before.z))>1,'Only vertical settling occurred after approach');assert.equal(resumed.uuid,before.uuid);assert.equal(resumed.dry,'0');assert.match(await command('aquaticfixture safety aquatic_mosa'),/forced=0/);return {before,after,denied,resumed};
+    const distance=Number((await inspect('aquatic_mosa')).distance);await delay(5000);const resumed=await inspect('aquatic_mosa');report.pocketProbe={before,after,denied,resumed};assert.ok(Number(resumed.distance)>distance+1,'Mosa did not keep swimming when the observer approached');assert.ok(Number(resumed.horizontal)-Number(after.horizontal)>1,'Mosa did not swim horizontally after approach');assert.ok(Math.max(Number(resumed.spanX)-Number(after.spanX),Number(resumed.spanZ)-Number(after.spanZ))>1,'Mosa did not leave its initial horizontal position after approach');assert.equal(resumed.uuid,before.uuid);assert.equal(resumed.dry,'0');assert.match(await command('aquaticfixture safety aquatic_mosa'),/forced=0/);return {before,after,denied,resumed};
   });
   await check('Unapproved worlds retain an ordinary Dolphin instead of activating Mosa swimming or aggression',async()=>{
     await command('aquaticfixture cleanup');await command('aquaticfixture create-world ark_outside');await command('execute in minecraft:ark_outside run fill -16 4 -16 16 4 16 stone');await command('execute in minecraft:ark_outside run fill -16 5 -16 16 15 16 water');
@@ -262,10 +262,16 @@ try {
     const before=await inspect('aquatic_mosa'),safetyBefore=await command('aquaticfixture safety aquatic_mosa');await delay(5000);const after=await inspect('aquatic_mosa'),safetyAfter=await command('aquaticfixture safety aquatic_mosa');
     report.surfaceMarginProbe={before,safetyBefore,after,safetyAfter};assert.equal(after.uuid,before.uuid);assert.equal(after.breachOrigin,'null');assert.match(safetyAfter,/safe=true;navigation=true/);assert.ok(Number(after.horizontal)-Number(before.horizontal)>1,'Recovered Mosa must resume horizontal swimming');assert.equal(after.health,before.health);return report.surfaceMarginProbe;
   });
-  await check('Corner recovery observation separates geometric yaw rejection from activation',async()=>{
-    await resetMosa();await command('aquaticfixture activation 64 6 4');await command('aquaticfixture teleport aquatic_mosa -0.04691707458942336 9.975689623215539 13.387228889792365 117.513275');await command('aquaticfixture path aquatic_mosa 0 9 0');
-    const before=await inspect('aquatic_mosa');await delay(25000);const natural=await inspect('aquatic_mosa');await command('aquaticfixture path aquatic_mosa 0 9 0');await delay(5000);const retried=await inspect('aquatic_mosa');
-    report.cornerProbe={before,natural,retried,safety:await command('aquaticfixture safety aquatic_mosa')};assert.ok(Number(retried.horizontal)-Number(before.horizontal)>1,'Corner still had no horizontal swimming after30s and a fresh inward path');return report.cornerProbe;
+  await check('Corner recovery makes net inward progress and accepts a fresh native path without jitter-only success',async()=>{
+    await resetMosa();await command('aquaticfixture activation 64 6 4');await command('aquaticfixture stop-wander aquatic_mosa');
+    await command('aquaticfixture teleport aquatic_mosa -0.04691707458942336 9.975689623215539 13.387228889792365 117.513275');await command('aquaticfixture path aquatic_mosa 0 9 0');
+    const before=await inspect('aquatic_mosa');await delay(25000);const natural=await inspect('aquatic_mosa');
+    const target=Number(natural.z)>3?[0,9,0]:[0,9,-6];await command(`aquaticfixture path aquatic_mosa ${target.join(' ')}`);await delay(5000);const retried=await inspect('aquatic_mosa');
+    const inward=Number(before.z)-Number(natural.z),targetDistance=state=>Math.hypot(Number(state.x)-target[0],Number(state.z)-target[2]);
+    report.cornerProbe={before,natural,target,retried,inward,retryProgress:targetDistance(natural)-targetDistance(retried),safety:await command('aquaticfixture safety aquatic_mosa')};
+    assert.ok(inward>3,`Corner failed to move at least3 blocks inward: ${inward}`);
+    assert.ok(report.cornerProbe.retryProgress>1,`Fresh native path failed to make net progress: ${report.cornerProbe.retryProgress}`);
+    assert.equal(retried.uuid,before.uuid);assert.equal(retried.health,before.health);assert.equal(retried.dry,'0');assert.match(report.cornerProbe.safety,/safe=true;navigation=true/);assert.match(report.cornerProbe.safety,/forced=0/);return report.cornerProbe;
   });
   assert.doesNotMatch(log,/Could not pass event|Task .*ArkDinos.*exception|Error occurred while (enabling|disabling) ArkDinos/);
 } catch(error){console.error(error.stack);process.exitCode=1;}

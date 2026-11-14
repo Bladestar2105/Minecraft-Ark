@@ -1,0 +1,674 @@
+{
+  "date": "2026-11-10",
+  "status": "Servertests bestanden; sichtbare Geräteabnahme teilweise offen",
+  "reference_commit": "15e8debae2232e8711ff433e31ad5d40d73d1033",
+  "candidate_plugin": {
+    "name": "ArkDinos",
+    "version": "1.2.0",
+    "sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922"
+  },
+  "versions": {
+    "java_server": "25.0.5+8",
+    "paper": "26.3 build241",
+    "paper_sha256": "ea1081663127a4256ca8ce500899a44b896c3a834a8bfac65d1e58ee1f1bee13",
+    "bettermodel": "3.6.0",
+    "bridge": "1.0.9",
+    "geyser": "2.12.1-b1295",
+    "packetevents": "2.14.0",
+    "java_client": "26.3",
+    "java_client_jar_sha1": "e877b6a07acd633fb3bb475002175cec036e7b87",
+    "floodgate": "2.2.5-b141",
+    "java_client_jvm": "25.0.1+8-LTS"
+  },
+  "dependency_jars": [
+    {
+      "file": "GeyserModelEngine-1.0.9.jar",
+      "sha256": "ce4295d05517c6bcdc1d5bc0c6e51b2daf4d07a45bc834e239c1d6019df035cc"
+    },
+    {
+      "file": "bettermodel-3.6.0-paper.jar",
+      "sha256": "66b2acc679ffcb81d9d7de686092d3e1daa38dc154da4cdaa9aaabc048a06aba"
+    },
+    {
+      "file": "floodgate-spigot.jar",
+      "sha256": "21570aff9ce17d6983928e8552777760e1ede5050026b04c686b0ae112e6fd7e"
+    },
+    {
+      "file": "geyser-spigot.jar",
+      "sha256": "b60ff8f9a007f30823cf40173532a0390e6150cdfc577551f6f37bdd5ccd1528"
+    },
+    {
+      "file": "geyserutils-spigot-1.0-SNAPSHOT.jar",
+      "sha256": "1de02334a7449929aa0577876ea2bba12eb5fb314048e9fbc21e4171b09c2542"
+    },
+    {
+      "file": "packetevents-spigot-2.14.0.jar",
+      "sha256": "060087c58ec268eae7dd0eb1f17ac3bea1eaadda1693414141ff64e506091bd7"
+    },
+    {
+      "file": "Geyser-Spigot/extensions/GeyserModelEngineExtension-1.0.9.jar",
+      "sha256": "71671ee8c475f194f7caf13bc1cc4d3b4d10dc4fd9df042a31ee7b29fe7a7cb5"
+    },
+    {
+      "file": "Geyser-Spigot/extensions/geyserutils-geyser-1.0-SNAPSHOT.jar",
+      "sha256": "8ed7b7dbece8341277652d4ee01706913e725cdf19b9664025bbb870299ec12a"
+    }
+  ],
+  "native": {
+    "passed": 128,
+    "failed": 0,
+    "skipped": 0,
+    "suites": [
+      {
+        "suite": "care",
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0,
+        "plugin_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+        "command": [
+          "node",
+          "dino-plugin/care-runtime-test.mjs"
+        ],
+        "checks": [
+          "Spawn-tick Rex identification prevents legacy one-seed taming before deferred restore",
+          "Hatch clearance covers the enlarged baby neck and tail before spawning",
+          "Rex requires twelve real meat items with twenty-second spacing and protected taming owner",
+          "Wall-clock Rex taming waits twenty seconds per feed and consumes twelve meat items then one bone",
+          "Pteranodon fish/seagrass, eight plant feeds/seeds and expired progress",
+          "Same-owner adult pair produces one real inventory egg and cooldown blocks repeats",
+          "Full inventory breeding drops exactly one real tagged overflow egg",
+          "Creative menu blocks transfers and grants a real inventory egg on selection",
+          "Protection cancellation retains the inventory egg and creates no nest",
+          "Placed eggs suppress native cracking/hatching; cancelled species spawn preserves egg",
+          "Obstructed nests wait safely and then hatch a persistent owned juvenile",
+          "Real clean restart retains incubation, species and owner without force loading",
+          "Joining and opening native inventories refresh only tagged egg models and default lore, preserving custom metadata",
+          "Persisted growth updates native body size through adulthood without a model plugin",
+          "Breaking returns exactly one tagged egg and suppresses vanilla item drops",
+          "Pistons cannot move nests; cancelled explosions retain them and allowed explosions clean them without egg duplication",
+          "Dilophosaurus tames with meat and bone, breeds an inventory egg and hatches the correct native species",
+          "Old five-minute care durations migrate to normal timing once, retaining elapsed age and native size",
+          "Eighth creative egg creates only a wild aquatic Mosa and respects gamemode, world, space and protection"
+        ]
+      },
+      {
+        "suite": "combat",
+        "passed": 35,
+        "failed": 0,
+        "skipped": 0,
+        "plugin_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+        "command": [
+          "node",
+          "dino-plugin/combat-runtime-test.mjs"
+        ],
+        "checks": [
+          "Self-defense selects the permitted attacker of an unmounted tame",
+          "Self-defense ignores cancelled damage, zero damage, Stay, babies and owner hits",
+          "Self-defense resolves a projectile shooter and retains PvP protection",
+          "Tamed wolves, cats and horses are protected during owner offense and mounted attacks",
+          "A mounted Rex applies twenty damage on a tall native carrier",
+          "A scaled Brachiosaurus rider can aim at its ground-level melee target",
+          "Public riding attacks use the driver while protecting the persistent owner",
+          "Public riding uses driver team permissions and driver GriefPrevention combat attribution",
+          "A public Dilo shot is discarded when its driver changes or loses riding permission",
+          "GriefPrevention fresh-spawn immunity blocks both carrier families as well as direct player hits",
+          "GriefPrevention safe claims and native PreventPvPEvent exceptions apply to both carrier families",
+          "GriefPrevention creature trust denies both carrier families and Dilo until container trust is granted",
+          "GriefPrevention immunity and claim changes cancel Dilo spit in flight before impact",
+          "GriefPrevention records real positive melee and spit PvP, with no combat state from cancelled or zero damage",
+          "Owned adult attacks the living opponent that damaged its owner",
+          "Carrier damage outside the commanded bite cannot bypass the cooldown",
+          "Owner attacks and owner-shot arrows select the opponent; cooldown stays at least 20 ticks",
+          "Owner range and game-mode changes cancel an active chase",
+          "Stay cancels active combat immediately and babies do not defend",
+          "Wild predators attack Survival while Creative and Spectator remain excluded",
+          "World PvP false, WorldGuard PvP deny, and friendly-fire teams each block indirect player attacks",
+          "WorldGuard animal and mob-damage protection cancel native attacks",
+          "Mounted swing requires a visible nearby target and one second between bites",
+          "Mounted bites enforce world PvP, WorldGuard and friendly-fire rules independently of player damage events",
+          "Seven owned adult species defend and bite with their defined damage; wild herbivores stay passive",
+          "Dilo visible black native spit hits at range, adds debuffs, and observes three-second cooldown",
+          "Dilo native spit starts at the visible adult mouth and cannot cross a wall before the muzzle",
+          "Dilo wild ranged aggro uses native spit; blocked and missed spit cannot hurt the target",
+          "Dilo launch, hit and native damage cancellation leave no effects or leaked shots",
+          "Dilo in-flight cleanup respects owner mode, target removal and source unload; foreign shots stay untouched",
+          "Dilo in-flight PvP, team and WorldGuard changes deny damage before impact",
+          "Legacy owned dinos outside prototype worlds retain passive combat",
+          "GriefPrevention installed handler failure denies companion attacks and warns once",
+          "Installed WorldGuard API failure denies companion attacks and warns once",
+          "Plugin disable removes pending native spit before shutdown"
+        ]
+      },
+      {
+        "suite": "swimming",
+        "passed": 7,
+        "failed": 0,
+        "skipped": 0,
+        "plugin_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+        "command": [
+          "node",
+          "dino-plugin/swimming-runtime-test.mjs"
+        ],
+        "checks": [
+          "Seven land species float in wild, Stay, Free and owner-offline Follow modes for sixty seconds at adult carrier scales",
+          "A growing small Sniffer uses its current native eye height",
+          "All seven mounted species recover, preserve health and accept real forward input in deep water",
+          "Submerged Ravager keeps its rider but native Sneak and game-mode cleanup still dismount",
+          "Water ceiling respects real rider collision without granting drowning immunity",
+          "Water plants and waterlogged blocks count as water; lava, Mosasaurus and ordinary mobs are excluded",
+          "Unloaded water probes do not load chunks; death, unload and shutdown remove swimmer state"
+        ]
+      },
+      {
+        "suite": "aquatic",
+        "passed": 21,
+        "failed": 0,
+        "skipped": 0,
+        "plugin_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+        "command": [
+          "node",
+          "dino-plugin/aquatic-runtime-test.mjs"
+        ],
+        "checks": [
+          "Mosa has a large wild Dolphin carrier while ordinary dolphins retain native goals",
+          "Native swimming moves continuously underwater without air jumps or creative attacks",
+          "Submerged Mosa replenishes air and moisture without drowning",
+          "Mosa cannot be tamed, mounted, leashed, portalled or teleported to another world",
+          "A modeled Mosa bites from its visible mouth, and raw native bites cannot bypass the one-second cooldown",
+          "Mosa protects Creative, Spectator, land players and players beside the tail instead of the mouth",
+          "Native fallback uses the real carrier mouth instead of an invisible nine-block bite",
+          "WorldGuard mob-damage and native event cancellation or zero damage stop Mosa bites",
+          "Stranded Mosa freezes on land without jumping and resumes swimming when returned to water",
+          "Controlled native movement and timer guards reject an unloaded neighbor without chunk loads or force tickets",
+          "Unapproved worlds retain an ordinary Dolphin instead of activating Mosa swimming or aggression",
+          "Real clean restart restores the same injured wild Mosa, its controller, swimming, oxygen and mouth attack",
+          "Controlled breach clears the full body above the surface, lands in water and resumes swimming",
+          "Breach preflight rejects thin interior glass, a low roof and an obstructed landing",
+          "Breach returns safely after a cancelled movement or a new obstruction in its air corridor",
+          "Breach survives controller close and restore in midair with the same entity and a safe landing",
+          "Breach survives a real clean midair restart and resumes submerged native swimming",
+          "Boundary recovery clears a rejected upward native path without stranding the Mosa",
+          "Shore-distance water activation 16 versus 64 on the same safe loaded Mosa",
+          "Persisted live surface-margin breach resumes from stopped NoAI when loaded without changing entity",
+          "Corner recovery observation separates geometric yaw rejection from activation"
+        ]
+      },
+      {
+        "suite": "controls",
+        "passed": 17,
+        "failed": 0,
+        "skipped": 0,
+        "plugin_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+        "command": [
+          "node",
+          "dino-plugin/controls-runtime-test.mjs"
+        ],
+        "checks": [
+          "Sneak empty-hand opens owned prototype control menu",
+          "Menu blocks transfers, nonowners and cancelled native interactions",
+          "Owner can share riding, guests cannot manage ownership, and revocation dismounts an active guest",
+          "Follow, stop and free wander persist distinct modes and move without owner following",
+          "Free wander still defends owner; stop immediately cancels combat and path",
+          "Juveniles follow and roam while riding, combat and release remain adult-only; occupied vehicles cannot release",
+          "Wandering paths only use loaded reachable terrain without loading more chunks",
+          "Release needs separate confirmation and rejects stale distance, world and ownership",
+          "Adult release preserves entity identity, species, health, scale and clears ownership/progress",
+          "Released carnivore never targets or harms former owner and remains wild toward other players",
+          "Released Sniffer keeps custom bounded wandering without native digging and preserves UUID",
+          "Mode and peaceful former-owner identity survive real restart",
+          "A later tame/release remembers the latest former owner",
+          "All seven initially wild NoAI carriers wake and wander without native Sniffer digging",
+          "Wild roaming keeps mounting blocked and normal taming takes over the same entity",
+          "Wild predators hunt eligible players and resume idle roaming when the player becomes Creative",
+          "Prototype-disabled main world leaves wild NoAI fixtures unchanged"
+        ]
+      },
+      {
+        "suite": "second-rider",
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0,
+        "plugin_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+        "command": [
+          "node",
+          "dino-plugin/second-rider-runtime-test.mjs"
+        ],
+        "checks": [
+          "Public adult dinosaur accepts a second rider in a distinct native seat, while private access remains denied",
+          "The passenger follows movement and turns without self teleport spam and keeps independent look direction",
+          "Only the driver commands dinosaur attacks and the dinosaur cannot target its co-rider",
+          "Forced passenger exit preserves safe feet below a low ceiling without resistance masking collision",
+          "Guest Sneak removes only the guest; revoking public access preserves the owner driver",
+          "Driver Sneak ends both seats without promoting the passenger",
+          "High-seat exit protection follows actual ground distance and preserves longer or infinite effects",
+          "All four large adult species accept exactly two riders; small species and juveniles remain excluded",
+          "Revoking a public driver ends both seats even when the owner is the passenger",
+          "Turning sweeps the rear passenger arc and stops before a wall; queries do not load chunks",
+          "Swimming checks the second rider headroom and keeps both riders aboard in open water",
+          "Cancelled mounts, external teleports, mode changes and carrier death remove reservations and helpers",
+          "A real unloaded chunk boundary rejects passenger motion, turn and collision probes without synchronous chunk loads",
+          "Real chunk unload/reload after dismount removes transient seats, reservations and inherited authority",
+          "Real chunk unload/reload after disconnect removes transient seats, reservations and inherited authority",
+          "Real chunk unload/reload after world-change removes transient seats, reservations and inherited authority",
+          "Real chunk unload/reload after carrier-removal removes transient seats, reservations and inherited authority",
+          "A world vacated by both real riders unloads through the server API and emits WorldUnloadEvent",
+          "Shutdown and a real restart leave no passenger helpers or inherited driving authority"
+        ]
+      },
+      {
+        "suite": "wildlife",
+        "passed": 6,
+        "failed": 0,
+        "skipped": 0,
+        "plugin_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+        "command": [
+          "node",
+          "dino-plugin/wildlife-runtime-test.mjs"
+        ],
+        "checks": [
+          "Natural world encounters obey the player budget, are unsaved and never force chunks",
+          "No Survival players means no new encounters; taming preserves the same natural animal",
+          "Successful leashing preserves a natural animal immediately, while cancelled leashes do not",
+          "Aquatic encounters require full-body border clearance and cannot overlap living entities",
+          "WorldGuard global spawning denial, named regions and GriefPrevention claims prevent encounters",
+          "Tamed and named natural encounters survive a real restart with their UUIDs"
+        ]
+      },
+      {
+        "suite": "speed",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "plugin_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+        "command": [
+          "node",
+          "dino-plugin/controls-runtime-test.mjs"
+        ],
+        "checks": [
+          "7 species match ground walk/run and real rider normal/sprint targets, return from sprint and stop without sliding"
+        ]
+      },
+      {
+        "suite": "flight",
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "plugin_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+        "command": [
+          "node",
+          "dino-plugin/controls-runtime-test.mjs"
+        ],
+        "checks": [
+          "An adult owned Ptera mounts and takes off with native jump input",
+          "Native forward input measures 12 / 18 / 12 blocks per second across normal, sprint and released sprint",
+          "Releasing flight input hovers and native Sneak dismount restores landing and gravity"
+        ]
+      }
+    ],
+    "rex_real_feeding_elapsed_ms": 222895
+  },
+  "model_stack": {
+    "passed": 6,
+    "failed": 0,
+    "candidate_jar": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+    "checks": [
+      {
+        "name": "Installed candidate and real Geyser registries expose all eight models and both resource packs",
+        "status": "passed"
+      },
+      {
+        "name": "Actual trex driver and passenger keep their native vehicles through real model rebuild",
+        "status": "passed"
+      },
+      {
+        "name": "Actual triceratops driver and passenger keep their native vehicles through real model rebuild",
+        "status": "passed"
+      },
+      {
+        "name": "Actual stegosaurus driver and passenger keep their native vehicles through real model rebuild",
+        "status": "passed"
+      },
+      {
+        "name": "Actual brachiosaurus driver and passenger keep their native vehicles through real model rebuild",
+        "status": "passed"
+      },
+      {
+        "name": "Actual candidate growth and all eight model registrations survive a clean server restart",
+        "status": "passed"
+      }
+    ],
+    "registered_dinosaurs": 8,
+    "registered_placed_eggs": 7,
+    "bedrock_registry_protocols": 3,
+    "model_sources": {
+      "trex": {
+        "bbmodel": "cd5f2aab53d206061a800ed4828b26763e1c135ec997ab66bc6677e13c32a770",
+        "geo.json": "32b3daad64cc61844649843357094eb2b13fdfdbbe5828ee57e323eda7555f46",
+        "animation.json": "0083529bdba37834d94262edf4a94d942d470e67021fb9d4d4a00468c6b73e08"
+      },
+      "triceratops": {
+        "bbmodel": "59e5e12ecf6057319a89831a00739adae0a49ea8ebffb287c832fbbddda507c6",
+        "geo.json": "5214dd4c2198d54f9737ead1f7a67ef4b331d9e2cc665b9604e1e755f390ff4d",
+        "animation.json": "94bac313dfd707bc2d55c526a23f23f6f00b17b34fffe9dca60a39cf9206772b"
+      },
+      "stegosaurus": {
+        "bbmodel": "a644065b4fd90a08714ee4a5e93097821bca67659a211827f0be8b314b19beeb",
+        "geo.json": "dc2b52bcdd552a70a8481d4ba9c99cdc08cb3d33f369e836edcf891674b5083d",
+        "animation.json": "39923fc2541f1390d20a762b7e73c0e72f139f26fd15fb833a54f768944c0677"
+      },
+      "brachiosaurus": {
+        "bbmodel": "6e76c89b05283957e3a790c24c9c1e5f1ac3d00688e0c9703b7a3dcef125fcc1",
+        "geo.json": "17fd3ce591a3f57107c6dc272c59b7e7b992f749e2c9f08386835d8ec1ec3ba8",
+        "animation.json": "bafc1467ed93a0f309ea6218cde1edf489ddf091587f1aff4d34e9aa703752f4"
+      },
+      "velociraptor": {
+        "bbmodel": "22fdad276207c3215bcddfb9690b4bdf41f4d00535e6a2aca1d0718f62197015",
+        "geo.json": "4a9cd95a8df8b50afd776f3d9e659f8ac16583c3f45b2037393a435a6e30a306",
+        "animation.json": "027c0a85a859cba6a963eb778a4f93aefd7ccaa2b2152886ad607dd67fece46f"
+      },
+      "pteranodon": {
+        "bbmodel": "a23e2bf247cb55fd93085f39e12f17635353654c6421145271fe8dceb68d610d",
+        "geo.json": "ffb3f6c955a59a2fc4d0c754e2f55a616419488f9222b4cd35ea834dba3934de",
+        "animation.json": "f164e406029d105f20334c0d6ea105881faca95a274af2e19ae14ee587b3b7a5"
+      },
+      "dilophosaurus": {
+        "bbmodel": "ed3916203ab2a8822b3477a05f3b49d4fe8661b75d72ea33a34155f323e4bf10",
+        "geo.json": "cb49f01456855c368b44b5c3825f03630c2dbbe023ee79ba820f7ec4aca8663a",
+        "animation.json": "a4856fceecfb0afe455768286842cd182c14152cd06581055d46506453555f58"
+      },
+      "mosasaurus": {
+        "bbmodel": "fde83bd30a27bc39ef163b4e6a5692a79e34d15833d69df2901f8460b3863b8c",
+        "geo.json": "5ad2ce7c6c7282290aec1500cda039302108ec7d2d4501813b175be6391f63cd",
+        "animation.json": "2dd5d91b9607fc5cf0aff3faddce6fefecd655672681b585283d3bf1a53e08f2"
+      },
+      "egg_trex": {
+        "bbmodel": "a6fac6aa416696bd05276fedcf734fedb2806da97f17bc811b1cd32b48f8f0a2",
+        "geo.json": "dc4a710580b22300eb455aa6efc053cf3d9c2f541428eb132bc986b0f6ca281a",
+        "animation.json": "a1b4cc5a7b5fd249d1c62aec5509424b7c38b086da48f5a72345425c655ca0f1"
+      },
+      "egg_triceratops": {
+        "bbmodel": "139072e75626ba0c90d817ba4fcbd26b96de48336ec1f409b2502d0a5f9963dd",
+        "geo.json": "2574d81dedb746c2c50ce5f98b9711e36be19f0a9455d1fbb124b33f71599e03",
+        "animation.json": "a1b4cc5a7b5fd249d1c62aec5509424b7c38b086da48f5a72345425c655ca0f1"
+      },
+      "egg_stegosaurus": {
+        "bbmodel": "03b6dc07008e70b47ac690055d82e51d524ff8e8bf0ef289c079c38bb0b74e47",
+        "geo.json": "192d224ad78459591cd523bae9268b561cc9291ae2695dab49e7677ac48c94ea",
+        "animation.json": "a1b4cc5a7b5fd249d1c62aec5509424b7c38b086da48f5a72345425c655ca0f1"
+      },
+      "egg_brachiosaurus": {
+        "bbmodel": "0bdac8bddd905168bcf452d6b8c0128885270fff831b8029ebae05918070de35",
+        "geo.json": "26b2df1fc621ad3b0e98aa018b6405e755773ff050ad427cdb7295b7e35e31ae",
+        "animation.json": "a1b4cc5a7b5fd249d1c62aec5509424b7c38b086da48f5a72345425c655ca0f1"
+      },
+      "egg_velociraptor": {
+        "bbmodel": "d4ef5d77f07dcfc90ca9dd7e3ad8bf19e6634e0db0082b4520b9cfb543e9f67e",
+        "geo.json": "5d721242631476c6436b5586efe768f737ba4124ffdaa215bcf557fe57afd152",
+        "animation.json": "a1b4cc5a7b5fd249d1c62aec5509424b7c38b086da48f5a72345425c655ca0f1"
+      },
+      "egg_pteranodon": {
+        "bbmodel": "ae29ab5f7f4f350ed94e4f1c836657fa485d24dc92f9846a994e0d7380e471ca",
+        "geo.json": "df79e865d788a92096643c6989ec2b93270bad8513b97ab462bcbd7786c3e517",
+        "animation.json": "a1b4cc5a7b5fd249d1c62aec5509424b7c38b086da48f5a72345425c655ca0f1"
+      },
+      "egg_dilophosaurus": {
+        "bbmodel": "c354d01964d2897418cf70169a85f464ad630ac88ee5900a66a395cb46283316",
+        "geo.json": "d8763735dc41f0a003e8c8e8f000f8ae3572fb998b0d49e21b618837621332c9",
+        "animation.json": "a1b4cc5a7b5fd249d1c62aec5509424b7c38b086da48f5a72345425c655ca0f1"
+      }
+    },
+    "packs_initial_start": {
+      "java": {
+        "path": "plugins/BetterModel/build.zip",
+        "bytes": 1218745,
+        "sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440"
+      },
+      "bedrock": {
+        "path": "plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack.zip",
+        "bytes": 325367,
+        "sha256": "4d06ccc7812511320fc1c59a3079c27a03b513b8511b0617a690f3033492ae46"
+      },
+      "bedrockEggs": {
+        "path": "plugins/Geyser-Spigot/packs/ark-dino-eggs.mcpack",
+        "bytes": 3371,
+        "sha256": "6a620a56e7bae1e536844990abc7588b586303b78aa1d13b34f39b9b1eef0f67"
+      }
+    },
+    "packs_after_restart": {
+      "java": {
+        "file": "ArkDinos-java-1.2.0.zip",
+        "bytes": 1218745,
+        "sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440",
+        "phase": "after_real_restart"
+      },
+      "bedrock": {
+        "file": "ArkDinos-bedrock-models-1.2.0.mcpack",
+        "bytes": 325367,
+        "sha256": "e8ecb2f145eeea6ea8d23b4e745c3a03a862beb6762d4693723aa23ce4465a89",
+        "phase": "after_real_restart"
+      },
+      "bedrockEggs": {
+        "file": "ArkDinos-bedrock-eggs-1.2.0.mcpack",
+        "bytes": 3371,
+        "sha256": "6a620a56e7bae1e536844990abc7588b586303b78aa1d13b34f39b9b1eef0f67",
+        "phase": "after_real_restart"
+      }
+    },
+    "limits": [
+      "Direct Java protocol777 clients verify real ArkDinos gameplay and actual model/registry/packet state; visible Java/Bedrock/console rendering is a separate acceptance step.",
+      "Bridge pose checks enroll these Java clients in the actual Bridge viewer sets to receive real encoded GeyserUtils actors; they do not establish real Geyser/Bedrock sessions."
+    ],
+    "compiled_java_pack_audit": {
+      "passed": true,
+      "models": 2702,
+      "cuboids": 6060,
+      "sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440"
+    },
+    "compiled_bedrock_pack_audit": {
+      "ok": true,
+      "models": 15,
+      "geometries": 30,
+      "files": 124,
+      "sha256": "e8ecb2f145eeea6ea8d23b4e745c3a03a862beb6762d4693723aa23ce4465a89"
+    },
+    "java_graphical_pack_comparison": {
+      "status": "Bestanden",
+      "graphical_sha256": "c228aed5abd14f6684a9cf068f72869c360570fa83e823cb1b00185ea106d96a",
+      "delivered_sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440",
+      "identical_paths": 3025,
+      "all_uncompressed_entry_bytes_identical": true,
+      "limit": "ZIP container bytes differ; graphical rendering used the recorded pack hash, not relabelled as the delivered ZIP.",
+      "delivered_zip_later_downloaded_by_both_real_clients": true,
+      "client_download_sha1": "04cc46e7282708f4694b4b5fb75edf6a2d261a01"
+    }
+  },
+  "jaw_engine_probe": {
+    "passed_states": 7,
+    "checks": [
+      "Mosa real engine joint state capture: fresh-first-viewer",
+      "Mosa real engine joint state capture: idle",
+      "Mosa real engine joint state capture: attack-idle",
+      "Mosa real engine joint state capture: swim",
+      "Mosa real engine joint state capture: attack-swim",
+      "Mosa real engine joint state capture: interrupted-attacks",
+      "Mosa real engine joint state capture: cancelled-attack"
+    ],
+    "frames_per_state": 61,
+    "bones": [
+      "neck",
+      "head",
+      "jaw"
+    ],
+    "status": "Engine target hinge and clock assertions passed; actual client interpolation is separate",
+    "limits": [
+      "Direct Java protocol777 test clients, not an official Java client, Mineflayer, Bedrock or PS5.",
+      "Model fixture calls the adapter directly; gameplay lifecycle is verified by the separate combined harness.",
+      "Fresh engine interpolation diagnostic internally starts from zero (maximum0.834blocks); actual initial published head/jaw transforms are already aligned. This diagnostic is not a measured rendered detachment."
+    ],
+    "head_jaw_frame_pairs": 427,
+    "maximum_target_hinge_error_blocks": 4.000167864418396e-07,
+    "initial_wire_hinge_error_blocks": 1.999999987845058e-08,
+    "report": "dino-model-mosa-first-wire-verified-20261110/runtime-report.json",
+    "fixture_sha256": "08b7bfdcf3a1c387406b3869fd8596592fe349e004951721ee8f12a2953572c5"
+  },
+  "unit_and_build": {
+    "model_tests": 38,
+    "world_tests": 20,
+    "script_tests": 41,
+    "native_fence_checks": 15,
+    "all_own_plugins": [
+      {
+        "module": "dino",
+        "name": "ArkDinos",
+        "version": "1.2.0",
+        "path": "dino-plugin/build/ArkDinos-1.2.0.jar",
+        "sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922"
+      },
+      {
+        "module": "atlas",
+        "name": "ArkAtlas",
+        "version": "1.0.1",
+        "path": "atlas-plugin/build/ArkAtlas-1.0.1.jar",
+        "sha256": "913ec558c3f5c5fd496366cbe390483578dba3bac69a07dfa9886728fc753eee"
+      },
+      {
+        "module": "panel",
+        "name": "ArkPanelBridge",
+        "version": "1.0.0",
+        "path": "panel-plugin/build/ArkPanelBridge-1.0.0.jar",
+        "sha256": "f676c23c4f4f46d9d14c265ad9a06946ca606f1fb7cf17607a5741bd34d2dfa8"
+      },
+      {
+        "module": "access",
+        "name": "ArkAccessBridge",
+        "version": "1.1.1",
+        "path": "access-plugin/build/ArkAccessBridge-1.1.1.jar",
+        "sha256": "f5e6ac16771aade266cc0b4f04ca2b7692e309fbebcb26b3e8dd34b702bf5539"
+      },
+      {
+        "module": "accounts",
+        "name": "ArkAccounts",
+        "version": "1.0.2",
+        "path": "accounts-plugin/build/ArkAccounts-1.0.2.jar",
+        "sha256": "8e7269179a372ce734bd3c6619994cec41a2ba324a0fc47948d3c9f5d1e9c53a"
+      },
+      {
+        "module": "wardrobe",
+        "name": "ArkWardrobe",
+        "version": "1.0.0",
+        "path": "wardrobe-plugin/build/ArkWardrobe-1.0.0.jar",
+        "sha256": "06f399769f57c69c80f28e47c32b7c0731b6302633075be7d7337bf855d2c9cb"
+      },
+      {
+        "module": "support",
+        "name": "ArkSupport",
+        "version": "1.0.1",
+        "path": "support-plugin/build/ArkSupport-1.0.1.jar",
+        "sha256": "535d469997af5e50e83826d21b81e6a3e0d746ff035becfdb700b711aedf18a5"
+      }
+    ],
+    "rebuilt_from_source_archive": true,
+    "all_seven_rebuilt_jars_byte_identical": true
+  },
+  "additional_probes": {
+    "model_seat_groups": 9,
+    "model_seat_optional_absence": true,
+    "bedrock_actual_pinned_translator": true,
+    "bedrock_client_rendering": false,
+    "model_target_optional_absence": true
+  },
+  "render_distance": {
+    "requested_chunks": 14,
+    "fresh_setup_property": "view-distance=14",
+    "actual_java_clients": 14,
+    "graphical_test_world": 14,
+    "automatic_fixture_view_distance": 3,
+    "simulation_distance_unchanged": true,
+    "production_server_changed": false,
+    "actual_graphical_clients_count": 3
+  },
+  "visual_acceptance": {
+    "status": "Teilweise Bestanden: four actual Java/Java species, documented still views and camera samples only",
+    "bedrock_combinations": "Blockiert: no executable licensed Bedrock client/device",
+    "console": "Blockiert: no connected console client",
+    "original_mosa_jaw_reference": "Actual baseline Java screenshot2026-11-10_16.13.51.png; exact historical state unknown; new side views connected open/closed; no unproven jaw fix",
+    "manifest": "2026-11-10-rendering/client-render-manifest.json",
+    "rendering_clients": 3,
+    "java_java_species": [
+      "trex",
+      "triceratops",
+      "stegosaurus",
+      "brachiosaurus"
+    ],
+    "brachiosaurus_first_person": "Open usability limit: central view occluded by tall neck; no proven departure from agreed back/seat geometry",
+    "movement_attempt": {
+      "status": "Nicht geprüft",
+      "measured_blocks": 0.0,
+      "reason": "Short UI W taps did not create reliable held input; not a passed movement check"
+    },
+    "sneak_attempt": {
+      "status": "Blockiert",
+      "reason": "UI keypress rejected modifier-only Shift with keyPressIncludedNoNonModifierKeys"
+    },
+    "remaining_java_scenarios": [
+      "held movement/sprint/stop/turn camera and correction observation",
+      "surface swimming/shore and low ceilings/forced exit",
+      "all eight models across full growth, animation and viewer/rebuild matrix"
+    ]
+  },
+  "fixed_findings": [
+    "Persist native adult baseline across modelled juvenile save/restart/fallback",
+    "Mosasaurus Java compiled cuboids outside allowed bounds; shape-preserving local mesh hierarchy",
+    "Incomplete source-package allowlist including23 inherited dinosaur source/harness omissions",
+    "Host-locale-dependent WorldEdit fixture replies",
+    "Invalid main-world dimension key in controls/lifecycle fixture"
+  ],
+  "historical_or_failed_runs": [
+    {
+      "candidate_sha256": "1a7a30aa010ca6a01460a9816f7c625f2819e16a5bfac99b167a980d07b4ca27",
+      "note": "Initial native/model/lifecycle success predates the new growth and Mosa fixes; not final-artifact proof"
+    },
+    {
+      "case": "Growth restart then fallback",
+      "result": "RED before baseline persistence fix"
+    },
+    {
+      "case": "Mosa Java pack",
+      "result": "RED actual Java renderer checkerblocks and four invalid compiled coordinates; final geometry correction independently preserves232056posed corners"
+    },
+    {
+      "case": "Intermediate mesh hierarchy",
+      "result": "246 anatomical-contact failures; production hierarchy adjusted, original contact assertions unchanged; final38tests pass"
+    },
+    {
+      "case": "First final-candidate real feeding run",
+      "result": "Client followed roaming dinosaur off fixture platform and was kicked; failed at ninth feed; revised stationary timed fixture later passed19/19"
+    },
+    {
+      "case": "Deliberate ten-second feeding mutant",
+      "result": "RED first deadline assertion, local-only mutant not deliverable"
+    }
+  ],
+  "production": {
+    "deployed": false,
+    "merged": false,
+    "released": false,
+    "world_blocks_changed": 0
+  },
+  "review": {
+    "skill": "ponytail:ponytail-review",
+    "status": "Bestanden: final independent Ponytail review of code, connected unchanged gameplay, all reported results and nine PNGs; no remaining material findings",
+    "code_gate": "Bestanden: independent Ponytail reviewer found no remaining material code findings after fixes; documentation/manifest final consistency pending."
+  },
+  "candidate_source_commit": "d849ecff7613eee8282e96378e46b1437e187255",
+  "test_infrastructure_shutdown": {
+    "qa_java_clients": 3,
+    "clean_client_exit": true,
+    "isolated_server_stopped": true,
+    "loopback_ports_closed": [
+      58152,
+      61060
+    ],
+    "production_changed": false
+  }
+}

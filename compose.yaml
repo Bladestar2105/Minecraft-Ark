@@ -10,7 +10,7 @@ services:
       EULA: ${EULA:-FALSE}
       TYPE: PAPER
       VERSION: "26.3"
-      PAPER_BUILD: "241"
+      PAPER_BUILD: "246"
       INIT_MEMORY: 512M
       MAX_MEMORY: 4G
       LEVEL: ark

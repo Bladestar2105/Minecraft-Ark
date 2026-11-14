@@ -5,3 +5,12 @@ survival-worlds:
 # Omit to use survival-worlds; an empty list disables these prototype features.
 # prototype-worlds:
 #   - ark_model_test
+
+# Encounters across loaded Overworld terrain in prototype-worlds. Existing pets,
+# placed eggs and named/site dinosaurs are never replaced. Taming makes a natural
+# dinosaur persistent; other natural encounters are not saved to disk.
+wild-spawning:
+  enabled: true
+  per-player: 8
+  world-limit: 64
+  nearby-limit: 6

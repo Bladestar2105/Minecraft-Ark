@@ -44,6 +44,7 @@ public final class CareFixture extends JavaPlugin implements Listener {
         var data=entity.getPersistentDataContainer();
         return "id="+entity.getEntityId()+";uuid="+entity.getUniqueId()+";owner="+data.get(key("owner"),PersistentDataType.STRING)
                 +";species="+data.get(key("species"),PersistentDataType.STRING)+";feeds="+data.getOrDefault(key("tame-feeds"),PersistentDataType.INTEGER,0)
+                +";nextFeedAt="+data.getOrDefault(key("tame-next"),PersistentDataType.LONG,0L)
                 +";actor="+data.get(key("tame-actor"),PersistentDataType.STRING)+";adultAt="+data.getOrDefault(key("adult-at"),PersistentDataType.LONG,0L)
                 +";growthDuration="+data.getOrDefault(key("growth-duration"),PersistentDataType.LONG,0L)
                 +";love="+data.getOrDefault(key("love-until"),PersistentDataType.LONG,0L)+";breedUntil="+data.getOrDefault(key("breed-until"),PersistentDataType.LONG,0L)
@@ -119,8 +120,25 @@ public final class CareFixture extends JavaPlugin implements Listener {
                     var method=visuals.getClass().getDeclaredMethod("unload",org.bukkit.Chunk.class);method.setAccessible(true);method.invoke(visuals,block.getChunk());
                 }
                 case "care-tick" -> call("tick",new Class<?>[]{});
+                case "hatch-space" -> sender.sendMessage("clear="+call("hatchSpace",new Class<?>[]{Block.class,String.class},block(args).block(),args[5]));
                 case "create-world" -> new org.bukkit.WorldCreator(args[1]).type(org.bukkit.WorldType.FLAT).generateStructures(false).createWorld();
                 case "inspect" -> sender.sendMessage(state(entity(args[1])));
+                case "spawn-taming-race" -> {
+                    Player p=getServer().getPlayerExact(args[1]);p.teleport(new org.bukkit.Location(p.getWorld(),-10,4,2));p.setSneaking(false);
+                    p.getInventory().setHeldItemSlot(0);p.getInventory().setItemInMainHand(new ItemStack(Material.TORCHFLOWER_SEEDS,1));
+                    int spawnTick=org.bukkit.Bukkit.getCurrentTick();
+                    var mob=p.getWorld().spawn(new org.bukkit.Location(p.getWorld(),-10,4,0),org.bukkit.entity.Ravager.class,entity -> {
+                        entity.addScoreboardTag(args[2]);entity.addScoreboardTag("ark_dino");entity.addScoreboardTag("ark_dino_wild");
+                        entity.addScoreboardTag("ark_renewal_habitat_03_dino_0");entity.setAI(false);
+                    });
+                    String speciesBefore=mob.getPersistentDataContainer().get(key("species"),PersistentDataType.STRING);
+                    // Spawn and interaction must stay in this one main-thread call, ahead of deferred restore.
+                    var event=new org.bukkit.event.player.PlayerInteractEntityEvent(p,mob,EquipmentSlot.HAND);
+                    getServer().getPluginManager().callEvent(event);
+                    sender.sendMessage(state(mob)+";spawnTick="+spawnTick+";interactionTick="+org.bukkit.Bukkit.getCurrentTick()+";speciesBefore="+speciesBefore
+                        +";cancelled="+event.isCancelled()+";hand="+p.getInventory().getItemInMainHand().getType()+";amount="+p.getInventory().getItemInMainHand().getAmount()
+                        +";wild="+mob.getScoreboardTags().contains("ark_dino_wild")+";tamed="+mob.getScoreboardTags().contains("ark_dino_tamed"));
+                }
                 case "food" -> { Player p=getServer().getPlayerExact(args[1]);p.getInventory().setHeldItemSlot(0);p.getInventory().setItemInMainHand(new ItemStack(Material.valueOf(args[2]),Integer.parseInt(args[3]))); }
                 case "fill-inventory" -> { Player p=getServer().getPlayerExact(args[1]);for(int i=0;i<36;i++)p.getInventory().setItem(i,new ItemStack(Material.STONE,64)); }
                 case "inventory" -> {
