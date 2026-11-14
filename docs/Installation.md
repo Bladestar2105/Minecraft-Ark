@@ -7,7 +7,7 @@ Use Docker with Compose v2, Python 3.10+ and **JDK 25** for the source build. Pr
 ## Fresh source checkout
 
 ```sh
-git clone --branch app-2026-11-14 https://github.com/Bladestar2105/Minecraft-Ark.git
+git clone --branch app-2026-11-14-2 https://github.com/Bladestar2105/Minecraft-Ark.git
 cd Minecraft-Ark
 # Set JAVA_HOME to JDK 25 if PATH uses another JDK.
 python3 scripts/build_plugins.py
@@ -18,7 +18,7 @@ Do **not** create `.env`, `data`, `secrets` or `panel-state` before fresh setup.
 
 If you use a verified binary ZIP, skip the JDK/build step and follow [All-in-One](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One). Setup never accepts the EULA or starts services.
 
-With the dinosaur module, provide a player-reachable address during setup: `python3 scripts/setup.py --portal-url https://mc.example.org/`. Java downloads the generated model pack through `/resources/dinos.zip`; `localhost` is suitable only for local tests. This requires the default `admin` profile. Without that profile, host the generated `data/plugins/BetterModel/build.zip` yourself and update `resource-pack` in `data/server.properties`. Java and Bedrock require their respective resource packs. The six models and flight controls are a prototype; visual acceptance on actual Java/Bedrock devices remains open.
+With the dinosaur module, provide a player-reachable address during setup: `python3 scripts/setup.py --portal-url https://mc.example.org/`. Java downloads the generated model pack through `/resources/dinos.zip`; `localhost` is suitable only for local tests. This requires the default `admin` profile. Without that profile, host the generated `data/plugins/BetterModel/build.zip` yourself and update `resource-pack` in `data/server.properties`. Java and Bedrock require their respective resource packs. The eight models and flight controls are a prototype; visual acceptance on actual Java/Bedrock devices remains open.
 
 ## Review and start
 

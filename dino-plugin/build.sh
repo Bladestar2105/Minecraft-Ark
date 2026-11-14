@@ -54,5 +54,5 @@ fetch geyser-spigot-2.12.1-b1298.jar 4e5740267f8f7e1c0b5d56213e047cfdba57a93c322
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.DinoGrowthTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.CareRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.EggAssetsTest src/main/resources/egg-assets.properties
-"$task_java_home/bin/jar" --create --date 2026-11-03T00:00:00Z --file build/ArkDinos-1.2.0.jar -C build/classes . -C src/main/resources .
-shasum -a 256 build/ArkDinos-1.2.0.jar
+"$task_java_home/bin/jar" --create --date 2026-11-03T00:00:00Z --file build/ArkDinos-1.2.1.jar -C build/classes . -C src/main/resources .
+shasum -a 256 build/ArkDinos-1.2.1.jar

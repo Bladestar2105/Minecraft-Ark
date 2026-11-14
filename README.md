@@ -6,16 +6,16 @@ A prepared survival adventure world, separate creative area and Java/Bedrock cro
 
 - 20,480 × 20,480 survival blocks, seed `20261103`, 1,638,400 pregenerated chunks.
 - 16 villages/64 houses, 12 dinosaur habitats, trader/witch/pirate camps, boss arenas, quests and an atlas with 55 locations.
-- ArkDinos 1.2.0: eight original models, world encounters, species speeds and sizes, surface swimming, controlled combat, owner-managed public riding and a second seat on four large adult species. Real Java/Bedrock/console visual acceptance remains open. See the [dinosaur review and upgrade notes](docs/Dinosaur-Review-2026-11-10.md).
+- ArkDinos 1.2.1: owner feeding heals injured pets, `/dinos` offers compass tracking, T-Rex taming has feeding protection, and Pteranodons can follow their flying owner or land for fish. Eight models, surface swimming, public riding and second seats remain available. Real Java/Bedrock/console visual acceptance remains open. See the [dinosaur review and upgrade notes](docs/Dinosaur-Review-2026-11-10.md).
 - Separate creative inventories, ender chest and experience; items drop on death in survival.
 - Local administration plus an isolated player portal with shared server passwords, optional recovery and own statistics.
 - Optional built-in skin editor/wardrobe/signing and persistent private support requests.
 
 ## Choose an installation
 
-**Version note:** the stable `app-2026-11-14` binary contains ArkDinos 1.2.0 and the current dinosaur changes. For another source revision, build below or use a matching successful [Checks workflow artifact](https://github.com/Bladestar2105/Minecraft-Ark/actions/workflows/checks.yml). Check `version ArkDinos` on an existing server before diagnosing its behavior.
+**Version note:** the stable `app-2026-11-14-2` binary contains ArkDinos 1.2.1, ArkSupport 1.0.2 with direct in-game replies and the 30-minute daylight/10-minute night pack. For another source revision, build below or use a matching successful [Checks workflow artifact](https://github.com/Bladestar2105/Minecraft-Ark/actions/workflows/checks.yml). Check `version ArkDinos` on an existing server before diagnosing its behavior. [Existing-server update guide](docs/Update-2026-11-14.md).
 
-**Binary All-in-One:** [`app-2026-11-14`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-14) provides `Minecraft-Ark-app-2026-11-14-all-in-one.zip` with the Docker stack and all seven project JARs. Verify its release `SHA256SUMS`, extract into a new empty directory, then run:
+**Binary All-in-One:** [`app-2026-11-14-2`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-14-2) provides `Minecraft-Ark-app-2026-11-14-2-all-in-one.zip` with the Docker stack and all seven project JARs. Verify its release `SHA256SUMS`, extract into a new empty directory, then run:
 
 ```sh
 python3 scripts/setup.py

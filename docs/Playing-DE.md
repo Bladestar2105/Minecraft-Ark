@@ -22,7 +22,7 @@ weiterhin den persönlichen Rang und die fehlenden Punkte zum nächsten Rang.
 
 ## Dinos
 
-ArkDinos 1.2.0 hat acht eigene Arten: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor, Pteranodon, Dilophosaurus und den wilden Mosasaurus. Nimm die Server-Ressourcenpakete auf Java und Bedrock an. Wilde Tiere können in geladenen, geeigneten Gebieten der eingerichteten Dino-Welten entstehen und ohne festes Heimrevier weiterwandern. In alten Weltständen vorhandene Zäune bleiben echte Hindernisse.
+ArkDinos 1.2.1 hat acht eigene Arten: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor, Pteranodon, Dilophosaurus und den wilden Mosasaurus. Nimm die Server-Ressourcenpakete auf Java und Bedrock an. Wilde Tiere können in geladenen, geeigneten Gebieten der eingerichteten Dino-Welten entstehen und ohne festes Heimrevier weiterwandern. In alten Weltständen vorhandene Zäune bleiben echte Hindernisse.
 
 In Dino-Welten zähmst du nach Art mit mehreren Fütterungen und einem Abschlussitem: **T-Rex zwölfmal rohes Fleisch im Abstand von zwanzig Sekunden, dann ein Knochen**; Raptor und Dilo fünfmal Fleisch im Abstand von zehn Sekunden, dann ein Knochen. Für Fisch- und Pflanzenfresser gelten die [vollständigen Futterregeln](Dino-Riding-DE.md). Nur außerhalb der Prototypwelten bleibt das alte Ein-Samen-System aktiv.
 
@@ -47,3 +47,11 @@ Das Spawnportal führt zur getrennten flachen Kreativwelt und zurück. Inventar,
 - `/support [low|normal|high] Message`: private Support-Anfrage mit ArkSupport.
 
 [Kontosicherheit](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security-DE), [Garderobe](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Wardrobe-DE), [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support-DE) und [Verwaltung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration-DE) erklären Berechtigungen und Grenzen. Fehlende optionale Module ändern nicht dein Kontopasswort oder Profil.
+
+### Eigene Dinos heilen und finden
+
+Füttere ein verletztes eigenes Tier im Survival mit seinem normalen Lieblingsfutter: Das heilt bis zu zwei Herzen alle zwei Sekunden, bevor Wachstum oder Paarung ausgelöst werden. `/dinos` zeigt ausschließlich eigene gezähmte Tiere. Halte einen normalen Kompass in Haupt- oder Nebenhand und klicke auf **[Kompass]**, um ein Tier auszuwählen. Der Kompass folgt geladenen Tieren und zeigt sonst auf die zuletzt erfasste Position. Bei einem Ziel in einer anderen Welt wechsle dorthin und wähle es erneut. Schon vor dem Update entladene Tiere werden beim nächsten Laden ihrer Umgebung erfasst.
+
+Der T-Rex verursacht auf Normal ohne Rüstung fünf Herzen Schaden. Nach angenommenem Zähmfutter greift er den fütternden Spieler während des gültigen Zähmfortschritts nicht an; ein eigener positiver Treffer oder ein eigener Pfeiltreffer beendet diesen Schutz und setzt den Fortschritt zurück. Zwölf Fütterungen mit 20 Sekunden Abstand und anschließend ein Knochen bleiben erforderlich. Ein erwachsener eigener Pteranodon im Folgen-Modus kann den Besitzer beim Flug auf einem zweiten eigenen Pteranodon begleiten.
+
+Wilde Pteranodons fliegen bei freiem, geladenem Luftraum zwischen Landestellen. Halte rohen Kabeljau, Lachs oder Tropenfisch in einer Hand, um ein nahes Tier in Sichtweite zur Landung anzulocken. Sie sind friedlich; ein tatsächlicher Treffer veranlasst sie zu landen und sich am Boden gegen den Angreifer zu wehren. Ein Treffer hält sie vorübergehend am Boden.

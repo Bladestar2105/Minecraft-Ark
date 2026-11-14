@@ -110,8 +110,8 @@ try {
   for (const item of ['libraries', 'versions', 'cache']) await symlink(`${cache}/${item}`, `${directory}/${item}`);
   await mkdir(`${directory}/plugins`, { recursive: true });
   await copyFile(paperJar, `${directory}/paper.jar`);
-  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${plugin}build/ArkDinos-1.2.0.jar`)).digest('hex');
-  await copyFile(`${plugin}build/ArkDinos-1.2.0.jar`, `${directory}/plugins/ArkDinos.jar`);
+  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${plugin}build/ArkDinos-1.2.1.jar`)).digest('hex');
+  await copyFile(`${plugin}build/ArkDinos-1.2.1.jar`, `${directory}/plugins/ArkDinos.jar`);
   await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});
   await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\nprototype-worlds: []\nwild-spawning:\n  enabled: false\n');
   await mkdir(`${directory}/fixture-classes`);

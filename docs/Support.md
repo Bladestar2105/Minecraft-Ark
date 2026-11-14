@@ -15,7 +15,7 @@ In the player portal, open **Support**, choose a priority and enter your message
 
 Priority defaults to `normal`. Messages contain 1–2000 characters; browser messages may include line breaks. Do not include passwords, login/recovery codes or signing credentials. You can read and reply only to your own requests. A closed request is read-only until an administrator reopens it.
 
-Online authenticated operators receive a private activity notification. Replies notify the relevant online player/operators; notifications contain a reference rather than the full private conversation. Browser lists refresh while the page is visible and the session is active. No email or external ticket service is involved.
+Online authenticated operators receive a private activity notification for player posts. With ArkSupport 1.0.2, an administrator reply displays its complete plain-text message directly to the authenticated online ticket owner. Offline players can read the saved reply in the portal. Status notices and operator pings do not repeat conversation text. Browser lists refresh while the page is visible and the session is active. No email or external ticket service is involved.
 
 ## Handle requests as an administrator
 
@@ -25,7 +25,7 @@ Sign in through [Administration](https://github.com/Bladestar2105/Minecraft-Ark/
 
 With **ArkSupport 1.0.1** and the matching web update, an administrator can open a **closed** ticket and choose **Delete request**. Read the confirmation and confirm only if the complete ticket, including every message, can be removed. Open tickets must be closed first. Players cannot delete tickets.
 
-For an existing installation, update the web application and replace the old ArkSupport JAR with `ArkSupport-1.0.1.jar` while Minecraft is stopped; keep only one ArkSupport JAR in `data/plugins/`. The new module is loaded on the next server start. Do not run fresh setup over an existing installation.
+For an existing installation, update the web application and replace the old ArkSupport JAR with `ArkSupport-1.0.2.jar` while Minecraft is stopped; keep only one ArkSupport JAR in `data/plugins/`. The new module is loaded on the next server start. Do not run fresh setup over an existing installation.
 
 Deletion checks the revision you last viewed. If someone has changed or reopened the ticket in the meantime, the operation fails with a conflict; refresh the conversation and decide again. Deleted tickets disappear from both the administration and the player's portal. There is no undo or recycle bin. Recovery is possible only from a private backup made before deletion; restoring a whole backup can also revert later changes. Keep `data/plugins/ArkSupport/` backed up privately.
 

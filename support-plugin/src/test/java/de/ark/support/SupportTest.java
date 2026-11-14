@@ -16,7 +16,7 @@ public final class SupportTest {
         JsonObject created=store.create(owner,"Alice",null,"Private <support> message\nsecond line");UUID ticket=id(created);
         TestSupport.check(created.get("priority").getAsString().equals("normal"),"default normal priority");
         TestSupport.check(created.getAsJsonArray("messages").get(0).getAsJsonObject().get("message").getAsString().equals("Private <support> message\nsecond line"),"plain text retained");
-        TestSupport.check(notices.size()==1&&notices.getFirst().admins()&&!notices.toString().contains("Private"),"private notification references exclude content");
+        TestSupport.check(notices.size()==1&&notices.getFirst().admins()&&notices.getFirst().reply()==null,"private notification references exclude content");
         TestSupport.check(store.list(stranger,false).getAsJsonArray("tickets").isEmpty(),"foreign tickets absent from player list");
         TestSupport.denied(404,()->store.get(stranger,ticket,false));
         TestSupport.denied(404,()->store.reply(stranger,ticket,1,"steal",false));
@@ -28,9 +28,12 @@ public final class SupportTest {
         TestSupport.denied(400,()->store.create(stranger,"Bob","low","x".repeat(2001)));
         JsonObject replied=store.reply(owner,ticket,1,"Player reply",false);
         TestSupport.check(revision(replied)==2&&notices.getLast().admins(),"player reply increments revision and notifies admins");
-        replied=store.reply(null,ticket,2,"Administrator reply",true);
+        TestSupport.check(notices.getLast().reply()==null,"player reply content is not broadcast to administrators");
+        replied=store.reply(null,ticket,2,"Administrator reply\r\n<gold>Plain text</gold> 🙂",true);
         TestSupport.check(revision(replied)==3&&!notices.getLast().admins()&&notices.getLast().owner().equals(owner),"admin reply privately notifies owner");
+        TestSupport.check(notices.getLast().reply().equals("Administrator reply\n<gold>Plain text</gold> 🙂"),"owner notification contains the full normalized administrator reply");
         JsonObject closed=store.status(ticket,3,"closed");
+        TestSupport.check(notices.getLast().reply()==null,"status notification never repeats previous reply text");
         TestSupport.denied(409,()->store.reply(owner,ticket,revision(closed),"closed reply",false));
         TestSupport.denied(409,()->store.status(ticket,3,"open"));
         TestSupport.denied(400,()->store.status(ticket,revision(closed),"deleted"));

@@ -116,7 +116,7 @@ async function boot() {
 try {
   await symlink(`${cache}/libraries`,`${directory}/libraries`);for(const item of ['versions','cache'])await cp(`${cache}/${item}`,`${directory}/${item}`,{recursive:true});
   await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await mkdir(`${directory}/plugins/WorldGuard/worlds/ark`,{recursive:true});
-  await copyFile(paperJar,`${directory}/paper.jar`);await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+  await copyFile(paperJar,`${directory}/paper.jar`);await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.1.jar`,`${directory}/plugins/ArkDinos.jar`);
   report.jarSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
   await copyFile(`${root}artifacts/renewal-20261103/server/plugins/worldedit-bukkit-7.4.6.jar`,`${directory}/plugins/WorldEdit.jar`);
   await copyFile(process.env.DINO_WORLDGUARD_JAR??`${root}output/dino-round2-20261108/candidate-plugins/worldguard-bukkit-7.0.21.jar`,`${directory}/plugins/WorldGuard.jar`);

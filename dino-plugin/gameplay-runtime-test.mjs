@@ -14,18 +14,22 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
 const scopeMode = process.env.DINO_PROTOTYPE_SCOPE === '1';
+const pteraWildOnly = process.env.DINO_PTERA_WILD_ONLY === '1';
+const pteraFollowOnly = process.env.DINO_PTERA_FOLLOW_ONLY === '1' || pteraWildOnly;
+const build = process.env.DINO_BUILD_DIR ?? `${plugin}build`;
 const modelStack = process.env.DINO_MODEL_STACK === '1' || scopeMode;
 const stackCache = process.env.DINO_MODEL_STACK_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
 const cache = process.env.DINO_PAPER_CACHE ?? (modelStack ? stackCache : `${root}output/live-dependency-stack-20261110/private/server`);
 const paperJar = process.env.DINO_PAPER_JAR ?? (modelStack ? `${stackCache}/paper.jar` : `${cache}/paper.jar`);
 const paperBuild = process.env.DINO_PAPER_JAR?.match(/paper-26\.3-([0-9]+)\.jar$/)?.[1] ?? '246';
-await mkdir(`${plugin}build`, { recursive: true });
-const directory = await mkdtemp(`${plugin}build/gameplay-smoke-`);
+await mkdir(build, { recursive: true });
+const directory = await mkdtemp(`${build}/gameplay-smoke-`);
 const report = { startedAt: new Date().toISOString(), fixture: directory, checks: [], limits: [
   'Direct Java protocol777 test clients, not an official Java client, Mineflayer, Bedrock or PS5.',
+  'Disposable server allows player floating because the minimal clients do not simulate client-side falling; mount physics and collision remain native.',
   'Chunk unload/load lifecycle uses dispatched native events; real world persistence is checked with a clean server restart.',
 ] };
-const reportPath = `${plugin}build/${scopeMode ? 'prototype-scope-runtime-report.json' : modelStack ? 'gameplay-model-runtime-report.json' : 'gameplay-runtime-report.json'}`;
+const reportPath = `${build}/${pteraFollowOnly ? 'ptera-follow-runtime-report.json' : scopeMode ? 'prototype-scope-runtime-report.json' : modelStack ? 'gameplay-model-runtime-report.json' : 'gameplay-runtime-report.json'}`;
 const clients = [];
 let server;
 let log = '';
@@ -125,8 +129,8 @@ try {
   for (const item of ['libraries', 'versions', 'cache']) await symlink(`${cache}/${item}`, `${directory}/${item}`);
   await mkdir(`${directory}/plugins`, { recursive: true });
   await copyFile(paperJar, `${directory}/paper.jar`);
-  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${plugin}build/ArkDinos-1.2.0.jar`)).digest('hex');
-  await copyFile(`${plugin}build/ArkDinos-1.2.0.jar`, `${directory}/plugins/ArkDinos.jar`);
+  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${build}/ArkDinos-1.2.1.jar`)).digest('hex');
+  await copyFile(`${build}/ArkDinos-1.2.1.jar`, `${directory}/plugins/ArkDinos.jar`);
   if(modelStack){
     for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','GeyserModelEngine-1.0.9.jar','geyser-spigot.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar']) await copyFile(`${stackCache}/plugins/${name}`,`${directory}/plugins/${name}`);
     await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1298.jar`,`${directory}/plugins/geyser-spigot.jar`);
@@ -146,7 +150,7 @@ try {
   execFileSync(`${javaHome}/bin/javac`, ['--release', '25', '-sourcepath', '', '-cp', `${plugin}.deps/*`, '-d', `${directory}/fixture-classes`, `${plugin}src/gameplay/java/de/ark/dinos/GameplayFixture.java`]);
   execFileSync(`${javaHome}/bin/jar`, ['--create', '--file', `${directory}/plugins/RidingFixture.jar`, '-C', `${directory}/fixture-classes`, '.', '-C', `${plugin}src/gameplay/resources`, '.']);
   await writeFile(`${directory}/eula.txt`, 'eula=true\n');
-  await writeFile(`${directory}/server.properties`, `server-ip=127.0.0.1\nserver-port=${port}\nonline-mode=false\nlevel-name=ark\nlevel-type=minecraft:flat\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\ngenerate-structures=false\nview-distance=3\nsimulation-distance=3\nspawn-protection=0\nmax-tick-time=-1\nenable-rcon=true\nrcon.port=${rconPort}\nrcon.password=${password}\nenforce-secure-profile=false\n`);
+  await writeFile(`${directory}/server.properties`, `server-ip=127.0.0.1\nserver-port=${port}\nonline-mode=false\nallow-flight=true\nlevel-name=ark\nlevel-type=minecraft:flat\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\ngenerate-structures=false\nview-distance=3\nsimulation-distance=3\nspawn-protection=0\nmax-tick-time=-1\nenable-rcon=true\nrcon.port=${rconPort}\nrcon.password=${password}\nenforce-secure-profile=false\n`);
   server = spawn(`${javaHome}/bin/java`, ['-Xms256M', '-Xmx1G', '-Dterminal.jline=false', '-Dterminal.ansi=false', '-jar', 'paper.jar', '--nogui'], { cwd: directory, stdio: ['pipe', 'pipe', 'pipe'] });
   (report.serverPids ??= []).push(server.pid);
   server.stdout.on('data', bytes => { log += bytes.toString(); }); server.stderr.on('data', bytes => { log += bytes.toString(); });
@@ -163,7 +167,92 @@ try {
   await eventually(() => alice.joined && bob.joined, 'Native clients did not join', 30000);
   await command('gamemode survival @a'); await command('effect give @a resistance 9999 4 true'); await tp(alice, 0, 0); await tp(bob, 12, 12);
   assert.match(await command('fill -16 3 -16 32 3 32 stone'), /Successfully filled/i, 'Safe platform must exist before summoning mobs');
-  if(scopeMode){
+  if(pteraFollowOnly){
+    assert.match(await command('fill -16 3 -16 32 3 47 stone'),/Successfully filled/i,'Pteranodon course needs ground below the sprint and landing route');
+    if(!pteraWildOnly){
+    const flags='PersistenceRequired:1b';
+    for(const [tag,x,z,owner,stay,extra] of [['follow_mount',0,0,alice.uuid,1,''],['follow_bird',0,-14,alice.uuid,0,''],['follow_stay',14,-14,alice.uuid,1,''],['follow_other',-14,-14,bob.uuid,0,''],['follow_free',24,-14,alice.uuid,0,',"arkdinos:free-wander":1b'],['follow_baby',-8,-8,alice.uuid,0,',"arkdinos:adult-at":9999999999999L']]){
+      await command(`summon sniffer ${x} 4 ${z} {${flags},Tags:["ark_dino","ark_dino_tamed","${tag}"],BukkitValues:{"arkdinos:owner":"${owner}","arkdinos:stay":${stay}b,"arkdinos:species":"pteranodon"${extra}}}`);
+      await command(`dinofixture load-event ${tag}`);
+    }
+    const landed=async tag=>eventually(async()=>/0b$|no elements/i.test(await data(tag,'NoGravity')),`${tag} did not restore gravity`,35000);
+    const start=async()=>{await command('tp @e[tag=follow_mount,limit=1] 0 4 0');await command('tp @e[tag=follow_bird,limit=1] 0 4 -14');await mount(alice,'follow_mount');alice.look(0,0);alice.input(16);await delay(1800);alice.input(0);await delay(250);await eventually(async()=>/phase=4/.test(await command('dinofixture ptera-state follow_bird'))&&/1b$/.test(await data('follow_bird','NoGravity'))&&(await position('follow_bird'))[1]>6,'Follow flight did not start for exit scenario',12000);};
+    await check('Follow Pteranodon takes off and follows its owner riding another Pteranodon',async()=>{
+      await start();const before=await position('follow_bird');
+      assert.ok(before[1]>6,`Following bird did not take off: ${before}`);assert.match(await data('follow_bird','NoGravity'),/1b$/);
+      alice.look(0,0);alice.input(1);await delay(1600);alice.input(0);await delay(350);const after=await position('follow_bird'),rider=await position('follow_mount');
+      assert.ok(after[2]>before[2]+5,`Following bird did not move with owner: ${before} -> ${after}`);
+      assert.ok(Math.hypot(after[0]-rider[0],after[2]-rider[2])>=10,'Follower intersected mounted Pteranodon');
+      for(const tag of ['follow_stay','follow_other','follow_free','follow_baby'])assert.match(await data(tag,'NoGravity'),/0b$|no elements/i,`${tag} must remain grounded`);
+      alice.input(65);await delay(1000);const speedState=await passengers('follow_bird');alice.input(0);
+      const velocity=Object.fromEntries(speedState.trim().split(';').filter(v=>/^v[xyz]=/.test(v)).map(v=>{const [key,value]=v.split('=');return[key,Number(value)];}));
+      assert.ok(Math.hypot(velocity.vx,velocity.vz)<=.900001&&Math.abs(velocity.vy)<=.400001,`Follower exceeded movement caps: ${speedState}`);
+      alice.input(16);await delay(8000);alice.input(0);await delay(200);const ceiling=await position('follow_bird');
+      assert.ok(ceiling[1]>=50&&ceiling[1]<=52.1,`Follower exceeded takeoff +48 height cap or failed to follow ascent: ${ceiling}`);
+      assert.match(await command('dinofixture ptera-state follow_bird'),/phase=4/,'Valid owner-follow flight must last beyond the short roaming-flight timeout');
+      return {before,after,rider,velocity,ceiling};
+    });
+    await check('Follow flight stops on Stay, Free, ownership, game mode, world change, logout and owner landing',async()=>{
+      const exits=[];
+      for(const reason of ['stay','free','ownership','mode','world','landing','logout']){
+        if(reason!=='stay')await start();
+        if(reason==='stay')await command('data modify entity @e[tag=follow_bird,limit=1] BukkitValues."arkdinos:stay" set value 1b');
+        if(reason==='free')await command('data modify entity @e[tag=follow_bird,limit=1] BukkitValues."arkdinos:free-wander" set value 1b');
+        if(reason==='ownership')await command(`data modify entity @e[tag=follow_bird,limit=1] BukkitValues."arkdinos:owner" set value "${bob.uuid}"`);
+        if(reason==='mode')await command('gamemode creative RideOwner');
+        if(reason==='world')await command('dinofixture world follow_mount RideOwner');
+        if(reason==='landing'){alice.look(0,80);alice.input(1);await landed('follow_mount');alice.input(0);}
+        if(reason==='logout')alice.close();
+        await landed('follow_bird');exits.push({reason,state:await passengers('follow_bird')});
+        if(reason==='stay')await command('data modify entity @e[tag=follow_bird,limit=1] BukkitValues."arkdinos:stay" set value 0b');
+        if(reason==='free')await command('data modify entity @e[tag=follow_bird,limit=1] BukkitValues."arkdinos:free-wander" set value 0b');
+        if(reason==='ownership')await command(`data modify entity @e[tag=follow_bird,limit=1] BukkitValues."arkdinos:owner" set value "${alice.uuid}"`);
+        if(reason==='mode')await command('gamemode survival RideOwner');
+        if(reason==='world')await command('execute in minecraft:overworld run tp RideOwner 0 4 0');
+        if(reason!=='logout'){alice.input(32);await delay(200);alice.input(0);await landed('follow_mount');}
+      }
+      return exits;
+    });
+    await check('Follow collision envelope rejects unloaded destinations without loading chunks',async()=>{
+      assert.match(await command('dinofixture ptera-boundary follow_bird'),/clear=false;chunksUnchanged=true/);
+      assert.match(await command('forceload query'),/No force loaded chunks|No force-loaded chunks/i);
+      assert.doesNotMatch(log,/Could not pass event|Task .*ArkDinos.*exception/);
+    });
+    }
+    await check('Wild Pteranodon takes a clear flight, stays peaceful and lands for fish',async()=>{
+      await command('kill @e[tag=follow_other]');await command('clear RideOther');await tp(bob,0,0);
+      await command('summon sniffer 0 4 -12 {Tags:["ark_dino","ark_dino_wild","wild_flight"],PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"pteranodon"}}');
+      await command('dinofixture load-event wild_flight');
+      await command('fill -8 8 -20 8 8 -4 stone');await command('dinofixture ptera-ready wild_flight');await delay(600);
+      assert.match(await data('wild_flight','NoGravity'),/0b$|no elements/i,'Tree canopy must block unsafe launch');
+      await command('fill -8 8 -20 8 8 -4 air');await command('dinofixture ptera-ready wild_flight');
+      await eventually(async()=>{const p=await position('wild_flight');return p[1]>6&&/1b$/.test(await data('wild_flight','NoGravity'));},'Wild Pteranodon never took off in clear terrain',25000);
+      const airborne=await position('wild_flight');await command('effect clear RideOther resistance');const health=await command('data get entity RideOther Health');
+      await command('item replace entity RideOther weapon.mainhand with cod 1');await tp(bob,airborne[0],airborne[2]+3);
+      await eventually(async()=>/phase=3/.test(await command('dinofixture ptera-state wild_flight')),'Fish lure did not start controlled landing',1500);
+      await eventually(async()=>/0b$|no elements/i.test(await data('wild_flight','NoGravity')),'Fish lure did not land wild Pteranodon',12000);
+      await command('dinofixture ptera-ready wild_flight');await delay(2500);
+      assert.match(await data('wild_flight','NoGravity'),/0b$|no elements/i,'Fish lure must keep the wild bird grounded');
+      assert.equal(await command('data get entity RideOther Health'),health,'Wild Pteranodon attacked its lure player');
+      await command('item replace entity RideOther weapon.mainhand with air');await command('item replace entity RideOther weapon.offhand with salmon 1');await command('dinofixture ptera-ready wild_flight');await delay(600);
+      assert.match(await data('wild_flight','NoGravity'),/0b$|no elements/i,'Offhand raw fish must also keep the wild bird grounded');
+      assert.match(await command('forceload query'),/No force loaded chunks|No force-loaded chunks/i);
+      return {airborne,landed:await position('wild_flight')};
+    });
+    await check('Provoked wild Pteranodon lands before dealing ground retaliation damage',async()=>{
+      await command('clear RideOther');await delay(2100);await command('dinofixture ptera-ready wild_flight');
+      await eventually(async()=>(await position('wild_flight'))[1]>6&&/1b$/.test(await data('wild_flight','NoGravity')),'Wild bird did not resume flight after fish was removed',25000);
+      const point=await position('wild_flight');await tp(bob,point[0],point[2]+1);
+      const state=()=>command('dinofixture ptera-state wild_flight RideOther');
+      const health=Number((await state()).match(/playerHealth=([\d.]+)/)[1]);
+      await command('damage @e[tag=wild_flight,limit=1] 1 minecraft:player_attack by RideOther');
+      assert.match(await state(),/phase=3;gravity=false/,'Hit must begin controlled landing');
+      const samples=[];
+      await eventually(async()=>{const sample=await state();samples.push(sample);if(/phase=0;gravity=true/.test(sample))return true;assert.equal(Number(sample.match(/playerHealth=([\d.]+)/)[1]),health,'Pteranodon retaliated while still flying');return false;},'Provoked bird did not finish landing',12000);
+      await eventually(async()=>Number((await state()).match(/playerHealth=([\d.]+)/)[1])<health,'Provoked grounded bird did not retaliate',10000);
+      assert.match(await data('wild_flight','NoGravity'),/0b$|no elements/i);return {point,health,samples};
+    });
+  } else if(scopeMode){
     await command('dinofixture create-world ark_model_test');
     const inspect=async tag=>Object.fromEntries((await command(`dinofixture inspect ${tag}`)).trim().split(';').map(field=>{const at=field.indexOf('=');return[field.slice(0,at),field.slice(at+1)];}));
     const scopeClick=async(tag,world,sneak=false)=>{const state=await inspect(tag);await command(`execute in ${world} run tp RideOwner ${state.x} ${state.y} ${Number(state.z)+2}`);await delay(350);alice.input(sneak?32:0);await delay(100);alice.interact(Number(state.id),sneak);await delay(300);alice.input(0);};

@@ -59,12 +59,12 @@ final class DinoCare implements Listener, AutoCloseable {
     private final EggVisuals visuals;
     private final Set<Chunk> nestingChunks=new HashSet<>();
     private final BukkitTask timer;
-    private final NamespacedKey eggSpecies,eggOwner,adultAt,growNext,tameActor,tameFeeds,tameNext,tameExpiry,loveUntil,breedUntil;
+    private final NamespacedKey eggSpecies,eggOwner,adultAt,growNext,healNext,tameActor,tameFeeds,tameNext,tameExpiry,loveUntil,breedUntil;
 
     DinoCare(ArkDinos plugin) {
         this.plugin=plugin;
         visuals=new EggVisuals(plugin);
-        eggSpecies=key("egg-species");eggOwner=key("egg-owner");adultAt=key("adult-at");growNext=key("grow-next");
+        eggSpecies=key("egg-species");eggOwner=key("egg-owner");adultAt=key("adult-at");growNext=key("grow-next");healNext=key("heal-next");
         tameActor=key("tame-actor");tameFeeds=key("tame-feeds");tameNext=key("tame-next");tameExpiry=key("tame-expiry");
         loveUntil=key("love-until");breedUntil=key("breed-until");
         for(World world:plugin.getServer().getWorlds())if(plugin.prototype(world))for(Chunk chunk:world.getLoadedChunks())index(chunk);
@@ -120,6 +120,15 @@ final class DinoCare implements Listener, AutoCloseable {
         data.set(tameActor,PersistentDataType.STRING,progress.actor());data.set(tameFeeds,PersistentDataType.INTEGER,progress.feeds());
         data.set(tameNext,PersistentDataType.LONG,progress.nextFeedAt());data.set(tameExpiry,PersistentDataType.LONG,progress.expiresAt());
     }
+    boolean taming(Mob mob,Player player) {
+        String species=plugin.species(mob);
+        if(plugin.owned(mob) || !plugin.prototype(mob) || species==null || !CareRules.SPECIES.contains(species))return false;
+        var progress=progress(species,mob.getPersistentDataContainer());
+        return progress!=null && progress.expiresAt()>System.currentTimeMillis() && progress.actor().equals(player.getUniqueId().toString());
+    }
+    void interruptTaming(Mob mob,Player player) {
+        if(taming(mob,player))progress(mob.getPersistentDataContainer(),null);
+    }
 
     boolean interact(Mob mob,Player player) {
         String species=plugin.species(mob);
@@ -131,6 +140,13 @@ final class DinoCare implements Listener, AutoCloseable {
                 message(player,"Nur der Besitzer kann sein Urtier im Survival füttern.");return true;
             }
             long now=System.currentTimeMillis();var data=mob.getPersistentDataContainer();
+            double maximum=mob.getAttribute(Attribute.MAX_HEALTH).getValue();
+            if(CareRules.primary(species,food) && mob.getHealth()<maximum) {
+                if(number(data,healNext)>now) { message(player,"Nächstes Heilfutter in "+((number(data,healNext)-now+999)/1000)+" s.");return true; }
+                mob.setHealth(Math.min(maximum,mob.getHealth()+CareRules.HEAL_AMOUNT));
+                data.set(healNext,PersistentDataType.LONG,now+CareRules.HEAL_COOLDOWN_MS);consume(player);hearts(mob);
+                message(player,"Urtier geheilt: "+Math.round(mob.getHealth())+" / "+Math.round(maximum)+" Leben.");return true;
+            }
             if(!adult(mob)) {
                 if(!CareRules.primary(species,food)) { message(player,"Jungtiere wachsen mit ihrem Lieblingsfutter schneller.");return true; }
                 if(number(data,growNext)>now) { message(player,"Nächstes Wachstumsfutter in "+((number(data,growNext)-now+999)/1000)+" s.");return true; }
@@ -158,7 +174,7 @@ final class DinoCare implements Listener, AutoCloseable {
         int required=CareRules.requiredFeeds(species);
         var feeding=CareRules.feed(species,food,player.getUniqueId().toString(),progress(species,data),now);
         switch(feeding.action()) {
-            case FEED -> { consume(player);progress(data,feeding.progress());hearts(mob);message(player,"Zähmen: "+feeding.progress().feeds()+"/"+required+". "+(feeding.progress().feeds()==required?"Jetzt: "+finisherLabel(species):"Nächstes Futter in "+(CareRules.feedCooldown(species)/1000)+" s.")); }
+            case FEED -> { consume(player);progress(data,feeding.progress());mob.setTarget(null);hearts(mob);message(player,"Zähmen: "+feeding.progress().feeds()+"/"+required+". "+(feeding.progress().feeds()==required?"Jetzt: "+finisherLabel(species):"Nächstes Futter in "+(CareRules.feedCooldown(species)/1000)+" s.")); }
             case FINISH -> {
                 if(plugin.tame(mob,player)) { consume(player);progress(data,null);message(player,"Gezähmt! Schleichen + Interagieren: Bleiben / Folgen."); }
                 else message(player,"Zähmen gerade nicht möglich. Futter bleibt erhalten.");

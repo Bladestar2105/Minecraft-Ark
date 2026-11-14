@@ -48,7 +48,7 @@ export default async function run({check,command,alice,clients,Client,eventually
   }
   const protections=await command('dm protections');
   for(const name of ['WorldEdit','WorldGuard','GriefPrevention'])assert.match(protections,new RegExp(`${name}=true`),`${name} must be enabled in the combined stack`);
-  assert.match(await command('version ArkDinos'),/1\.2\.0/);return{registrations,protections,packs:report.packs,pluginSha256:report.pluginSha256};
+  assert.match(await command('version ArkDinos'),/1\.2\.1/);return{registrations,protections,packs:report.packs,pluginSha256:report.pluginSha256};
  });
  for(const [i,name] of species.entries()) {
   const type=['trex','velociraptor','dilophosaurus'].includes(name)?'ravager':name==='mosasaurus'?'dolphin':'sniffer';

@@ -117,7 +117,7 @@ try {
   await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});
   await mkdir(`${directory}/plugins/WorldGuard/worlds/ark`,{recursive:true});
   await copyFile(paperJar,`${directory}/paper.jar`);
-  await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+  await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.1.jar`,`${directory}/plugins/ArkDinos.jar`);
   report.jarSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
   for(const jar of ['worldedit-bukkit-7.4.6.jar','worldguard-bukkit-7.0.21.jar']) await copyFile((jar.startsWith('worldguard-')?process.env.DINO_WORLDGUARD_JAR:process.env.DINO_WORLDEDIT_JAR)??`${cache}/plugins/${jar}`,`${directory}/plugins/${jar}`);
   report.worldguardSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/worldguard-bukkit-7.0.21.jar`)).digest('hex');
@@ -156,6 +156,65 @@ try {
   await eventually(()=>owner.joined&&other.joined&&rider.joined,'Native clients did not join',30000);
   await move('CombatOwner',0,0);await move('CombatOther',10,10);await command('fill -16 3 -16 40 3 40 stone');
   for(const name of ['CombatOwner','CombatOther','CombatRider']){await command(`attribute ${name} minecraft:max_health base set 500`);await command(`effect give ${name} instant_health 1 10 true`);}
+  await check('Wild Pteranodon cannot bite while falling without an aerial controller and retains retaliation until landing',async()=>{
+    await clear();await command('gamemode survival CombatOwner');await move('CombatOwner',0,2);await spawnDino('combat_ptera pteranodon wild 0 0');
+    await command('combatfixture suspend combat_ptera');await delay(150);const airState=await command('combatfixture air-state combat_ptera');assert.match(airState,/ground=false/);assert.match(airState,/aerial=false/);const before=await phealth('CombatOwner');
+    await command('combatfixture strike combat_ptera CombatOwner');assert.match(await command('combatfixture valid-target combat_ptera CombatOwner'),/valid=true/,'Landing must retain the attacker as its target');
+    await command('combatfixture commanded-hit combat_ptera CombatOwner');
+    await delay(1200);const airHits=await command('combatfixture ptera-hits');report.pteraGroundDiagnostics={airState,airHits,before,after:await phealth('CombatOwner')};
+    assert.equal(await phealth('CombatOwner'),before,'An uncontrolled airborne Pteranodon must never bite a nearby player');assert.equal(airHits.trim(),'none');
+    await command('combatfixture ground combat_ptera');await eventually(async()=>await phealth('CombatOwner')<before,'A retained attacker must be bitten after actual landing');
+    const groundHits=await command('combatfixture ptera-hits');assert.doesNotMatch(groundHits,/ground=false|aerial=true/);report.pteraGroundDiagnostics.groundHits=groundHits;
+    await clear();return report.pteraGroundDiagnostics;
+  });
+  await check('Wild adult Pteranodon stays peaceful until a positive player hit and retaliates only against that attacker',async()=>{
+    await clear();await command('gamemode survival CombatOwner');await command('gamemode survival CombatOther');
+    await move('CombatOwner',0,2);await move('CombatOther',8,2);await spawnDino('combat_ptera pteranodon wild 0 0');
+    await command('data merge entity @e[tag=combat_ptera,limit=1] {NoAI:1b}');
+    const valid=async name=>(await command(`combatfixture valid-target combat_ptera ${name}`)).trim();
+    const initial=await phealth('CombatOwner');await delay(1100);assert.equal(await phealth('CombatOwner'),initial);assert.equal(await valid('CombatOwner'),'valid=false');
+    for(const gate of ['cancel','zero']) {
+      await command(`combatfixture incoming-damage ${gate}`);await command('combatfixture strike combat_ptera CombatOwner');assert.equal(await valid('CombatOwner'),'valid=false');
+    }
+    await command('combatfixture incoming-damage allow');await command('gamemode creative CombatOwner');await command('combatfixture strike combat_ptera CombatOwner');await command('gamemode survival CombatOwner');
+    assert.equal(await valid('CombatOwner'),'valid=false','A Creative hit must not start retaliation');
+    await command('combatfixture strike combat_ptera CombatOwner');assert.equal(await valid('CombatOwner'),'valid=true','A real Survival hit must allow ground retaliation');
+    assert.equal(await valid('CombatOther'),'valid=false','The peaceful Pteranodon must not hunt a bystander');
+    await eventually(async()=>await phealth('CombatOwner')<initial,'The provoked ground Pteranodon did not retaliate');assert.ok(await phealth('CombatOwner')>=initial-8,'Pteranodon retains its small four-point native bite');
+    await command('gamemode creative CombatOwner');await command('gamemode survival CombatOwner');assert.equal(await valid('CombatOwner'),'valid=false','A mode change must discard the old provocation');
+    await command('combatfixture arrow combat_ptera CombatOwner');await eventually(async()=>await valid('CombatOwner')==='valid=true','A real player arrow must provoke its shooter');
+    await command('item replace entity CombatOwner weapon.mainhand with minecraft:cod 1');owner.interact(Number((await command('combatfixture entity-id combat_ptera')).trim().split('=')[1]));await delay(200);
+    assert.equal(await valid('CombatOwner'),'valid=false','An accepted fish feed must preserve taming peace');
+    await command('combatfixture strike combat_ptera CombatOwner');assert.equal(await valid('CombatOwner'),'valid=true','Hitting the fed animal revokes peace and permits retaliation');
+    await command('combatfixture unload combat_ptera');assert.equal(await valid('CombatOwner'),'valid=false','Unloading must discard retaliation state');
+    await command('combatfixture incoming-damage allow');await clear();
+  });
+  await check('Accepted feeding protects only its tamer until expiry or a real uncancelled melee or arrow hit',async()=>{
+    await clear();await command('gamemode survival CombatOwner');await command('gamemode survival CombatOther');
+    await move('CombatOwner',0,2);await move('CombatOther',8,2);await spawnDino('combat_taming trex wild 0 0');
+    const valid=async name=>(await command(`combatfixture valid-target combat_taming ${name}`)).trim();
+    const feed=async()=>{
+      await command('item replace entity CombatOwner weapon.mainhand with minecraft:beef 1');
+      await command('data modify entity @e[tag=combat_taming,limit=1] BukkitValues."arkdinos:tame-next" set value 0L');
+      owner.interact(Number((await command('combatfixture entity-id combat_taming')).trim().split('=')[1]));await delay(200);
+    };
+    assert.equal(await valid('CombatOwner'),'valid=true');await feed();
+    assert.equal(await valid('CombatOwner'),'valid=false','An accepted feed must stop attacks against its tamer');
+    assert.equal(await valid('CombatOther'),'valid=true','Other Survival players remain normal wild targets');
+    await command('combatfixture incoming-damage cancel');await command('combatfixture strike combat_taming CombatOwner');
+    assert.equal(await valid('CombatOwner'),'valid=false','A cancelled hit must not revoke taming peace');
+    await command('combatfixture incoming-damage zero');await command('combatfixture strike combat_taming CombatOwner');
+    assert.equal(await valid('CombatOwner'),'valid=false','A zero-damage hit must not revoke taming peace');
+    await command('combatfixture incoming-damage allow');await command('combatfixture strike combat_taming CombatOther');
+    assert.equal(await valid('CombatOwner'),'valid=false','Another player cannot revoke the tamer protection');
+    await command('combatfixture strike combat_taming CombatOwner');assert.equal(await valid('CombatOwner'),'valid=true','A real tamer hit must revoke peace');
+    await feed();assert.equal(await valid('CombatOwner'),'valid=false');
+    await command('data modify entity @e[tag=combat_taming,limit=1] BukkitValues."arkdinos:tame-expiry" set value 0L');
+    assert.equal(await valid('CombatOwner'),'valid=true','Expired progress must not protect a tamer');
+    await feed();assert.equal(await valid('CombatOwner'),'valid=false');await command('combatfixture arrow combat_taming CombatOwner');
+    await eventually(async()=>await valid('CombatOwner')==='valid=true','A real arrow shot must revoke its shooter protection');
+    await command('combatfixture incoming-damage allow');await clear();
+  });
   await check('Native horse REGEN is isolated to marked fixture pets while unmarked controls still heal',async()=>{
     await clear();
     const pets=[];
@@ -237,13 +296,13 @@ try {
     await command('combatfixture strike combat_pet CombatOwner');const before=await health('combat_pet');
     await eventually(async()=>await health('combat_pet')<before,'Untamed living animals must remain eligible opponents');
   });
-  await check('A mounted Rex applies twenty damage on a tall native carrier',async()=>{
+  await check('A mounted Rex applies ten damage on a tall native carrier',async()=>{
     await clear();await command('gamemode survival CombatOwner');await move('CombatOwner',0,2);await command('clear CombatOwner');
     await spawnDino('combat_owned trex CombatOwner 0 0');await command('combatfixture scale combat_owned 2.1');
     await command('combatfixture victim combat_enemy 0 2.25');assert.match(await command('combatfixture click combat_owned CombatOwner'),/passengers=1/);
     await delay(250);await aim('combat_enemy');await command('combatfixture swing CombatOwner');
     await eventually(async()=>await health('combat_enemy')<500,'Elevated rider ray ended before its ground-level melee target');
-    assert.equal(await health('combat_enemy'),480,'A tall Rex must still apply its single twenty-point native hit');
+    assert.equal(await health('combat_enemy'),490,'A tall Rex must apply one ten-point native hit');
   });
   await check('A scaled Brachiosaurus rider can aim at its ground-level melee target',async()=>{
     await clear();await command('gamemode survival CombatOwner');await move('CombatOwner',0,2);await command('clear CombatOwner');
@@ -258,7 +317,7 @@ try {
     await command('data modify entity @e[tag=combat_owned,limit=1] BukkitValues."arkdinos:public-ride" set value 1b');
     await command('combatfixture victim combat_enemy 0 2.25');assert.match(await command('combatfixture click combat_owned CombatRider'),/passengers=1/);
     await delay(250);await aim('combat_enemy','CombatRider');await command('combatfixture swing CombatRider');
-    await eventually(async()=>await health('combat_enemy')===480,'Authorized public driver could not attack while its owner was unavailable');
+    await eventually(async()=>await health('combat_enemy')===490,'Authorized public driver could not attack while its owner was unavailable');
     await command('combatfixture remove combat_enemy');await command('gamemode survival CombatOwner');await move('CombatOwner',0,2.25);
     await command('combatfixture pvp true');await command('region flag -w ark __global__ pvp allow');await delay(1100);
     const ownerHealth=await phealth('CombatOwner');await aim('CombatOwner','CombatRider');await command('combatfixture swing CombatRider');await delay(200);
@@ -272,7 +331,7 @@ try {
     await spawnDino('combat_owned trex CombatOwner 0 0');await command('data modify entity @e[tag=combat_owned,limit=1] BukkitValues."arkdinos:public-ride" set value 1b');
     assert.match(await command('combatfixture click combat_owned CombatRider'),/passengers=1/);await delay(200);await aim('CombatOther','CombatRider');
     const before=await phealth('CombatOther');await command('combatfixture swing CombatRider');
-    await eventually(async()=>await phealth('CombatOther')===before-20,'The unrelated owner team must not replace driver permissions');
+    await eventually(async()=>await phealth('CombatOther')===before-10,'The unrelated owner team must not replace driver permissions');
     assert.ok(await gpTimestamp('CombatRider')>0);assert.ok(await gpTimestamp('CombatOther')>0);assert.equal(await gpTimestamp('CombatOwner'),0,'Absent owner must not receive driver combat attribution');
     await command('team leave CombatOwner');await command('team join combat_actor_team CombatRider');await delay(1100);
     const protectedHealth=await phealth('CombatOther');await command('combatfixture swing CombatRider');await delay(200);
@@ -310,7 +369,7 @@ try {
       await eventually(async()=>Number((await model()).attacks)>Number(before.attacks),'Actual ATTACK packet did not dispatch the native pre-attack event');
       const targetAttack=await model();report.manualAttackDiagnostics={species,before,targetAttack};
       assert.match(targetAttack.running,/name=attack, type=PLAY_ONCE/,`${species} real targeted ATTACK gave no dino attack`);
-      assert.equal(await health('combat_enemy'),500-({trex:20,triceratops:8,stegosaurus:8,brachiosaurus:10,velociraptor:6,pteranodon:4,dilophosaurus:5}[species]),'Targeted input must use exactly one dinosaur hit, with no extra player punch');
+      assert.equal(await health('combat_enemy'),500-({trex:10,triceratops:8,stegosaurus:8,brachiosaurus:10,velociraptor:6,pteranodon:4,dilophosaurus:5}[species]),'Targeted input must use exactly one dinosaur hit, with no extra player punch');
       assert.equal(Number((await state('combat_owned')).stay),1,'Manual command must preserve Stay');
       await delay(250);const targetEncoded=await model();
       const names=JSON.parse(await readFile(`${root}dino-models/models/ark_${species}/ark_${species}.bbmodel`,'utf8')).animations.map(x=>x.name).sort();
@@ -323,7 +382,7 @@ try {
       assert.match(attacking.running,/name=attack, type=PLAY_ONCE/,`${species} real mounted swing gave no visible attack`);
       await delay(250);const after=await model();assert.ok(Number(after.javaTransforms)>0,'Java model must emit changed display transforms');
       assert.ok(JSON.parse(after.masks).some(mask=>(mask&2**names.indexOf('attack'))!==0),'Bedrock attack flag was not emitted');
-      assert.equal(await health('combat_enemy'),500-({trex:20,triceratops:8,stegosaurus:8,brachiosaurus:10,velociraptor:6,pteranodon:4,dilophosaurus:5}[species]),'An unaimed swing cannot damage the target');outcomes[species]={before,targetAttack,targetEncoded,attacking,after};
+      assert.equal(await health('combat_enemy'),500-({trex:10,triceratops:8,stegosaurus:8,brachiosaurus:10,velociraptor:6,pteranodon:4,dilophosaurus:5}[species]),'An unaimed swing cannot damage the target');outcomes[species]={before,targetAttack,targetEncoded,attacking,after};
       await command('ride CombatOwner dismount');const healthBeforeDefense=await health('combat_enemy');
       await command('combatfixture strike CombatOwner combat_enemy');await delay(1100);
       assert.equal(await health('combat_enemy'),healthBeforeDefense,'Dismounted Stay must not defend or attack');
@@ -390,7 +449,7 @@ try {
     report.proxyContactBefore=await command('combatfixture contact-state CombatOwner');
     owner.send(Number(model.attackPacket),vi(Number(proxy.id)));await delay(200);
     report.proxyContactAfter={lastDamage:await command('combatfixture last-damage'),model:await modelState()};
-    assert.equal(await health('combat_mosa'),180,'One proxy attack must cause one twenty-point original-Dolphin dinosaur hit');
+    assert.equal(await health('combat_mosa'),190,'One proxy attack must cause one ten-point original-Dolphin dinosaur hit');
     assert.match(await command('combatfixture last-damage'),/RAVAGER:DOLPHIN/);
     await delay(1100);await command('region flag -w ark __global__ damage-animals deny');
     owner.send(Number(model.attackPacket),vi(Number(proxy.id)));await delay(200);
@@ -427,7 +486,7 @@ try {
       assert.equal(await gpTimestamp('CombatOwner'),0);assert.equal(await gpTimestamp('CombatOther'),0);
       await command('combatfixture gp-immune CombatOther false');await command('combatfixture gp-immune CombatOwner true');await command('combatfixture swing CombatOwner');assert.equal(await phealth('CombatOther'),initial,'Immune owner must not attack through a companion');
       await command('combatfixture gp-immune CombatOwner false');await delay(1100);const hits=Number((await state('combat_owned')).hits);await command('combatfixture swing CombatOwner');await eventually(async()=>await phealth('CombatOther')<initial,'GP-permitted mounted attack failed');
-      assert.equal(await phealth('CombatOther'),initial-(species==='trex'?20:8));assert.equal(Number((await state('combat_owned')).hits),hits+1,'Permission query must not duplicate native damage');
+      assert.equal(await phealth('CombatOther'),initial-(species==='trex'?10:8));assert.equal(Number((await state('combat_owned')).hits),hits+1,'Permission query must not duplicate native damage');
       assert.ok(await gpTimestamp('CombatOwner')>0);assert.ok(await gpTimestamp('CombatOther')>0);
     }
     await command('combatfixture gp-immune CombatOther false');await command('combatfixture pvp false');await command('region flag -w ark __global__ pvp deny');return outcomes;
@@ -441,7 +500,7 @@ try {
       const before=await phealth('CombatOther');await command('combatfixture strike CombatOther CombatOwner');assert.equal(await phealth('CombatOther'),before,'GP safe claim must block direct player hit');
       await aim('CombatOther');await command('combatfixture swing CombatOwner');assert.equal(await phealth('CombatOther'),before,'Companion bypassed safe claim');
       const prevented=Number((await command('combatfixture gp-allow-pvp true')).match(/preventions=(\d+)/)[1]);assert.ok(prevented>0);await delay(1100);await command('combatfixture swing CombatOwner');await eventually(async()=>await phealth('CombatOther')<before,'Native GP PreventPvPEvent exception did not allow attack');
-      assert.equal(await phealth('CombatOther'),before-(species==='trex'?20:8));await command('combatfixture gp-allow-pvp false');await command('combatfixture gp-clear-claims');
+      assert.equal(await phealth('CombatOther'),before-(species==='trex'?10:8));await command('combatfixture gp-allow-pvp false');await command('combatfixture gp-clear-claims');
     }
     await command('combatfixture gp-config pvp_noCombatInPlayerLandClaims false');await command('combatfixture pvp false');await command('region flag -w ark __global__ pvp deny');
   });
@@ -451,7 +510,7 @@ try {
       assert.match(await command('combatfixture gp-claim CombatOther -5 5 2 10'),/claimCreated=true/);await command('clear CombatOwner');assert.match(await command('combatfixture click combat_owned CombatOwner'),/passengers=1/);await delay(200);await aim('combat_enemy');
       await command('combatfixture swing CombatOwner');await delay(500);assert.equal(await health('combat_enemy'),500);assert.match(await command('combatfixture effects combat_enemy'),/blind=false;slow=false/);
       assert.match(await command('combatfixture gp-trust CombatOwner combat_enemy'),/trusted=true/);await delay(1100);await command('combatfixture swing CombatOwner');await eventually(async()=>await health('combat_enemy')<500,'GP trusted creature attack was blocked');
-      assert.equal(await health('combat_enemy'),500-({trex:20,triceratops:8,dilophosaurus:3}[species]));await command('combatfixture gp-clear-claims');
+      assert.equal(await health('combat_enemy'),500-({trex:10,triceratops:8,dilophosaurus:3}[species]));await command('combatfixture gp-clear-claims');
     }
   });
   await check('GriefPrevention immunity and claim changes cancel Dilo spit in flight before impact',async()=>{
@@ -470,7 +529,7 @@ try {
     for(const species of ['trex','triceratops','dilophosaurus'])for(const gate of ['cancel-damage','zero-damage','allow']){
       await clear();await command('gamemode survival @a');await move('CombatOwner',0,2);await move('CombatOther',0,species==='dilophosaurus'?6:2.25);await command('combatfixture pvp true');await command('region flag -w ark __global__ pvp allow');await spawnDino(`combat_owned ${species} CombatOwner 0 0`);await command('clear CombatOwner');assert.match(await command('combatfixture click combat_owned CombatOwner'),/passengers=1/);await delay(150);await aim('CombatOther');
       if(gate!=='allow')await command(`combatfixture ${gate} true`);const before=await phealth('CombatOther');await command('combatfixture swing CombatOwner');await delay(750);
-      if(gate==='allow'){assert.equal(await phealth('CombatOther'),before-({trex:20,triceratops:8,dilophosaurus:3}[species]));assert.ok(await gpTimestamp('CombatOwner')>0);assert.ok(await gpTimestamp('CombatOther')>0);}
+      if(gate==='allow'){assert.equal(await phealth('CombatOther'),before-({trex:10,triceratops:8,dilophosaurus:3}[species]));assert.ok(await gpTimestamp('CombatOwner')>0);assert.ok(await gpTimestamp('CombatOther')>0);}
       else {assert.equal(await phealth('CombatOther'),before);assert.equal(await gpTimestamp('CombatOwner'),0);assert.equal(await gpTimestamp('CombatOther'),0);await command(`combatfixture ${gate} false`);}
       await command('effect clear CombatOther');
     }
@@ -560,7 +619,7 @@ try {
     await command('region flag -w ark __global__ pvp deny');await command('combatfixture pvp false');
   });
   await check('Seven owned adult species defend and bite with their defined damage; wild herbivores stay passive',async()=>{
-    for(const [species,damage] of Object.entries({triceratops:8,stegosaurus:8,brachiosaurus:10,pteranodon:4,trex:20,velociraptor:6,dilophosaurus:5})){
+    for(const [species,damage] of Object.entries({triceratops:8,stegosaurus:8,brachiosaurus:10,pteranodon:4,trex:10,velociraptor:6,dilophosaurus:5})){
       await clear();await command('gamemode survival CombatOwner');await move('CombatOwner',0,2);await spawnDino(`combat_owned ${species} CombatOwner 0 0`);await command('combatfixture victim combat_enemy 2 0');await command('combatfixture strike CombatOwner combat_enemy');
       await eventually(async()=>await health('combat_enemy')<500,`${species} did not defend`);assert.equal(await health('combat_enemy'),500-damage);
       await command('tp @e[tag=combat_owned,limit=1] 0 4 0');await command('tp @e[tag=combat_enemy,limit=1] 0 4 2.25');await move('CombatOwner',0,2);await command('clear CombatOwner');assert.match(await command('combatfixture click combat_owned CombatOwner'),/passengers=1/);await delay(1100);await aim('combat_enemy');const before=await health('combat_enemy');await command('combatfixture swing CombatOwner');await eventually(async()=>await health('combat_enemy')===before-damage,`${species} mounted bite did not hit`);

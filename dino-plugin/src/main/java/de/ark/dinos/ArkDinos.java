@@ -52,6 +52,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     private final Map<UUID, Mob> landing = new HashMap<>();
     private DinoModels models;
     private DinoCare care;
+    private DinoLocator locator;
     private DinoControls controls;
     private DinoCombat combat;
     private DinoAquatic aquatic;
@@ -82,6 +83,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         flightKey = new NamespacedKey(this, "flight");
         models = new DinoModels(this);
         care = new DinoCare(this);
+        locator = new DinoLocator(this);
         combat = new DinoCombat(this);
         aquatic = new DinoAquatic(this);
         controls = new DinoControls(this);
@@ -99,6 +101,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        if (locator != null) loaded.values().forEach(locator::remember);
         List.copyOf(loaded.values()).forEach(this::endRide);
         List.copyOf(landing.values()).forEach(this::restoreGravity);
         if (combat != null) combat.close();
@@ -118,6 +121,11 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     @Override public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command command,
                                        String label, String[] args) {
+        if (command.getName().equalsIgnoreCase("dinos")) {
+            if (sender instanceof Player player) return locator.command(player, args);
+            sender.sendMessage("Nur Spieler können ihre eigenen gezähmten Dinos orten.");
+            return true;
+        }
         if (!command.getName().equalsIgnoreCase("dinoeier")) return false;
         if (sender instanceof Player player) return care.command(player);
         sender.sendMessage("Dino-Eier bitte im Kreativmodus mit /dinoeier auswählen.");
@@ -275,6 +283,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         mob.getPersistentDataContainer().remove(stayKey);
         mob.getPersistentDataContainer().remove(publicRideKey);
         mob.removeScoreboardTag("ark_dino_tamed"); mob.addScoreboardTag("ark_dino_wild");
+        locator.forget(mob);
         loaded.remove(mob.getUniqueId());
         combat.restore(mob);
         return true;
@@ -318,6 +327,20 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     String species(Entity entity) {
         return entity.getPersistentDataContainer().get(speciesKey, PersistentDataType.STRING);
+    }
+
+    boolean taming(Mob mob, Player player) { return care.taming(mob, player); }
+    void interruptTaming(Mob mob, Player player) { care.interruptTaming(mob, player); }
+    boolean ownerFlyingOnPtera(Player player) {
+        return player.getVehicle() instanceof Mob mount && prototype(mount) && "pteranodon".equals(species(mount))
+                && player.getUniqueId().toString().equals(owner(mount)) && driver(mount) == player
+                && flying.containsKey(mount.getUniqueId()) && !mount.isOnGround() && !mount.isInWater();
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void removed(org.bukkit.event.entity.EntityRemoveEvent event) {
+        if (owned(event.getEntity()) && event.getCause() != org.bukkit.event.entity.EntityRemoveEvent.Cause.UNLOAD)
+            locator.forget(event.getEntity());
     }
 
     Mob spawnWild(org.bukkit.Location point, String species) {
@@ -364,6 +387,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 restoreGravity(mob);
             }
             if (prepare(mob)) loaded.put(entity.getUniqueId(), mob);
+            locator.remember(mob);
         }
         if (entity instanceof Mob mob) combat.restore(mob);
         if (swimming != null) swimming.restore(entity);
@@ -380,6 +404,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         mob.removeScoreboardTag("ark_dino_wild");
         mob.addScoreboardTag("ark_dino_tamed");
         loaded.put(mob.getUniqueId(), mob);
+        locator.remember(mob);
         identify(mob);
         combat.restore(mob);
         mob.getWorld().spawnParticle(Particle.HEART, mob.getLocation().add(0, 2, 0), 8, .5, .5, .5);
@@ -401,6 +426,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     @EventHandler
     public void unload(EntitiesUnloadEvent event) {
         event.getEntities().forEach(entity -> {
+            locator.remember(entity);
             Mob mob = loaded.remove(entity.getUniqueId());
             if (mob != null) { endRide(mob); if (flying.containsKey(mob.getUniqueId())) restoreGravity(mob); }
             models.unload(entity);
@@ -665,6 +691,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     @EventHandler
     public void death(EntityDeathEvent event) {
+        locator.forget(event.getEntity());
         if (event.getEntity() instanceof Player player) endRide(player);
         Mob mob = loaded.remove(event.getEntity().getUniqueId());
         if (mob != null) { endRide(mob); restoreGravity(mob); }
@@ -673,13 +700,16 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     }
 
     private void follow() {
+        locator.updateCompasses();
         var iterator = loaded.values().iterator();
         while (iterator.hasNext()) {
             Mob mob = iterator.next();
             if (!mob.isValid() || mob.isDead()) {
+                locator.forget(mob);
                 iterator.remove();
                 continue;
             }
+            locator.remember(mob);
             models.growth(mob);
             if (combat.active(mob)) continue;
             mob.setTarget(null);

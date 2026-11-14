@@ -6,7 +6,8 @@ final class CareRules {
     static final List<String> SPECIES=List.of("trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus");
     static final long FEED_COOLDOWN_MS=10_000, PROGRESS_EXPIRY_MS=300_000, LOVE_MS=60_000,
             BREED_COOLDOWN_MS=300_000, INCUBATION_MS=1_200_000, GROWTH_MS=DinoGrowth.DURATION_MS,
-            GROWTH_FEED_MS=60_000, GROWTH_FEED_COOLDOWN_MS=30_000;
+            GROWTH_FEED_MS=60_000, GROWTH_FEED_COOLDOWN_MS=30_000, HEAL_COOLDOWN_MS=2_000;
+    static final double HEAL_AMOUNT=4;
     enum Action { IGNORE, FEED, WAIT, LOCKED, NEED_FEEDS, READY, FINISH }
     record Progress(String actor,int feeds,long nextFeedAt,long expiresAt) { }
     record Feeding(Action action,Progress progress) { }

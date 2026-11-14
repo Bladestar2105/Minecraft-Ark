@@ -13,14 +13,18 @@ import zipfile
 from build_plugins import ROOT, download
 from fetch_world import safe_path
 
-PLUGINS = {"dino": ("ArkDinos", "1.2.0"), "atlas": ("ArkAtlas", "1.0.1"),
+PLUGINS = {"dino": ("ArkDinos", "1.2.1"), "atlas": ("ArkAtlas", "1.0.1"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
-           "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.1"),
+           "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.2"),
            "access": ("ArkAccessBridge", "1.1.1")}
 DEFAULT_MODULES = [module for module in PLUGINS if module != "access"]
 DINO_MODELS = ("trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon", "dilophosaurus", "mosasaurus")
 DINO_DEPENDENCIES = {"bettermodel", "geyser-model-engine", "geyser-model-engine-extension",
                      "geyser-utils-spigot", "geyser-utils-geyser"}
+LONG_DAY_FILES = ("pack.mcmeta", "data/minecraft/tags/function/load.json",
+                  "data/ark_long_days/function/load.mcfunction", "data/ark_long_days/function/tick.mcfunction",
+                  "data/ark_long_days/function/day.mcfunction", "data/ark_long_days/function/night.mcfunction")
+
 
 
 def selected_modules(modules):
@@ -120,6 +124,14 @@ def install(root=ROOT, modules=None):
     if not safe_path(root, "data/ark/level.dat").is_file():
         raise ValueError("Install the world first; keep Minecraft stopped during installation.")
     own = verify_own_plugins(root, modules)
+    day_pack = []
+    for name in LONG_DAY_FILES:
+        source = safe_path(root, "world-design/long_days/" + name)
+        if not source.is_file():
+            raise ValueError("Missing bundled day-cycle source: " + name)
+        day_pack.append(("data/ark/datapacks/ark_long_days/" + name, source.read_bytes()))
+    if safe_path(root, "data/ark/datapacks/ark_long_days").exists():
+        raise ValueError("Existing day-cycle pack; refusing to replace data/ark/datapacks/ark_long_days")
     models = dino_model_files(root) + dino_item_files(root) if "dino" in modules else []
     copies = [("config/geyser.yml", "data/plugins/Geyser-Spigot/config.yml"),
               ("config/floodgate.yml", "data/plugins/floodgate/config.yml"),
@@ -142,7 +154,7 @@ def install(root=ROOT, modules=None):
     targets = ["data/server.properties", "data/dependencies-installed.json"]
     targets += [target for _, target in copies]
     targets += ["data/plugins/" + Path(item["path"]).name for item in own]
-    targets += [target for target, _ in models]
+    targets += [target for target, _ in models + day_pack]
     for target in targets:
         path = safe_path(root, target)
         if path.exists():
@@ -155,7 +167,7 @@ def install(root=ROOT, modules=None):
     (root / "data/plugins").mkdir(parents=True, exist_ok=True)
     for item in own:
         shutil.copyfile(root / item["path"], root / "data/plugins" / Path(item["path"]).name)
-    for target, content in models:
+    for target, content in models + day_pack:
         destination = safe_path(root, target)
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(content)

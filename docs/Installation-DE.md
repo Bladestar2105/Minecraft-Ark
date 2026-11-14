@@ -7,7 +7,7 @@ Für den Quellcodebau werden Docker mit Compose v2, Python 3.10+ und **JDK 25** 
 ## Neuer Quellcode-Checkout
 
 ```sh
-git clone --branch app-2026-11-14 https://github.com/Bladestar2105/Minecraft-Ark.git
+git clone --branch app-2026-11-14-2 https://github.com/Bladestar2105/Minecraft-Ark.git
 cd Minecraft-Ark
 # JAVA_HOME auf JDK 25 setzen, falls PATH ein anderes JDK verwendet.
 python3 scripts/build_plugins.py
@@ -18,7 +18,7 @@ Lege `.env`, `data`, `secrets` oder `panel-state` **nicht** vor dem neuen Setup 
 
 Bei einem geprüften Binär-ZIP entfällt der JDK-/Bauschritt; siehe [All-in-One](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One-DE). Das Setup akzeptiert keine EULA und startet keine Dienste.
 
-Mit dem Dino-Modul gib beim Setup eine für Spieler erreichbare Adresse an: `python3 scripts/setup.py --portal-url https://mc.example.org/`. Java lädt das erzeugte Modellpaket über `/resources/dinos.zip`; `localhost` eignet sich nur für lokale Tests. Das voreingestellte Profil `admin` muss dafür laufen. Ohne dieses Profil musst du das erzeugte `data/plugins/BetterModel/build.zip` selbst bereitstellen und `resource-pack` in `data/server.properties` anpassen. Java und Bedrock verlangen das jeweilige Ressourcenpaket. Die sechs Modelle und Flugsteuerung sind ein Prototyp; die Sichtprüfung auf echten Java-/Bedrock-Geräten steht noch aus.
+Mit dem Dino-Modul gib beim Setup eine für Spieler erreichbare Adresse an: `python3 scripts/setup.py --portal-url https://mc.example.org/`. Java lädt das erzeugte Modellpaket über `/resources/dinos.zip`; `localhost` eignet sich nur für lokale Tests. Das voreingestellte Profil `admin` muss dafür laufen. Ohne dieses Profil musst du das erzeugte `data/plugins/BetterModel/build.zip` selbst bereitstellen und `resource-pack` in `data/server.properties` anpassen. Java und Bedrock verlangen das jeweilige Ressourcenpaket. Die acht Modelle und Flugsteuerung sind ein Prototyp; die Sichtprüfung auf echten Java-/Bedrock-Geräten steht noch aus.
 
 ## Prüfen und starten
 

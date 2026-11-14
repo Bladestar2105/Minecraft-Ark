@@ -140,7 +140,7 @@ try {
       await copyFile(`${cache}/plugins/${name}`,`${directory}/plugins/${name}`);
       report.protectionSha256[name]=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/${name}`)).digest('hex');
     }
-    await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.0.jar`, `${directory}/plugins/ArkDinos.jar`);
+    await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.1.jar`, `${directory}/plugins/ArkDinos.jar`);
     report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
     report.limits=['Direct Java protocol777 clients verify real ArkDinos gameplay and actual model/registry/packet state; visible Java/Bedrock/console rendering is a separate acceptance step.', 'Bridge pose checks enroll these Java clients in the actual Bridge viewer sets to receive real encoded GeyserUtils actors; they do not establish real Geyser/Bedrock sessions.'];
     await mkdir(`${directory}/plugins/ArkDinos`, {recursive:true});
@@ -636,6 +636,29 @@ try {
     }
     report.restartedJavaPackAudit=JSON.parse(execFileSync('python3',[`${root}dino-models/verify_java_pack.py`,`${directory}/plugins/BetterModel/build.zip`],{encoding:'utf8'}));
     for(const name of species)await command(`dm attach ${name}`);return{before,after};
+  });
+  await check('Normal Java raptor item packets survive foliage, tracking reentry and registry replacement',async()=>{
+    const viewer=new Client('JavaVisibility');clients.push(viewer);await eventually(()=>viewer.joined,'Java visibility viewer did not join');
+    await command('gamemode creative JavaVisibility');await command('tp JavaVisibility 220 4 4 180 0');
+    await command('dm stopmotion velociraptor');await command('dm position velociraptor 0 4 0');
+    await command('fill -2 4 2 2 6 2 cherry_leaves[persistent=true]');await delay(1000);
+    const itemDisplays=(from,ids)=>new Set(viewer.packets.slice(from).flatMap(packet=>{
+      if(packet.id!==0x65)return[];
+      const bytes=Buffer.from(packet.hex,'hex'),id=readVi(bytes).value;
+      return ids.includes(id)&&bytes.includes(Buffer.from('bettermodel:'))?[id]:[];
+    }));
+    const from=viewer.packets.length;await command('tp JavaVisibility 0 4 4 180 0');await delay(1000);
+    const before=await inspect('velociraptor'),ids=JSON.parse(before.packet);
+    assert.equal(ids.length,Number(before.displays));assert.ok(ids.length>=7);
+    assert.equal(itemDisplays(from,ids).size,ids.length,'Every Java model display needs its actual item metadata after tracking reentry');
+    viewer.look(0);await delay(150);viewer.look(180);
+    const replacedFrom=viewer.packets.length;await command('dm baselineclose velociraptor');
+    let after;
+    await eventually(async()=>{after=await inspect('velociraptor');return after.trackers==='1'&&JSON.stringify(JSON.parse(after.packet))!==JSON.stringify(ids);},'Missing raptor registry was not recreated');
+    const replacedIds=JSON.parse(after.packet);
+    await eventually(()=>itemDisplays(replacedFrom,replacedIds).size===replacedIds.length,'Replacement Java model items did not reach the viewer');
+    await command('fill -2 4 2 2 6 2 air');viewer.close();
+    return {displays:ids.length,replacedDisplays:replacedIds.length};
   });
   await command('dm shared stegosaurus');await delay(200);await verifyBridgeSpawn('stegosaurus',false,'shared_fixture');
   await check('Unloading an actor before the first sampler tick clears its bridge mapping',async()=>{

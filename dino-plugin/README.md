@@ -48,7 +48,7 @@ Growing horns, plates, crests and frill parts sample the same Java phase or comb
 
 Explicitly placed dinosaur eggs create persistent offspring. The bounded wild-spawn controller also creates temporary natural encounters throughout loaded prototype Overworlds; it never respawns a dead or unloaded pet. Ownership and stay state persist through normal world saves/restarts as entity PDC: `arkdinos:owner` (UUID string), `arkdinos:stay` (byte), `arkdinos:species` (string), and `arkdinos:public-ride` (byte, absent/private by default). `arkdinos:flight` is a temporary persisted recovery marker, removed when gravity is restored. Only currently loaded pets are kept in memory; their paths update once per second. Load restores their controller. Habitat datapacks must not teleport `ark_dino_tamed` back to their home, or respawn replacement groups when pets leave.
 
-Sniffers use a Brain rather than ordinary goal selectors. A small Minecraft 26.3 adapter clears their native Brain behaviors once on tame/load, allowing Paper's Pathfinder to control them. This also replaces natural sniffing/digging behavior on owned Sniffers. The adapter must be checked after Minecraft upgrades; failure stops a pet safely and refuses new Sniffer taming without consuming food. Ordinary unmanaged Sniffers retain native AI. Tagged prototype wild and owned animals use controlled pathfinding without native digging. Food supports taming, breeding and growth; healing is omitted.
+Sniffers use a Brain rather than ordinary goal selectors. A small Minecraft 26.3 adapter clears their native Brain behaviors once on tame/load, allowing Paper's Pathfinder to control them. This also replaces natural sniffing/digging behavior on owned Sniffers. The adapter must be checked after Minecraft upgrades; failure stops a pet safely and refuses new Sniffer taming without consuming food. Ordinary unmanaged Sniffers retain native AI. Tagged prototype wild and owned animals use controlled pathfinding without native digging. Owners in Survival can heal their injured dinosaur with its normal primary food. Each accepted item restores up to four health points (two hearts), with a two-second cooldown. Healing takes priority over growth and breeding; full-health animals retain their existing growth and breeding actions.
 
 ## Prototype gameplay
 
@@ -70,7 +70,7 @@ Mosasaurus cannot be tamed, ridden, leashed or bred, and is excluded from the se
 
 Run `rtk proxy bash dino-plugin/build.sh` from the repository root with JDK 25 in `JAVA_HOME`, or use the local verified JDK at `dino-plugin/.tools/jdk-25.0.5+8/Contents/Home`. Build dependencies are downloaded with fixed SHA-256 checksums and kept outside Git. Cloudflare DoH is used for these downloads because the current VPN DNS was unreachable; it changes no system DNS setting.
 
-Output: `dino-plugin/build/ArkDinos-1.2.0.jar`. This update also changes four model exports; install the corresponding model inputs and rebuild both resource packs as described in the [upgrade notes](../docs/Dinosaur-Review-2026-11-10.md). Copy that single JAR to the server's `plugins/` directory and restart normally. The generated `plugins/ArkDinos/config.yml` allows only `ark`; add other Survival worlds explicitly if wanted. Do not hot-reload plugins.
+Output: `dino-plugin/build/ArkDinos-1.2.1.jar`. This update also changes four model exports; install the corresponding model inputs and rebuild both resource packs as described in the [upgrade notes](../docs/Dinosaur-Review-2026-11-10.md). Copy that single JAR to the server's `plugins/` directory and restart normally. The generated `plugins/ArkDinos/config.yml` allows only `ark`; add other Survival worlds explicitly if wanted. Do not hot-reload plugins.
 
 The build runs dependency-free checks for ownership, Survival restrictions, food consumption, stay/follow, mounting restrictions, directional movement, all 24 legacy species tags, deterministic migration, flight math and passenger packet ordering. These checks do not replace the native runtime checks below.
 
@@ -149,3 +149,15 @@ node dino-plugin/care-runtime-test.mjs
 ```
 
 Set `JAVA_HOME`, `DINO_PAPER_JAR`, `DINO_PAPER_CACHE` and separate absolute output directories for your local runtime. Wildlife also reads the pinned protection JARs from the cache's `plugins` directory. These fixtures create disposable loopback worlds; they do not open the historical world archive. The swimming fixture documents its lifecycle event simulation and real protocol controls in its report. Model and Bedrock-seat probes remain separate from official-client visual acceptance.
+
+## Finding and healing your dinosaurs
+
+`/dinos` lists only your own tamed animals with their world and current or last-known block coordinates. Hold a normal compass in your main hand or offhand, then click **[Kompass]** beside an animal. `/dinofind <animal-uuid>` selects the same target. The compass follows a loaded animal while held and keeps the last recorded position when it unloads. For a target in another world, travel there and select it again. No animal is teleported and no chunk is force-loaded. The compass keeps its existing name and other metadata. Previously unloaded animals enter the new location index when their area is next loaded.
+
+Use the species' normal primary food to heal your own injured animal in Survival: raw land meat for T-Rex, Velociraptor and Dilophosaurus; raw fish for Pteranodon; wheat, fern or dandelion for the three herbivores. An accepted item restores at most two hearts, once every two seconds, before growth or breeding. Other players and Creative players cannot heal your animal.
+
+T-Rex melee damage is now ten health points (five hearts on Normal before armor). Its twelve-feed, twenty-second taming recipe remains. Each accepted feed protects only the feeding player from that animal while the saved taming progress is valid (five minutes after the latest accepted feed). A positive uncancelled attack by that player, including arrows, clears this progress and protection. Other players remain possible targets.
+
+An adult tamed Pteranodon in Follow can accompany its owner flying on another owned Pteranodon in the same world. Stay and Free modes do not start flight following. Normal collision, loaded-chunk and flight-recovery limits still apply.
+
+Wild Pteranodons remain peaceful while roaming. Holding their normal primary fish in either hand within sixteen blocks and line of sight requests landing and keeps them grounded for taming. Actual positive, uncancelled player or player-arrow damage makes a wild adult land and retaliate against that attacker on the ground, without hunting bystanders.

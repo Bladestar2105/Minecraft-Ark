@@ -15,7 +15,7 @@
 
 Ohne Auswahl gilt `normal`. Nachrichten haben 1–2000 Zeichen; im Browser sind Zeilenumbrüche erlaubt. Teile keine Passwörter, Anmelde-/Wiederherstellungscodes oder Signierungszugänge. Du kannst ausschließlich eigene Anfragen lesen und beantworten. Geschlossene Anfragen bleiben bis zur Wiedereröffnung durch die Verwaltung schreibgeschützt.
 
-Angemeldete Operatoren erhalten im Spiel einen privaten Aktivitätshinweis. Antworten benachrichtigen die betroffenen anwesenden Spieler/Operatoren; der Hinweis enthält eine Referenz statt der vollständigen Unterhaltung. Browserlisten werden bei sichtbarer Seite und aktiver Sitzung aktualisiert. E-Mails oder externe Ticketsysteme sind nicht beteiligt.
+Angemeldete Operatoren erhalten zu Spielerbeiträgen einen privaten Aktivitätshinweis. Mit ArkSupport 1.0.2 erscheint eine Verwaltungsantwort mit ihrem vollständigen Klartext direkt beim angemeldeten Ticketbesitzer im Spiel. Offline-Spieler lesen die gespeicherte Antwort im Portal. Statushinweise und OP-Benachrichtigungen wiederholen keinen Unterhaltungstext. Browserlisten werden bei sichtbarer Seite und aktiver Sitzung aktualisiert. E-Mails oder externe Ticketsysteme sind nicht beteiligt.
 
 ## Anfragen als Administrator bearbeiten
 
@@ -25,7 +25,7 @@ Melde dich an der [Verwaltung](https://github.com/Bladestar2105/Minecraft-Ark/wi
 
 Mit **ArkSupport 1.0.1** und der passenden Web-Aktualisierung kann ein Administrator ein **geschlossenes** Ticket öffnen und **Anfrage löschen** wählen. Lies die Bestätigung und bestätige nur, wenn das gesamte Ticket einschließlich aller Nachrichten entfernt werden darf. Offene Tickets müssen zuerst geschlossen werden. Spieler können keine Tickets löschen.
 
-Aktualisiere bei einer bestehenden Installation die Web-Anwendung und ersetze das alte ArkSupport-JAR bei gestopptem Minecraft durch `ArkSupport-1.0.1.jar`; in `data/plugins/` darf nur ein ArkSupport-JAR liegen. Das neue Modul wird beim nächsten Serverstart geladen. Führe die Ersteinrichtung nicht über einer bestehenden Installation aus.
+Aktualisiere bei einer bestehenden Installation die Web-Anwendung und ersetze das alte ArkSupport-JAR bei gestopptem Minecraft durch `ArkSupport-1.0.2.jar`; in `data/plugins/` darf nur ein ArkSupport-JAR liegen. Das neue Modul wird beim nächsten Serverstart geladen. Führe die Ersteinrichtung nicht über einer bestehenden Installation aus.
 
 Beim Löschen wird die zuletzt angezeigte Version geprüft. Hat jemand das Ticket inzwischen geändert oder wieder geöffnet, wird die Löschung mit einem Konflikt abgelehnt; aktualisiere die Unterhaltung und entscheide erneut. Gelöschte Tickets verschwinden aus Verwaltung und Spielerportal. Es gibt weder Rückgängig-Funktion noch Papierkorb. Eine Wiederherstellung ist nur aus einer privaten Sicherung vor der Löschung möglich; das Zurückspielen einer vollständigen Sicherung kann auch spätere Änderungen zurücksetzen. Sichere `data/plugins/ArkSupport/` deshalb privat.
 

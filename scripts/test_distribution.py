@@ -13,9 +13,9 @@ import install_plugins
 import package
 
 
-PLUGINS = {"dino": ("ArkDinos", "1.2.0"), "atlas": ("ArkAtlas", "1.0.1"),
+PLUGINS = {"dino": ("ArkDinos", "1.2.1"), "atlas": ("ArkAtlas", "1.0.1"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
-           "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.1"),
+           "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.2"),
            "access": ("ArkAccessBridge", "1.1.1")}
 
 
@@ -32,8 +32,26 @@ def plugins_fixture(root):
     return entries
 
 
+DAY_FILES = {
+    "pack.mcmeta": '{"pack":{"min_format":[121,0],"max_format":[121,0],"description":"fixture"}}\n',
+    "data/minecraft/tags/function/load.json": '{"values":["ark_long_days:load"]}\n',
+    "data/ark_long_days/function/load.mcfunction": 'function ark_long_days:tick\n',
+    "data/ark_long_days/function/tick.mcfunction": 'schedule function ark_long_days:tick 1t replace\n',
+    "data/ark_long_days/function/day.mcfunction": 'time of minecraft:overworld rate 0.33333334\n',
+    "data/ark_long_days/function/night.mcfunction": 'time of minecraft:overworld rate 1\n',
+}
+
+
+def day_pack_fixture(root):
+    for name, content in DAY_FILES.items():
+        path = root / "world-design/long_days" / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+
+
 def install_fixture(root):
     entries = plugins_fixture(root)
+    day_pack_fixture(root)
     (root / "data/ark").mkdir(parents=True)
     (root / "data/ark/level.dat").write_bytes(b"world")
     (root / "config").mkdir()
@@ -78,6 +96,45 @@ def dino_models_fixture(root):
 
 
 class InstallerTests(unittest.TestCase):
+    def test_support_release_pin_matches_current_notification_module(self):
+        self.assertEqual(install_plugins.PLUGINS["support"], ("ArkSupport", "1.0.2"))
+
+    def test_day_cycle_pack_installs_bundled_functions_and_preserves_world(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            install_fixture(root)
+            with patch.object(install_plugins, "download"):
+                install_plugins.install(root, ["accounts"])
+            target = root / "data/ark/datapacks/ark_long_days"
+            self.assertTrue(target.is_dir(), "Fresh installs need the reviewed 30-minute day pack")
+            self.assertEqual({p.relative_to(target).as_posix(): p.read_text()
+                              for p in target.rglob("*") if p.is_file()}, DAY_FILES)
+            self.assertEqual((root / "data/ark/level.dat").read_bytes(), b"world")
+
+    def test_day_pack_preflight_rejects_missing_sources_and_occupied_or_linked_targets(self):
+        for change in ("missing", "source-link", "target-link", "existing"):
+            with self.subTest(change=change), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                install_fixture(root)
+                source = root / "world-design/long_days/pack.mcmeta"
+                target = root / "data/ark/datapacks/ark_long_days"
+                if change == "missing":
+                    source.unlink()
+                elif change == "source-link":
+                    source.unlink(); source.symlink_to(root / "README.md")
+                else:
+                    target.parent.mkdir(parents=True)
+                    if change == "target-link":
+                        target.symlink_to(root / "world-design/long_days", target_is_directory=True)
+                    else:
+                        target.mkdir(); (target / "operator.mcfunction").write_text("operator settings\n")
+                with patch.object(install_plugins, "download") as download:
+                    with self.assertRaises(ValueError):
+                        install_plugins.install(root, ["accounts"])
+                    download.assert_not_called()
+                self.assertFalse((root / "data/plugins").exists())
+                self.assertEqual((root / "data/ark/level.dat").read_bytes(), b"world")
+
     def test_audit_configs_install_and_existing_settings_refuse_before_download(self):
         for existing in (None, 'prism.conf', 'storage.conf'):
             with self.subTest(existing=existing), tempfile.TemporaryDirectory() as tmp:
@@ -225,7 +282,7 @@ class InstallerTests(unittest.TestCase):
                 install_plugins.install(root, ["accounts", "support"])
             self.assertEqual(fetched, ["Geyser.jar"])
             self.assertEqual(sorted(p.name for p in (root / "data/plugins").glob("*.jar")),
-                             ["ArkAccounts-1.0.2.jar", "ArkSupport-1.0.1.jar", "Geyser.jar"])
+                             ["ArkAccounts-1.0.2.jar", "ArkSupport-1.0.2.jar", "Geyser.jar"])
             self.assertFalse((root / "data/plugins/SkinsRestorer").exists())
 
     def test_defaults_include_six_modules_and_optional_modules_require_accounts(self):
@@ -278,11 +335,29 @@ class InstallerTests(unittest.TestCase):
 
 
 class DistributionTests(unittest.TestCase):
+    def test_packaging_allows_only_the_bundled_day_pack_data_scope(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package_fixture(root)
+            day_pack_fixture(root)
+            names = sorted(json.loads((root / "distribution-files.json").read_text())
+                           + ["world-design/long_days/" + name for name in DAY_FILES])
+            (root / "distribution-files.json").write_text(json.dumps(names))
+            self.assertEqual(package.source_files(root), names)
+            for name in ("data/ark/pack.mcmeta", "world-design/other/data/tick.mcfunction",
+                         "world-design/long_days/data/secrets/private.mcfunction"):
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True); path.write_text("private\n")
+                (root / "distribution-files.json").write_text(json.dumps(sorted(names + [name])))
+                with self.assertRaisesRegex(ValueError, "Private or non-source"):
+                    package.source_files(root)
+
     def test_binary_dino_setup_uses_verified_bundled_bridge_without_host_java(self):
         from build_plugins import download
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             package_fixture(root)
+            day_pack_fixture(root)
             derived = root / ".deps/bridge.jar"
             derived.parent.mkdir()
             derived.write_bytes(b"verified derived bridge fixture")
@@ -292,7 +367,8 @@ class DistributionTests(unittest.TestCase):
                     "patch": "geyser-model-engine-task-publication",
                     "bundled_path": "runtime-dependencies/GeyserModelEngine-1.0.9.jar"}
             (root / "dependencies-runtime.json").write_text(json.dumps([item]))
-            names = sorted(json.loads((root / "distribution-files.json").read_text()) + ["dependencies-runtime.json"])
+            names = sorted(json.loads((root / "distribution-files.json").read_text()) + ["dependencies-runtime.json"]
+                           + ["world-design/long_days/" + name for name in DAY_FILES])
             (root / "distribution-files.json").write_text(json.dumps(names))
             with patch("package.download", return_value=derived, create=True):
                 output = package.package(root, "bundled-bridge")

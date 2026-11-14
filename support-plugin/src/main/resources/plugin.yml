@@ -1,5 +1,5 @@
 name: ArkSupport
-version: 1.0.1
+version: 1.0.2
 main: de.ark.support.ArkSupport
 api-version: '26.3'
 depend: [ArkAccounts]

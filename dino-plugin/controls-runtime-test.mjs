@@ -131,7 +131,7 @@ try {
  }
 
  if(process.env.DINO_WILDLIFE_ONLY==='1'){for(const name of ['worldedit-bukkit-7.4.6.jar','worldguard-bukkit-7.0.21.jar','GriefPrevention.jar'])await copyFile(`${cache}/plugins/${name}`,`${directory}/plugins/${name}`);}
- await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+ await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.1.jar`,`${directory}/plugins/ArkDinos.jar`);
  report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
  await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\nwild-spawning:\n  enabled: false\n'+(process.env.DINO_WILDLIFE_ONLY==='1'?'  per-player: 2\n  world-limit: 4\n  nearby-limit: 2\n':''));
  await mkdir(`${directory}/fixture-classes`);

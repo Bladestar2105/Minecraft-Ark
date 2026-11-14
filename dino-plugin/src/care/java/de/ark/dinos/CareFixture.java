@@ -49,6 +49,7 @@ public final class CareFixture extends JavaPlugin implements Listener {
                 +";growthDuration="+data.getOrDefault(key("growth-duration"),PersistentDataType.LONG,0L)
                 +";love="+data.getOrDefault(key("love-until"),PersistentDataType.LONG,0L)+";breedUntil="+data.getOrDefault(key("breed-until"),PersistentDataType.LONG,0L)
                 +";type="+entity.getType()+";scale="+((org.bukkit.entity.LivingEntity)entity).getAttribute(org.bukkit.attribute.Attribute.SCALE).getBaseValue()
+                +";health="+((org.bukkit.entity.LivingEntity)entity).getHealth()+";maxHealth="+((org.bukkit.entity.LivingEntity)entity).getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue()
                 +";passengers="+entity.getPassengers().size()+";x="+entity.getX()+";y="+entity.getY()+";z="+entity.getZ();
     }
     @EventHandler(priority=EventPriority.HIGH)
@@ -123,6 +124,30 @@ public final class CareFixture extends JavaPlugin implements Listener {
                 case "hatch-space" -> sender.sendMessage("clear="+call("hatchSpace",new Class<?>[]{Block.class,String.class},block(args).block(),args[5]));
                 case "create-world" -> new org.bukkit.WorldCreator(args[1]).type(org.bukkit.WorldType.FLAT).generateStructures(false).createWorld();
                 case "inspect" -> sender.sendMessage(state(entity(args[1])));
+                case "health" -> ((org.bukkit.entity.LivingEntity)entity(args[1])).setHealth(Double.parseDouble(args[2]));
+                case "player-command" -> getServer().getPlayerExact(args[1]).performCommand(String.join(" ",java.util.Arrays.copyOfRange(args,2,args.length)));
+                case "compass" -> {
+                    var item=new ItemStack(Material.COMPASS);var meta=item.getItemMeta();meta.displayName(net.kyori.adventure.text.Component.text("KeepCompassName"));item.setItemMeta(meta);
+                    if(args.length>2 && args[2].equals("offhand"))getServer().getPlayerExact(args[1]).getInventory().setItemInOffHand(item);
+                    else getServer().getPlayerExact(args[1]).getInventory().setItemInMainHand(item);
+                }
+                case "compass-state" -> {
+                    var inventory=getServer().getPlayerExact(args[1]).getInventory();var item=args.length>2 && args[2].equals("offhand")?inventory.getItemInOffHand():inventory.getItemInMainHand();
+                    if(!(item.getItemMeta() instanceof org.bukkit.inventory.meta.CompassMeta meta)) {sender.sendMessage("compass=false");break;}
+                    var target=meta.getLodestone();sender.sendMessage("compass=true;target="+meta.hasLodestone()+";tracked="+meta.isLodestoneTracked()+";name="+net.kyori.adventure.text.Component.text("KeepCompassName").equals(meta.displayName())
+                        +";x="+(target==null?"none":target.getBlockX())+";y="+(target==null?"none":target.getBlockY())+";z="+(target==null?"none":target.getBlockZ()));
+                }
+                case "relocate" -> {
+                    var mob=entity(args[1]);double x=Double.parseDouble(args[2]),z=Double.parseDouble(args[3]);
+                    mob.getWorld().getChunkAt(((int)x)>>4,((int)z)>>4).load();mob.teleport(new org.bukkit.Location(mob.getWorld(),x,4,z));
+                }
+                case "unload-chunk" -> sender.sendMessage("unloaded="+getServer().getWorld(args[1]).unloadChunk(Integer.parseInt(args[2]),Integer.parseInt(args[3]),true));
+                case "load-chunk" -> getServer().getWorld(args[1]).getChunkAt(Integer.parseInt(args[2]),Integer.parseInt(args[3])).load();
+                case "chunk-loaded" -> sender.sendMessage("loaded="+getServer().getWorld(args[1]).isChunkLoaded(Integer.parseInt(args[2]),Integer.parseInt(args[3])));
+                case "release" -> {
+                    var plugin=getServer().getPluginManager().getPlugin("ArkDinos");var method=plugin.getClass().getDeclaredMethod("release",Mob.class);method.setAccessible(true);
+                    sender.sendMessage("released="+method.invoke(plugin,(Mob)entity(args[1])));
+                }
                 case "spawn-taming-race" -> {
                     Player p=getServer().getPlayerExact(args[1]);p.teleport(new org.bukkit.Location(p.getWorld(),-10,4,2));p.setSneaking(false);
                     p.getInventory().setHeldItemSlot(0);p.getInventory().setItemInMainHand(new ItemStack(Material.TORCHFLOWER_SEEDS,1));

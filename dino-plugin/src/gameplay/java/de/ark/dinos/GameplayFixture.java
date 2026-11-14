@@ -31,6 +31,11 @@ public final class GameplayFixture extends JavaPlugin implements org.bukkit.even
     +";vx="+mob.getVelocity().getX()+";vy="+mob.getVelocity().getY()+";vz="+mob.getVelocity().getZ()+";aware="+mob.isAware()+";path="+mob.getPathfinder().hasPath();armedStay=null;
   }
  }
+ private double renderScale(Mob mob)throws ReflectiveOperationException {
+  var registry=((java.util.Optional<?>)Class.forName("kr.toxicity.model.api.BetterModel").getMethod("registry",java.util.UUID.class).invoke(null,mob.getUniqueId())).orElseThrow();
+  var tracker=((java.util.Collection<?>)registry.getClass().getMethod("trackers").invoke(registry)).iterator().next();var scaler=tracker.getClass().getMethod("scaler").invoke(tracker);
+  return ((Number)Class.forName("kr.toxicity.model.api.tracker.ModelScaler").getMethod("scale",Class.forName("kr.toxicity.model.api.tracker.Tracker")).invoke(scaler,tracker)).doubleValue();
+ }
  public boolean onCommand(CommandSender sender,Command command,String label,String[] args){
   if(!sender.getName().equals("Rcon")&&!sender.getName().equals("CONSOLE"))return true;
   if(args[0].equals("player")){var player=getServer().getPlayer(args[1]);if(player==null){sender.sendMessage("player=absent");return true;}sender.sendMessage("slowfall="+player.hasPotionEffect(PotionEffectType.SLOW_FALLING)+";main="+player.getInventory().getItemInMainHand().getAmount()+";off="+player.getInventory().getItemInOffHand().getAmount());return true;}
@@ -62,10 +67,10 @@ public final class GameplayFixture extends JavaPlugin implements org.bukkit.even
      data.set(adult,PersistentDataType.LONG,System.currentTimeMillis()+remaining);
      mob.getAttribute(org.bukkit.attribute.Attribute.SCALE).setBaseValue(base*(.45+.55*Math.max(0,1-remaining/900000d)));
      restore.invoke(plugin,mob);double saved=data.get(original,PersistentDataType.DOUBLE);long deadline=data.get(adult,PersistentDataType.LONG);
-     var tracker=kr.toxicity.model.api.BetterModel.registry(mob.getUniqueId()).orElseThrow().trackers().iterator().next();double render=tracker.scaler().scale(tracker);
+     double render=renderScale(mob);
      unload.invoke(models,mob);double fallback=mob.getAttribute(org.bukkit.attribute.Attribute.SCALE).getBaseValue();
      restore.invoke(plugin,mob);data.set(adult,PersistentDataType.LONG,0L);grow.invoke(models,mob);
-     tracker=kr.toxicity.model.api.BetterModel.registry(mob.getUniqueId()).orElseThrow().trackers().iterator().next();double adultRender=tracker.scaler().scale(tracker);
+     double adultRender=renderScale(mob);
      unload.invoke(models,mob);
      sender.sendMessage("uuid="+mob.getUniqueId()+";owner="+data.get(NamespacedKey.fromString("arkdinos:owner"),PersistentDataType.STRING)+";original="+saved+";render="+render+";deadline="+deadline+";duration="+data.get(duration,PersistentDataType.LONG)+";fallback="+fallback+";adultRender="+adultRender+";adultFallback="+mob.getAttribute(org.bukkit.attribute.Attribute.SCALE).getBaseValue());return true;
     }catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
@@ -86,6 +91,23 @@ public final class GameplayFixture extends JavaPlugin implements org.bukkit.even
      var details=new java.util.TreeSet<String>();
      for(var bone:(java.util.Collection<?>)tracker.getClass().getMethod("bones").invoke(tracker)){var running=bone.getClass().getMethod("runningAnimation").invoke(bone);if(running!=null)details.add(running.toString());}
      sender.sendMessage("trackers="+trackers.size()+";running="+pipeline.getClass().getMethod("runningAnimation").invoke(pipeline)+";details="+details);return true;
+    }catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
+   }
+   case "ptera-ready", "ptera-state" -> {
+    try {
+     var field=plugin.getClass().getDeclaredField("ptera");field.setAccessible(true);var ptera=field.get(plugin);
+     var birds=ptera.getClass().getDeclaredField("birds");birds.setAccessible(true);var bird=((java.util.Map<?,?>)birds.get(ptera)).get(mob.getUniqueId());
+     if(args[0].equals("ptera-ready")){var next=bird.getClass().getDeclaredField("nextFlight");next.setAccessible(true);next.setInt(bird,0);}
+     var phase=bird.getClass().getDeclaredField("phase");phase.setAccessible(true);sender.sendMessage("phase="+phase.getInt(bird)+";gravity="+mob.hasGravity()+";ground="+mob.isOnGround()+(args.length>2?";playerHealth="+getServer().getPlayer(args[2]).getHealth():""));return true;
+    }catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
+   }
+   case "ptera-boundary" -> {
+    try {
+     var field=plugin.getClass().getDeclaredField("ptera");field.setAccessible(true);var ptera=field.get(plugin);
+     var method=ptera.getClass().getDeclaredMethod("clear",Mob.class,org.bukkit.util.BoundingBox.class);method.setAccessible(true);
+     int chunks=mob.getWorld().getLoadedChunks().length;var loc=mob.getLocation();
+     boolean clear=(boolean)method.invoke(ptera,mob,new org.bukkit.util.BoundingBox(loc.getX()-5.2,loc.getY(),loc.getZ()-5.2,loc.getX()+5.2,loc.getY()+3.12,loc.getZ()+10000));
+     sender.sendMessage("clear="+clear+";chunksUnchanged="+(chunks==mob.getWorld().getLoadedChunks().length));return true;
     }catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
    }
    case "boundary" -> {

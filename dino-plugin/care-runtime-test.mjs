@@ -70,6 +70,7 @@ class Client extends EventEmitter {
       if (id === 20) this.send(9);
       if (id === 3) { this.send(3); this.phase = 'play'; this.tick = setInterval(() => { this.send(0x21, Buffer.from([1])); this.send(0x0d); }, 50); }
     } else {
+      (this.packets??=[]).push({id,text:body.toString('utf8')});
       if (id === 0x2d) this.send(0x1c, body);
       if (id === 0x49) { const token = readVi(body); this.send(0, Buffer.concat([vi(token.value), body.subarray(token.end, token.end + 24), body.subarray(token.end + 48, token.end + 56)])); this.send(0x2c); }
       if (id === 0x32) { this.send(0x2c); this.joined = true; }
@@ -123,7 +124,7 @@ async function stop(){clients.forEach(c=>c.close());await command('save-all flus
 try {
  for(const name of ['libraries','versions','cache'])await symlink(`${cache}/${name}`,`${directory}/${name}`);
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
- await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+ await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.1.jar`,`${directory}/plugins/ArkDinos.jar`);
  report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
  await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\nwild-spawning:\n  enabled: false\n');
  await mkdir(`${directory}/fixture-classes`);
@@ -135,6 +136,69 @@ try {
  let alice=new Client('CareOwner'),bob=new Client('CareOther');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Care clients did not join',30000);
  await command('gamemode survival @a');await command('effect give @a resistance 9999 4 true');await command('tp @a 0 4 3');await delay(500);
  await eventually(async()=>/Successfully filled/.test(await command('fill -16 3 -16 32 3 32 stone')),'Care fixture platform chunks did not load');
+ await check('Compass tracks only an owned dinosaur while preserving existing item metadata',async()=>{
+  const tag='care_compass';
+  try {
+   await spawnDino(tag,'triceratops',-12,alice.uuid);await delay(1200);const uuid=(await inspect(tag)).uuid;
+   await command('carefixture compass CareOwner');await command(`carefixture player-command CareOwner dinofind ${uuid}`);
+   const first=fields(await command('carefixture compass-state CareOwner'));assert.equal(first.target,'true','The normal held compass must acquire the requested owned pet');
+   assert.equal(first.tracked,'false');assert.equal(first.name,'true','Compass naming must survive target changes');assert.equal(first.x,'-12');
+   await command('carefixture compass CareOther');await command(`carefixture player-command CareOther dinofind ${uuid}`);
+   assert.equal(fields(await command('carefixture compass-state CareOther')).target,'false','Another player cannot track this pet');
+   await food(alice,'WHEAT',1);await command(`carefixture player-command CareOwner dinofind ${uuid}`);assert.equal((await inventory(alice)).hand,'WHEAT','Tracking without a compass must preserve the held item');
+   await command('carefixture compass CareOwner');await command(`carefixture player-command CareOwner dinofind ${uuid}`);
+   await command(`carefixture relocate ${tag} -8 0`);await eventually(async()=>fields(await command('carefixture compass-state CareOwner')).x==='-8','A moving owned pet must update its compass target');
+   await food(alice,'WHEAT',1);await command('carefixture compass CareOwner offhand');await command(`carefixture player-command CareOwner dinofind ${uuid}`);
+   const offhand=fields(await command('carefixture compass-state CareOwner offhand'));assert.equal(offhand.target,'true');assert.equal(offhand.name,'true');assert.equal(offhand.x,'-8');assert.equal((await inventory(alice)).hand,'WHEAT');
+   await command('carefixture create-world ark');await command('execute in minecraft:ark run tp CareOwner 0 5 0');await command('carefixture compass CareOwner');await command(`carefixture player-command CareOwner dinofind ${uuid}`);
+   assert.equal(fields(await command('carefixture compass-state CareOwner')).target,'false','A compass cannot acquire a pet in another world');
+   await command('execute in minecraft:overworld run tp CareOwner 0 4 3');
+   return {uuid,first,offhand};
+  } finally {await command(`kill @e[tag=${tag},limit=1]`);}
+ });
+ await check('Locator keeps owner locations through actual chunk unload and restart, then removes released or dead pets',async()=>{
+  const tag='care_locator';
+  try {
+   await spawnDino(tag,'triceratops',-12,alice.uuid);await command(`data merge entity @e[tag=${tag},limit=1] {CustomName:"LocatorPrivatePet",NoAI:1b}`);await delay(1200);
+   const locate=async(client,alias='dinos')=>{const from=client.packets.length;await command(`carefixture player-command ${client.name} ${alias}`);await delay(250);return client.packets.slice(from).map(p=>p.text).join('');};
+   const own=await locate(alice);assert.match(own,/Deine gezähmten Dinos:/);assert.match(own,/LocatorPrivatePet/);assert.match(own,/X -12/);assert.match(own,/aktuell/);
+   const other=await locate(bob);assert.doesNotMatch(other,/LocatorPrivatePet/);assert.doesNotMatch(other,/X -12/);
+   const uuid=(await inspect(tag)).uuid;await command(`carefixture relocate ${tag} 512 512`);await delay(1200);
+   assert.match(await locate(alice),/X 512/);await eventually(async()=>/unloaded=true/.test(await command('carefixture unload-chunk ark_model_test 32 32')),'The fixture teleport ticket did not release its pet chunk',30000);
+   assert.match(await command('carefixture chunk-loaded ark_model_test 32 32'),/loaded=false/);
+   const unloaded=await locate(alice,'dinofind');assert.match(unloaded,/LocatorPrivatePet/);assert.match(unloaded,/zuletzt gesehen/);
+   assert.match(await command('carefixture chunk-loaded ark_model_test 32 32'),/loaded=false/,'Locating must not reload the pet chunk');
+   await stop();await start();alice=new Client('CareOwner');bob=new Client('CareOther');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Locator restart clients did not join',30000);
+   const restored=await locate(alice);assert.match(restored,/LocatorPrivatePet/);assert.match(restored,/X 512/);assert.match(restored,/zuletzt gesehen/);
+   assert.doesNotMatch(await locate(bob),/LocatorPrivatePet/);assert.match(await command('carefixture chunk-loaded ark_model_test 32 32'),/loaded=false/);
+   await command('carefixture load-chunk ark_model_test 32 32');await delay(250);assert.equal((await inspect(tag)).uuid,uuid);
+   await command(`kill @e[tag=${tag},limit=1]`);await delay(150);assert.doesNotMatch(await locate(alice),/LocatorPrivatePet/,'A dead pet must leave the locator');
+   await spawnDino('care_locator_release','triceratops',-12,alice.uuid);await command('data merge entity @e[tag=care_locator_release,limit=1] {CustomName:"LocatorReleasedPet"}');await delay(1200);
+   assert.match(await locate(alice),/LocatorReleasedPet/);assert.match(await command('carefixture release care_locator_release'),/released=true/);
+   assert.doesNotMatch(await locate(alice),/LocatorReleasedPet/,'A released pet must leave the locator');await command('kill @e[tag=care_locator_release,limit=1]');
+   return {uuid,owner:own,other,unloaded,restored};
+  } finally {await command(`kill @e[tag=${tag},limit=1]`);}
+ });
+ await check('Owner healing consumes the right food before growth or breeding and respects health, mode and cooldown',async()=>{
+  const tag='care_healing';
+  try {
+   await spawnDino(tag,'trex',-12,alice.uuid);await command(`carefixture health ${tag} 10`);
+   await command(`carefixture time ${tag} adult-at 600000`);const age=(await inspect(tag)).adultAt;
+   await food(alice,'BEEF',3);await click(alice,tag);
+   assert.equal(Number((await inspect(tag)).health),14,'An injured owned dinosaur must heal two hearts per food');
+   assert.equal((await inventory(alice)).amount,'2');assert.equal((await inspect(tag)).adultAt,age,'Healing must precede growth');
+   assert.equal((await inspect(tag)).love,'0','Healing must not also enable breeding');
+   await click(alice,tag);assert.equal(Number((await inspect(tag)).health),14);assert.equal((await inventory(alice)).amount,'2','Healing cooldown must retain food');
+   await food(bob,'BEEF',1);await click(bob,tag);assert.equal(Number((await inspect(tag)).health),14);assert.equal((await inventory(bob)).amount,'1','Another player cannot heal or spend food');
+   await command('gamemode creative CareOwner');await food(alice,'BEEF',1);await click(alice,tag);
+   assert.equal(Number((await inspect(tag)).health),14);assert.equal((await inventory(alice)).amount,'1','Creative cannot heal');await command('gamemode survival CareOwner');
+   await food(alice,'BONE',1);await click(alice,tag);assert.equal(Number((await inspect(tag)).health),14);assert.equal((await inventory(alice)).amount,'1','A finisher is not healing food');
+   const maximum=Number((await inspect(tag)).maxHealth);await command(`carefixture health ${tag} ${maximum-1}`);await command(`carefixture time ${tag} heal-next 0`);
+   await food(alice,'BEEF',2);await click(alice,tag);assert.equal(Number((await inspect(tag)).health),maximum,'Healing must stop at maximum health');assert.equal((await inventory(alice)).amount,'1');
+   await click(alice,tag);assert.equal((await inventory(alice)).amount,'0','A healthy juvenile retains its existing growth-food behavior');
+   return {health:maximum,ageBefore:age,ageAfter:(await inspect(tag)).adultAt};
+  } finally {await command(`kill @e[tag=${tag},limit=1]`);}
+ });
  await check('Spawn-tick Rex identification prevents legacy one-seed taming before deferred restore',async()=>{
   const tag='care_spawn_tick';
   try {

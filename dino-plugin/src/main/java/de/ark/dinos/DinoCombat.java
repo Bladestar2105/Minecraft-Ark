@@ -33,6 +33,7 @@ final class DinoCombat implements Listener {
     private final DinoSpit spit;
     private final Map<UUID, Mob> wild = new HashMap<>();
     private final Map<UUID, LivingEntity> targets = new HashMap<>();
+    private final Map<UUID, UUID> provoked = new HashMap<>();
     private final Map<UUID, Integer> lastAttack = new HashMap<>();
     private final BukkitTask task;
     private Mob attacking;
@@ -61,6 +62,7 @@ final class DinoCombat implements Listener {
 
     void restore(Mob mob) {
         wild.remove(mob.getUniqueId());
+        provoked.remove(mob.getUniqueId());
         if (!wildLand(mob) || !plugin.prepare(mob)) return;
         wild.put(mob.getUniqueId(), mob);
     }
@@ -83,7 +85,7 @@ final class DinoCombat implements Listener {
 
     private double meleeDamage(Mob mob) {
         return switch (plugin.species(mob)) {
-            case "trex" -> 20;
+            case "trex" -> 10;
             case "velociraptor" -> 6;
             case "dilophosaurus" -> 5;
             case "triceratops", "stegosaurus" -> 8;
@@ -109,8 +111,8 @@ final class DinoCombat implements Listener {
         if (!available(mob) || !target.isValid() || target.isDead() || target.equals(mob) || DinoSeats.isSeat(target)
                 || plugin.passengers(mob).contains(target)
                 || !target.getWorld().equals(mob.getWorld()) || mob.getLocation().distanceSquared(target.getLocation()) > 24 * 24) return false;
-        if (!plugin.owned(mob)) return predator(mob) && !plugin.formerOwner(mob, target)
-                && target instanceof Player player && player.isOnline() && plugin.survival(player);
+        if (!plugin.owned(mob)) return (predator(mob) || "pteranodon".equals(plugin.species(mob)) && target.getUniqueId().equals(provoked.get(mob.getUniqueId()))) && !plugin.formerOwner(mob, target)
+                && target instanceof Player player && player.isOnline() && plugin.survival(player) && !plugin.taming(mob,player);
         if (actor == null || !actor.equals(actor(mob)) || (plugin.staying(mob) && plugin.driver(mob) == null)
                 || !actor.isOnline() || actor.isDead() || !plugin.survival(actor)
                 || !actor.getWorld().equals(mob.getWorld()) || actor.getLocation().distanceSquared(mob.getLocation()) > 48 * 48
@@ -137,6 +139,7 @@ final class DinoCombat implements Listener {
 
     void cancel(Mob mob) {
         targets.remove(mob.getUniqueId());
+        provoked.remove(mob.getUniqueId());
         spit.cancel(mob);
         plugin.stop(mob);
     }
@@ -162,6 +165,7 @@ final class DinoCombat implements Listener {
 
     boolean damage(Mob mob, LivingEntity target, double amount, boolean nativeMelee, Player actor) {
         if (!validTarget(mob, target, actor)) return false;
+        if (!plugin.owned(mob) && "pteranodon".equals(plugin.species(mob)) && !mob.isOnGround()) return false;
         attacking = mob; attackTarget = target; attackActor = actor; landed = false;
         try {
             if (nativeMelee && mob instanceof org.bukkit.entity.Ravager) {
@@ -180,6 +184,7 @@ final class DinoCombat implements Listener {
     }
 
     private boolean attack(Mob mob, LivingEntity target, Entity contact) {
+        if (!plugin.owned(mob) && "pteranodon".equals(plugin.species(mob)) && !mob.isOnGround()) return false;
         int tick = Bukkit.getCurrentTick();
         Integer previous = lastAttack.get(mob.getUniqueId());
         if ((previous != null && tick - previous < 20) || !target.equals(targets.get(mob.getUniqueId()))
@@ -257,6 +262,14 @@ final class DinoCombat implements Listener {
         if (event.getFinalDamage() <= 0) return;
         if (event.getDamager().equals(attacking) && event.getEntity().equals(attackTarget)) landed = true;
         LivingEntity source = attacker(event.getDamager());
+        if (source instanceof Player player && event.getEntity() instanceof Mob mob) {
+            plugin.interruptTaming(mob,player);
+            if (wildLand(mob) && "pteranodon".equals(plugin.species(mob)) && available(mob)
+                    && player.isOnline() && !player.isDead() && plugin.survival(player) && !plugin.formerOwner(mob,player)
+                    && mob.getWorld().equals(player.getWorld()) && mob.getLocation().distanceSquared(player.getLocation())<=24*24) {
+                provoked.put(mob.getUniqueId(),player.getUniqueId());targets.put(mob.getUniqueId(),player);plugin.landPtera(mob);
+            }
+        }
         if (event.getEntity() instanceof Player victim) defend(victim, source);
         if (event.getEntity() instanceof Mob victim) defend(victim, source);
         if (source instanceof Player owner && event.getEntity() instanceof LivingEntity target) defend(owner, target);
@@ -315,7 +328,7 @@ final class DinoCombat implements Listener {
     @EventHandler public void unload(EntitiesUnloadEvent event) {
         for (Entity entity : event.getEntities()) if (entity instanceof Mob mob) {
             spit.cancel(mob);
-            targets.remove(mob.getUniqueId()); wild.remove(mob.getUniqueId()); lastAttack.remove(mob.getUniqueId());
+            targets.remove(mob.getUniqueId()); provoked.remove(mob.getUniqueId()); wild.remove(mob.getUniqueId()); lastAttack.remove(mob.getUniqueId());
         }
     }
 
@@ -324,6 +337,6 @@ final class DinoCombat implements Listener {
         spit.close();
         protection.close();
         for (Mob mob : java.util.stream.Stream.concat(wild.values().stream(), plugin.companions().stream()).toList()) cancel(mob);
-        wild.clear(); targets.clear(); lastAttack.clear(); HandlerList.unregisterAll(this);
+        wild.clear(); targets.clear(); provoked.clear(); lastAttack.clear(); HandlerList.unregisterAll(this);
     }
 }

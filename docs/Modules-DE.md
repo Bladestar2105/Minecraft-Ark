@@ -9,7 +9,7 @@ Das Paket enthält sieben getrennt gebaute Projektplugins. Der neue Standardstac
 | `accounts` | ArkAccounts | Gemeinsame Passwörter, Wiederherstellung, Profil/Statistiken, gemeinsame Spieleranmeldung, aktuelle OP-Prüfung und private API | Grundlage für Wardrobe/Support |
 | `wardrobe` | ArkWardrobe | Eigene Skins, Editorablage, Aktivierung und Signierung | ArkAccounts; SkinsRestorer |
 | `support` | ArkSupport | Dauerhafte Anfragen, Antworten und Hinweise im Spiel | ArkAccounts |
-| `dino` | ArkDinos 1.2.0 | Acht Modelle, Weltbegegnungen, Zähmen, Reitfreigabe, Oberflächenschwimmen, Kampf und Pteranodon-Flug | BetterModel, Geyser-Bridge/-Utilities, PacketEvents und Java-/Bedrock-Pakete |
+| `dino` | ArkDinos 1.2.1 | Acht Modelle, Weltbegegnungen, Zähmen, Reitfreigabe, Oberflächenschwimmen, Kampf und Pteranodon-Flug | BetterModel, Geyser-Bridge/-Utilities, PacketEvents und Java-/Bedrock-Pakete |
 | `atlas` | ArkAtlas | Atlas im Spiel | Getrenntes Spielplugin |
 | `panel` | ArkPanelBridge | Laufzeitdaten und Verwaltungsbrücke | Getrenntes Verwaltungsplugin |
 | `access` | ArkAccessBridge | Integration bestehender Offline-/AuthMe-Installationen (1.1.1) | Getrennt geprüfte Migration; kein Standard im neuen Stack |

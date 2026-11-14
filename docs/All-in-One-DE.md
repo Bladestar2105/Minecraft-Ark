@@ -2,7 +2,7 @@
 
 [English](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One) · [Installation aus Quellcode](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Installation-DE) · [Module](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules-DE)
 
-Der stabile Anwendungsrelease [`app-2026-11-14`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-14) stellt `Minecraft-Ark-app-2026-11-14-all-in-one.zip` mit Docker-Stack, Webanwendungen, Setup-/Konfigurationsquellen und allen sieben geprüften Projekt-JARs bereit. Die große Welt, fremde Server-/Plugin-JARs, persönliche Konten und Geheimnisse sind nicht eingebettet. Lade das ZIP und `SHA256SUMS` aus demselben Anwendungsrelease.
+Der stabile Anwendungsrelease [`app-2026-11-14-2`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-14-2) stellt `Minecraft-Ark-app-2026-11-14-2-all-in-one.zip` mit Docker-Stack, Webanwendungen, Setup-/Konfigurationsquellen und allen sieben geprüften Projekt-JARs bereit. Die geprüfte gepatchte GeyserModelEngine-Bridge ist ebenfalls enthalten. Die große Welt, der Server und die übrigen fremden Plugins werden separat geladen; persönliche Konten und Geheimnisse sind ausgeschlossen. Lade das ZIP und `SHA256SUMS` aus demselben Anwendungsrelease.
 
 Voraussetzungen auf dem Host: Docker mit Compose v2, Python 3.10+, ein Programm zum Entpacken und Internetzugang. **Das Binärpaket benötigt kein Host-JDK.** Java 25 läuft im Spielcontainer. Plane Platz für Weltarchiv, entpackte Welt, Kartenberechnung und private Backups ein; mindestens 8 GiB Host-RAM sind eine erste Empfehlung, keine Kapazitätszusage.
 

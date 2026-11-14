@@ -1,11 +1,15 @@
 name: ArkDinos
-version: 1.2.0
+version: 1.2.1
 main: de.ark.dinos.ArkDinos
 api-version: '26.3'
 description: Eight persistent ARK dinosaurs with native riding, flight and optional crossplay models.
 author: ARK
 softdepend: [BetterModel, packetevents, GeyserModelEngine, Geyser-Spigot, WorldGuard, GriefPrevention]
 commands:
+  dinos:
+    description: Eigene gezähmte Dinos und ihre zuletzt bekannte Position anzeigen
+    usage: /dinos
+    aliases: [dinofind]
   dinoeier:
     description: Dino-Eier im Kreativmodus einer Dino-Welt auswählen
     usage: /dinoeier

@@ -93,6 +93,14 @@ def initialize(root=ROOT, portal_url=DEFAULT_PORTAL_URL):
     properties = root / "data/server.properties"
     if properties.exists():
         raise ValueError("Existing server.properties: refusing to replace a running installation.")
+    pack_version = None
+    if any((root / "data/plugins").glob("ArkDinos-*.jar")):
+        from install_plugins import dino_model_files
+        digest = hashlib.sha256()
+        for name, content in sorted(dino_model_files(root)):
+            if name.startswith("data/plugins/BetterModel/models/"):
+                digest.update(name.encode() + b"\0" + content)
+        pack_version = digest.hexdigest()
     config = root / "data/plugins/ArkAccounts/config.yml"
     if config.is_symlink() or config.exists() and not config.is_file():
         raise ValueError("ArkAccounts config must be a regular file.")
@@ -112,9 +120,9 @@ def initialize(root=ROOT, portal_url=DEFAULT_PORTAL_URL):
             "enable-rcon=true\nrcon.port=25575\nrcon.password=" + rcon + "\n"
             "difficulty=normal\ngamemode=survival\nmax-players=10\nview-distance=14\nspawn-protection=0\n"
             "motd=Minecraft ARK\nallow-flight=true\n")
-        if any((root / "data/plugins").glob("ArkDinos-*.jar")):
+        if pack_version is not None:
             portal = urlsplit(portal_url)
-            pack_url = urlunsplit((portal.scheme, portal.netloc, "/resources/dinos.zip", "", ""))
+            pack_url = urlunsplit((portal.scheme, portal.netloc, "/resources/dinos.zip", "v=" + pack_version, ""))
             with properties.open("a") as target:
                 target.write("resource-pack=" + pack_url + "\nrequire-resource-pack=true\n")
         for name in ["data", "panel-state"]:

@@ -16,7 +16,7 @@ from install_plugins import PLUGINS, sha256, verify_own_plugins
 TIMESTAMP = (2026, 11, 7, 0, 0, 0)
 PRIVATE = {".git", ".env", "secrets", "data", "panel-state", ".cache", ".deps", ".venv",
            "dist", "build", "__pycache__", "node_modules", "test-fixtures", "fixtures", "output"}
-TEXT_SUFFIXES = {".py", ".java", ".json", ".bbmodel", ".patch", ".conf", ".yml", ".yaml", ".md", ".txt", ".html", ".css", ".js", ".mjs", ".sh", ".properties", ".xml", ".toml"}
+TEXT_SUFFIXES = {".mcmeta", ".mcfunction", ".py", ".java", ".json", ".bbmodel", ".patch", ".conf", ".yml", ".yaml", ".md", ".txt", ".html", ".css", ".js", ".mjs", ".sh", ".properties", ".xml", ".toml"}
 TEXT_NAMES = {".env.example", ".gitignore", ".dockerignore", "Dockerfile", "LICENSE", "requirements.txt"}
 
 
@@ -27,7 +27,8 @@ def source_files(root):
         raise ValueError("Source allowlist must be a sorted unique list including itself.")
     for name in names:
         parts = PurePosixPath(name).parts
-        if (set(parts) & PRIVATE or name == "own-plugins.json" or any(part.startswith(".env") and part != ".env.example" for part in parts)
+        if (any(part in PRIVATE and not (index == 2 and parts[:3] == ("world-design", "long_days", "data"))
+                for index, part in enumerate(parts)) or name == "own-plugins.json" or any(part.startswith(".env") and part != ".env.example" for part in parts)
                 or not parts or Path(name).suffix not in TEXT_SUFFIXES and parts[-1] not in TEXT_NAMES):
             raise ValueError("Private or non-source allowlist path: " + name)
         source = safe_path(root, name)
