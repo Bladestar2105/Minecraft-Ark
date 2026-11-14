@@ -36,6 +36,16 @@ Under **Players → Previously connected players**, administrators can also see 
 
 The list uses successful joins from retained server logs, including compressed archives, and cached names backed by saved player data. A name in the profile cache alone or a rejected connection is not a successful join. Deleted history may be missing; unreadable files produce a warning.
 
+## Container and item auditing
+
+The current source after `app-2026-11-14` installs Prism `4.5+container-audit.1` with NBTAPI 2.16.1. Templates under `config/prism/` enable inventory opens, item insertion/removal, pickup/drop, block break/place, and player join/quit. Records include the player, time, world, coordinates, item and quantity where applicable. The persistent local SQLite database is `data/plugins/prism/prism.db`.
+
+Chat/command recording, the web server and automatic rollbacks are disabled. The standard scheduled purge removes Prism records older than six weeks. Keep the database private. Operators can activate the inspection tool with `/pr wand inspect` and inspect a container; `/pr lookup` defaults to the last three days within 32 blocks. See the [Prism guide](https://docs.prism-mc.org/using/) for further search parameters.
+
+On an existing server, install only the two verified plugin JARs and matching Prism configuration while Minecraft is cleanly stopped, then restart and check `/pr status`. Fresh setup does not upgrade an existing installation and refuses existing audit settings. Recording starts at activation; earlier withdrawals cannot be reconstructed.
+
+The modified Prism version fixes odd half-stack amounts and number-key/offhand swap records. Source provenance, patch and build instructions are under `audit-patches/prism/` in the repository.
+
 ## Accounts, tickets and skins
 
 The player service remains isolated internally on port8091, without a Docker socket, RCON secret, world mount or admin service key. The shared root interface calls its allowed personal routes through `/api/player/*`. **ArkAccounts** owns player identity/password/session data; [Wardrobe](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Wardrobe) and [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support) are optional extensions. Read [Modules](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules).

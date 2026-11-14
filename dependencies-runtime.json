@@ -175,5 +175,21 @@
     "url": "https://github.com/retrooper/packetevents/releases/download/v2.14.0/packetevents-spigot-2.14.0.jar",
     "sha256": "060087c58ec268eae7dd0eb1f17ac3bea1eaadda1693414141ff64e506091bd7",
     "kind": "plugin"
+  },
+  {
+    "project": "prism",
+    "name": "prism-paper-v4.5+container-audit.1.jar",
+    "version": "4.5+container-audit.1",
+    "url": "https://github.com/Bladestar2105/Minecraft-Ark/releases/download/prism-container-audit-4.5-1/prism-paper-v4.5%2Bcontainer-audit.1.jar",
+    "sha256": "69e3304515c0ef62ce608e04c3e0550f8695a153333caf5bf325640191a2b94a",
+    "kind": "plugin"
+  },
+  {
+    "project": "nbtapi",
+    "name": "item-nbt-api-plugin-2.16.1.jar",
+    "version": "2.16.1",
+    "url": "https://repo.codemc.io/repository/maven-public/de/tr7zw/item-nbt-api-plugin/2.16.1/item-nbt-api-plugin-2.16.1.jar",
+    "sha256": "c571502e768640c7cff10c49b3eef904ccf3fd95bd81803913abfe43cfc09746",
+    "kind": "plugin"
   }
 ]

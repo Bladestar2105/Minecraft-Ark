@@ -36,6 +36,16 @@ Unter **Spielerverwaltung → Bisher verbundene Spieler** stehen auch frühere, 
 
 Die Liste verwendet erfolgreiche Beitritte aus erhaltenen Serverlogs einschließlich komprimierter Archive sowie zwischengespeicherte Namen mit gespeicherten Spielerdaten. Ein Name allein im Namenscache oder ein abgewiesener Verbindungsversuch gilt nicht als Beitritt. Gelöschte Historie kann fehlen; unlesbare Dateien erzeugen einen Hinweis.
 
+## Kisten- und Item-Protokollierung
+
+Der aktuelle Quellstand nach `app-2026-11-14` installiert Prism `4.5+container-audit.1` mit NBTAPI 2.16.1. Die Konfiguration unter `config/prism/` aktiviert Kistenöffnungen, Item-Einlagerung/-Entnahme, Aufsammeln/Fallenlassen, Blockabbau/-Platzierung und Spielerbeitritte/-austritte. Ereignisse enthalten Spieler, Zeitpunkt, Welt, Koordinaten, Item und Menge, soweit für die jeweilige Aktion vorhanden. Die lokale SQLite-Datenbank liegt dauerhaft unter `data/plugins/prism/prism.db`.
+
+Chat-/Befehlsaufzeichnung, Webserver und automatische Rollbacks sind deaktiviert. Die normale geplante Bereinigung entfernt Prism-Einträge, die älter als sechs Wochen sind. Bewahre die Datenbank privat auf. OPs können mit `/pr wand inspect` das Inspektionswerkzeug aktivieren und eine Kiste prüfen; `/pr lookup` zeigt standardmäßig Ereignisse der letzten drei Tage im Umkreis von 32 Blöcken. Die [Prism-Anleitung](https://docs.prism-mc.org/using/) erklärt weitere Suchparameter.
+
+Auf einem bestehenden Server nur die beiden geprüften Plugin-JARs und die passenden Prism-Konfigurationen bei sauber gestopptem Minecraft installieren; anschließend neu starten und `/pr status` prüfen. Das Neuinstallations-Setup ersetzt keine laufende Installation und verweigert vorhandene Audit-Konfigurationen. Die Erfassung beginnt erst mit der Aktivierung; sie rekonstruiert keine früheren Entnahmen.
+
+Die angepasste Prism-Version korrigiert ungerade halbe Stapel und Zahlentasten-/Zweithandtausch. Herkunft, Patch und Build sind im Repository unter `audit-patches/prism/` dokumentiert.
+
 ## Konten, Anfragen und Skins
 
 Der Spielerprozess bleibt intern auf Port8091 getrennt, ohne Docker-Socket, RCON-Schlüssel, Weltzugriff oder Admin-Dienstschlüssel. Die gemeinsame Oberfläche unter der Hauptadresse nutzt seine erlaubten persönlichen Routen über `/api/player/*`. **ArkAccounts** verwaltet Spieleridentität, Passwort und Sitzungen; [Wardrobe](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Wardrobe-DE) und [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support-DE) sind optionale Erweiterungen. Siehe [Module](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Modules-DE).

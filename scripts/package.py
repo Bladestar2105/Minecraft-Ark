@@ -16,7 +16,7 @@ from install_plugins import PLUGINS, sha256, verify_own_plugins
 TIMESTAMP = (2026, 11, 7, 0, 0, 0)
 PRIVATE = {".git", ".env", "secrets", "data", "panel-state", ".cache", ".deps", ".venv",
            "dist", "build", "__pycache__", "node_modules", "test-fixtures", "fixtures", "output"}
-TEXT_SUFFIXES = {".py", ".java", ".json", ".bbmodel", ".patch", ".yml", ".yaml", ".md", ".txt", ".html", ".css", ".js", ".mjs", ".sh", ".properties", ".xml", ".toml"}
+TEXT_SUFFIXES = {".py", ".java", ".json", ".bbmodel", ".patch", ".conf", ".yml", ".yaml", ".md", ".txt", ".html", ".css", ".js", ".mjs", ".sh", ".properties", ".xml", ".toml"}
 TEXT_NAMES = {".env.example", ".gitignore", ".dockerignore", "Dockerfile", "LICENSE", "requirements.txt"}
 
 
