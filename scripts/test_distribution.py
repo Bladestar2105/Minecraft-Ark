@@ -40,6 +40,9 @@ def install_fixture(root):
     for name in ("geyser.yml", "floodgate.yml", "skinsrestorer.yml", "permissions.yml"):
         (root / "config" / name).write_text("fixture: true\n")
     (root / "config/floodgate.yml").write_text('metrics:\n  enabled: true\n  uuid: ${metrics.uuid}\n')
+    (root / "config/prism").mkdir()
+    (root / "config/prism/prism.conf").write_text('actions { item-remove = true }\n')
+    (root / "config/prism/storage.conf").write_text('primary-storage-type = SQLITE\n')
     (root / "dependencies-runtime.json").write_text(json.dumps([
         {"kind": "plugin", "project": "skinsrestorer", "name": "SkinsRestorer.jar", "url": "https://example.org/skins.jar", "sha256": "0" * 64},
         {"kind": "plugin", "project": "geyser", "name": "Geyser.jar", "url": "https://example.org/geyser.jar", "sha256": "0" * 64}]))
@@ -75,6 +78,26 @@ def dino_models_fixture(root):
 
 
 class InstallerTests(unittest.TestCase):
+    def test_audit_configs_install_and_existing_settings_refuse_before_download(self):
+        for existing in (None, 'prism.conf', 'storage.conf'):
+            with self.subTest(existing=existing), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                install_fixture(root)
+                folder = root / 'data/plugins/prism'
+                if existing:
+                    folder.mkdir(parents=True)
+                    (folder / existing).write_text('operator audit settings\n')
+                with patch.object(install_plugins, 'download') as download:
+                    if existing:
+                        with self.assertRaisesRegex(ValueError, 'Existing installation'):
+                            install_plugins.install(root, ['accounts'])
+                        download.assert_not_called()
+                        self.assertEqual((folder / existing).read_text(), 'operator audit settings\n')
+                    else:
+                        install_plugins.install(root, ['accounts'])
+                        for name in ('prism.conf', 'storage.conf'):
+                            self.assertEqual((folder / name).read_bytes(), (root / 'config/prism' / name).read_bytes())
+
     def test_species_egg_pack_and_mappings_preserve_existing_model_pack_and_cache(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -281,7 +304,8 @@ class DistributionTests(unittest.TestCase):
             (extracted / "data/ark").mkdir(parents=True)
             (extracted / "data/ark/level.dat").write_bytes(b"world")
             (extracted / "config").mkdir()
-            for name in ("geyser.yml", "floodgate.yml", "permissions.yml"):
+            for name in ("geyser.yml", "floodgate.yml", "permissions.yml", "prism/prism.conf", "prism/storage.conf"):
+                (extracted / "config" / name).parent.mkdir(parents=True, exist_ok=True)
                 (extracted / "config" / name).write_text("fixture: true\n")
             dino_models_fixture(extracted)
             (extracted / "dependencies-runtime.json").write_text(json.dumps([item]))
@@ -349,6 +373,28 @@ class DistributionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, reason):
                     package.package(root, "refused")
                 self.assertFalse((root / "dist/refused").exists())
+
+    def test_audit_hocon_configs_package_as_text_with_private_and_binary_guards(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package_fixture(root)
+            name = 'config/prism/storage.conf'
+            target = root / name
+            target.parent.mkdir(parents=True)
+            target.write_text('primary-storage-type = SQLITE\n')
+            names = sorted(json.loads((root / 'distribution-files.json').read_text()) + [name])
+            (root / 'distribution-files.json').write_text(json.dumps(names))
+            with zipfile.ZipFile(next(package.package(root, 'audit-config').glob('*.zip'))) as bundle:
+                self.assertEqual(bundle.read(name), target.read_bytes())
+            for content in (b'config\x00', b'config\xff'):
+                target.write_bytes(content)
+                with self.assertRaisesRegex(ValueError, 'binary file'):
+                    package.package(root, 'refused')
+            (root / 'secrets').mkdir()
+            (root / 'secrets/audit.conf').write_text('private audit data')
+            (root / 'distribution-files.json').write_text(json.dumps(['distribution-files.json', 'secrets/audit.conf']))
+            with self.assertRaisesRegex(ValueError, 'Private or non-source allowlist path'):
+                package.package(root, 'refused')
 
     def test_bundle_is_reproducible_contains_allowlisted_sources_and_seven_verified_jars(self):
         with tempfile.TemporaryDirectory() as tmp:

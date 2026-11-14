@@ -1,0 +1,24 @@
+{
+  "upstream_repository": "https://github.com/prism/Prism",
+  "upstream_tag": "v4.5",
+  "upstream_commit": "57cbaa8ca9af946fa6c8a1d1b420a46e8a5f36d0",
+  "upstream_source_archive_sha256": "08bdc638bac00c01b017ca8c46845a4cdbdbc66e6e6c1b9e4447dcd2d158d34a",
+  "official_binary_sha256": "d0d205ba092e7af10fbf3957dd7df71c28e496d2fe75082da7e4197045f2aa43",
+  "modified_version": "4.5+container-audit.1",
+  "modified_binary_sha256": "69e3304515c0ef62ce608e04c3e0550f8695a153333caf5bf325640191a2b94a",
+  "patch_sha256": "8e3649b4183d8f3fe78738ac3407e23130946aab066c471afda99361ced397d3",
+  "source_bundle_sha256": "f07c23162af924bcd95c1f907e0c1d0e0715de5a8e1d2a2b1d4d9b0251cf9720",
+  "build_tasks": [
+    "clean",
+    ":prism-paper:test",
+    ":prism-paper:checkstyleMain",
+    ":prism-paper-loader:shadowJar",
+    "-PskipWeb"
+  ],
+  "web_frontend": "omitted; the configured web listener is disabled",
+  "license": "MIT; original Prism notice is embedded as META-INF/LICENSE-Prism.txt",
+  "upstream_source_archive_url": "https://codeload.github.com/prism/Prism/tar.gz/57cbaa8ca9af946fa6c8a1d1b420a46e8a5f36d0",
+  "source_archive_format": "tar.gz",
+  "repeat_clean_build_sha256_matches": true,
+  "patch_replay_all_source_files_match": 552
+}

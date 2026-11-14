@@ -1,0 +1,74 @@
+--- a/buildSrc/src/main/groovy/prism.java-conventions.gradle
++++ b/buildSrc/src/main/groovy/prism.java-conventions.gradle
+@@ -49,10 +49,5 @@
+     sha256 = ''
+ }
+ 
+-def details = versionDetails()
+-
+-// Remove the "v" from a tag version
+-version = details.lastTag.substring(1) + (details.commitDistance > 0 ? '-dev' + details.commitDistance : '')
+-
+-// Use the full tag
+-project.ext.fullVersion = details.lastTag + (details.commitDistance > 0 ? '-dev' + details.commitDistance : '')
+\ No newline at end of file
++version = '4.5+container-audit.1'
++project.ext.fullVersion = "v${version}"
+--- /dev/null
++++ b/prism-paper-loader/src/main/resources/META-INF/LICENSE-Prism.txt
+@@ -0,0 +1,22 @@
++The MIT License (MIT)
++
++Copyright (c) 2022 M Botsko (viveleroi)
++                   Contributors
++
++Permission is hereby granted, free of charge, to any person obtaining a copy
++of this software and associated documentation files (the "Software"), to deal
++in the Software without restriction, including without limitation the rights
++to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++copies of the Software, and to permit persons to whom the Software is
++furnished to do so, subject to the following conditions:
++
++The above copyright notice and this permission notice shall be included in
++all copies or substantial portions of the Software.
++
++THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++THE SOFTWARE.
+\ No newline at end of file
+--- a/prism-paper/src/main/java/org/prism_mc/prism/paper/listeners/inventory/InventoryClickListener.java
++++ b/prism-paper/src/main/java/org/prism_mc/prism/paper/listeners/inventory/InventoryClickListener.java
+@@ -161,10 +161,10 @@
+                     recordItemRemoveActivity(location, player, heldItem, totalCollected);
+                 }
+             }
+-            case HOTBAR_SWAP, PICKUP_ALL -> {
++            case PICKUP_ALL -> {
+                 recordItemRemoveActivity(location, player, slotItem);
+             }
+-            case HOTBAR_MOVE_AND_READD -> {
++            case HOTBAR_SWAP, HOTBAR_MOVE_AND_READD -> {
+                 ItemStack swapItem = null;
+                 if (event.getHotbarButton() == -1) {
+                     swapItem = player.getInventory().getItemInOffHand();
+@@ -172,7 +172,6 @@
+                     swapItem = player.getInventory().getItem(event.getHotbarButton());
+                 }
+ 
+-                // No need to check if the item exists because this only fires when it does
+                 recordItemInsertActivity(location, player, swapItem);
+                 recordItemRemoveActivity(location, player, slotItem);
+             }
+@@ -195,7 +194,7 @@
+             }
+             case PICKUP_HALF -> {
+                 if (ItemUtils.isValidItem(slotItem)) {
+-                    recordItemRemoveActivity(location, player, slotItem, Integer.max(slotItem.getAmount() / 2, 1));
++                    recordItemRemoveActivity(location, player, slotItem, Math.ceilDiv(slotItem.getAmount(), 2));
+                 }
+             }
+             case PICKUP_ONE -> {

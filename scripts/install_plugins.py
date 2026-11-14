@@ -123,7 +123,9 @@ def install(root=ROOT, modules=None):
     models = dino_model_files(root) + dino_item_files(root) if "dino" in modules else []
     copies = [("config/geyser.yml", "data/plugins/Geyser-Spigot/config.yml"),
               ("config/floodgate.yml", "data/plugins/floodgate/config.yml"),
-              ("config/permissions.yml", "data/permissions.yml")]
+              ("config/permissions.yml", "data/permissions.yml"),
+              ("config/prism/prism.conf", "data/plugins/prism/prism.conf"),
+              ("config/prism/storage.conf", "data/plugins/prism/storage.conf")]
     if "wardrobe" in modules:
         copies.append(("config/skinsrestorer.yml", "data/plugins/SkinsRestorer/config.yml"))
     items = json.loads(safe_path(root, "dependencies-runtime.json").read_text())
