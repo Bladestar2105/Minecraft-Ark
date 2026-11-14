@@ -7,8 +7,10 @@ from test_model_poses import pose
 
 BASELINE = {
     'triceratops': '26240c50ccec7fd1a6f57b2795f4937e8ce5bbee4940150bfc277a6deae29c80',
-    'stegosaurus': 'e021fa349f51bc96ca5152ae915899567847d4abf4a9f859cbf94ecc16442f7f',
-    'pteranodon': 'b192998cb08efbcb0e7968f754cdf7a07fb6a5dbfb951b465985454404428b5a',
+    # The still-head attack track keeps BetterModel's head/jaw idle clocks synchronized.
+    'stegosaurus': '20894c6b9293dd9ada5af0cf46bc5bd6b2c7498bd00bacab2d3e661592616fa2',
+    # Includes the neck overlap and hip flesh required by the all-clip joint regression.
+    'pteranodon': '56756b064acd295dd095a1deab6192779f0a09aedce03f9e99c662592834b506',
     'dilophosaurus': '7d012313990b5099ea6b04c4f0649cea8506e1ec953a737d502bc9e329925298',
 }
 PREFIXES = {'triceratops': ('brow_horn_', 'nose_horn'),

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Disposable loopback Paper236 fixture and direct protocol777 clients; no historical world is opened.
+// Disposable loopback Paper246 fixture and direct protocol777 clients; no historical world is opened.
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -13,8 +13,9 @@ import { setTimeout as delay } from 'node:timers/promises';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
-const cache = process.env.DINO_PAPER_CACHE ?? `${root}artifacts/renewal-20261103/server`;
-const paperJar = process.env.DINO_PAPER_JAR ?? `${root}artifacts/renewal-20261103/paper-26.3-236.jar`;
+const cache = process.env.DINO_PAPER_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
+const paperJar = process.env.DINO_PAPER_JAR ?? `${cache}/paper.jar`;
+const paperBuild = process.env.DINO_PAPER_JAR?.match(/paper-26\.3-([0-9]+)\.jar$/)?.[1] ?? '246';
 await mkdir(`${plugin}build`, { recursive: true });
 const directory = await mkdtemp(`${plugin}build/riding-smoke-`);
 const report = { startedAt: new Date().toISOString(), fixture: directory, checks: [], limits: [
@@ -109,8 +110,10 @@ try {
   for (const item of ['libraries', 'versions', 'cache']) await symlink(`${cache}/${item}`, `${directory}/${item}`);
   await mkdir(`${directory}/plugins`, { recursive: true });
   await copyFile(paperJar, `${directory}/paper.jar`);
-  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${plugin}build/ArkDinos-1.1.0.jar`)).digest('hex');
-  await copyFile(`${plugin}build/ArkDinos-1.1.0.jar`, `${directory}/plugins/ArkDinos.jar`);
+  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${plugin}build/ArkDinos-1.2.0.jar`)).digest('hex');
+  await copyFile(`${plugin}build/ArkDinos-1.2.0.jar`, `${directory}/plugins/ArkDinos.jar`);
+  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});
+  await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark\nprototype-worlds: []\nwild-spawning:\n  enabled: false\n');
   await mkdir(`${directory}/fixture-classes`);
   execFileSync(`${javaHome}/bin/javac`, ['--release', '25', '-sourcepath', '', '-cp', `${plugin}.deps/*`, '-d', `${directory}/fixture-classes`, `${plugin}src/runtime/java/de/ark/dinos/RidingFixture.java`]);
   execFileSync(`${javaHome}/bin/jar`, ['--create', '--file', `${directory}/plugins/RidingFixture.jar`, '-C', `${directory}/fixture-classes`, '.', '-C', `${plugin}src/runtime/resources`, '.']);
@@ -119,7 +122,7 @@ try {
   server = spawn(`${javaHome}/bin/java`, ['-Xms256M', '-Xmx1G', '-Dterminal.jline=false', '-Dterminal.ansi=false', '-jar', 'paper.jar', '--nogui'], { cwd: directory, stdio: ['pipe', 'pipe', 'pipe'] });
   server.stdout.on('data', bytes => { log += bytes.toString(); }); server.stderr.on('data', bytes => { log += bytes.toString(); });
   await eventually(() => log.includes('Done (') || (server.exitCode !== null && assert.fail(log.slice(-4000))), 'Isolated Paper did not boot', 90000);
-  assert.match(log, /Paper version 26\.3-236-/, 'Riding fixture requires the pinned Paper build');
+  assert.match(log, new RegExp(`Paper version 26\\.3-${paperBuild}-`), 'Riding fixture requires the pinned Paper build');
   await command('whitelist off');
   await command('gamerule minecraft:advance_time false');
   await command('gamerule minecraft:spawn_mobs false');

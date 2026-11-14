@@ -9,20 +9,22 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = Path(os.environ.get('DINO_TARGET_OUTPUT', ROOT / 'output/dino-round5-20261108/model-target'))
 OUTPUT.mkdir(parents=True, exist_ok=True)
-JDK = ROOT / 'dino-plugin/.tools/jdk-25.0.5+8/Contents/Home/bin'
+JDK = Path(os.environ.get('JAVA_HOME', ROOT / 'dino-plugin/.tools/jdk-25.0.5+8/Contents/Home')) / 'bin'
 paths = sorted(p for p in (ROOT / 'dino-plugin/.deps').glob('*.jar') if not p.name.endswith('-sources.jar'))
-cache = Path.home() / '.gradle/caches/modules-2/files-2.1'
+cache = Path(os.environ.get('DINO_MODEL_TEST_LIBS', Path.home() / '.gradle/caches/modules-2/files-2.1'))
 for pattern in ('**/mockito-core-*.jar', '**/byte-buddy-*.jar', '**/objenesis-*.jar'):
-    matches = sorted(cache.glob(pattern))
+    matches = sorted(p for p in cache.glob(pattern) if not p.name.endswith(('-sources.jar', '-javadoc.jar')))
     assert matches, f'Missing cached test dependency: {pattern}'
     paths.extend(matches)
-paths.extend(sorted(p for p in (ROOT / 'output/dino-model-spike-20261107/private/server/libraries').rglob('*.jar') if not p.name.startswith('slf4j-simple-')))
+paper_cache = Path(os.environ.get('DINO_MODEL_CACHE', os.environ.get('DINO_MODEL_STACK_CACHE', ROOT / 'output/live-dependency-stack-20261110/private/server')))
+paths.extend(sorted(p for p in (paper_cache / 'libraries').rglob('*.jar') if not p.name.startswith('slf4j-simple-')))
 classes = OUTPUT / 'classes'
 classes.mkdir(exist_ok=True)
 source = ROOT / 'dino-plugin/src/main/java/de/ark/dinos'
-sources = [source / f'{name}.java' for name in ('DinoModels', 'BetterModelAdapter', 'BetterModelCleanup', 'DinoPassengerOrder', 'BedrockSeats', 'DinoGrowth', 'EggAssets')]
+sources = [source / f'{name}.java' for name in ('DinoModels', 'BetterModelAdapter', 'BetterModelCleanup', 'DinoPassengerOrder', 'BedrockSeats', 'DinoGrowth', 'DinoSizes', 'EggAssets')]
 sources.append(ROOT / 'dino-plugin/src/runtime/java/de/ark/dinos/ModelTargetProbe.java')
 classpath = ':'.join(map(str, paths))
+agent = next(p for p in paths if p.name.startswith('byte-buddy-agent-'))
 compiled = subprocess.run([str(JDK / 'javac'), '-sourcepath', '', '-cp', classpath, '-d', str(classes), *map(str, sources)], capture_output=True, text=True)
 if compiled.returncode:
     print(compiled.stderr, end='', file=sys.stderr)
@@ -30,7 +32,7 @@ if compiled.returncode:
 checks = []
 for optional in (False, True):
     selected = [p for p in paths if not optional or not any(name in p.name.lower() for name in ('bettermodel', 'packetevents', 'geyser'))]
-    result = subprocess.run([str(JDK / 'java'), '-Dnet.bytebuddy.experimental=true', '-XX:+EnableDynamicAgentLoading', '-cp', ':'.join(map(str, selected)) + ':' + str(classes), 'de.ark.dinos.ModelTargetProbe', *(['optional'] if optional else [])], capture_output=True, text=True)
+    result = subprocess.run([str(JDK / 'java'), f'-javaagent:{agent}', '-Dnet.bytebuddy.experimental=true', '-cp', ':'.join(map(str, selected)) + ':' + str(classes), 'de.ark.dinos.ModelTargetProbe', *(['optional'] if optional else [])], capture_output=True, text=True)
     checks.append({'optionalJarsAbsent': optional, 'ok': result.returncode == 0, 'stdout': result.stdout, 'stderr': result.stderr})
     print(result.stdout, end='')
     print(result.stderr, end='', file=sys.stderr)

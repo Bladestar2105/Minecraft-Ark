@@ -277,11 +277,8 @@ def _geometry(site):
 
     elif kind == "habitat":
         fill(x - 14, y, z - 14, x + 14, y, z + 14, "moss_block")
-        for edge in (-16, 16):
-            fill(x - 16, y + 1, z + edge, x + 16, y + 1, z + edge, wood + "_fence")
-            fill(x + edge, y + 1, z - 16, x + edge, y + 1, z + 16, wood + "_fence")
-        for dx in (-1, 0, 1):
-            block(x + dx, y + 1, z + 16, wood + "_fence_gate[facing=south,in_wall=false,open=false,powered=false]")
+        # Open encounter clearing: wild animals choose new paths from their current position.
+        # Never surround them with a territory fence or teleport them back here.
         fill(x + 7, y, z + 4, x + 11, y, z + 8, "water")
         for dx, dz in ((-9, -8), (10, -9), (-9, 9)):
             block(x + dx, y + 1, z + dz, "mossy_cobblestone")
@@ -294,7 +291,7 @@ def _geometry(site):
                          '{Tags:["ark_dino","ark_dino_wild","' + tag + '"],PersistenceRequired:1b,CustomName:{text:' + json.dumps(name, ensure_ascii=False) + '}}')
             site["npcs"].append({"tag": tag, "mob": mob, "role": "dino", "name": name,
                                  "x": x + dx + .5, "y": y + 1, "z": z + .5})
-        sign(x + 4, y + 2, z + 17, ["URZEIT-REVIER", "Fackelliliensamen", "zähmen per Klick", "Vorsicht: wilde Jäger"])
+        sign(x + 4, y + 2, z + 17, ["URZEIT-PFADE", "Dinos ziehen weiter", "Futter nach Tierart", "Vorsicht: wilde Jäger"])
         for dx in (-16, 16):
             lamp(x + dx, z - 16)
 
@@ -415,7 +412,7 @@ def write_pack(path, sites):
     destination = Path(path)
     functions = destination / "data/ark_renewal/function"
     functions.mkdir(parents=True, exist_ok=True)
-    (destination / "pack.mcmeta").write_text(json.dumps({"pack": {"description": "ARK — neue Dörfer, Urzeit-Reviere und sichere Tore",
+    (destination / "pack.mcmeta").write_text(json.dumps({"pack": {"description": "ARK — neue Dörfer, offene Urzeit-Pfade und sichere Tore",
                                                                "min_format": [121, 0], "max_format": [121, 0]}}, ensure_ascii=False) + "\n")
     for name, lines in pack.items():
         (functions / (name + ".mcfunction")).write_text("\n".join(lines) + "\n")

@@ -16,6 +16,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 
 final class DinoProtection implements Listener {
     private final ArkDinos plugin;
+    private final DinoCombat combat;
     private Object query, pvp, animals;
     private Method adapt, test, wrap;
     private boolean warned;
@@ -23,8 +24,8 @@ final class DinoProtection implements Listener {
     private Method gpDamage, gpMonitor;
     private boolean gpWarned;
 
-    DinoProtection(ArkDinos plugin) {
-        this.plugin = plugin;
+    DinoProtection(ArkDinos plugin, DinoCombat combat) {
+        this.plugin = plugin; this.combat = combat;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
@@ -106,10 +107,10 @@ final class DinoProtection implements Listener {
         if (grief == null) return;
         try {
             if (!grief.isEnabled()) throw new IllegalStateException("GriefPrevention disabled");
-            var owner = plugin.getServer().getPlayer(java.util.UUID.fromString(plugin.owner(mob)));
-            if (owner == null) throw new IllegalStateException("Companion owner unavailable");
+            Player actor = combat.damageActor(mob);
+            if (actor == null) throw new IllegalStateException("Companion attack actor unavailable");
             // Commit GP combat/logout state only after the real native damage event succeeds.
-            gpMonitor.invoke(gpHandler, attributed(owner, target, event.getFinalDamage()));
+            gpMonitor.invoke(gpHandler, attributed(actor, target, event.getFinalDamage()));
         } catch (ReflectiveOperationException | LinkageError | RuntimeException error) { gpUnavailable(error); }
     }
 

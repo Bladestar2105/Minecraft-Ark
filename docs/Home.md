@@ -20,4 +20,4 @@ A prepared survival adventure world with a separate creative world, Java/Bedrock
 
 This is the official manual linked from the webinterface. Application/plugin updates and the world snapshot are separate: the world archive alone does not install new features. An application ZIP is available only when attached to its selected [application release](https://github.com/Bladestar2105/Minecraft-Ark/releases); these instructions do not imply a deployment.
 
-Template versions: Minecraft/Paper 26.3, Paper build 241, Java 25. Original code is MIT; original world content is CC BY 4.0. Third-party components retain their own licenses.
+Template versions: Minecraft/Paper 26.3, Paper build 246, Java 25. Original code is MIT; original world content is CC BY 4.0. Third-party components retain their own licenses.

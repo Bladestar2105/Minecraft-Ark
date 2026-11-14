@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // Disposable loopback Paper fixture and direct protocol777 clients; no historical world is opened.
+// DINO_FLIGHT_SPEED_ONLY=1 checks real normal/sprint/released-sprint flight input without a model stack.
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import zlib from 'node:zlib';
@@ -13,8 +14,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
-const cache = process.env.DINO_PAPER_CACHE ?? `${root}artifacts/renewal-20261103/server`;
-const paperJar = process.env.DINO_PAPER_JAR ?? `${root}artifacts/renewal-20261103/paper-26.3-236.jar`;
+const cache = process.env.DINO_PAPER_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
+const paperJar = process.env.DINO_PAPER_JAR ?? `${cache}/paper.jar`;
 const output=process.env.DINO_CONTROLS_OUTPUT ?? `${plugin}build`;
 await mkdir(output, { recursive: true });
 const directory = await mkdtemp(`${output}/controls-smoke-`);
@@ -23,7 +24,7 @@ const report = {startedAt:new Date().toISOString(),fixture:directory,checks:[],l
   'Inventory clicks and cancelled interactions use dispatched native Paper events against actual inventories.',
   'Juvenile deadlines advance through fixture-only PDC edits; real server restart verifies mode and former-owner persistence.',
 ]};
-const reportPath=`${output}/controls-runtime-report.json`;
+const reportPath=`${output}/${process.env.DINO_SECOND_RIDER_ONLY==='1'?'second-rider':process.env.DINO_WILDLIFE_ONLY==='1'?'wildlife':'controls'}-runtime-report.json`;
 const clients=[];let server,log='';
 const vi = value => { const out = []; do { let byte = value & 127; value >>>= 7; if (value) byte |= 128; out.push(byte); } while (value); return Buffer.from(out); };
 const readVi = (buffer, start = 0) => { let value = 0; for (let n = 0; n < 5; n++) { if (start + n >= buffer.length) return null; const byte = buffer[start + n]; value |= (byte & 127) << (7 * n); if (!(byte & 128)) return { value, end: start + n + 1 }; } throw Error('Invalid VarInt'); };
@@ -71,7 +72,7 @@ class Client extends EventEmitter {
       if (id === 3) { this.send(3); this.phase = 'play'; this.tick = setInterval(() => { this.send(0x21, Buffer.from([1])); this.send(0x0d); }, 50); }
     } else {
       if (id === 0x2d) this.send(0x1c, body);
-      if (id === 0x49) { const token = readVi(body); this.send(0, Buffer.concat([vi(token.value), body.subarray(token.end, token.end + 24), body.subarray(token.end + 48, token.end + 56)])); this.send(0x2c); }
+      if (id === 0x49) { this.selfTeleports=(this.selfTeleports??0)+1;const token = readVi(body); this.send(0, Buffer.concat([vi(token.value), body.subarray(token.end, token.end + 24), body.subarray(token.end + 48, token.end + 56)])); this.send(0x2c); }
       if (id === 0x32) { this.send(0x2c); this.joined = true; }
       if (id === 0x01) { const entity = readVi(body); this.entities.set(uuidString(body.subarray(entity.end, entity.end + 16)), entity.value); }
       if (id === 0x20) this.failure = Error(`Play disconnect: ${body.toString('hex')}`);
@@ -113,12 +114,12 @@ async function stop(){clients.forEach(c=>c.close());await command('save-all flus
 try {
  for(const name of ['libraries','versions','cache'])await symlink(`${cache}/${name}`,`${directory}/${name}`);
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
- if(process.env.DINO_PTERA_MODELS==='1'||process.env.DINO_SPEED_MODELS==='1') {
-  const modelCache=`${root}output/dino-model-spike-20261107/private/server`;
+ if(process.env.DINO_PTERA_MODELS==='1'||process.env.DINO_SPEED_MODELS==='1'||process.env.DINO_SECOND_RIDER_MODELS==='1') {
+  const modelCache=process.env.DINO_MODEL_STACK_CACHE??`${root}output/live-dependency-stack-20261110/private/server`;
   for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','geyser-spigot.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar'])await copyFile(`${modelCache}/plugins/${name}`,`${directory}/plugins/${name}`);
-  await copyFile(process.env.DINO_GME_JAR??`${root}output/dino-round3-20261108/gme-race/GeyserModelEngine-1.0.9-publication-fixed.jar`,`${directory}/plugins/GeyserModelEngine-1.0.9.jar`);
+  await copyFile(process.env.DINO_GME_JAR??`${modelCache}/plugins/GeyserModelEngine-1.0.9.jar`,`${directory}/plugins/GeyserModelEngine-1.0.9.jar`);
   report.bridgeSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/GeyserModelEngine-1.0.9.jar`)).digest('hex');
-  await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1295.jar`,`${directory}/plugins/geyser-spigot.jar`);
+  await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1298.jar`,`${directory}/plugins/geyser-spigot.jar`);
   for(const name of ['BetterModel','GeyserModelEngine','Geyser-Spigot','floodgate'])await cp(`${modelCache}/plugins/${name}`,`${directory}/plugins/${name}`,{recursive:true});
   const generated=`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack`;await rm(generated,{recursive:true,force:true});await rm(`${generated}.zip`,{force:true});
   const geyserConfig=`${directory}/plugins/Geyser-Spigot/config.yml`;await writeFile(geyserConfig,(await readFile(geyserConfig,'utf8')).replace(/^port: .*/m,`port: ${await freePort()}`));
@@ -129,9 +130,10 @@ try {
   report.pteraModelSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/BetterModel/models/ark_pteranodon.bbmodel`)).digest('hex');
  }
 
- await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.1.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+ if(process.env.DINO_WILDLIFE_ONLY==='1'){for(const name of ['worldedit-bukkit-7.4.6.jar','worldguard-bukkit-7.0.21.jar','GriefPrevention.jar'])await copyFile(`${cache}/plugins/${name}`,`${directory}/plugins/${name}`);}
+ await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
  report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
- await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\n');
+ await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\nwild-spawning:\n  enabled: false\n'+(process.env.DINO_WILDLIFE_ONLY==='1'?'  per-player: 2\n  world-limit: 4\n  nearby-limit: 2\n':''));
  await mkdir(`${directory}/fixture-classes`);
  execFileSync(`${javaHome}/bin/javac`,['--release','25','-sourcepath','','-cp',`${plugin}.deps/*`,'-d',`${directory}/fixture-classes`,`${plugin}src/controls/java/de/ark/dinos/ControlsFixture.java`]);
  execFileSync(`${javaHome}/bin/jar`,['--create','--file',`${directory}/plugins/ControlsFixture.jar`,'-C',`${directory}/fixture-classes`,'.','-C',`${plugin}src/controls/resources`,'.']);
@@ -141,18 +143,122 @@ try {
  let alice=new Client('ControlsOwner'),bob=new Client('ControlsOther');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Controls clients did not join',30000);
  await command('gamemode survival @a');await command('effect give @a resistance 9999 4 true');await command('tp @a 0 4 3');await delay(500);
  await eventually(async()=>/Successfully filled/.test(await command('fill -16 3 -16 32 3 32 stone')),'Controls fixture platform chunks did not load');
- if(process.env.DINO_SPEED_ONLY==='1') {
+ if(process.env.DINO_SECOND_RIDER_ONLY==='1') {
+  await (await import('./second-rider-runtime-checks.mjs')).default({check,command,inspect,fields,food,spawnDino,alice,bob,clients,Client,eventually,delay,report,start,stop});
+ } else if(process.env.DINO_WILDLIFE_ONLY==='1') {
+  await command(`gamemode creative ${bob.name}`);
+  await check('Natural world encounters obey the player budget, are unsaved and never force chunks',async()=>{
+   const tick=fields(await command('controlsfixture wild-tick 40'));
+   assert.equal(tick.after,tick.before,'Population scan must not load chunks');
+   const count=fields(await command('controlsfixture wild-counts'));assert.equal(count.natural,'2');assert.equal(count.persistent,'0');
+   await command('controlsfixture wild-tick 20');assert.equal(fields(await command('controlsfixture wild-counts')).natural,'2','Budget is stable');
+   const edge=fields(await command('controlsfixture wild-edge'));assert.equal(edge.clear,'false');assert.equal(edge.after,edge.before);
+   return {tick,count,edge};
+  });
+  await check('No Survival players means no new encounters; taming preserves the same natural animal',async()=>{
+   await command('controlsfixture wild-cleanup');await command('gamemode creative @a');await command('controlsfixture wild-tick 30');assert.equal(fields(await command('controlsfixture wild-counts')).natural,'0');
+   await command(`gamemode survival ${alice.name}`);await command('controlsfixture wild-tick 40');
+   await command('tag @e[tag=ark_dino_natural,limit=1] add wildlife_tame');const before=await inspect('wildlife_tame');
+   assert.match(await command(`controlsfixture tame wildlife_tame ${alice.name}`),/tamed=true/);
+   const after=await inspect('wildlife_tame');assert.equal(after.uuid,before.uuid);assert.equal(after.owner,alice.uuid);assert.equal(after.persistent,'true');assert.equal(after.natural,'false');
+   await command('tag @e[tag=ark_dino_natural,limit=1] add wildlife_named');await command('controlsfixture wild-name wildlife_named');await command('controlsfixture wild-tick 1');
+   const named=await inspect('wildlife_named');assert.equal(named.persistent,'true');assert.equal(named.natural,'false');
+   await command('controlsfixture wild-cleanup');assert.equal((await inspect('wildlife_tame')).uuid,before.uuid);assert.equal((await inspect('wildlife_named')).uuid,named.uuid);
+   return {before,after,named};
+  });
+  await check('Successful leashing preserves a natural animal immediately, while cancelled leashes do not',async()=>{
+   await command(`tp ${alice.name} 20 4 23`);const initial=fields(await command('controlsfixture wild-spawn'));assert.equal(initial.persistent,'false');
+   const denied=fields(await command(`controlsfixture wild-leash ${alice.name} true`));assert.equal(denied.persistent,'false');assert.equal(denied.natural,'true');
+   const accepted=fields(await command(`controlsfixture wild-leash ${alice.name} false`));assert.equal(accepted.cancelled,'false');assert.equal(accepted.leashed,'true');
+   assert.equal(accepted.persistent,'true','Accepted leash must persist before any population tick');assert.equal(accepted.natural,'false');return {initial,denied,accepted};
+  });
+  await check('Aquatic encounters require full-body border clearance and cannot overlap living entities',async()=>{
+   await command('gamemode creative @a');await command('tp @a 25 18 0');await command('fill -10 4 -16 10 13 16 water');
+   await command('worldborder center 0 0');await command('worldborder set 28');
+   const edge=await command('controlsfixture wild-space mosasaurus 0 8 0');
+   await command('worldborder set 200');const clear=await command('controlsfixture wild-space mosasaurus 0 8 0');
+   await command('summon cow 0 8 0 {Tags:["wildlife_collision"],NoAI:1b,NoGravity:1b}');
+   const occupied=await command('controlsfixture wild-space mosasaurus 0 8 0');await command('kill @e[tag=wildlife_collision]');
+   await command('fill -10 4 -16 10 13 16 air');await command('worldborder set 59999968');await command('tp @a 0 4 3');
+   assert.match(edge,/clear=false/);assert.match(clear,/clear=true/);assert.match(occupied,/clear=false/);return {edge,clear,occupied};
+  });
+  await check('WorldGuard global spawning denial, named regions and GriefPrevention claims prevent encounters',async()=>{
+   assert.match(await command('controlsfixture wild-allowed 0 0'),/allowed=true/);
+   await command('region flag -w ark_model_test __global__ mob-spawning deny');await eventually(async()=>/allowed=false/.test(await command('controlsfixture wild-allowed 0 0')),'WorldGuard global mob-spawning denial must propagate');
+   await command('region flag -w ark_model_test __global__ mob-spawning allow');assert.match(await command('controlsfixture wild-allowed 0 0'),/allowed=true/);
+   assert.match(await command('controlsfixture wild-region'),/created=true/);await eventually(async()=>/allowed=false/.test(await command('controlsfixture wild-allowed 0 0')),'Named WorldGuard region must exclude natural dinos');
+   assert.match(await command(`controlsfixture wild-claim ${alice.name}`),/created=true/);assert.match(await command('controlsfixture wild-allowed 55 55'),/allowed=false/);
+   await command('controlsfixture wild-disable-guard GriefPrevention');
+   assert.match(await command('controlsfixture wild-allowed 70 0'),/allowed=false/,'An installed unavailable claim plugin must deny natural spawns');
+  });
+  await check('Tamed and named natural encounters survive a real restart with their UUIDs',async()=>{
+   const before=await inspect('wildlife_tame'),named=await inspect('wildlife_named'),leashed=await inspect('wildlife_leashed');await stop();await start();
+   alice=new Client('ControlsOwner');clients.push(alice);await eventually(()=>alice.joined,'Restarted wildlife client did not join',30000);await command('gamemode survival @a');await command('tp @a 0 4 3');await delay(400);
+   for(const [tag,saved] of [['wildlife_tame',before],['wildlife_named',named],['wildlife_leashed',leashed]]){await command(`tp ${alice.name} ${saved.x} ${Number(saved.y)+8} ${saved.z}`);await eventually(async()=>/present=true/.test(await command(`controlsfixture present ${saved.uuid}`)),`Saved ${tag} must load near its visitor`);assert.equal((await inspect(tag)).uuid,saved.uuid);}
+   assert.match(await command('forceload query'),/No force loaded chunks|No force-loaded chunks/i);
+   await command('controlsfixture wild-disable-guard WorldGuard');
+   assert.match(await command('controlsfixture wild-allowed 70 0'),/allowed=false/,'An installed unavailable region plugin must deny natural spawns');
+  });
+ } else if(process.env.DINO_FLIGHT_SPEED_ONLY==='1') {
+  const tag='ptera_flight_speed',samples={};
+  const horizontal=(a,b)=>Math.hypot(Number(b.x)-Number(a.x),Number(b.z)-Number(a.z));
+  report.flightSpeeds=samples;
+  report.flightSpeedFixture={mount:'ControlsFixture reserves the active ride before native addPassenger; jump, forward, sprint and sneak are real protocol inputs.',models:false};
+  await command(`gamemode creative ${bob.name}`);await command(`effect clear ${alice.name} resistance`);
+  await check('An adult owned Ptera mounts and takes off with native jump input',async()=>{
+   await spawnDino(tag,'pteranodon',0,alice.uuid);
+   await eventually(async()=>{const state=await inspect(tag);return state.ai==='true'&&state.ground==='true';},'Flight fixture must finish restoration before mounting');
+   alice.input(0);alice.look(0,0);await delay(100);
+   assert.match(await command(`controlsfixture occupy ${tag} ${alice.name}`),/mounted=true/);
+   const before=await inspect(tag);assert.equal(before.passengers,'1');assert.equal(before.owner,alice.uuid);
+   alice.input(16);await eventually(async()=>Number((await inspect(tag)).y)>=10,'Native jump did not lift the Ptera',5000);
+   alice.input(0);await delay(150);const airborne=await inspect(tag);
+   assert.equal(airborne.passengers,'1');assert.equal(airborne.gravity,'false');assert.equal(airborne.ground,'false');
+   assert.equal(airborne.pteraFlight,'false','This must be player-controlled flight, not autonomous flight');
+   report.flightLifecycle={before,airborne};return {before,airborne};
+  });
+  await check('Native forward input measures 12 / 18 / 12 blocks per second across normal, sprint and released sprint',async()=>{
+   alice.look(0,0);
+   for(const [mode,flags,target]of [['normal',1,12],['sprint',65,18],['releasedSprint',1,12]]){
+    alice.input(flags);await delay(150);const before=await inspect(tag);await delay(600);const after=await inspect(tag);
+    const ticks=Number(after.tick)-Number(before.tick);assert.ok(ticks>=10,'Flight speed sample must span at least ten native ticks');
+    const speed=horizontal(before,after)*20/ticks;samples[mode]={before,after,blocksPerSecond:speed,target};
+    assert.equal(after.passengers,'1');assert.equal(after.gravity,'false');assert.equal(after.ground,'false');
+    assert.ok(Math.abs(Number(after.y)-Number(before.y))<.05,`${mode} changed altitude despite a level view`);
+    assert.ok(Math.abs(speed-target)<.25,`${mode}: measured ${speed} blocks/s, expected ${target}`);
+   }
+   assert.ok(Math.abs(samples.releasedSprint.blocksPerSecond-samples.normal.blocksPerSecond)<.1,'Releasing sprint must restore normal flight speed');
+   return samples;
+  });
+  await check('Releasing flight input hovers and native Sneak dismount restores landing and gravity',async()=>{
+   alice.input(0);await delay(150);const hoverBefore=await inspect(tag);await delay(600);const hoverAfter=await inspect(tag);
+   assert.ok(horizontal(hoverBefore,hoverAfter)<.05&&Math.abs(Number(hoverAfter.y)-Number(hoverBefore.y))<.05,'Released flight input must hover without drift');
+   assert.equal(hoverAfter.gravity,'false');assert.equal(hoverAfter.passengers,'1');
+   alice.input(32);await eventually(async()=> (await inspect(tag)).passengers==='0','Native Sneak did not dismount the airborne Ptera');alice.input(0);
+   const dismounted=await inspect(tag);
+   await eventually(async()=>{const state=await inspect(tag);return state.gravity==='true'&&state.ground==='true';},'Unridden Ptera failed to land and restore gravity',10000);
+   const landed=await inspect(tag);assert.equal(landed.passengers,'0');assert.equal(landed.health,report.flightLifecycle.before.health);
+   assert.equal(landed.uuid,report.flightLifecycle.before.uuid);assert.equal(landed.owner,alice.uuid);
+   Object.assign(report.flightLifecycle,{hoverBefore,hoverAfter,dismounted,landed});await command(`kill @e[tag=${tag}]`);
+   return {hoverBefore,hoverAfter,dismounted,landed};
+  });
+ } else if(process.env.DINO_SPEED_ONLY==='1') {
   await command('gamemode creative @a');await command('fill -24 3 -24 40 3 40 stone');
   const species=process.env.DINO_SPEED_MODELS==='1'?['velociraptor','brachiosaurus']:['triceratops','stegosaurus','brachiosaurus','pteranodon','trex','velociraptor','dilophosaurus'];
-  const targets={brachiosaurus:[1,2],stegosaurus:[1,2.8],triceratops:[1.4,4.6],trex:[1.5,6],velociraptor:[2,7],dilophosaurus:[1.8,6],pteranodon:[1.4,3]};
+  const targets={brachiosaurus:[1.4,3.5],stegosaurus:[1.5,4.5],triceratops:[2,7],trex:[2.5,9],velociraptor:[3,12],dilophosaurus:[2.8,10],pteranodon:[2,4.5]};
   const within=(actual,target)=>assert.ok(Math.abs(actual-target)<=target*.1,`Measured ${actual}b/s differs from target ${target}b/s`);
   const samples={};const distance=(a,b)=>Math.hypot(Number(b.x)-Number(a.x),Number(b.z)-Number(a.z));const measured=(a,b)=>({before:a,after:b,blocksPerSecond:distance(a,b)*20/(Number(b.tick)-Number(a.tick))});
   await check(`${species.length} species match ground walk/run and real rider normal/sprint targets, return from sprint and stop without sliding`,async()=>{
-   for(let i=0;i<species.length;i++){const name=species[i],type=['trex','velociraptor','dilophosaurus'].includes(name)?'ravager':'sniffer';await command(`summon ${type} -12 4 ${-12+i*7} {Tags:["ptera_speed_${name}","ark_dino","ark_dino_wild"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"${name}","arkdinos:ptera-ground-until":9999999999999L}}`);samples[name]={};}await delay(300);
-   for(const [mode,multiplier]of [['wander',.85],['followChase',1.15]]){
-    for(let i=0;i<species.length;i++){const name=species[i],z=-12+i*7;await command(`tp @e[tag=ptera_speed_${name},limit=1] -12 4 ${z}`);await command(`controlsfixture ground-path ptera_speed_${name} ${process.env.DINO_SPEED_MODELS==='1'&&name==='brachiosaurus'?0:30} ${z} ${multiplier}`);}await delay(600);
-    const before={};for(const name of species)before[name]=await inspect(`ptera_speed_${name}`);await delay(2000);
-    for(const name of species){const after=await inspect(`ptera_speed_${name}`);samples[name][mode]=measured(before[name],after);within(samples[name][mode].blocksPerSecond,targets[name][mode==='wander'?0:1]);if(process.env.DINO_SPEED_MODELS==='1'){const expected=name==='velociraptor'?1.489667/2.2625:2.5/2.09375;assert.ok(Math.abs(Number(after.scale)-expected)<.00001,'Modeled native scale is calibrated');}}
+   for(const name of species)samples[name]={};
+   for(const [mode,multiplier]of [['wander',.85],['followChase',1.15]])for(const name of species){
+    // Fresh carriers avoid retaining PathNavigation state across teleports. End
+    // measurement before even the 12 b/s runner reaches the checked destination.
+    await command('kill @e[tag=ark_dino]');const type=['trex','velociraptor','dilophosaurus'].includes(name)?'ravager':'sniffer';
+    await command(`summon ${type} -12 4 -12 {Tags:["ptera_speed_${name}","ark_dino","ark_dino_wild"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"${name}","arkdinos:ptera-ground-until":9999999999999L}}`);await delay(300);
+    assert.match(await command(`controlsfixture ground-path ptera_speed_${name} 12 -12 ${multiplier}`),/path=true/,'Speed sample requires an accepted native path');await delay(500);
+    const before=await inspect(`ptera_speed_${name}`);await delay(1200);const after=await inspect(`ptera_speed_${name}`);
+    samples[name][mode]=measured(before,after);within(samples[name][mode].blocksPerSecond,targets[name][mode==='wander'?0:1]);
+    if(process.env.DINO_SPEED_MODELS==='1'){const expected=name==='velociraptor'?1.489667/2.2625:2.5*2.15/2.09375;assert.ok(Math.abs(Number(after.scale)-expected)<.00001,'Modeled native scale is calibrated');}
    }
    await command('kill @e[tag=ark_dino]');await command(`gamemode survival ${alice.name}`);alice.look(0,0);alice.input(0);
    for(let i=0;i<species.length;i++){
@@ -178,7 +284,7 @@ try {
     await command('setblock 4 6 0 glass_pane');assert.equal((await attempt('ptera_modeled')).flight,'false');await command('setblock 4 6 0 air');assert.equal((await attempt('ptera_modeled')).flight,'true');await airborne('ptera_modeled');const flying=await inspect('ptera_modeled');
     await command(`controlsfixture ptera-hit ptera_modeled ${alice.name} projectile`);await landed('ptera_modeled');const hit=await inspect('ptera_modeled');assert.ok(Number(hit.groundUntil)>Date.now()+50000);assert.ok(Number(hit.health)<Number(before.health));assert.equal((await attempt('ptera_modeled')).flight,'false');
     await command('controlsfixture time ptera_modeled ptera-ground-until 0');assert.equal((await attempt('ptera_modeled')).flight,'true');await airborne('ptera_modeled');
-    await command(`gamemode survival ${alice.name}`);alice.input(0);await delay(100);await command(`controlsfixture occupy ptera_modeled ${alice.name}`);alice.input(16);await delay(300);const mounted=await inspect('ptera_modeled');assert.equal(mounted.passengers,'1');assert.equal(mounted.pteraFlight,'false');assert.equal(mounted.gravity,'false');alice.look(0,0);const flightInput={};for(const [mode,flags]of [['normal',1],['sprint',65]]){alice.input(flags);await delay(150);const a=await inspect('ptera_modeled');await delay(400);const b=await inspect('ptera_modeled');const speed=Math.hypot(Number(b.x)-Number(a.x),Number(b.z)-Number(a.z))*20/(Number(b.tick)-Number(a.tick));assert.ok(Math.abs(speed-7)<.3);flightInput[mode]=speed;}report.pteraFlightInput=flightInput;alice.input(0);await command(`ride ${alice.name} dismount`);await landed('ptera_modeled');const after=await inspect('ptera_modeled');assert.equal(after.uuid,before.uuid);assert.equal(after.owner,before.owner);assert.equal(after.gravity,'true');return {before,flying,hit,mounted,after};
+    await command(`gamemode survival ${alice.name}`);alice.input(0);await delay(100);await command(`controlsfixture occupy ptera_modeled ${alice.name}`);alice.input(16);await delay(300);const mounted=await inspect('ptera_modeled');assert.equal(mounted.passengers,'1');assert.equal(mounted.pteraFlight,'false');assert.equal(mounted.gravity,'false');alice.look(0,0);const flightInput={};for(const [mode,flags]of [['normal',1],['sprint',65]]){alice.input(flags);await delay(150);const a=await inspect('ptera_modeled');await delay(400);const b=await inspect('ptera_modeled');const speed=Math.hypot(Number(b.x)-Number(a.x),Number(b.z)-Number(a.z))*20/(Number(b.tick)-Number(a.tick));assert.ok(Math.abs(speed-(mode==='sprint'?18:12))<.5);flightInput[mode]=speed;}report.pteraFlightInput=flightInput;alice.input(0);await command(`ride ${alice.name} dismount`);await landed('ptera_modeled');const after=await inspect('ptera_modeled');assert.equal(after.uuid,before.uuid);assert.equal(after.owner,before.owner);assert.equal(after.gravity,'true');return {before,flying,hit,mounted,after};
    });
   } else {
   await check('Ptera walks at a practical pace and adult wild Ptera takes off, cruises and lands without a rider',async()=>{
@@ -239,6 +345,23 @@ try {
   await command('controlsfixture deny-interact true');await open(alice,'control_rex');assert.notEqual((await inventory(alice)).top,'9');await command('controlsfixture deny-interact false');
   await open(alice,'control_rex');await command('controlsfixture deny-click true');await menuClick(alice,0);assert.equal((await inspect('control_rex')).stay,'1');await command('controlsfixture deny-click false');await command(`controlsfixture close ${alice.name}`);
  });
+ await check('Owner can share riding, guests cannot manage ownership, and revocation dismounts an active guest',async()=>{
+  const mount = async client => {
+   const mob=await inspect('control_rex');await command(`tp ${client.name} ${mob.x} ${mob.y} ${Number(mob.z)+3}`);
+   await food(client,'AIR',0);client.input(0);await delay(150);client.interact(Number(mob.id));await delay(250);
+  };
+  assert.equal((await inspect('control_rex')).shared,'0','Existing pets start private');
+  await mount(bob);assert.equal((await inspect('control_rex')).passengers,'0');
+  await open(alice,'control_rex');await menuClick(alice,6);assert.equal((await inspect('control_rex')).shared,'1');
+  await open(bob,'control_rex');assert.notEqual((await inventory(bob)).top,'9','Sharing does not grant the owner menu');
+  await mount(bob);assert.equal((await inspect('control_rex')).passengers,'1','Public guest mounts by real use packet');
+  bob.look(0,0);const before=await inspect('control_rex');bob.input(1);await delay(700);bob.input(0);
+  const moved=await inspect('control_rex');assert.ok(Math.hypot(Number(moved.x)-Number(before.x),Number(moved.z)-Number(before.z))>.5,'Guest input controls the dinosaur');
+  await open(alice,'control_rex');assert.equal((await inventory(alice)).top,'9','Owner can revoke sharing while a guest rides');
+  await menuClick(alice,6);const revoked=await inspect('control_rex');assert.equal(revoked.shared,'0');assert.equal(revoked.passengers,'0');assert.equal(revoked.owner,alice.uuid);assert.equal(revoked.stay,'1');
+  await mount(bob);assert.equal((await inspect('control_rex')).passengers,'0','Revoked guest cannot remount');
+  return {before,moved,revoked};
+ });
  await check('Follow, stop and free wander persist distinct modes and move without owner following',async()=>{
   await open(alice,'control_rex');await menuClick(alice,0);assert.equal((await inspect('control_rex')).stay,'0');assert.equal((await inspect('control_rex')).roam,'0');
   await command(`tp ${alice.name} 0 4 14`);await eventually(async()=>Number((await inspect('control_rex')).z)>2,'Follow mode must walk toward owner');
@@ -276,7 +399,7 @@ try {
   await open(alice,'control_rex');await menuClick(alice,8);assert.equal((await inspect('control_rex')).owner,alice.uuid);assert.equal((await inventory(alice)).top,'9');await menuClick(alice,6);assert.equal((await inspect('control_rex')).owner,alice.uuid);
   await open(alice,'control_rex');await menuClick(alice,8);await command(`tp ${alice.name} 80 4 0`);await menuClick(alice,2);assert.equal((await inspect('control_rex')).owner,alice.uuid);
   await command('controlsfixture create-world ark');await open(alice,'control_rex');await menuClick(alice,8);await command(`execute in minecraft:ark run tp ${alice.name} 0 4 0`);await menuClick(alice,2);assert.equal((await inspect('control_rex')).owner,alice.uuid);
-  await command(`execute in minecraft:ark_model_test run tp ${alice.name} 0 4 0`);await open(alice,'control_rex');await menuClick(alice,8);await command(`data modify entity @e[tag=control_rex,limit=1] BukkitValues."arkdinos:owner" set value "${bob.uuid}"`);await menuClick(alice,2);assert.equal((await inspect('control_rex')).owner,bob.uuid);await command(`data modify entity @e[tag=control_rex,limit=1] BukkitValues."arkdinos:owner" set value "${alice.uuid}"`);await command(`controlsfixture close ${alice.name}`);
+  assert.match(await command(`execute in minecraft:overworld run tp ${alice.name} 0 4 0`),/Teleported/);await open(alice,'control_rex');await menuClick(alice,8);await command(`data modify entity @e[tag=control_rex,limit=1] BukkitValues."arkdinos:owner" set value "${bob.uuid}"`);await menuClick(alice,2);assert.equal((await inspect('control_rex')).owner,bob.uuid);await command(`data modify entity @e[tag=control_rex,limit=1] BukkitValues."arkdinos:owner" set value "${alice.uuid}"`);await command(`controlsfixture close ${alice.name}`);
  });
  await check('Adult release preserves entity identity, species, health, scale and clears ownership/progress',async()=>{
   await command(`tp ${bob.name} 80 4 4`);await open(alice,'control_rex');await menuClick(alice,2);
@@ -297,9 +420,9 @@ try {
   await open(alice,'control_sniffer');await menuClick(alice,8);await menuClick(alice,2);const after=await inspect('control_sniffer');assert.equal(after.owner,'null');assert.equal(after.uuid,before.uuid);assert.equal(after.ai,'true');assert.equal(after.behaviors,'0','Wild Sniffer digging stays disabled');report.sniffer=after;
  });
  await check('Mode and peaceful former-owner identity survive real restart',async()=>{
-  await spawnDino('control_persist','triceratops',18,alice.uuid);await open(alice,'control_persist');await menuClick(alice,4);const before=await inspect('control_persist');await stop();await start();
+  await spawnDino('control_persist','triceratops',18,alice.uuid);await open(alice,'control_persist');await menuClick(alice,4);await open(alice,'control_persist');await menuClick(alice,6);const before=await inspect('control_persist');await command('effect give @a resistance 9999 4 true');await stop();await start();
   alice=new Client('ControlsOwner');bob=new Client('ControlsOther');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Restarted controls clients did not join',30000);await command('gamemode survival @a');await command('tp @a 0 4 3');await delay(500);
-  const after=await inspect('control_persist');assert.equal(after.uuid,before.uuid);assert.equal(after.owner,alice.uuid);assert.equal(after.roam,'1');
+  const after=await inspect('control_persist');assert.equal(after.uuid,before.uuid);assert.equal(after.owner,alice.uuid);assert.equal(after.roam,'1');assert.equal(after.shared,'1');
   const rex=await inspect('control_rex');assert.equal(rex.uuid,report.released.uuid);assert.equal(rex.former,alice.uuid);assert.equal(rex.owner,'null');assert.match(await command(`controlsfixture valid control_rex ${alice.name}`),/valid=false/);assert.match(await command(`controlsfixture damage control_rex ${alice.name}`),/landed=false;loss=0.0/);
   const sniffer=await inspect('control_sniffer');assert.equal(sniffer.uuid,report.sniffer.uuid);assert.equal(sniffer.behaviors,'0');
   assert.match(await command('forceload query'),/No force loaded chunks|No force-loaded chunks/i);

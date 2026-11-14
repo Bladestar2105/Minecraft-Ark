@@ -1,0 +1,207 @@
+{
+  "client": "Minecraft Java Edition",
+  "version": "26.3",
+  "client_jar_sha1": "e877b6a07acd633fb3bb475002175cec036e7b87",
+  "client_jar_matches_existing_launcher_manifest": true,
+  "jvm": [
+    "openjdk version \"25.0.1\" 2025-10-21 LTS",
+    "OpenJDK Runtime Environment Microsoft-12574220 (build 25.0.1+8-LTS)",
+    "OpenJDK 64-Bit Server VM Microsoft-12574220 (build 25.0.1+8-LTS, mixed mode)"
+  ],
+  "platform": "macOS-27.2-arm64-arm-64bit-Mach-O",
+  "render_backend": "LWJGL3.4.3+4/OpenGL4.1 Metal91.7",
+  "profiles": [
+    "HeadOf",
+    "ArkPassenger",
+    "ArkObserver"
+  ],
+  "authentication": "Offline local test profiles; not a licensed online multiplayer certification",
+  "source_commit": "d849ecff7613eee8282e96378e46b1437e187255",
+  "server_build_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+  "java_pack_sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440",
+  "client_render_distance": 14,
+  "server_view_distance": 14,
+  "server_simulation_distance": 3,
+  "pack_container_equivalence": "c228 and 40d6 contain 3025 identical paths with identical uncompressed bytes; only the ZIP container differs.",
+  "status": "Teilweise sichtbar geprüft; keine vollständige Freigabe",
+  "checks": [
+    {
+      "check": "Java/Java, zwei tatsächliche Renderer, normale Interaktion zum Aufsteigen, erwachsene T-Rex/Triceratops/Stegosaurus/Brachiosaurus",
+      "status": "Bestanden",
+      "scope": "Stationäre getrennte Sitzpositionen, keine sichtbaren Sitzhelfer; Außenansicht. Fahrer/Beifahrerrollen zusätzlich durch Serverzustände bestätigt."
+    },
+    {
+      "check": "Unabhängige Beifahrerblickrichtung",
+      "status": "Bestanden",
+      "scope": "T-Rex und Triceratops, tatsächliche Mausbewegung und abweichende Spielerwinkel; keine vollständige Bewegungsabnahme."
+    },
+    {
+      "check": "Mosa ursprünglicher violetter/schwarzer Schwanz und Java-Exportgrenzen",
+      "status": "Fehler behoben und erneut geprüft",
+      "scope": "Echte F2-Vorher-/Nachherbilder; vier ungültige kompilierte Cuboidkoordinaten korrigiert, Geometrie und Posen unverändert."
+    },
+    {
+      "check": "Mosa Kiefer in Seitenansicht: stabilisiertes frisches Modell, kontrolliert wiederholter/unterbrochener Angriff und Abbruch",
+      "status": "Bestanden",
+      "scope": "Geschlossen, geöffnet mit sichtbarem Scharnier, wieder geschlossen. Kein abgelöster Kiefer reproduziert. Der Zustand des ursprünglichen angeschnittenen Bilds wurde nicht aufgezeichnet."
+    },
+    {
+      "check": "Reconnect und Ressourcenpaketübernahme",
+      "status": "Bestanden",
+      "scope": "HeadOf und ArkPassenger tatsächlich neu verbunden und endgültiges Java-ZIP 40d6 heruntergeladen/angewendet; Vorgänger c228 hat identische 3025 entpackte Dateien."
+    },
+    {
+      "check": "Gerittene Bewegung/Sprint/Stop/enge Kurven",
+      "status": "Nicht geprüft",
+      "scope": "16 W-Tastentipps ergaben 0,0 Verschiebung; gehaltene Eingabe mit verfügbarem CUA-Tastendruck nicht belegt. Kein Produktfehler daraus abgeleitet."
+    },
+    {
+      "check": "Reguläres Shift-Absteigen per echter Clienttaste",
+      "status": "Blockiert",
+      "scope": "CUA lehnte einzelnen Modifier Shift_L ab: keyPressIncludedNoNonModifierKeys. Keine künstliche Eventprobe als sichtbarer Abstieg deklariert."
+    }
+  ],
+  "not_tested": [
+    "Java/Bedrock, Bedrock/Java, Bedrock/Bedrock und PS5: kein verifizierter lizenzierter Bedrock-Client/Gerät/Account bzw. Konsolenaufnahme verfügbar.",
+    "Reiten bei Schwimmen, Uferwechsel, niedriger Decke, erzwungener Ausstieg und längerfristige Bewegung/Kamerakorrekturen.",
+    "Sichtbare Jungtier-/Wachstumsstadien aller Arten und vollständige Idle-/Bewegungs-/Angriffsübergangsmatrix aller acht Arten.",
+    "Exakter erster frisch gesendeter Mosa-Renderframe blieb nicht vollständig im Bild; stabilisierte frische Darstellung geprüft.",
+    "Online-Account-/Lizenzvalidierung: lokale Offlineprofile ausschließlich auf isoliertem Loopback-Server."
+  ],
+  "observed_limits": [
+    "Brachiosaurus: In Fahrer-Erstperson verdeckt der Hals einen großen zentralen Teil der Vorwärtssicht. Außenansicht zeigt normale Anatomie und getrennte Sitze. Sichtgrenze zur manuellen Spielabnahme dokumentiert; keine unbegründete Geometrieänderung."
+  ],
+  "evidence_integrity": "Unveränderte F2-PNGs; SHA-256 pro Datei. Relative Bildpfade sind auf dieses Verzeichnis bezogen. Historische Builds/Pakete sind pro Bild gekennzeichnet.",
+  "screenshots": [
+    {
+      "source_file": "2026-11-10_16.57.39.png",
+      "client_profile": "HeadOf",
+      "species": "brachiosaurus",
+      "scenario": "release40-driver-forward-neck-occlusion",
+      "perspective": "first-person",
+      "capture_local_time": "2026-11-10T16:57:39.612385",
+      "sha256": "3d380078ff6a019c9cf60958df8daa3ae7cc64fba882c55e92d7364c7305a0f3",
+      "build_jar_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "java_pack_sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440",
+      "file": "java26.3-brachiosaurus-release40-driver-forward-neck-occlusion-first-person.png",
+      "client_render_distance": 14
+    },
+    {
+      "source_file": "2026-11-10_16.58.35.png",
+      "client_profile": "ArkObserver",
+      "species": "brachiosaurus",
+      "scenario": "release40-two-real-riders",
+      "perspective": "independent-outside-client",
+      "capture_local_time": "2026-11-10T16:58:35.428838",
+      "sha256": "11574e10279adad193882f91790e5d7d4283c34df80ffcbc91894d3271eda732",
+      "build_jar_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "java_pack_sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440",
+      "file": "java26.3-brachiosaurus-release40-two-real-riders-independent-outside-client.png",
+      "client_render_distance": 14
+    },
+    {
+      "source_file": "2026-11-10_16.13.51.png",
+      "client_profile": "HeadOf",
+      "species": "mosasaurus",
+      "scenario": "baseline-user-reference-animation-state-unknown",
+      "perspective": "missing-texture-close",
+      "capture_local_time": "2026-11-10T16:13:51.986469",
+      "sha256": "c612f605f0beaf5f92d800458c2cec76351aea00809fa1bf115f9d748bce633a",
+      "build_jar_sha256": "1a7a30aa010ca6a01460a9816f7c625f2819e16a5bfac99b167a980d07b4ca27",
+      "scenario_verification": "Ursprüngliche Nutzerreferenz mit angeschnittenem Kopf; tatsächlicher damaliger Animationszustand unbekannt.",
+      "file": "java26.3-mosasaurus-baseline-user-reference.png",
+      "client_render_distance": 6,
+      "animation_state": "unknown"
+    },
+    {
+      "source_file": "2026-11-10_16.44.11.png",
+      "client_profile": "HeadOf",
+      "species": "mosasaurus",
+      "scenario": "final15-after-cancel-idle",
+      "perspective": "head-side",
+      "capture_local_time": "2026-11-10T16:44:11.120670",
+      "sha256": "b5bb1ed68d1ccdfd53902a5643274398a2b06a0620ee4d193829d9f25568d3b4",
+      "build_jar_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "java_pack_sha256": "c228aed5abd14f6684a9cf068f72869c360570fa83e823cb1b00185ea106d96a",
+      "file": "java26.3-mosasaurus-final15-after-cancel-idle-head-side.png",
+      "client_render_distance": 14
+    },
+    {
+      "source_file": "2026-11-10_16.45.15.png",
+      "client_profile": "HeadOf",
+      "species": "mosasaurus",
+      "scenario": "final15-cuboid-fix-green",
+      "perspective": "full-body",
+      "capture_local_time": "2026-11-10T16:45:15.666020",
+      "sha256": "28691cf0bbd1d8e1301daeb3d9c61a0e3a6659ad311eb05871a77d46e0d6ca52",
+      "build_jar_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "java_pack_sha256": "c228aed5abd14f6684a9cf068f72869c360570fa83e823cb1b00185ea106d96a",
+      "file": "java26.3-mosasaurus-final15-cuboid-fix-green-full-body.png",
+      "client_render_distance": 14
+    },
+    {
+      "source_file": "2026-11-10_16.43.29_4.png",
+      "client_profile": "HeadOf",
+      "species": "mosasaurus",
+      "scenario": "final15-interrupted-attack-open",
+      "perspective": "head-side",
+      "capture_local_time": "2026-11-10T16:43:29.431591",
+      "sha256": "21303ae44a8b5bd58f825cfccc0714fc3942c245ad69b6026137780ce98623bd",
+      "build_jar_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "java_pack_sha256": "c228aed5abd14f6684a9cf068f72869c360570fa83e823cb1b00185ea106d96a",
+      "file": "java26.3-mosasaurus-final15-interrupted-attack-open-head-side.png",
+      "client_render_distance": 14
+    },
+    {
+      "source_file": "2026-11-10_16.57.00.png",
+      "client_profile": "ArkObserver",
+      "species": "stegosaurus",
+      "scenario": "release40-two-real-riders",
+      "perspective": "independent-outside-client",
+      "capture_local_time": "2026-11-10T16:57:00.433172",
+      "sha256": "7eaac41363768b58f4126033200267783970b9e02abfe7b00c8714b6c0fbe75c",
+      "build_jar_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "java_pack_sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440",
+      "file": "java26.3-stegosaurus-release40-two-real-riders-independent-outside-client.png",
+      "client_render_distance": 14
+    },
+    {
+      "source_file": "2026-11-10_16.47.05.png",
+      "client_profile": "ArkPassenger",
+      "species": "trex",
+      "scenario": "final15-two-real-riders",
+      "perspective": "third-person-side",
+      "capture_local_time": "2026-11-10T16:47:05.562836",
+      "sha256": "674c6cd3122b623ee85f455cfc73905df9cbe1cfaaec807019fd1fd5c102e87c",
+      "build_jar_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "java_pack_sha256": "c228aed5abd14f6684a9cf068f72869c360570fa83e823cb1b00185ea106d96a",
+      "file": "java26.3-trex-final15-two-real-riders-third-person-side.png",
+      "client_render_distance": 14
+    },
+    {
+      "source_file": "2026-11-10_16.52.12.png",
+      "client_profile": "ArkPassenger",
+      "species": "triceratops",
+      "scenario": "release40-two-real-riders",
+      "perspective": "third-person-overhead",
+      "capture_local_time": "2026-11-10T16:52:12.592361",
+      "sha256": "fac79475ba11e1ee8d6a970062ba6eaae369f99914d1262129c3dcd973b17a39",
+      "build_jar_sha256": "96d78caca7d4360c78a0748d940ca14fb0a3f53926c2ea35122d134d45c8b922",
+      "java_pack_sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440",
+      "file": "java26.3-triceratops-release40-two-real-riders-third-person-overhead.png",
+      "client_render_distance": 14
+    }
+  ],
+  "release_pack_downloads": [
+    {
+      "client": 1,
+      "sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440"
+    },
+    {
+      "client": 2,
+      "sha256": "40d6d781ff132d9cfa085ec99f6894c41297c4de59a8985cf28d421fa3e78440"
+    }
+  ],
+  "client_render_distance_scope": "14 für neue finale Bilder; ursprüngliches Baselinebild hatte 6. Jede Bildzuordnung trägt ihren tatsächlichen Wert.",
+  "graphical_fixture_bedrock_pack_sha256_unrendered": "c19c5d981b13c4e0c4f8d1d67c9af3f502f358310172a45657c72e0158bced91"
+}

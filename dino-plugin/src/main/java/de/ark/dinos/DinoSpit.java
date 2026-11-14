@@ -9,6 +9,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
+import org.bukkit.entity.Player;
 import org.bukkit.entity.Snowball;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -21,7 +22,7 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
 final class DinoSpit implements Listener {
-    private record Shot(Snowball ball, Mob source, LivingEntity target, String owner, int born) { }
+    private record Shot(Snowball ball, Mob source, LivingEntity target, String owner, Player actor, Player driver, int born) { }
     private final ArkDinos plugin;
     private final DinoCombat combat;
     private final NamespacedKey modelScaleKey;
@@ -36,15 +37,17 @@ final class DinoSpit implements Listener {
 
     boolean launch(Mob mob, LivingEntity target) {
         int tick = Bukkit.getCurrentTick();
+        Player actor = combat.actor(mob), driver = plugin.driver(mob);
         Integer previous = lastShot.get(mob.getUniqueId());
-        if ((previous != null && tick - previous < 60) || !combat.validTarget(mob, target)
+        if ((previous != null && tick - previous < 60) || !combat.validTarget(mob, target, actor)
                 || mob.getLocation().distanceSquared(target.getLocation()) > 8 * 8 || !mob.hasLineOfSight(target)) return false;
         var eye = mob.getEyeLocation();
         var mouth = eye.clone();
         if (mob.getPersistentDataContainer().has(modelScaleKey, PersistentDataType.DOUBLE)) {
             // Adult visual dimensions are independent of the native carrier's seat/collision scale.
             double yaw = Math.toRadians(mob.getBodyYaw());
-            mouth = mob.getLocation().add(-Math.sin(yaw) * 1.9125, 1.4288648081, Math.cos(yaw) * 1.9125);
+            double scale = DinoSizes.adultScale("ark_dilophosaurus");
+            mouth = mob.getLocation().add(-Math.sin(yaw) * 1.9125 * scale, 1.4288648081 * scale, Math.cos(yaw) * 1.9125 * scale);
         }
         for (int x = Math.min(eye.getBlockX(), mouth.getBlockX()) >> 4; x <= Math.max(eye.getBlockX(), mouth.getBlockX()) >> 4; x++) {
             for (int z = Math.min(eye.getBlockZ(), mouth.getBlockZ()) >> 4; z <= Math.max(eye.getBlockZ(), mouth.getBlockZ()) >> 4; z++) {
@@ -64,14 +67,15 @@ final class DinoSpit implements Listener {
             projectile.setPersistent(false);
         });
         if (ball.isValid()) {
-            shots.put(ball.getUniqueId(), new Shot(ball, mob, target, plugin.owner(mob), tick));
+            shots.put(ball.getUniqueId(), new Shot(ball, mob, target, plugin.owner(mob), actor, driver, tick));
             plugin.attackAnimation(mob, true);
         } else ball.remove();
         return true;
     }
 
     private boolean valid(Shot shot) {
-        return plugin.owner(shot.source()).equals(shot.owner()) && combat.validTarget(shot.source(), shot.target())
+        return plugin.owner(shot.source()).equals(shot.owner()) && java.util.Objects.equals(plugin.driver(shot.source()), shot.driver())
+                && combat.validTarget(shot.source(), shot.target(), shot.actor())
                 && shot.source().getLocation().distanceSquared(shot.target().getLocation()) <= 8 * 8;
     }
 
@@ -99,7 +103,7 @@ final class DinoSpit implements Listener {
         event.setCancelled(true);
         shot.ball().remove();
         if (allowed && shot.target().equals(plugin.combatTarget(event.getHitEntity())) && valid(shot) && shot.source().hasLineOfSight(shot.target())
-                && combat.damage(shot.source(), shot.target(), 3, false)) {
+                && combat.damage(shot.source(), shot.target(), 3, false, shot.actor())) {
             shot.target().addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0));
             shot.target().addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 60, 0));
         }

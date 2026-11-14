@@ -1,0 +1,8 @@
+name: SwimFixture
+version: 1.0.0
+main: de.ark.dinos.SwimFixture
+api-version: '26.3'
+depend: [ArkDinos]
+commands:
+  swimfixture:
+    description: Disposable native swimming fixture

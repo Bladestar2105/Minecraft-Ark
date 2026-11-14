@@ -36,6 +36,9 @@ final class DinoAquatic implements Listener {
         boolean chasing;
         int lastAttack = -20, nextPath, nextRecovery, nextBreach = Bukkit.getCurrentTick() + 900 + java.util.concurrent.ThreadLocalRandom.current().nextInt(300), breachTicks;
         Location launch;
+        Vector retreat;
+        float retreatYaw;
+        int retreatTicks;
         org.bukkit.util.BoundingBox corridor;
         Swimmer(Dolphin mob, Goal<Dolphin> wander) { this.mob = mob; this.wander = wander; }
     }
@@ -77,7 +80,8 @@ final class DinoAquatic implements Listener {
         dolphin.getAttribute(Attribute.SCALE).setBaseValue(4);
         dolphin.getAttribute(Attribute.ATTACK_DAMAGE).setBaseValue(16);
         dolphin.getAttribute(Attribute.FOLLOW_RANGE).setBaseValue(16);
-        dolphin.setPersistent(true); dolphin.setRemoveWhenFarAway(false); dolphin.setCanPickupItems(false);
+        dolphin.setPersistent(!dolphin.getScoreboardTags().contains(DinoWildSpawns.NATURAL_TAG));
+        dolphin.setRemoveWhenFarAway(false); dolphin.setCanPickupItems(false);
         dolphin.setHasFish(false); dolphin.setTarget(null); dolphin.setAware(true);
         dolphin.setRemainingAir(dolphin.getMaximumAir()); dolphin.setMoistness(2400);
         var swimmer=new Swimmer(dolphin, wander);swimmers.put(mob.getUniqueId(), swimmer);
@@ -164,6 +168,7 @@ final class DinoAquatic implements Listener {
         var top=launch.clone();top.setY(Math.max(launch.getY()+16,mob.getY()+1));
         var corridor=body(mob,launch).union(body(mob,top)).expand(.25,0,.25);
         if(!clear(mob.getWorld(),corridor,false))return false;
+        swimmer.retreatTicks=0;
         swimmer.launch=launch.clone();swimmer.corridor=corridor;swimmer.breachTicks=1;
         mob.getPersistentDataContainer().set(breachOrigin,PersistentDataType.DOUBLE,launch.getY());
         stop(mob);mob.setAI(true);mob.setAware(false);mob.setVelocity(new Vector(0,recovering?-.2:1.5,0));
@@ -247,6 +252,14 @@ final class DinoAquatic implements Listener {
             }
             if(swimmer.breachTicks>0) {breach(swimmer);continue;}
             if (!safe(mob, mob.getLocation()) || !navigationLoaded(mob)) { stop(mob); swimmer.target = null; plugin.animation(mob, "idle"); continue; }
+            if(swimmer.retreatTicks>0) {
+                var next=mob.getLocation().add(swimmer.retreat);next.setYaw(swimmer.retreatYaw);
+                if(safe(mob,next)) {
+                    swimmer.retreatTicks--;mob.setRotation(swimmer.retreatYaw,0);mob.setBodyYaw(swimmer.retreatYaw);
+                    mob.setAI(true);mob.setAware(false);mob.setVelocity(swimmer.retreat.clone());plugin.animation(mob,"swim");continue;
+                }
+                swimmer.retreatTicks=0;
+            }
             mob.setAI(true); mob.setAware(true);
             if (!valid(mob, swimmer.target)) swimmer.target = null;
             if (swimmer.target == null) {
@@ -286,15 +299,21 @@ final class DinoAquatic implements Listener {
             } else {if(waterLanding)swimmer.corridor.union(swept);mob.setBodyYaw(destination.getYaw());}
             return;
         }
+        if(swimmer.retreatTicks>0) {destination.setYaw(swimmer.retreatYaw);event.setTo(destination);}
         if (!safe(mob, destination)) {
             event.setCancelled(true); stop(mob);
             if (!safe(mob, event.getFrom()) || !navigationLoaded(mob)) return;
-            // Native swimming adds upward buoyancy even without a path; retreat from a rejected step before retrying.
-            var retreat=event.getFrom().toVector().subtract(destination.toVector());
-            if(retreat.lengthSquared()<.0001)retreat=event.getFrom().getDirection().multiply(-1);
+            // Hold a safe heading briefly: native yaw can otherwise reject every retreat at a tight shoreline.
+            var from=event.getFrom();var forward=from.getDirection().setY(0).normalize().multiply(.2);
+            var side=new Vector(-forward.getZ(),0,forward.getX());
+            var retreat=from.toVector().subtract(destination.toVector());
+            if(retreat.lengthSquared()<.0001)retreat=forward.clone().multiply(-1);
             retreat.normalize().multiply(.15);
-            for(var velocity:java.util.List.of(retreat,new Vector(0,-.15,0),new Vector(0,.15,0))) {
-                if(safe(mob,event.getFrom().clone().add(velocity))) {mob.setVelocity(velocity);break;}
+            for(var velocity:java.util.List.of(forward,forward.clone().multiply(-1),side,side.clone().multiply(-1),retreat,new Vector(0,-.15,0),new Vector(0,.15,0))) {
+                if(safe(mob,from.clone().add(velocity))) {
+                    swimmer.retreat=velocity;swimmer.retreatYaw=from.getYaw();swimmer.retreatTicks=40;
+                    mob.setAI(true);mob.setAware(false);mob.setVelocity(velocity.clone());break;
+                }
             }
         }
         else mob.setBodyYaw(destination.getYaw());

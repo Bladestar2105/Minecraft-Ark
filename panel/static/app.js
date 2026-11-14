@@ -88,7 +88,7 @@ function completionChoices(data, input) {
     document.querySelectorAll(".view form").forEach(form => form.reset());
     document.querySelectorAll(".view .setting-state, .view .config-status, .view .form-message, .service-details dd, .service-state").forEach(node => node.textContent = "");
     state.loaded.clear(); state.services = []; state.configs = []; state.allConfigs = []; state.advanced = state.mission = null;
-    for (const id of ["players-output", "whitelist-players", "banned-players", "player-names", "minecraft-dynamic-fields", "mission-config", "advanced-config"]) {
+    for (const id of ["players-output", "whitelist-players", "banned-players", "player-names", "known-players", "minecraft-dynamic-fields", "mission-config", "advanced-config"]) {
       $(id).replaceChildren();
     }
     document.documentElement.dataset.arkWardrobe = "false";
@@ -825,11 +825,12 @@ function completionChoices(data, input) {
     $("player-name").value = name; if (action) $("player-action").value = action; renderPlayerAction(); $("player-name").focus();
   }
   async function loadPlayers() {
+    const session = state.sessionSerial;
     try {
       const data = await api("/api/players");
-      $("players-table").replaceChildren(); $("player-names").replaceChildren();
-      const names = new Set([...(data.players || []).map((player) => player.name), ...(data.whitelist || []), ...(data.banned || [])]);
-      for (const name of names) { const option = document.createElement("option"); option.value = name; $("player-names").append(option); }
+      $("players-table").replaceChildren(); $("player-names").replaceChildren(); $("known-players").replaceChildren();
+      const names = new Set([...(data.players || []).map((player) => player.name), ...(data.known_players || []).map((player) => player.name), ...(data.whitelist || []), ...(data.banned || [])]);
+      for (const name of names) { const option = document.createElement("option"); option.value = name; option.dataset.i18nSkip = ""; $("player-names").append(option); }
       for (const player of data.players || []) {
         const row = document.createElement("div"); row.className = "player-row";
         const detail = document.createElement("div"); const name = document.createElement("strong"); name.dataset.i18nSkip = ""; name.textContent = player.name;
@@ -837,6 +838,21 @@ function completionChoices(data, input) {
         detail.append(name, info); const button = document.createElement("button"); button.type = "button"; button.className = "button quiet"; button.textContent = "Verwalten"; button.addEventListener("click", () => choosePlayer(player.name)); row.append(detail, button); $("players-table").append(row);
       }
       if (!data.players?.length) $("players-table").textContent = "Gerade ist niemand online.";
+      for (const player of data.known_players || []) {
+        const row = document.createElement("div"); row.className = "player-row button-row";
+        const detail = document.createElement("div"); const name = document.createElement("strong"); name.dataset.i18nSkip = ""; name.textContent = player.name;
+        const info = document.createElement("p"); info.className = "field-hint"; info.textContent = [player.online ? "Online" : "Offline", player.whitelisted ? "Whitelist" : "", player.banned ? "Gesperrt" : ""].filter(Boolean).join(" · ");
+        detail.append(name, info); row.append(detail);
+        if (player.whitelisted) { const badge = document.createElement("span"); badge.className = "badge"; badge.textContent = "Auf der Whitelist"; row.append(badge); }
+        else {
+          const button = document.createElement("button"); button.type = "button"; button.className = "button quiet"; button.textContent = "Zur Whitelist hinzufügen";
+          button.addEventListener("click", () => run(button, async () => { await api("/api/players/action", "POST", { action: "whitelist-add", player: player.name }); await loadPlayers(); }, $("player-history-message")));
+          row.append(button);
+        }
+        $("known-players").append(row);
+      }
+      if (!data.known_players?.length) $("known-players").textContent = "Noch keine verbundenen Spieler bekannt.";
+      message($("player-history-message"), data.history_warning || "", Boolean(data.history_warning));
       for (const [id, entries, action] of [["whitelist-players", data.whitelist, "whitelist-remove"], ["banned-players", data.banned, "pardon"]]) {
         $(id).replaceChildren();
         for (const name of entries || []) { const button = document.createElement("button"); button.type = "button"; button.className = "button quiet"; button.dataset.i18nSkip = ""; button.textContent = name; button.addEventListener("click", () => choosePlayer(name, action)); $(id).append(button); }
@@ -844,7 +860,11 @@ function completionChoices(data, input) {
       }
       if (!state.worlds.length) { try { state.worlds = (await api("/api/worlds")).worlds || []; } catch { } }
       renderPlayerAction(); message($("players-admin-message"), "Spieler und Zugangslisten geladen.");
-    } catch (error) { message($("players-admin-message"), error.message, true); }
+    } catch (error) {
+      if (!state.authenticated || session !== state.sessionSerial) return;
+      $("known-players").replaceChildren(); $("player-names").replaceChildren(); message($("player-history-message"), "");
+      message($("players-admin-message"), error.message, true);
+    }
   }
   async function loadResetAccounts() {
     const session = state.sessionSerial;

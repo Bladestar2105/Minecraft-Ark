@@ -13,7 +13,7 @@ import zipfile
 from build_plugins import ROOT, download
 from fetch_world import safe_path
 
-PLUGINS = {"dino": ("ArkDinos", "1.1.0"), "atlas": ("ArkAtlas", "1.0.1"),
+PLUGINS = {"dino": ("ArkDinos", "1.2.0"), "atlas": ("ArkAtlas", "1.0.1"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
            "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.1"),
            "access": ("ArkAccessBridge", "1.1.1")}
@@ -149,7 +149,7 @@ def install(root=ROOT, modules=None):
         if not safe_path(root, source).is_file():
             raise ValueError("Missing configuration template: " + source)
     for item in items:
-        download(item, root / folders[item["kind"]])
+        download(item, root / folders[item["kind"]], root=root)
     (root / "data/plugins").mkdir(parents=True, exist_ok=True)
     for item in own:
         shutil.copyfile(root / item["path"], root / "data/plugins" / Path(item["path"]).name)

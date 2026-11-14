@@ -148,6 +148,10 @@ public final class AquaticFixture extends JavaPlugin implements Listener {
                 try {var next=swimmer.getClass().getDeclaredField("nextBreach");next.setAccessible(true);next.setInt(swimmer,args.length>2?org.bukkit.Bukkit.getCurrentTick()+Integer.parseInt(args[2]):0);sender.sendMessage("forced=true");}
                 catch(NoSuchFieldException missing){sender.sendMessage("forced=false");}return true;
             }
+            if(args[0].equals("stop-wander")) {
+                getServer().getMobGoals().removeGoal(mob,com.destroystokyo.paper.entity.ai.VanillaGoal.RANDOM_SWIMMING);
+                mob.getPathfinder().stopPathfinding();sender.sendMessage("wander=false");return true;
+            }
             if(args[0].equals("path")) {
                 mob.setAI(true);mob.setAware(true);boolean result=mob.getPathfinder().moveTo(new Location(mob.getWorld(),Double.parseDouble(args[2]),Double.parseDouble(args[3]),Double.parseDouble(args[4])),1);
                 sender.sendMessage("path="+result);return true;

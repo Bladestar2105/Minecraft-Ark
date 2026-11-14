@@ -1,5 +1,5 @@
 name: ArkDinos
-version: 1.1.0
+version: 1.2.0
 main: de.ark.dinos.ArkDinos
 api-version: '26.3'
 description: Eight persistent ARK dinosaurs with native riding, flight and optional crossplay models.

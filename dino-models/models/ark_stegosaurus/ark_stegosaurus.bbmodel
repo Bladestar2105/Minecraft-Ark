@@ -7566,7 +7566,7 @@
         16
       ],
       "rotation": [
-        11.738571206722328,
+        11.73857120672233,
         180.0,
         0
       ],
@@ -8550,7 +8550,7 @@
         18.5
       ],
       "rotation": [
-        11.738571206722328,
+        11.73857120672233,
         180.0,
         0
       ],
@@ -8632,7 +8632,7 @@
         16
       ],
       "rotation": [
-        105.25511870305778,
+        105.25511870305779,
         0.0,
         0
       ],
@@ -8796,7 +8796,7 @@
         37
       ],
       "rotation": [
-        108.43494882292201,
+        108.43494882292202,
         0.0,
         0
       ],
@@ -9698,7 +9698,7 @@
         23
       ],
       "rotation": [
-        4.763641690726144,
+        4.763641690726143,
         180.0,
         0
       ],
@@ -14901,6 +14901,77 @@
               "channel": "rotation",
               "time": 0.75,
               "uuid": "a443bb49-b917-53a0-a7fa-cf8e29353aee",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            }
+          ]
+        },
+        "bbf01e3e-4a3a-5add-8194-70d26e9bb8a4": {
+          "name": "head",
+          "type": "bone",
+          "keyframes": [
+            {
+              "channel": "rotation",
+              "time": 0,
+              "uuid": "a8b257c0-fef2-5576-98bd-8e94606a82a7",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 0.16,
+              "uuid": "732c910c-7db0-5aed-be86-79f6e589e4c2",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 0.34,
+              "uuid": "b3737e35-5f55-5f6f-a267-0175f5824413",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 0.52,
+              "uuid": "e9c17f69-187a-5dd9-acd3-cc8eeaeb7cca",
+              "interpolation": "linear",
+              "data_points": [
+                {
+                  "x": "0",
+                  "y": "0",
+                  "z": "0"
+                }
+              ]
+            },
+            {
+              "channel": "rotation",
+              "time": 0.75,
+              "uuid": "658ee8f5-a814-5019-8c10-89a98083728b",
               "interpolation": "linear",
               "data_points": [
                 {

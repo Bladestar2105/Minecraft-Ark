@@ -39,6 +39,19 @@ def block_at(lines, position):
 
 
 class RenewalTest(unittest.TestCase):
+    def test_dinosaur_sites_have_open_routes_in_all_directions(self):
+        pack, _ = self.pack()
+        site = SITES[2]
+        lines = pack['site_habitat']
+        x, y, z = site['x'], site['y'], site['z']
+        for side in (-16, 16):
+            for offset in range(-14, 15):
+                for dx, dz in ((offset, side), (side, offset)):
+                    self.assertEqual(block_at(lines, (x + dx, y + 1, z + dz)), 'air')
+        text = '\n'.join(lines)
+        self.assertNotIn('URZEIT-REVIER', text)
+        self.assertNotIn('zähmen per Klick', text)
+
     def test_measured_cardinal_ramps_connect_raised_platforms_to_terrain(self):
         site = dict(SITES[1], approach_heights={'north': 77, 'east': 98, 'south': 90, 'west': 84})
         pack, manifest = self.pack([site])

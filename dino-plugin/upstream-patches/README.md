@@ -16,4 +16,8 @@ The deterministic native regression uses the installed Paper/BetterModel/Geyser 
 DINO_BRIDGE_RACE=1 DINO_GME_JAR=/private/output/GeyserModelEngine-1.0.9.jar DINO_MODEL_OUTPUT=/private/evidence node dino-plugin/model-runtime-test.mjs
 ```
 
-This rebuild does not change public dependency pins or deploy anything.
+The runtime manifest pins the reviewed output SHA-256 and original input SHA-256 separately. A source checkout reproduces the bridge automatically with Java25 before installation; set `JAVA_HOME` to the Java25 JDK. A verified cached output is reused.
+
+New binary packages contain the verified derived JAR separately at `runtime-dependencies/GeyserModelEngine-1.0.9.jar`, alongside the seven project plugins. Binary setup verifies its exact manifest checksum before copying it and needs no host JDK or bridge download. A changed bundled JAR is rejected rather than silently replaced. No binary is stored in Git, and existing release archives are unchanged.
+
+Upstream source and original artifact: [GeyserModelEngine](https://github.com/GeyserExtensionists/GeyserModelEngine), with its [MIT license](LICENSE-GeyserModelEngine.txt). The derived JAR retains all upstream entries except the two patched class payloads, including their original licensing information. The original download URL, both checksums, license, source patch and transformer remain in the binary archive for provenance. This does not deploy anything or modify existing installations.

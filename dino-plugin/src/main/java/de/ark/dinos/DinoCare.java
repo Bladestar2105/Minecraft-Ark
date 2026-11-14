@@ -99,10 +99,12 @@ final class DinoCare implements Listener, AutoCloseable {
         item.setAmount(item.getAmount()-1);player.getInventory().setItemInMainHand(item);
     }
     private String instructions(String species) {
+        String timing=CareRules.requiredFeeds(species)+"× ";
+        String interval=" ("+(CareRules.feedCooldown(species)/1000)+" s Abstand), dann ";
         return switch(species) {
-            case "trex","velociraptor","dilophosaurus" -> "5× rohes Fleisch (10 s Abstand), dann 1 Knochen.";
-            case "pteranodon" -> "5× roher Fisch (10 s Abstand), dann 1 Seegras.";
-            default -> "8× Weizen, Farn oder Löwenzahn (15 s Abstand), dann 1 Fackelblumensamen.";
+            case "trex","velociraptor","dilophosaurus" -> timing+"rohes Fleisch"+interval+"1 Knochen.";
+            case "pteranodon" -> timing+"roher Fisch"+interval+"1 Seegras.";
+            default -> timing+"Weizen, Farn oder Löwenzahn"+interval+"1 Fackelblumensamen.";
         };
     }
     private String finisherLabel(String species) { return switch(CareRules.finisher(species)) {
@@ -156,7 +158,7 @@ final class DinoCare implements Listener, AutoCloseable {
         int required=CareRules.requiredFeeds(species);
         var feeding=CareRules.feed(species,food,player.getUniqueId().toString(),progress(species,data),now);
         switch(feeding.action()) {
-            case FEED -> { consume(player);progress(data,feeding.progress());hearts(mob);message(player,"Zähmen: "+feeding.progress().feeds()+"/"+required+". "+(feeding.progress().feeds()==required?"Jetzt: "+finisherLabel(species):"Nächstes Futter in "+(required==8?15:10)+" s.")); }
+            case FEED -> { consume(player);progress(data,feeding.progress());hearts(mob);message(player,"Zähmen: "+feeding.progress().feeds()+"/"+required+". "+(feeding.progress().feeds()==required?"Jetzt: "+finisherLabel(species):"Nächstes Futter in "+(CareRules.feedCooldown(species)/1000)+" s.")); }
             case FINISH -> {
                 if(plugin.tame(mob,player)) { consume(player);progress(data,null);message(player,"Gezähmt! Schleichen + Interagieren: Bleiben / Folgen."); }
                 else message(player,"Zähmen gerade nicht möglich. Futter bleibt erhalten.");
@@ -388,8 +390,19 @@ final class DinoCare implements Listener, AutoCloseable {
         visuals.retain(activeNests);
     }
     private boolean hatchSpace(Block egg,String species) {
-        double half=species.equals("pteranodon")?.7:.5,height=species.equals("brachiosaurus")?3:1.5;
-        var box=new BoundingBox(egg.getX()+.5-half,egg.getY(),egg.getZ()+.5-half,egg.getX()+.5+half,egg.getY()+height,egg.getZ()+.5+half);
+        String model="ark_"+species;
+        var visible=DinoSizes.centeredClearanceBounds(model);
+        long now=System.currentTimeMillis();
+        double growth=DinoGrowth.scale(now+CareRules.GROWTH_MS,now,CareRules.GROWTH_MS);
+        // Reserve the visible rig and both the modeled carrier and optional-plugin fallback.
+        double nativeScale=Math.max(1,DinoSizes.nativeScale(model));
+        double nativeWidth=SpeciesRules.ravager(species)?1.95:1.9;
+        double nativeHeight=SpeciesRules.ravager(species)?2.2:1.75;
+        double halfWidth=Math.max(visible.width(),nativeWidth*nativeScale)*growth/2;
+        double halfLength=Math.max(visible.length(),nativeWidth*nativeScale)*growth/2;
+        double height=Math.max(visible.height()+DinoSizes.clearanceMinY(model),nativeHeight*nativeScale)*growth;
+        var box=new BoundingBox(egg.getX()+.5-halfWidth,egg.getY(),egg.getZ()+.5-halfLength,
+                egg.getX()+.5+halfWidth,egg.getY()+height,egg.getZ()+.5+halfLength);
         World world=egg.getWorld();
         for(int x=(int)Math.floor(box.getMinX())-1;x<=(int)Math.floor(box.getMaxX())+1;x++)for(int z=(int)Math.floor(box.getMinZ())-1;z<=(int)Math.floor(box.getMaxZ())+1;z++) {
             if(!world.isChunkLoaded(x>>4,z>>4))return false;
