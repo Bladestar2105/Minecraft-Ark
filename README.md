@@ -13,9 +13,9 @@ A prepared survival adventure world, separate creative area and Java/Bedrock cro
 
 ## Choose an installation
 
-**Version note:** the historical `app-2026-11-07` binary contains ArkDinos 1.0.0. It does not contain the current dinosaur changes. Build the intended source revision below, or use a matching successful [Checks workflow artifact](https://github.com/Bladestar2105/Minecraft-Ark/actions/workflows/checks.yml). Check `version ArkDinos` on an existing server before diagnosing its behavior.
+**Version note:** the stable `app-2026-11-14` binary contains ArkDinos 1.2.0 and the current dinosaur changes. For another source revision, build below or use a matching successful [Checks workflow artifact](https://github.com/Bladestar2105/Minecraft-Ark/actions/workflows/checks.yml). Check `version ArkDinos` on an existing server before diagnosing its behavior.
 
-**Historical binary All-in-One:** [`app-2026-11-07`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-07) provides `Minecraft-Ark-app-2026-11-07-all-in-one.zip` with the Docker stack and all seven project JARs. Verify its release `SHA256SUMS`, extract into a new empty directory, then run:
+**Binary All-in-One:** [`app-2026-11-14`](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/app-2026-11-14) provides `Minecraft-Ark-app-2026-11-14-all-in-one.zip` with the Docker stack and all seven project JARs. Verify its release `SHA256SUMS`, extract into a new empty directory, then run:
 
 ```sh
 python3 scripts/setup.py
