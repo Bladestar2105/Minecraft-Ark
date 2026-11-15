@@ -29,7 +29,7 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class CareFixture extends JavaPlugin implements Listener {
-    private boolean denyPlacement,denySpawn;
+    private boolean denyPlacement,denySpawn,denyCreative;
     private String spawnIdentity="none";
     public void onEnable() { getServer().getPluginManager().registerEvents(this,this); }
     private NamespacedKey key(String name) { return NamespacedKey.fromString("arkdinos:"+name); }
@@ -54,6 +54,8 @@ public final class CareFixture extends JavaPlugin implements Listener {
     }
     @EventHandler(priority=EventPriority.HIGH)
     public void protection(BlockPlaceEvent event) { if(denyPlacement)event.setCancelled(true); }
+    @EventHandler(priority=EventPriority.HIGH)
+    public void creativeProtection(org.bukkit.event.inventory.InventoryCreativeEvent event) { if(denyCreative)event.setCancelled(true); }
     @EventHandler(priority=EventPriority.MONITOR)
     public void lateJoinSwap(org.bukkit.event.player.PlayerJoinEvent event) {
         var item=event.getPlayer().getInventory().getItem(0);if(item==null || !item.hasItemMeta())return;
@@ -70,6 +72,25 @@ public final class CareFixture extends JavaPlugin implements Listener {
         if(!sender.getName().equals("Rcon") && !sender.getName().equals("CONSOLE"))return true;
         try {
             switch(args[0]) {
+                case "creative-packet" -> {
+                    Player player=getServer().getPlayerExact(args[1]);
+                    ItemStack item=args[2].equals("held")?player.getInventory().getItemInMainHand().clone():new ItemStack(Material.valueOf(args[2]));item.setAmount(Integer.parseInt(args[3]));
+                    Class<?> stack=Class.forName("net.minecraft.world.item.ItemStack"),buffer=Class.forName("io.netty.buffer.ByteBuf");
+                    Object nativeItem=Class.forName("org.bukkit.craftbukkit.inventory.CraftItemStack").getMethod("asNMSCopy",ItemStack.class).invoke(null,item);
+                    Class<?> packet=Class.forName("net.minecraft.network.protocol.game.ServerboundSetCreativeModeSlotPacket");
+                    Object value=packet.getConstructor(short.class,stack).newInstance(Short.parseShort(args[4]),nativeItem);
+                    Object raw=Class.forName("io.netty.buffer.Unpooled").getMethod("buffer").invoke(null);
+                    try {
+                        Object server=getServer().getClass().getMethod("getServer").invoke(getServer());
+                        Object registries=server.getClass().getMethod("registryAccess").invoke(server);
+                        Object output=Class.forName("net.minecraft.network.RegistryFriendlyByteBuf").getConstructor(buffer,Class.forName("net.minecraft.core.RegistryAccess")).newInstance(raw,registries);
+                        Class.forName("net.minecraft.network.codec.StreamEncoder").getMethod("encode",Object.class,Object.class).invoke(packet.getField("STREAM_CODEC").get(null),output,value);
+                        byte[] bytes=new byte[(int)buffer.getMethod("readableBytes").invoke(raw)];buffer.getMethod("readBytes",byte[].class).invoke(raw,(Object)bytes);
+                        sender.sendMessage("hex="+java.util.HexFormat.of().formatHex(bytes));
+                    } finally {buffer.getMethod("release").invoke(raw);}
+                }
+                case "deny-creative" -> denyCreative=Boolean.parseBoolean(args[1]);
+                case "egg-drops" -> sender.sendMessage(getServer().getWorld(args[1]).getEntities().stream().filter(e->e instanceof org.bukkit.entity.Item).map(e->((org.bukkit.entity.Item)e).getItemStack()).filter(i->i.hasItemMeta()&&i.getItemMeta().getPersistentDataContainer().has(key("egg-species"))).map(i->"species="+i.getItemMeta().getPersistentDataContainer().get(key("egg-species"),PersistentDataType.STRING)+";owner="+i.getItemMeta().getPersistentDataContainer().get(key("egg-owner"),PersistentDataType.STRING)+";count="+i.getAmount()).collect(java.util.stream.Collectors.joining("|")));
                 case "placed-visual" -> {
                     Block block=block(args).block();
                     var actors=block.getWorld().getNearbyEntities(block.getLocation().add(.5,.5,.5),.1,1,.1).stream()
@@ -167,12 +188,13 @@ public final class CareFixture extends JavaPlugin implements Listener {
                 case "food" -> { Player p=getServer().getPlayerExact(args[1]);p.getInventory().setHeldItemSlot(0);p.getInventory().setItemInMainHand(new ItemStack(Material.valueOf(args[2]),Integer.parseInt(args[3]))); }
                 case "fill-inventory" -> { Player p=getServer().getPlayerExact(args[1]);for(int i=0;i<36;i++)p.getInventory().setItem(i,new ItemStack(Material.STONE,64)); }
                 case "inventory" -> {
-                    Player p=getServer().getPlayerExact(args[1]);int eggs=0;String species="none",model="none",lore="none";
+                    Player p=getServer().getPlayerExact(args[1]);int eggs=0;String species="none",model="none",lore="none",owner="none";
                     for(ItemStack item:p.getInventory().getContents())if(item!=null && item.hasItemMeta() && item.getItemMeta().getPersistentDataContainer().has(key("egg-species"))) {
                         eggs+=item.getAmount();species=item.getItemMeta().getPersistentDataContainer().get(key("egg-species"),PersistentDataType.STRING);
                         model=String.valueOf(item.getItemMeta().getItemModel());lore=String.valueOf(item.getItemMeta().lore());
+                        owner=item.getItemMeta().getPersistentDataContainer().get(key("egg-owner"),PersistentDataType.STRING);
                     }
-                    sender.sendMessage("hand="+p.getInventory().getItemInMainHand().getType()+";amount="+p.getInventory().getItemInMainHand().getAmount()+";eggs="+eggs+";eggSpecies="+species+";eggModel="+model+";lore="+lore+";top="+p.getOpenInventory().getTopInventory().getSize()+";cursor="+p.getItemOnCursor().getType());
+                    sender.sendMessage("hand="+p.getInventory().getItemInMainHand().getType()+";amount="+p.getInventory().getItemInMainHand().getAmount()+";eggs="+eggs+";eggSpecies="+species+";eggOwner="+owner+";eggModel="+model+";lore="+lore+";top="+p.getOpenInventory().getTopInventory().getSize()+";cursor="+p.getItemOnCursor().getType());
                 }
                 case "time" -> entity(args[1]).getPersistentDataContainer().set(key(args[2]),PersistentDataType.LONG,Long.parseLong(args[3])==0?0:System.currentTimeMillis()+Long.parseLong(args[3]));
                 case "legacy-growth" -> { var mob=entity(args[1]);var data=mob.getPersistentDataContainer();data.remove(key("growth-duration"));if(args.length>3)data.set(key("growth-duration"),PersistentDataType.LONG,Long.parseLong(args[3]));data.set(key("adult-at"),PersistentDataType.LONG,System.currentTimeMillis()+Long.parseLong(args[2])); }

@@ -34,7 +34,20 @@ Beide Editionen benötigen die Server-Ressourcenpakete. Automatische Prüfungen 
 
 T-Rex braucht zwölf Fütterungen mit rohem Fleisch, jeweils zwanzig Sekunden auseinander, dann einen Knochen. Zwischen erstem und zwölftem Füttern liegen mindestens drei Minuten vierzig Sekunden. Velociraptor und Dilophosaurus brauchen weiterhin fünf Fleischfütterungen, jeweils zehn Sekunden auseinander, dann einen Knochen. Pteranodon braucht fünf Fütterungen mit rohem Fisch, ebenfalls zehn Sekunden auseinander, dann Seegras. Brachiosaurus, Triceratops und Stegosaurus brauchen acht Fütterungen mit Weizen, Farn oder Löwenzahn in beliebiger Mischung, jeweils fünfzehn Sekunden auseinander, dann einen Fackelblumensamen. Falsches Futter und zu frühe Klicks verbrauchen nichts. Der sichtbare Fortschritt bleibt nach der letzten Fütterung fünf Minuten für dich reserviert.
 
-Füttere zwei eigene erwachsene Tiere derselben Art innerhalb von sechs Blöcken. Bei erfolgreicher Paarung erhältst du ein beschriftetes Ei im Inventar; bei vollem Inventar fällt es neben dir herunter. Danach haben die Eltern fünf Minuten Pause. Im Kreativmodus öffnet `/dinoeier` die Auswahl aller acht Eiarten; die Auswahl gibt dir ein normales Inventaritem. Ein übertragenes Ei behält seinen ursprünglichen Besitzer. Jede Art besitzt ein eigenes Inventarbild. Die sieben ausbrütbaren Arten haben zusätzlich verschiedene platzierte Eierschalenmodelle über dem unveränderten Schnüffler-Eiblock.
+Füttere zwei eigene erwachsene Tiere derselben Art innerhalb von sechs Blöcken. Bei erfolgreicher Paarung erhältst du ein beschriftetes Ei im Inventar; bei vollem Inventar fällt es neben dir herunter. Danach haben die Eltern fünf Minuten Pause. Öffne in der Kreativwelt das normale Inventar unter **Spawn-Eier** oder suche nach **Dino-Ei** und wähle das gewünschte Ei aus. Dafür brauchst du keinen Befehl und keine Client-Mod. Die gewählte Stückzahl wird zu echten Eiern in deinem Besitz. Ein übertragenes Ei behält seinen ursprünglichen Besitzer. Jede Art besitzt ein eigenes Inventarbild. Die sieben ausbrütbaren Arten haben zusätzlich verschiedene platzierte Eierschalenmodelle über dem unveränderten Schnüffler-Eiblock.
+
+Das Ressourcenpaket ersetzt dafür diese acht Vanilla-Eier. Nimm das aktualisierte Serverpaket an, damit Namen und Bilder angezeigt werden. Außerhalb des Kreativmodus einer eingerichteten Dino-Welt bleibt ihre serverseitige Vanilla-Funktion erhalten. `/dinoeier` bleibt als bisheriges Auswahlmenü verfügbar.
+
+| Ersetztes Vanilla-Ei | Dino-Ei |
+| --- | --- |
+| Fledermaus | T-Rex |
+| Endermilbe | Triceratops |
+| Silberfischchen | Stegosaurus |
+| Plagegeist | Brachiosaurus |
+| Phantom | Velociraptor |
+| Schreiter | Pteranodon |
+| Kaulquappe | Dilophosaurus |
+| Händlerlama | Mosasaurus |
 
 Platziere das Ei auf einer Fläche, auf der du Blöcke setzen darfst. In jeder Dino-Welt gelten zwanzig Minuten Brutzeit und anschließend fünfzehn Minuten Wachstum. Ein blockierter Schlupf wartet auf Platz. Jungtiere beginnen klein. Triceratops-Hörner, Stego-Platten und Schwanzstacheln, Ptera-Kamm sowie Dilo-Kämme und Kragen haben drei Entwicklungsstufen: Schlüpfling, Jungtier ab der halben Wachstumszeit und erwachsenes Tier. Wachstumsfutter beschleunigt auch diese Entwicklung. Passendes Futter verkürzt das Wachstum um eine Minute pro Fütterung, frühestens alle dreißig Sekunden. Jungtiere können folgen und frei umherlaufen. Erst Erwachsene können geritten oder freigelassen werden, kämpfen und sich paaren. Geschlüpfte Tiere übernehmen bereits den Besitzer des Eis und beginnen im Modus Bleiben; sie müssen nicht erneut gezähmt werden. Ein im Survival abgebautes Ei lässt sich erneut setzen; seine Brutzeit beginnt dann neu. Explosionen zerstören es.
 

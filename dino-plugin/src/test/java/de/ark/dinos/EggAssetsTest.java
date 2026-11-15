@@ -10,7 +10,7 @@ public final class EggAssetsTest {
     public static void main(String[] args) throws Exception {
         try (var source = Files.newInputStream(Path.of(args[0]))) {
             var assets = EggAssets.read(source);
-            if (assets.size() != 24) throw new AssertionError("All species assets required");
+            if (assets.size() != 34) throw new AssertionError("All species and Creative alias assets required");
             for (String species : new String[]{"trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon", "dilophosaurus", "mosasaurus"}) {
                 var texture = assets.get("assets/arkdinos/textures/item/egg_" + species + ".png");
                 if (texture == null || !Arrays.equals(Arrays.copyOf(texture, 8), new byte[]{(byte)137,80,78,71,13,10,26,10})) {

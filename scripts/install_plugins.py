@@ -104,6 +104,10 @@ def dino_item_files(root):
     assets = json.loads(safe_path(root, 'dino-items/egg-assets.json').read_text())
     expected = {'manifest.json', 'textures/item_texture.json'} | {
         'textures/items/arkdinos/egg_' + species + '.png' for species in DINO_MODELS}
+    aliases = ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama')
+    expected |= {'textures/items/egg_' + alias + '.png' for alias in aliases}
+    expected |= {'textures/items/spawn_eggs/spawn_egg_' + alias + '.png' for alias in aliases}
+    expected |= {'texts/en_US.lang', 'texts/de_DE.lang'}
     if set(assets['bedrock']) != expected:
         raise ValueError('Unexpected dinosaur egg resource paths')
     output = io.BytesIO()

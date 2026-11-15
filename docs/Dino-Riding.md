@@ -36,7 +36,20 @@ Both editions require the server resource packs. Automated checks cover all eigh
 
 T-Rex needs twelve raw-meat feeds, twenty seconds apart, then a bone. The first-to-twelfth-feed interval is at least three minutes forty seconds. Velociraptor and Dilophosaurus still need five raw-meat feeds, ten seconds apart, then a bone. Pteranodon needs five raw-fish feeds, ten seconds apart, then seagrass. Brachiosaurus, Triceratops and Stegosaurus need eight feeds of wheat, fern or dandelion in any combination, fifteen seconds apart, then a torchflower seed. Wrong food and early clicks consume nothing. Visible progress stays reserved for you for five minutes after the latest feed.
 
-Feed two owned adults of the same species within six blocks. A successful pair puts a named species egg into your inventory; overflow drops beside you. Parents then have a five-minute breeding cooldown. In Creative mode, `/dinoeier` opens all eight egg choices and gives a real inventory item. Transferred eggs retain their original owner. Every species has its own inventory image. The seven hatchable species also have different placed shell models over the unchanged native sniffer-egg block.
+Feed two owned adults of the same species within six blocks. A successful pair puts a named species egg into your inventory; overflow drops beside you. Parents then have a five-minute breeding cooldown. In the Creative world's normal inventory, open **Spawn Eggs** or search **Dino-Ei**, then select the dinosaur egg. No command or client mod is required. The selected quantity becomes real eggs owned by you; transferred eggs retain their original owner. Every species has its own inventory image. The seven hatchable species also have different placed shell models over the unchanged native sniffer-egg block.
+
+The resource pack reserves these eight vanilla egg entries for the dinosaur catalog. Accept the updated server resource pack to see their names and icons. Outside Creative in a configured dinosaur world, they retain vanilla server behavior. `/dinoeier` remains available as a compatibility menu.
+
+| Replaced vanilla egg | Dinosaur egg |
+| --- | --- |
+| Bat | T-Rex |
+| Endermite | Triceratops |
+| Silverfish | Stegosaurus |
+| Vex | Brachiosaurus |
+| Phantom | Velociraptor |
+| Strider | Pteranodon |
+| Tadpole | Dilophosaurus |
+| Trader Llama | Mosasaurus |
 
 Place an egg where block placement is allowed. Incubation takes twenty minutes and growth takes fifteen minutes in every dinosaur world. A blocked hatch waits for space. Hatchlings start small. Triceratops horns, Stegosaurus plates and tail spikes, Pteranodon crest, and Dilophosaurus crests and frill have hatchling, juvenile and adult detail stages; the juvenile stage starts halfway through growth. Growth food advances these features too. Accepted food removes one minute from the remaining growth time, with thirty seconds between feeds. Young owned animals can follow and wander. Only adults can be ridden or released, fight or breed. Hatchlings already inherit the egg owner and initially Stay; they do not need taming again. Breaking an egg in Survival returns it, restarting incubation when placed again. Explosions destroy it.
 

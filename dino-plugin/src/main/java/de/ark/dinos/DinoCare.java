@@ -36,6 +36,7 @@ import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCreativeEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -199,6 +200,25 @@ final class DinoCare implements Listener, AutoCloseable {
         meta.lore(eggLore(species));
         meta.getPersistentDataContainer().set(eggSpecies,PersistentDataType.STRING,species);
         meta.getPersistentDataContainer().set(eggOwner,PersistentDataType.STRING,owner.toString());item.setItemMeta(meta);return item;
+    }
+    @EventHandler(priority=EventPriority.HIGHEST,ignoreCancelled=true)
+    public void creativeEgg(InventoryCreativeEvent event) {
+        if(!(event.getWhoClicked() instanceof Player player) || player.getGameMode()!=GameMode.CREATIVE || !plugin.prototype(player))return;
+        String species=switch(event.getCursor().getType()) {
+            case BAT_SPAWN_EGG -> "trex";
+            case ENDERMITE_SPAWN_EGG -> "triceratops";
+            case SILVERFISH_SPAWN_EGG -> "stegosaurus";
+            case VEX_SPAWN_EGG -> "brachiosaurus";
+            case PHANTOM_SPAWN_EGG -> "velociraptor";
+            case STRIDER_SPAWN_EGG -> "pteranodon";
+            case TADPOLE_SPAWN_EGG -> "dilophosaurus";
+            case TRADER_LLAMA_SPAWN_EGG -> "mosasaurus";
+            default -> null;
+        };
+        if(species==null)return;
+        var item=egg(species,player.getUniqueId());item.setAmount(event.getCursor().getAmount());event.setCursor(item);
+        // Creative clients predict the vanilla alias; sync after Paper applies the replacement.
+        plugin.getServer().getScheduler().runTask(plugin,() -> { if(player.isOnline())player.updateInventory(); });
     }
     private List<Component> eggLore(String species) {
         return species.equals("mosasaurus")

@@ -510,9 +510,22 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         }
         modeledCarriers.put(mob.getEntityId(), modelName);
         models.putIfAbsent(mob.getUniqueId(), new Model(mob, modelName));
-        var tracker = renderer.getOrCreate(BukkitAdapter.adapt(mob), TrackerModifier.DEFAULT,
-                created -> created.scaler(ModelScaler.value((float) (DinoSizes.adultScale(modelName)
-                        * (modelName.equals("ark_mosasaurus") ? 1 : growthScale(mob))))));
+        // Keep moving legs animated for every tracked viewer; BetterModel's separate sight limit
+        // can be shorter than native entity tracking. Visibility still follows entity tracking.
+        var registry = BetterModel.registry(BukkitAdapter.adapt(mob)).orElse(null);
+        var existing = registry == null ? null : registry.tracker(modelName);
+        var migration = existing != null && existing.modifier().sightTrace() ? existing.asTrackerData() : null;
+        if (migration != null) {
+            // getOrCreate keeps a restored tracker's immutable modifier; replace only our tracker.
+            existing.forRemoval(true);
+            registry.remove(modelName);
+        }
+        var modifier = (migration == null ? TrackerModifier.DEFAULT : migration.modifier()).toBuilder().sightTrace(false).build();
+        var tracker = renderer.getOrCreate(BukkitAdapter.adapt(mob), modifier, created -> {
+            if (migration != null) migration.applyAs(created);
+            created.scaler(ModelScaler.value((float) (DinoSizes.adultScale(modelName)
+                    * (modelName.equals("ark_mosasaurus") ? 1 : growthScale(mob)))));
+        });
         String phase = previous == null || previous.phase == null ? "idle" : previous.phase;
         Model current = models.get(mob.getUniqueId());
         if (current.tracker != tracker) { current.phase = null; current.detailStage = null; current.customName = null; }

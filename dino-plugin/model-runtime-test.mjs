@@ -237,7 +237,9 @@ try {
     assert.equal(wire.type,modelName?nativeIds.pig:nativeIds.ravager,modelName?'Unrelated model factory changed':'Owned GME actor must share native carrier interpolation in both prediction states');
     await command(`dm bridge-off ${name}`);return{ids,wire};
   };
-  if(process.env.DINO_MODEL_JOINTS_ONLY==='1') {
+  if(process.env.DINO_MODEL_DISTANCE_ONLY==='1') {
+    await (await import('./model-distance-runtime-checks.mjs')).default({check,command,inspect,delay,alice,readVi,report,eventually});
+  } else if(process.env.DINO_MODEL_JOINTS_ONLY==='1') {
     await (await import('./model-joint-runtime-checks.mjs')).default({check,command,inspect,delay,directory,report,alice});
   } else if(process.env.DINO_BRIDGE_RACE==='1') {
     await check('Zero-delay bridge task waits for publication and sends the initial actor exactly once',async()=>{
@@ -262,11 +264,15 @@ try {
   await check('Generated Java pack and pinned Geyser register eight distinct species egg items',async()=>{
     report.javaPackAudit=JSON.parse(execFileSync('python3',[`${root}dino-models/verify_java_pack.py`,`${directory}/plugins/BetterModel/build.zip`],{encoding:'utf8'}));
     const result=await command('dm egg-mappings');
-    assert.match(result,/javaAssets=24;/);assert.match(result,/eggPack=true;/);
+    assert.match(result,/javaAssets=34;/);assert.match(result,/eggPack=true;/);
     assert.match(result,/bedrockDefinitions=8;/);assert.match(result,/modelEntities=8;/);
     for(const name of species)assert.ok(result.includes(`arkdinos:egg_${name}`),`Missing native ${name} item mapping`);
     assert.ok(!log.match(/Error reading definition.*ark-dino-eggs|Failed to register custom item.*arkdinos/));
     return result;
+  });
+  await check('Native Geyser Creative alias entries reverse-map to usable vanilla Java stacks on every supported protocol',async()=>{
+    const result=await command('dm creative-alias-mappings');const counts=Object.fromEntries(result.trim().split(';').map(row=>{const [key,value]=row.split('=');return[key,Number(value)];}));
+    assert.equal(counts.aliases,8);assert.ok(counts.protocols>0);assert.equal(counts.roundtrips,8*counts.protocols);return result;
   });
   await check('Startup attachment waits for BetterModel pack readiness',async()=>{
     const state=await inspect('early');report.earlyStartup=state;
@@ -483,6 +489,7 @@ try {
     }
     return samples;
   });
+  await (await import('./model-distance-runtime-checks.mjs')).default({check,command,inspect,delay,alice,readVi,report,eventually});
   await check('Blocked velocity and pure falling do not play walk',async()=>{
     await command('tp ModelRider 0 4 12');
     await command('dm position trex 0 4 8');await command('fill 2 4 5 2 10 11 stone');
@@ -557,12 +564,16 @@ try {
       assert.ok(Math.abs(Number(attacking.riderY)-Number(before.riderY))<.00001,'Attack moved the native saddle');
       await delay(850);const ended=await inspect(name);assert.doesNotMatch(ended.running,/name=attack/);assert.match(ended.running,/name=walk/);
       assert.equal(await command(`dm token ${name} walk`),token,'Finishing the attack restarted the movement clock');
-      const masks=JSON.parse((await command(`dm animation-masks ${name} ${bridgeId}`)).trim());
-      report.combatDiagnostics={name,before,attacking,ended,masks};
       const animationNames=JSON.parse(await readFile(`${root}dino-models/models/ark_${name}/ark_${name}.bbmodel`,'utf8')).animations.map(a=>a.name).sort();
       const attackBit=2**animationNames.indexOf('attack'),walkBit=2**animationNames.indexOf('walk');
+      let masks;
+      // GME publishes properties on a separate updater after BetterModel ends the overlay.
+      await eventually(async()=>{
+        masks=JSON.parse((await command(`dm animation-masks ${name} ${bridgeId}`)).trim());
+        return masks.length>0&&(masks.at(-1)&attackBit)===0&&(masks.at(-1)&walkBit)!==0;
+      },'Encoded GME property must return to the ongoing walk',3000);
+      report.combatDiagnostics={name,before,attacking,ended,masks};
       assert.ok(masks.some(mask=>(mask&attackBit)!==0),'Attack must reach actual encoded GME animation property packets');
-      assert.ok((masks.at(-1)&attackBit)===0&&(masks.at(-1)&walkBit)!==0,'Encoded GME property must return to the ongoing walk');
       await command(`dm stopmotion ${name}`);await command(`dm dismount ${name}`);
       await command(`dm bridge-off ${name}`);samples[name]={before,attacking,ended,masks};
     }

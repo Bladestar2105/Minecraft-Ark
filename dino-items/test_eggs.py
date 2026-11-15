@@ -11,6 +11,22 @@ SPECIES = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor'
 
 
 class EggAssetsTest(unittest.TestCase):
+    def test_normal_creative_aliases_use_species_art_and_names_on_both_editions(self):
+        aliases = ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama')
+        result = generated_assets()
+        for alias, species in zip(aliases, SPECIES):
+            path = f'assets/minecraft/items/{alias}_spawn_egg.json'
+            self.assertIn(path, result['java'], 'The ordinary Creative egg must show its dinosaur icon')
+            item = json.loads(result['java'][path])
+            self.assertEqual(item['model'], {'type': 'minecraft:model', 'model': f'arkdinos:item/egg_{species}'})
+            for language in ('en_us', 'de_de'):
+                names = json.loads(result['java'][f'assets/minecraft/lang/{language}.json'])
+                self.assertIn(species.replace('trex', 'T-Rex').lower(), names[f'item.minecraft.{alias}_spawn_egg'].lower())
+            self.assertEqual(result['bedrock'][f'textures/items/egg_{alias}.png'], result['bedrock'][f'textures/items/arkdinos/egg_{species}.png'])
+            self.assertEqual(result['bedrock'][f'textures/items/spawn_eggs/spawn_egg_{alias}.png'], result['bedrock'][f'textures/items/arkdinos/egg_{species}.png'])
+            for language in ('en_US', 'de_DE'):
+                self.assertIn(f'item.spawn_egg.entity.{alias}.name=', result['bedrock'][f'texts/{language}.lang'].decode())
+
     def test_each_species_has_a_unique_texture_and_resolving_java_and_bedrock_paths(self):
         source = ROOT / 'dino-items/egg-assets.json'
         self.assertTrue(source.is_file(), 'Eight species egg assets have not been generated')
@@ -20,7 +36,7 @@ class EggAssetsTest(unittest.TestCase):
         self.assertEqual(generated_assets(), {'java': java, 'bedrock': bedrock, 'geyser': assets['geyser']}, 'Regenerate assets after changing egg art')
         mappings = assets['geyser']['items']['minecraft:sniffer_egg']
         self.assertEqual(assets['geyser']['format_version'], 2)
-        self.assertEqual(len(java), 24)
+        self.assertEqual(len(java), 34)
         self.assertEqual(len(mappings), 8)
         self.assertEqual(len(set(value for name, value in java.items() if name.endswith('.png'))), 8)
         atlas = json.loads(bedrock['textures/item_texture.json'])['texture_data']

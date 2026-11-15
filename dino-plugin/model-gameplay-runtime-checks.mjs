@@ -104,13 +104,14 @@ export default async function run({check,command,alice,clients,Client,eventually
   const packAudit=audit();observer.close();await exit();return{before,after,moved,bridgePoses,packAudit};
  });
  await check('Actual candidate growth and all eight model registrations survive a clean server restart',async()=>{
-  const before={};for(const name of species){const tag=`model_game_${name}`;if(name!=='mosasaurus')await command(`dm age ${tag} 450000`);before[name]=await inspect(tag);}
+   const before={};for(const name of species){const tag=`model_game_${name}`;if(name!=='mosasaurus')await command(`dm age ${tag} 450000`);before[name]=await inspect(tag);assert.equal(before[name].sightTrace,'false');}
   await exit();clients.forEach(client=>client.close());await command('save-all flush');const stopped=server();stopped.stdin.write('stop\n');await once(stopped,'exit');await start();
   alice=new Client('ModelRider');bob=new Client('ModelGuest');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Both clients must reconnect after real restart',30000);
   await command('tp @a 0 4 3');await command('forceload add -16 -16 80 32');await delay(500);ids=fields(await command(`dm ids ${alice.name}`));register(alice);register(bob);
   const after={};for(const name of species) {
    const tag=`model_game_${name}`;await eventually(async()=>{after[name]=await inspect(tag);return after[name].active==='1'&&after[name].stale==='0';},`${name} must restore its actual model after restart`);
    assert.equal(after[name].uuid,before[name].uuid);assert.equal(after[name].adultAt,before[name].adultAt);assert.equal(after[name].extra,'none');
+    assert.equal(after[name].sightTrace,'false',`${name} restored its old animation sight cutoff`);
    const factor={...factors,velociraptor:1,pteranodon:1,dilophosaurus:1.15,mosasaurus:1}[name];
    const growth=name==='mosasaurus'?1:.45+.55*Math.min(1,Math.max(0,1-(Number(after[name].adultAt)-Number(after[name].time))/900000));
    assert.ok(Math.abs(Number(after[name].render)-factor*growth)<.002,`${name} must advance growth by the real reboot duration`);

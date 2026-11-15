@@ -64,7 +64,7 @@ public final class ModelGameplayFixture extends JavaPlugin {
                 +";render="+tracker.scaler().scale(tracker)+";time="+System.currentTimeMillis()+";adultAt="+mob.getPersistentDataContainer().get(NamespacedKey.fromString("arkdinos:adult-at"),PersistentDataType.LONG)+";original="+mob.getPersistentDataContainer().get(NamespacedKey.fromString("arkdinos:model-original-scale"),PersistentDataType.DOUBLE)+";extra="+(seat==null?"none":seat)
                 +";trackers="+BetterModel.registry(mob.getUniqueId()).orElseThrow().trackers().size()
                 +";driver="+call(plugin(),"driver",new Class<?>[]{Mob.class},mob)
-                +";x="+mob.getX()+";y="+mob.getY()+";z="+mob.getZ()+";yaw="+mob.getYaw();
+                +";x="+mob.getX()+";y="+mob.getY()+";z="+mob.getZ()+";yaw="+mob.getYaw()+";sightTrace="+tracker.modifier().sightTrace();
     }
     @SuppressWarnings("unchecked")
     @Override public boolean onCommand(CommandSender sender,Command command,String label,String[] args) {
