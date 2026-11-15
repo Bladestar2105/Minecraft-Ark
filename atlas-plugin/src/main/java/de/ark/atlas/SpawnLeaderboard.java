@@ -22,7 +22,6 @@ import org.bukkit.entity.TextDisplay;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.event.world.SpawnChangeEvent;
@@ -36,7 +35,6 @@ import org.bukkit.scoreboard.Score;
 final class SpawnLeaderboard implements Listener, AutoCloseable {
     private final JavaPlugin plugin;
     private final NamespacedKey marker;
-    private final Map<UUID, String> players = new HashMap<>();
     private final BukkitTask refreshTask;
     private UUID display;
     private boolean closed;
@@ -44,24 +42,17 @@ final class SpawnLeaderboard implements Listener, AutoCloseable {
     SpawnLeaderboard(JavaPlugin plugin) {
         this.plugin = plugin;
         marker = new NamespacedKey(plugin, "leaderboard-display");
-        for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
-            if (player.hasPlayedBefore() || player.isOnline()) remember(player);
-        }
         Bukkit.getPluginManager().registerEvents(this, plugin);
         removeLoaded();
         refreshTask = Bukkit.getScheduler().runTaskTimer(plugin, this::refresh, 1, 100);
     }
 
-    private void remember(OfflinePlayer player) {
-        String name = player.getName();
-        if (name != null && !name.isBlank()) players.put(player.getUniqueId(), name);
-    }
-
     private List<LeaderboardRules.Entry> ranking() {
-        Bukkit.getOnlinePlayers().forEach(this::remember);
         Objective objective = Bukkit.getScoreboardManager().getMainScoreboard().getObjective("ark_rp");
         Map<String, Integer> points = new HashMap<>();
-        if (objective != null) for (String name : players.values()) {
+        if (objective != null) for (OfflinePlayer player : Bukkit.getWhitelistedPlayers()) {
+            String name = player.getName();
+            if (name == null || name.isBlank()) continue;
             Score score = objective.getScore(name);
             if (score.isScoreSet()) points.put(name, score.getScore());
         }
@@ -143,7 +134,6 @@ final class SpawnLeaderboard implements Listener, AutoCloseable {
     }
 
     @EventHandler public void chunkLoaded(ChunkLoadEvent event) { checkChunk(event.getChunk()); }
-    @EventHandler public void playerJoined(PlayerJoinEvent event) { remember(event.getPlayer()); }
     @EventHandler public void entitiesLoaded(EntitiesLoadEvent event) {
         for (Entity entity : event.getEntities()) if (owned(entity) && !entity.getUniqueId().equals(display)) entity.remove();
         checkChunk(event.getChunk());
