@@ -2,7 +2,7 @@
 
 [English](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding) · [Spieleranleitung](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Playing-DE)
 
-ArkDinos 1.2.0 ergänzt acht eigene Modelle und Pteranodon-Flug. Das Weltarchiv allein enthält weder dieses Update noch die Ressourcenpakete. Der Crossplay-Prototyp wartet noch auf die visuelle Abnahme mit echten Java-/Bedrock-/Konsolenspielern.
+ArkDinos 1.2.1 ergänzt acht eigene Modelle und Pteranodon-Flug. Das Weltarchiv allein enthält weder dieses Update noch die Ressourcenpakete. Der Crossplay-Prototyp benötigt weiterhin eine Prüfung von Darstellung und Steuerung auf den tatsächlich verwendeten Bedrock-/Konsolengeräten.
 
 Außerhalb der Prototypwelten zähmst du eines der besonderen Habitat-Tiere im Survival mit einem Fackelblumensamen. Für Prototypwelten gelten die Futterregeln unten. Innerhalb der eingerichteten Survival-Welten darf zunächst nur der Besitzer reiten; er kann in einer Prototypwelt die Reitfreigabe für alle aktivieren. Ziele beim Zähmen oder Aufsteigen auf den Rumpf; lange Schwänze und Flügel sind dekorativ.
 
@@ -22,7 +22,9 @@ Diese erste Umsetzung benötigt Paper 26.3. Das sichtbare Zusammenspiel beider S
 
 ## Pteranodon fliegen
 
-Springen hebt ab und gewinnt Höhe. Bewegung lenkt relativ zur Blickrichtung; beim Vorwärtsflug nach unten schauen leitet den Sinkflug ein. Lasse Bewegung und Springen zum Schweben los. Sinke zum Landen auf eine freie Bodenfläche. Der Flug endet spätestens 48 Blöcke über dem Start und unter der Weltdecke. Lande möglichst vor dem Absteigen: Beim Absprung in der Luft sinkt das Tier kontrolliert und der Reiter erhält kurzzeitig langsamen Fall. Die sechs anderen reitbaren Arten bleiben Bodenreittiere.
+Springen hebt ab und gewinnt Höhe, auch aus dem Wasser. Halte Springen gedrückt, bis das Tier das Wasser verlassen hat; lässt du unter Wasser los, schwimmt es wieder. Bewegung lenkt relativ zur Blickrichtung; beim Vorwärtsflug nach unten schauen leitet den Sinkflug ein. Lasse Bewegung und Springen in der Luft zum Schweben los. Sinke zum Landen auf eine freie Bodenfläche. Der Flug endet spätestens 48 Blöcke über dem Start und unter der Weltdecke. Lande möglichst vor dem Absteigen: Beim Absprung in der Luft sinkt das Tier kontrolliert und der Reiter erhält kurzzeitig langsamen Fall. Die sechs anderen reitbaren Arten bleiben Bodenreittiere.
+
+Ein erwachsener gezähmter Pteranodon in **Folgen** begleitet seinen Besitzer auf einem anderen eigenen fliegenden Pteranodon, auch wenn er selbst im Wasser beginnt. Zuerst steigt er mit angelegten Flügeln auf, bis genügend Flugraum vorhanden ist. Ist der Besitzer am Ufer, kann ein nasses erwachsenes Tier in Folgen stattdessen zu einem geprüften trockenen Landeplatz in seiner Nähe fliegen. Der Besitzer muss im Survival, in derselben Welt und höchstens 48 Blöcke entfernt sein; der Weg muss frei und geladen sein. Bleiben, Jungtiere und am Boden gehaltene Tiere behalten normale Wasserauftriebshilfe ohne automatischen Start.
 
 Dinos bleiben in ihrer Welt, laden keine entfernten Chunks und teleportieren sich nicht zu dir. Die sieben Land-/Flugarten schwimmen zur freien Wasseroberfläche, mit und ohne Reiter und auch in Bleiben. Tiefe, überdeckte oder blockierte Gewässer können weiter gefährlich sein; es gibt keine pauschale Immunität gegen Ertrinken, Stürze oder Lava. Meide enge Durchgänge und gefährliches Gelände. Endet die Steuerung beim Verlassen von Survival oder der Welt, kehre normal zurück und interagiere erneut.
 
@@ -72,6 +74,6 @@ Ein neues Setup mit Modul `dino` installiert den festgelegten BetterModel-/Geyse
 `prototype-worlds` begrenzt Modelle, Flug, anspruchsvolleres Zähmen, Eier, Wachstum und Kampf auf die ausgewählten Welten. Die vorhandenen Habitat-Tags verteilen weiterhin vier Tiere je ursprünglicher Art, ohne native Tiere, UUIDs, Besitzer oder Bleiben-Zustände zu ersetzen. Dilophosaurus kommt als siebte Art über seine eigene Artkennung und Eier hinzu. Ohne `prototype-worlds` gilt die konfigurierte Liste `survival-worlds` als Standard. Fallen optionale Modellkomponenten aus, bleibt natives Gameplay verfügbar. Bestehende Installationen werden getrennt vom neuen Setup in einem geplanten Wartungsfenster aktualisiert. Lösche nach Modelländerungen den erzeugten Paketcache der Bridge vor dem Neuerzeugen, damit bei unveränderter Modellanzahl kein altes Paket erhalten bleibt.
 
 
-Erwachsene wilde Pteranodons und eigene Tiere im Freilauf fliegen kurze Strecken und landen auf sicheren nahen Plätzen. Nach einem erfolgreichen Spielertreffer landet ein wildes Tier für mindestens sechzig Sekunden; angenommene Fischfütterungen halten es während des Zähmens am Boden. Jungtiere und der Modus Folgen bleiben bodengebunden.
+Erwachsene wilde Pteranodons und eigene Tiere im Freilauf fliegen kurze Strecken und landen auf sicheren nahen Plätzen. Nach einem erfolgreichen Spielertreffer landet ein wildes Tier für mindestens sechzig Sekunden; angenommene Fischfütterungen halten es während des Zähmens am Boden. Jungtiere bleiben bodengebunden.
 
 Namensschilder zeigen den gespeicherten eigenen Namen über dem Dino, auch nach erneutem Benennen oder Einloggen. Gehen/Sprinten ist je Art abgestimmt: Brachiosaurus 1,4/3,5, Stegosaurus 1,5/4,5, Triceratops 2/7, T-Rex 2,5/9, Raptor 3/12, Dilophosaurus 2,8/10 und Pteranodon 2/4,5 Blöcke pro Sekunde. Pteranodon fliegt mit 12/18 Blöcken pro Sekunde. Das sind Spielwerte für freie ebene Strecken, keine wissenschaftlichen Angaben; Hindernisse und Effekte beeinflussen das tatsächliche Tempo.

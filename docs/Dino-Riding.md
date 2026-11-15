@@ -2,7 +2,7 @@
 
 [Deutsch](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding-DE) · [Player guide](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Playing)
 
-ArkDinos 1.2.0 adds eight original models and Pteranodon flight. The world archive alone does not include this update or its resource packs. This crossplay prototype still needs visual acceptance on actual Java/Bedrock/console clients.
+ArkDinos 1.2.1 adds eight original models and Pteranodon flight. The world archive alone does not include this update or its resource packs. This crossplay prototype still requires rendering and control checks on the actual Bedrock/console devices in use.
 
 Outside prototype worlds, tame a special habitat animal with one torchflower seed in Survival. Prototype worlds use the feeding rules below. Within the configured Survival worlds, riding starts private; the owner can enable public riding in a prototype world. Aim at its torso when taming or mounting; long tails and wings are decorative.
 
