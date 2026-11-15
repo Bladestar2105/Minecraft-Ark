@@ -15,7 +15,8 @@ const plugin = `${root}dino-plugin/`;
 const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents/Home`;
 const scopeMode = process.env.DINO_PROTOTYPE_SCOPE === '1';
 const pteraWildOnly = process.env.DINO_PTERA_WILD_ONLY === '1';
-const pteraFollowOnly = process.env.DINO_PTERA_FOLLOW_ONLY === '1' || pteraWildOnly;
+const pteraRecovery = process.env.DINO_PTERA_RECOVERY;
+const pteraFollowOnly = process.env.DINO_PTERA_FOLLOW_ONLY === '1' || pteraWildOnly || !!pteraRecovery;
 const build = process.env.DINO_BUILD_DIR ?? `${plugin}build`;
 const modelStack = process.env.DINO_MODEL_STACK === '1' || scopeMode;
 const stackCache = process.env.DINO_MODEL_STACK_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
@@ -29,7 +30,7 @@ const report = { startedAt: new Date().toISOString(), fixture: directory, checks
   'Disposable server allows player floating because the minimal clients do not simulate client-side falling; mount physics and collision remain native.',
   'Chunk unload/load lifecycle uses dispatched native events; real world persistence is checked with a clean server restart.',
 ] };
-const reportPath = `${build}/${pteraFollowOnly ? 'ptera-follow-runtime-report.json' : scopeMode ? 'prototype-scope-runtime-report.json' : modelStack ? 'gameplay-model-runtime-report.json' : 'gameplay-runtime-report.json'}`;
+const reportPath = `${build}/${pteraRecovery ? `ptera-recovery-${pteraRecovery}-runtime-report.json` : pteraFollowOnly ? 'ptera-follow-runtime-report.json' : scopeMode ? 'prototype-scope-runtime-report.json' : modelStack ? 'gameplay-model-runtime-report.json' : 'gameplay-runtime-report.json'}`;
 const clients = [];
 let server;
 let log = '';
@@ -177,6 +178,56 @@ try {
     }
     const landed=async tag=>eventually(async()=>/0b$|no elements/i.test(await data(tag,'NoGravity')),`${tag} did not restore gravity`,35000);
     const start=async()=>{await command('tp @e[tag=follow_mount,limit=1] 0 4 0');await command('tp @e[tag=follow_bird,limit=1] 0 4 -14');await mount(alice,'follow_mount');alice.look(0,0);alice.input(16);await delay(1800);alice.input(0);await delay(250);await eventually(async()=>/phase=4/.test(await command('dinofixture ptera-state follow_bird'))&&/1b$/.test(await data('follow_bird','NoGravity'))&&(await position('follow_bird'))[1]>6,'Follow flight did not start for exit scenario',12000);};
+    if(pteraRecovery){
+      await command('data modify entity @e[tag=follow_bird,limit=1] BukkitValues."arkdinos:stay" set value 1b');
+      await tp(bob,28,28);
+      const state=async tag=>Object.fromEntries((await passengers(tag)).trim().split(';').map(field=>{const at=field.indexOf('=');return[field.slice(0,at),field.slice(at+1)];}));
+      const bird=async(tag,x,y,z,stay=0,extra='')=>{await command(`summon sniffer ${x} ${y} ${z} {PersistenceRequired:1b,Tags:["ark_dino","ark_dino_tamed","${tag}"],BukkitValues:{"arkdinos:owner":"${alice.uuid}","arkdinos:stay":${stay}b,"arkdinos:species":"pteranodon"${extra}}}`);await command(`dinofixture load-event ${tag}`);};
+      if(pteraRecovery==='shore'||pteraRecovery==='all')await check('Adult Follow Pteranodon leaves water for its owner on dry shore',async()=>{
+        await command('fill -12 4 -12 12 4 12 stone');await command('fill -7 4 -7 7 4 7 water');
+        await bird('water_shore',0,4,0);await tp(alice,0,20,4);
+        const before=await state('water_shore');await eventually(async()=>{const p=await position('water_shore');return p[1]>=4.95&&p[2]>12;},'Follow Pteranodon stayed trapped behind the water bank',18000);
+        await landed('water_shore');const after=await state('water_shore');assert.equal(after.uuid,before.uuid);assert.equal(after.owner,before.owner);assert.equal(after.stay,'0');assert.equal(after.health,before.health);
+        await command('kill @e[tag=water_shore]');await command('fill -12 4 -12 12 4 12 air');return {before,after};
+      });
+      if(pteraRecovery==='mounted'||pteraRecovery==='all')await check('Owner jump takes off from surface and deep water without losing the mount',async()=>{
+        await command('fill -8 4 -8 8 9 8 water');await bird('water_ride',0,4,0,1);
+        const samples=[];for(const y of [8,4]){
+          await command('tp @e[tag=water_ride,limit=1] 0 '+y+' 0');await mount(alice,'water_ride');const before=await state('water_ride');alice.look(0,0);alice.input(16);
+          await eventually(async()=>(await position('water_ride'))[1]>11,'Jump could not lift the ridden Pteranodon out of water',12000);alice.input(0);
+          const after=await state('water_ride');assert.equal(after.uuid,before.uuid);assert.equal(after.owner,before.owner);assert.equal(after.stay,'1');assert.equal(after.passengers,'1');assert.equal(after.gravity,'false');assert.equal(after.health,before.health);samples.push({before,after});
+          alice.input(32);await delay(200);alice.input(0);await command('dinofixture unload-event water_ride');await command('dinofixture load-event water_ride');
+        }
+        await command('kill @e[tag=water_ride]');await command('fill -8 4 -8 8 9 8 air');return samples;
+      });
+      if(pteraRecovery==='water-follow'||pteraRecovery==='terrain'||pteraRecovery==='all')await check('Following Pteranodon takes off from water and uneven terrain',async()=>{
+        const samples=[];for(const terrain of (pteraRecovery==='all'?['water','uneven']:[pteraRecovery==='water-follow'?'water':'uneven'])){
+          await command('tp @e[tag=follow_mount,limit=1] 0 4 0');
+          if(terrain==='water')await command('fill -7 4 -21 7 5 -7 water');else await command('setblock 4 4 -14 stone');
+          await mount(alice,'follow_mount');alice.look(0,0);alice.input(16);await delay(1800);alice.input(0);await bird('recovery_follow',0,4,-14);const before=await state('recovery_follow');
+          if(terrain==='uneven')alice.input(1);
+          await eventually(async()=>(await position('recovery_follow'))[1]>9&&/phase=4/.test(await command('dinofixture ptera-state recovery_follow')),'Follower could not launch from '+terrain,8000);alice.input(0);
+          const after=await state('recovery_follow');assert.equal(after.uuid,before.uuid);assert.equal(after.owner,before.owner);assert.equal(after.stay,'0');assert.equal(after.health,before.health);samples.push({terrain,before,after});
+          alice.input(32);await delay(200);alice.input(0);await landed('follow_mount');await command('kill @e[tag=recovery_follow]');
+          if(terrain==='water')await command('fill -7 4 -21 7 5 -7 air');else await command('setblock 4 4 -14 air');
+        }
+        return samples;
+      });
+      if(pteraRecovery==='all')await check('Water recovery respects Stay, babies, grounding, ceilings and subsequent liquid collisions',async()=>{
+        await tp(alice,0,20);await command('fill -7 4 -7 7 5 7 water');
+        for(const [tag,stay,extra]of [['water_stay',1,''],['water_baby',0,',"arkdinos:adult-at":9999999999999L'],['water_grounded',0,',"arkdinos:ptera-ground-until":9999999999999L']])await bird(tag,0,4,0,stay,extra);
+        await delay(1600);const protectedStates=[];for(const tag of ['water_stay','water_baby','water_grounded']){const snapshot=await state(tag);assert.equal(snapshot.gravity,'true');assert.ok(Number(snapshot.y)<6);protectedStates.push(snapshot);await command(`kill @e[tag=${tag}]`);}
+        await command('fill -4 8 -4 4 8 4 stone');await bird('water_ceiling',0,4,0);await delay(1600);const ceiling=await state('water_ceiling');assert.equal(ceiling.gravity,'true');assert.ok(Number(ceiling.y)<6);await command('kill @e[tag=water_ceiling]');await command('fill -4 8 -4 4 8 4 air');
+        await command('tp @e[tag=follow_mount,limit=1] 0 4 20');await mount(alice,'follow_mount');alice.look(0,0);alice.input(16);await delay(1800);alice.input(0);await bird('water_collision',0,4,0);
+        await eventually(async()=>/phase=4/.test(await command('dinofixture ptera-state water_collision')),'Wet follower did not complete its safe vertical launch');
+        await command('setblock 8 6 8 lava');assert.match(await command('dinofixture ptera-clear water_collision 8 6 8 true'),/clear=false/);
+        await command('setblock 8 6 8 water');assert.match(await command('dinofixture ptera-clear water_collision 8 6 8 true'),/clear=true/);assert.match(await command('dinofixture ptera-clear water_collision 8 6 8 false'),/clear=false/);await command('setblock 8 6 8 air');
+        await command('execute at @e[tag=water_collision,limit=1] run setblock ~4 ~ ~ water');await eventually(async()=>(await state('water_collision')).gravity==='true','Wet launch left a permanent liquid-collision exemption',3000);
+        const collision=await state('water_collision');assert.match(await command('dinofixture unload-event water_collision'),/gravity=true/);await command('kill @e[tag=water_collision]');alice.input(32);await delay(200);alice.input(0);
+        assert.match(await command('forceload query'),/No force loaded chunks|No force-loaded chunks/i);assert.doesNotMatch(log,/Could not pass event|Task .*ArkDinos.*exception|Error occurred while (enabling|disabling) ArkDinos|Sniffer controller unavailable/);
+        return {protectedStates,ceiling,collision};
+      });
+    } else {
     await check('Follow Pteranodon takes off and follows its owner riding another Pteranodon',async()=>{
       await start();const before=await position('follow_bird');
       assert.ok(before[1]>6,`Following bird did not take off: ${before}`);assert.match(await data('follow_bird','NoGravity'),/1b$/);
@@ -219,6 +270,8 @@ try {
       assert.doesNotMatch(log,/Could not pass event|Task .*ArkDinos.*exception/);
     });
     }
+    }
+    if(!pteraRecovery){
     await check('Wild Pteranodon takes a clear flight, stays peaceful and lands for fish',async()=>{
       await command('kill @e[tag=follow_other]');await command('clear RideOther');await tp(bob,0,0);
       await command('summon sniffer 0 4 -12 {Tags:["ark_dino","ark_dino_wild","wild_flight"],PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"pteranodon"}}');
@@ -252,6 +305,7 @@ try {
       await eventually(async()=>Number((await state()).match(/playerHealth=([\d.]+)/)[1])<health,'Provoked grounded bird did not retaliate',10000);
       assert.match(await data('wild_flight','NoGravity'),/0b$|no elements/i);return {point,health,samples};
     });
+    }
   } else if(scopeMode){
     await command('dinofixture create-world ark_model_test');
     const inspect=async tag=>Object.fromEntries((await command(`dinofixture inspect ${tag}`)).trim().split(';').map(field=>{const at=field.indexOf('=');return[field.slice(0,at),field.slice(at+1)];}));

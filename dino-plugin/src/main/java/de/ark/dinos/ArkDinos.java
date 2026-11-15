@@ -247,6 +247,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
 
     boolean roaming(Mob mob) { return controls.roaming(mob); }
     boolean aerial(Mob mob) { return ptera!=null&&ptera.controls(mob); }
+    boolean flying(Mob mob) { return flying.containsKey(mob.getUniqueId()); }
     boolean roamPtera(Mob mob) { return ptera!=null&&ptera.roam(mob); }
     void landPtera(Mob mob) { if(ptera!=null)ptera.land(mob); }
     boolean combatActive(Mob mob) { return combat.active(mob); }
@@ -620,7 +621,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
             stop(mob);
             var input = player.getCurrentInput();
             if (prototype(mob) && "pteranodon".equals(species(mob))) {
-                if (input.isJump() && !mob.isInWater() && !flying.containsKey(mob.getUniqueId())) {
+                if (input.isJump() && !flying.containsKey(mob.getUniqueId())) {
                     flying.put(mob.getUniqueId(), Math.min(mob.getLocation().getY() + 48, mob.getWorld().getMaxHeight() - mob.getHeight() - 3));
                     landing.remove(mob.getUniqueId());
                     mob.getPersistentDataContainer().set(flightKey, PersistentDataType.BYTE, (byte) 1);
@@ -629,7 +630,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 if (flying.containsKey(mob.getUniqueId())) {
                     var motion = FlightRules.movement(player.getYaw(), player.getPitch(), input.isForward(), input.isBackward(),
                             input.isLeft(), input.isRight(), input.isJump(), input.isSprint(), mob.getLocation().getY(), flying.get(mob.getUniqueId()));
-                    if (mob.isInWater() || mob.isOnGround() && !input.isJump() && motion.y() <= 0) restoreGravity(mob);
+                    if (mob.isInWater() && !input.isJump() || mob.isOnGround() && !input.isJump() && motion.y() <= 0) restoreGravity(mob);
                     else {
                         flightVelocity(mob, new Vector(motion.x(), motion.y(), motion.z()));
                         mob.setRotation(player.getYaw(), 0);

@@ -110,6 +110,14 @@ public final class GameplayFixture extends JavaPlugin implements org.bukkit.even
      sender.sendMessage("clear="+clear+";chunksUnchanged="+(chunks==mob.getWorld().getLoadedChunks().length));return true;
     }catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
    }
+   case "ptera-clear" -> {
+    try {
+     var field=plugin.getClass().getDeclaredField("ptera");field.setAccessible(true);var ptera=field.get(plugin);
+     var method=ptera.getClass().getDeclaredMethod("clear",Mob.class,org.bukkit.util.BoundingBox.class,boolean.class);method.setAccessible(true);
+     int x=Integer.parseInt(args[2]),y=Integer.parseInt(args[3]),z=Integer.parseInt(args[4]);
+     sender.sendMessage("clear="+method.invoke(ptera,mob,new org.bukkit.util.BoundingBox(x,y,z,x+1,y+1,z+1),Boolean.parseBoolean(args[5])));return true;
+    }catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
+   }
    case "boundary" -> {
     mob.setVelocity(new org.bukkit.util.Vector(1,1,1));
     try {var method=plugin.getClass().getDeclaredMethod("flightVelocity",Mob.class,org.bukkit.util.Vector.class);method.setAccessible(true);method.invoke(plugin,mob,new org.bukkit.util.Vector(0,1,10000));}
