@@ -9,7 +9,7 @@ import shutil
 import stat
 import tempfile
 import zipfile
-from build_plugins import ROOT, BUNDLED_BRIDGE, download
+from build_plugins import ROOT, PATCHES, download
 from fetch_world import safe_path
 from install_plugins import PLUGINS, sha256, verify_own_plugins
 
@@ -59,12 +59,13 @@ def package(root=ROOT, version=None):
         for item in json.loads((root / "dependencies-runtime.json").read_text()):
             if "bundled_path" not in item:
                 continue
-            if item["bundled_path"] != BUNDLED_BRIDGE or BUNDLED_BRIDGE in bundled:
+            expected = PATCHES.get(item.get("patch"))
+            if expected is None or item["bundled_path"] != expected[1] or expected[1] in bundled:
                 raise ValueError("Unexpected or duplicate bundled dependency")
             source = download(item, root / ".deps", root=root)
             if sha256(source) != item["sha256"]:
                 raise ValueError("Bundled dependency checksum mismatch")
-            bundled[BUNDLED_BRIDGE] = source
+            bundled[expected[1]] = source
     dist.mkdir(exist_ok=True)
     staging = Path(tempfile.mkdtemp(prefix=".package-", dir=dist))
     try:

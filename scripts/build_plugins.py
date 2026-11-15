@@ -13,6 +13,12 @@ from fetch_world import safe_path
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLED_BRIDGE = "runtime-dependencies/GeyserModelEngine-1.0.9.jar"
+PATCHES = {
+    "geyser-model-engine-task-publication":
+        ("dino-plugin/upstream-patches/GeyserModelEngineTaskPublicationFix.java", BUNDLED_BRIDGE),
+    "quests-mission-availability":
+        ("config/quests/upstream-patches/QuestsMissionAvailabilityFix.java", "runtime-dependencies/Quests-5.3.2.jar"),
+}
 
 
 def download(item, folder, *, root=ROOT):
@@ -24,12 +30,12 @@ def download(item, folder, *, root=ROOT):
         raise ValueError("Artifact symlink")
     algorithm = "sha512" if "sha512" in item else "sha256"
     patch = item.get("patch")
-    if patch is not None and patch != "geyser-model-engine-task-publication":
+    if patch is not None and patch not in PATCHES:
         raise ValueError("Unknown artifact patch")
     if patch and (algorithm != "sha256" or not isinstance(item.get("source_sha256"), str)
                   or len(item["source_sha256"]) != 64 or any(c not in "0123456789abcdef" for c in item["source_sha256"])):
         raise ValueError("Patched artifact requires a pinned upstream SHA-256")
-    if "bundled_path" in item and (not patch or item["bundled_path"] != BUNDLED_BRIDGE):
+    if "bundled_path" in item and (not patch or item["bundled_path"] != PATCHES[patch][1]):
         raise ValueError("Unexpected bundled dependency path")
     bundled = safe_path(root, item["bundled_path"]) if "bundled_path" in item else None
     if not target.exists():
@@ -42,12 +48,12 @@ def download(item, folder, *, root=ROOT):
             if hashlib.new(algorithm, content).hexdigest() != (item["source_sha256"] if patch else item[algorithm]):
                 raise ValueError("Checksum mismatch: " + item["name"])
             if patch:
-                with tempfile.TemporaryDirectory(prefix=".bridge-build-", dir=folder) as temporary:
+                with tempfile.TemporaryDirectory(prefix=".patch-build-", dir=folder) as temporary:
                     source, output = Path(temporary) / "upstream.jar", Path(temporary) / "patched.jar"
                     source.write_bytes(content)
                     java_home = os.environ.get("JAVA_HOME")
                     java = str(Path(java_home, "bin", "java")) if java_home else "java"
-                    subprocess.run([java, str(Path(root) / "dino-plugin/upstream-patches/GeyserModelEngineTaskPublicationFix.java"),
+                    subprocess.run([java, str(Path(root) / PATCHES[patch][0]),
                                     str(source), str(output)], check=True, capture_output=True, text=True)
                     content = output.read_bytes()
         if hashlib.new(algorithm, content).hexdigest() != item[algorithm]:

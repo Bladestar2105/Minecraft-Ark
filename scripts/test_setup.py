@@ -189,6 +189,32 @@ class SetupTests(unittest.TestCase):
                     download({"name": "bridge.jar", "sha256": "0" * 64, **metadata}, root)
             self.assertEqual(list(root.iterdir()), [])
 
+    def test_mission_patch_uses_pinned_transformer_and_verifies_bundled_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "upstream.jar"
+            source.write_bytes(b"upstream quest fixture")
+            result = b"ordered native quests"
+            item = {"name": "Quests-5.3.2.jar", "url": source.as_uri(),
+                    "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                    "sha256": hashlib.sha256(result).hexdigest(),
+                    "patch": "quests-mission-availability",
+                    "bundled_path": "runtime-dependencies/Quests-5.3.2.jar"}
+            def transform(command, **kwargs):
+                self.assertTrue(command[-3].endswith("config/quests/upstream-patches/QuestsMissionAvailabilityFix.java"))
+                Path(command[-1]).write_bytes(result)
+            with patch("build_plugins.subprocess.run", side_effect=transform):
+                self.assertEqual(download(item, root / "built", root=root).read_bytes(), result)
+            bundled = root / item["bundled_path"]
+            bundled.parent.mkdir(); bundled.write_bytes(result)
+            with patch("build_plugins.urlopen", side_effect=AssertionError("must use bundled quests")), \
+                    patch("build_plugins.subprocess.run", side_effect=AssertionError("must not need Java")):
+                self.assertEqual(download(item, root / "installed", root=root).read_bytes(), result)
+                bundled.write_bytes(b"tampered")
+                with self.assertRaisesRegex(ValueError, "Artifact checksum"):
+                    download(item, root / "rejected", root=root)
+            self.assertFalse((root / "rejected" / item["name"]).exists())
+
     def test_portal_upgrade_can_create_private_directory_but_requires_world(self):
         from init import initialize_portal
         with tempfile.TemporaryDirectory() as tmp:

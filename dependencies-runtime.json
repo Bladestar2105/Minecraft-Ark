@@ -59,8 +59,11 @@
     "version_id": "fD1cWOQu",
     "version": "5.3.2",
     "url": "https://cdn.modrinth.com/data/T8iZG3U1/versions/fD1cWOQu/Quests-5.3.2.jar",
-    "sha512": "9e901852419a3a1ac3fbcd120022d27936f35bece7692a5895e958e64ad844e75bb7d41edd139769a0e71f2800d7dfd5d3c623b17fcbbc6e3a6a126dc1265d71",
-    "kind": "plugin"
+    "kind": "plugin",
+    "source_sha256": "d969b77c5beb8f08d54538e43cdb4765507d7faf3bf08e5ffb03d1ebe39140c0",
+    "sha256": "638c0dc94c052d18c573c60752e06a2fcd6ba986eb400e00daaa56e1619d5f04",
+    "patch": "quests-mission-availability",
+    "bundled_path": "runtime-dependencies/Quests-5.3.2.jar"
   },
   {
     "project": "bluemap",

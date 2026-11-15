@@ -1,6 +1,10 @@
-# Quest names and command hints
+# Mission order, availability and command hints
 
 Quests 5.3.2 numbers `/quests list` entries for display. `/quests take` accepts the **display name**, for example `/quests take Nachtwache`, followed by the normal confirmation. List numbers are not quest IDs and may change when the list is filtered. Nachtwache still requires Material fürs Lager; the hints do not alter prerequisites, progress or rewards.
+
+The pinned [Quests patch](upstream-patches/README.md) preserves the prerequisite-compatible definition order in player, console and NPC lists. Yellow missions are available; gray missions are locked. Selecting a locked mission reports its existing requirement message before opening a confirmation. German aliases such as `/quests nehmen Werkzeugmacher` work too; answer `Ja` or `Nein` in normal chat.
+
+There are two independent starting missions: **Werkzeugmacher** and **Material fürs Lager**. Werkzeugmacher unlocks Eisenzeit and Ein treuer Begleiter; Eisenzeit unlocks Kundschafter. Material fürs Lager unlocks Nachtwache. **Both** Kundschafter and Nachtwache are required for Nether-Vorstoß, followed by Gefährliche Expedition, Bossauftrag and Das letzte Artefakt. Quest IDs, prerequisites, objectives, world conditions, rewards and saved player progress remain the native definitions.
 
 The supplied Quests config selects German (`language: de-DE`, `language-override-client: true`). `messages-de-DE.json` contains three German wording overrides; it is a merge input, **not** a replacement for the complete plugin language file.
 

@@ -410,6 +410,32 @@ class DistributionTests(unittest.TestCase):
                     for path in root.glob(pattern)}
         self.assertFalse(required - names, f'Missing runnable dinosaur sources: {sorted(required - names)}')
 
+    def test_bundle_keeps_both_pinned_dependencies_and_refuses_cross_patch_path(self):
+        from build_plugins import PATCHES, download
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            package_fixture(root)
+            items = []
+            sources = {}
+            for index, (patch_name, (_, bundled_path)) in enumerate(PATCHES.items()):
+                source = root / (str(index) + ".jar")
+                source.write_bytes(patch_name.encode())
+                item = {"name": Path(bundled_path).name, "url": "https://example.org/upstream.jar",
+                        "source_sha256": "0" * 64, "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                        "patch": patch_name, "bundled_path": bundled_path}
+                items.append(item); sources[item["name"]] = source
+            (root / "dependencies-runtime.json").write_text(json.dumps(items))
+            names = json.loads((root / "distribution-files.json").read_text()) + ["dependencies-runtime.json"]
+            (root / "distribution-files.json").write_text(json.dumps(sorted(names)))
+            with patch("package.download", side_effect=lambda item, *args, **kwargs: sources[item["name"]]):
+                output = package.package(root, "both-patches")
+            with zipfile.ZipFile(next(output.glob("*.zip"))) as bundle:
+                for item in items:
+                    self.assertEqual(bundle.read(item["bundled_path"]), sources[item["name"]].read_bytes())
+            invalid = {**items[1], "bundled_path": items[0]["bundled_path"]}
+            with self.assertRaisesRegex(ValueError, "Unexpected bundled dependency path"):
+                download(invalid, root / "rejected", root=root)
+
     def test_editable_dinosaur_models_are_allowed_as_text_sources(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
