@@ -130,8 +130,8 @@ try {
   for (const item of ['libraries', 'versions', 'cache']) await symlink(`${cache}/${item}`, `${directory}/${item}`);
   await mkdir(`${directory}/plugins`, { recursive: true });
   await copyFile(paperJar, `${directory}/paper.jar`);
-  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${build}/ArkDinos-1.2.1.jar`)).digest('hex');
-  await copyFile(`${build}/ArkDinos-1.2.1.jar`, `${directory}/plugins/ArkDinos.jar`);
+  report.jarSha256 = crypto.createHash('sha256').update(await readFile(`${build}/ArkDinos-1.2.2.jar`)).digest('hex');
+  await copyFile(`${build}/ArkDinos-1.2.2.jar`, `${directory}/plugins/ArkDinos.jar`);
   if(modelStack){
     for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','GeyserModelEngine-1.0.9.jar','geyser-spigot.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar']) await copyFile(`${stackCache}/plugins/${name}`,`${directory}/plugins/${name}`);
     await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1298.jar`,`${directory}/plugins/geyser-spigot.jar`);

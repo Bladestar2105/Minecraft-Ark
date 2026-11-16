@@ -112,7 +112,7 @@ final class DinoCombat implements Listener {
                 || plugin.passengers(mob).contains(target)
                 || !target.getWorld().equals(mob.getWorld()) || mob.getLocation().distanceSquared(target.getLocation()) > 24 * 24) return false;
         if (!plugin.owned(mob)) return (predator(mob) || "pteranodon".equals(plugin.species(mob)) && target.getUniqueId().equals(provoked.get(mob.getUniqueId()))) && !plugin.formerOwner(mob, target)
-                && target instanceof Player player && player.isOnline() && plugin.survival(player) && !plugin.taming(mob,player);
+                && target instanceof Player player && player.isOnline() && plugin.survival(player) && (predator(mob) || !plugin.taming(mob,player));
         if (actor == null || !actor.equals(actor(mob)) || (plugin.staying(mob) && plugin.driver(mob) == null)
                 || !actor.isOnline() || actor.isDead() || !plugin.survival(actor)
                 || !actor.getWorld().equals(mob.getWorld()) || actor.getLocation().distanceSquared(mob.getLocation()) > 48 * 48
@@ -145,13 +145,16 @@ final class DinoCombat implements Listener {
     }
 
     private boolean meleeReach(Mob mob, Entity contact) {
-        return mob.getBoundingBox().expand(1.5, 1, 1.5).overlaps(contact.getBoundingBox());
+        if(mob.getBoundingBox().expand(1.5,1,1.5).overlaps(contact.getBoundingBox()))return true;
+        var strike=plugin.strikeBounds(mob);
+        return strike!=null && strike.expand(1.5,1,1.5).overlaps(contact.getBoundingBox());
     }
 
     private double aimRange(Mob mob, org.bukkit.Location eye) {
         // The rider's eyes may sit above the old five-block ray on large species.
         // Cover the existing melee volume; meleeReach still decides whether a hit is possible.
         var box = mob.getBoundingBox().expand(1.5, 1, 1.5);
+        var strike=plugin.strikeBounds(mob);if(strike!=null)box.union(strike.expand(1.5,1,1.5));
         double x = Math.max(Math.abs(eye.getX() - box.getMinX()), Math.abs(eye.getX() - box.getMaxX()));
         double y = Math.max(Math.abs(eye.getY() - box.getMinY()), Math.abs(eye.getY() - box.getMaxY()));
         double z = Math.max(Math.abs(eye.getZ() - box.getMinZ()), Math.abs(eye.getZ() - box.getMaxZ()));
@@ -225,15 +228,8 @@ final class DinoCombat implements Listener {
             if(plugin.aerial(mob)) {plugin.landPtera(mob);continue;}
             if (!plugin.passengers(mob).isEmpty()) { cancel(mob); continue; }
             LivingEntity target = targets.get(mob.getUniqueId());
-            if ("dilophosaurus".equals(plugin.species(mob)) && !meleeReach(mob, target)
-                    && mob.getLocation().distanceSquared(target.getLocation()) <= 8 * 8 && mob.hasLineOfSight(target)) {
-                plugin.stop(mob);
-                var direction = target.getLocation().subtract(mob.getLocation()).toVector();
-                mob.setRotation((float) Math.toDegrees(Math.atan2(-direction.getX(), direction.getZ())), 0);
-            } else {
-                mob.setAware(true);
-                mob.getPathfinder().moveTo(target, plugin.groundSpeed(mob,true));
-            }
+            mob.setAware(true);
+            mob.getPathfinder().moveTo(target, plugin.groundSpeed(mob,true));
             attack(mob, target);
         }
         lastAttack.keySet().removeIf(id -> plugin.getServer().getEntity(id) == null);

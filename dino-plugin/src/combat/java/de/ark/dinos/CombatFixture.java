@@ -107,6 +107,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
         }
     }
 
+
     @EventHandler(priority = EventPriority.LOWEST)
     public void cancelDamage(EntityDamageByEntityEvent event) {
         if (cancelDamage && event.getDamager() instanceof Mob && event.getDamager().getPersistentDataContainer().has(NamespacedKey.fromString("arkdinos:species"))) event.setCancelled(true);
@@ -159,9 +160,10 @@ public final class CombatFixture extends JavaPlugin implements Listener {
                         + ";unexpected=" + unexpectedRegens + ";reason=" + lastRegenReason + ";amount=" + lastRegenAmount);
                 return true;
             }
-            if(args[0].equals("model-state")||args[0].equals("model-trace")||args[0].equals("model-proxy")) {
+            if(args[0].equals("model-state")||args[0].equals("model-trace")||args[0].equals("model-proxy")||args[0].equals("strike-boxes")) {
                 if(modelProbe==null)modelProbe=new CombatModelProbe(this);
                 Mob mob=(Mob)entity(args[1]);
+                if(args[0].equals("strike-boxes")){sender.sendMessage(modelProbe.strikeBoxes(mob));return true;}
                 if(args[0].equals("model-proxy")){sender.sendMessage(modelProbe.proxy(mob,getServer().getPlayer(args[2])));return true;}
                 if(args[0].equals("model-trace"))modelProbe.trace(mob,getServer().getPlayer(args[2]));
                 var player=getServer().getPlayer(args[2]);
@@ -169,12 +171,13 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             }
             if(args[0].equals("contact-state")) {
                 var player=getServer().getPlayer(args[1]);var mob=(Mob)player.getVehicle();var eye=player.getEyeLocation();
-                var result=player.getWorld().rayTrace(eye,eye.getDirection(),5,org.bukkit.FluidCollisionMode.NEVER,true,.2,e->{
+                var f=plugin.getClass().getDeclaredField("combat");f.setAccessible(true);var combat=f.get(plugin);
+                double range=(double)call(combat,"aimRange",new Class<?>[]{Mob.class,Location.class},mob,eye);
+                var result=player.getWorld().rayTrace(eye,eye.getDirection(),range,org.bukkit.FluidCollisionMode.NEVER,true,.2,e->{
                     try {var target=call(plugin,"combatTarget",new Class<?>[]{Entity.class},e);return target instanceof LivingEntity && !target.equals(player)&&!target.equals(mob);}
                     catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
                 });
                 var contact=result==null?null:result.getHitEntity();Object resolved=contact==null?null:call(plugin,"combatTarget",new Class<?>[]{Entity.class},contact);
-                var f=plugin.getClass().getDeclaredField("combat");f.setAccessible(true);var combat=f.get(plugin);
                 sender.sendMessage("ray="+(contact==null?result:contact.getType()+":"+contact.getEntityId())+";resolved="+resolved+";los="+(contact!=null&&mob.hasLineOfSight(contact))+";reach="+(contact!=null&&(boolean)call(combat,"meleeReach",new Class<?>[]{Mob.class,Entity.class},mob,contact))+";valid="+(resolved instanceof LivingEntity living&&(boolean)call(combat,"validTarget",new Class<?>[]{Mob.class,LivingEntity.class},mob,living)));return true;
             }
             if(args[0].equals("menu")) {
@@ -365,7 +368,9 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             }
             if (args[0].equals("spit-wall")) {
                 var source = (Mob) entity(args[1]); var target = (LivingEntity) entity(args[2]);
-                var middle = source.getEyeLocation().toVector().add(target.getBoundingBox().getCenter()).multiply(.5);
+                var ball=held.keySet().stream().map(getServer()::getEntity)
+                        .filter(entity->entity instanceof org.bukkit.entity.Snowball shot && source.equals(shot.getShooter())).findFirst().orElseThrow();
+                var middle = ball.getLocation().toVector().add(target.getBoundingBox().getCenter()).multiply(.5);
                 var block = source.getWorld().getBlockAt(middle.getBlockX(), middle.getBlockY(), middle.getBlockZ());
                 block.setType(org.bukkit.Material.STONE); sender.sendMessage("wall=" + block.getX() + "," + block.getY() + "," + block.getZ()); return true;
             }
@@ -428,6 +433,9 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             }
             if (args[0].equals("valid-target")) {
                 sender.sendMessage("valid="+call(combat,"validTarget",new Class<?>[]{Mob.class,LivingEntity.class},mob,getServer().getPlayer(args[2])));return true;
+            }
+            if (args[0].equals("melee-reach")) {
+                sender.sendMessage("reach="+call(combat,"meleeReach",new Class<?>[]{Mob.class,Entity.class},mob,entity(args[2])));return true;
             }
             if (args[0].equals("commanded-hit")) {
                 sender.sendMessage("landed="+call(combat,"damage",new Class<?>[]{Mob.class,LivingEntity.class,double.class,boolean.class},mob,getServer().getPlayer(args[2]),4.0,false));return true;

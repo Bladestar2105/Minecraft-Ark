@@ -124,7 +124,7 @@ async function stop(){clients.forEach(c=>c.close());await command('save-all flus
 try {
  for(const name of ['libraries','versions','cache'])await symlink(`${cache}/${name}`,`${directory}/${name}`);
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
- await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.1.jar`,`${directory}/plugins/ArkDinos.jar`);
+ await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.2.jar`,`${directory}/plugins/ArkDinos.jar`);
  report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
  await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\n  - ark_creative\nwild-spawning:\n  enabled: false\n');
  await mkdir(`${directory}/fixture-classes`);

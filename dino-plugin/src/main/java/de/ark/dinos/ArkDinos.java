@@ -216,6 +216,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     }
 
     Entity combatTarget(Entity target) { return models.resolveTarget(target); }
+    org.bukkit.util.BoundingBox strikeBounds(Mob mob) { return models.strikeBounds(mob); }
 
     void attackAnimation(Mob mob, boolean spit) {
         models.attack(mob, spit);

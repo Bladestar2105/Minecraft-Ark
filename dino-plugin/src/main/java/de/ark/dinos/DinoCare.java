@@ -175,7 +175,7 @@ final class DinoCare implements Listener, AutoCloseable {
         int required=CareRules.requiredFeeds(species);
         var feeding=CareRules.feed(species,food,player.getUniqueId().toString(),progress(species,data),now);
         switch(feeding.action()) {
-            case FEED -> { consume(player);progress(data,feeding.progress());mob.setTarget(null);hearts(mob);message(player,"Zähmen: "+feeding.progress().feeds()+"/"+required+". "+(feeding.progress().feeds()==required?"Jetzt: "+finisherLabel(species):"Nächstes Futter in "+(CareRules.feedCooldown(species)/1000)+" s.")); }
+            case FEED -> { consume(player);progress(data,feeding.progress());if(!SpeciesRules.ravager(species))mob.setTarget(null);hearts(mob);message(player,"Zähmen: "+feeding.progress().feeds()+"/"+required+". "+(feeding.progress().feeds()==required?"Jetzt: "+finisherLabel(species):"Nächstes Futter in "+(CareRules.feedCooldown(species)/1000)+" s.")); }
             case FINISH -> {
                 if(plugin.tame(mob,player)) { consume(player);progress(data,null);message(player,"Gezähmt! Schleichen + Interagieren: Bleiben / Folgen."); }
                 else message(player,"Zähmen gerade nicht möglich. Futter bleibt erhalten.");

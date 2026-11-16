@@ -23,7 +23,7 @@ class SetupTests(unittest.TestCase):
                 (root / 'data/ark').mkdir(parents=True)
                 (root / 'data/ark/level.dat').write_bytes(b'fixture')
                 (root / 'data/plugins').mkdir()
-                (root / 'data/plugins/ArkDinos-1.2.1.jar').write_bytes(b'fixture')
+                (root / 'data/plugins/ArkDinos-1.2.2.jar').write_bytes(b'fixture')
                 (root / '.env.example').write_text('EULA=FALSE\n')
                 dino_models_fixture(root)
                 if changed:

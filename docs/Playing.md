@@ -33,7 +33,7 @@ progress and points needed for the next rank.
 
 ## Dinosaurs
 
-ArkDinos 1.2.1 includes eight original species: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor, Pteranodon, Dilophosaurus and wild Mosasaurus. Accept the server resource packs on Java and Bedrock. Wild animals can appear throughout suitable loaded terrain in configured dinosaur worlds and wander without a fixed home territory. Fences already present in older worlds remain physical obstacles.
+ArkDinos 1.2.2 includes eight original species: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor, Pteranodon, Dilophosaurus and wild Mosasaurus. Accept the server resource packs on Java and Bedrock. Wild animals can appear throughout suitable loaded terrain in configured dinosaur worlds and wander without a fixed home territory. Fences already present in older worlds remain physical obstacles.
 
 Taming in dinosaur worlds requires species food and a finishing item. **T-Rex needs twelve raw-meat feeds, twenty seconds apart, then a bone**; Raptor and Dilo need five meat feeds, ten seconds apart, then a bone. See [all food recipes](Dino-Riding.md) for fish eaters and herbivores. The legacy single-seed system only applies outside prototype worlds.
 
@@ -48,8 +48,7 @@ claims. Manage your land with `/claimslist`, `/trust Name`, `/untrust Name`,
 `/trustlist` and `/abandonclaim`. Starting budget: 1,000 blocks, increasing by 100
 per active hour up to 10,000. Public structures have separate protection.
 
-`/quests list` shows available quests. The numbers are list positions, not quest IDs: use the **display name**, such as `/quests take Nachtwache`, rather than `/quests take 7`. Nachtwache still requires Material fürs Lager. Example: `/quests take Werkzeugmacher`, then
-confirm with `Ja` (German for yes). Parties: `/party create Name`, `/party invite Name`,
+`/quests list` shows available quests. The numbers are list positions, not quest IDs: use the **display name**, such as `/quests take Nachtwache`, rather than `/quests take 7`. Nachtwache still requires Material fürs Lager. Example: `/quests take Werkzeugmacher` starts an available mission immediately, with no chat reply. Abandoning a mission still requires confirmation. Parties: `/party create Name`, `/party invite Name`,
 `/party accept`. Every member must accept the same quest individually. Creative
 actions do not count. Parties must be installed successfully for group commands.
 

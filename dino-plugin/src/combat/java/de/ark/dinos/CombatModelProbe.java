@@ -105,6 +105,12 @@ final class CombatModelProbe implements AutoCloseable {
                 +";yaw="+look.getYaw()+";pitch="+look.getPitch()+";bounds="+contact.getBoundingBox();
     }
 
+    String strikeBoxes(Mob mob) {
+        var tracker=tracker(mob);
+        return tracker.bones().stream().filter(bone->java.util.Set.of("head","jaw","tail").contains(bone.name().name()))
+                .map(bone->bone.name().name()+":"+bone.getGroup().getHitBox()+":point="+bone.getGroup().getHitBoxPoint()+":position="+bone.hitBoxPosition()+":scale="+bone.hitBoxScale()).toList().toString();
+    }
+
     @Override public void close() {
         task.cancel();if(viewers!=null)viewers.remove(viewer);
         PacketEvents.getAPI().getEventManager().unregisterListener(observer);

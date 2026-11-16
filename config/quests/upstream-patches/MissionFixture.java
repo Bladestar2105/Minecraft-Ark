@@ -37,7 +37,7 @@ public final class MissionFixture extends JavaPlugin {
                 var requirements=(BukkitRequirements)plugin.getQuestById("lagermaterial").getRequirements();
                 requirements.setItems(List.of(new ItemStack(Material.STONE,1)));
                 requirements.setRemoveItems(List.of(true));
-                player.getInventory().addItem(new ItemStack(Material.STONE,1));
+                if(args.length==2)player.getInventory().addItem(new ItemStack(Material.STONE,1));
             }
             case "condition" -> {
                 var quest=plugin.getQuestById("werkzeugmacher");var original=player.getLocation();

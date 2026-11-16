@@ -140,7 +140,7 @@ try {
       await copyFile(`${cache}/plugins/${name}`,`${directory}/plugins/${name}`);
       report.protectionSha256[name]=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/${name}`)).digest('hex');
     }
-    await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.1.jar`, `${directory}/plugins/ArkDinos.jar`);
+    await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.2.jar`, `${directory}/plugins/ArkDinos.jar`);
     report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
     report.limits=['Direct Java protocol777 clients verify real ArkDinos gameplay and actual model/registry/packet state; visible Java/Bedrock/console rendering is a separate acceptance step.', 'Bridge pose checks enroll these Java clients in the actual Bridge viewer sets to receive real encoded GeyserUtils actors; they do not establish real Geyser/Bedrock sessions.'];
     await mkdir(`${directory}/plugins/ArkDinos`, {recursive:true});
