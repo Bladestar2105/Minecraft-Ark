@@ -43,6 +43,7 @@ final class DinoSwimming implements AutoCloseable {
             Mob mob = iterator.next();
             if (!mob.isValid() || mob.isDead() || !eligible(mob)) { iterator.remove(); continue; }
             if (!mob.isInWater() || mob.isInLava()) continue; // Paper includes bubble columns in water.
+            if (plugin.aerial(mob) || plugin.flying(mob)) continue;
             World world = mob.getWorld();
             BoundingBox box = mob.getBoundingBox();
             if (!loaded(world, box)) continue;

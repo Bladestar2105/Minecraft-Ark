@@ -2,7 +2,7 @@
 
 [Deutsch](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Dino-Riding-DE) · [Player guide](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Playing)
 
-ArkDinos 1.2.0 adds eight original models and Pteranodon flight. The world archive alone does not include this update or its resource packs. This crossplay prototype still needs visual acceptance on actual Java/Bedrock/console clients.
+ArkDinos 1.2.2 adds eight original models and Pteranodon flight. The world archive alone does not include this update or its resource packs. This crossplay prototype still requires rendering and control checks on the actual Bedrock/console devices in use.
 
 Outside prototype worlds, tame a special habitat animal with one torchflower seed in Survival. Prototype worlds use the feeding rules below. Within the configured Survival worlds, riding starts private; the owner can enable public riding in a prototype world. Aim at its torso when taming or mounting; long tails and wings are decorative.
 
@@ -22,7 +22,9 @@ This initial implementation requires Paper 26.3. Visible rendering of both seats
 
 ## Pteranodon flight
 
-Jump takes off and gains height. Movement steers relative to your view; look down while moving forward to descend. Release movement and jump to hover. Descend onto open ground to land. Flight is capped at 48 blocks above takeoff and below the world ceiling. Land before dismounting where possible: an in-air dismount starts the animal's controlled descent and gives temporary slow falling to its rider. The other six rideable species remain ground mounts.
+Jump takes off and gains height, including from water. Keep jump held until clear of the water; releasing it while submerged returns to swimming. Movement steers relative to your view; look down while moving forward to descend. Release movement and jump in the air to hover. Descend onto open ground to land. Flight is capped at 48 blocks above takeoff and below the world ceiling. Land before dismounting where possible: an in-air dismount starts the animal's controlled descent and gives temporary slow falling to its rider. The other six rideable species remain ground mounts.
+
+An adult tamed Pteranodon in **Follow** can follow its owner riding another owned Pteranodon, including when it starts in water. It first rises with folded wings until there is room to fly. A wet adult in Follow can also fly to a safe dry landing near its owner on shore. The owner must be in Survival, in the same world and within 48 blocks; the route must be clear and loaded. Stay, babies and grounded animals keep normal surface buoyancy without automatic takeoff.
 
 Pets stay in their world and do not load distant chunks or teleport to you. The seven land/flying species rise to an open water surface while ridden, unmounted or in Stay. Deep, covered or obstructed water can still be dangerous; there is no blanket immunity to drowning, falls or lava. Avoid narrow passages and dangerous terrain. If control stops after leaving Survival or the world, return normally and interact again.
 
@@ -32,13 +34,26 @@ Both editions require the server resource packs. Automated checks cover all eigh
 
 ## Taming, eggs and combat in prototype worlds
 
-T-Rex needs twelve raw-meat feeds, twenty seconds apart, then a bone. The first-to-twelfth-feed interval is at least three minutes forty seconds. Velociraptor and Dilophosaurus still need five raw-meat feeds, ten seconds apart, then a bone. Pteranodon needs five raw-fish feeds, ten seconds apart, then seagrass. Brachiosaurus, Triceratops and Stegosaurus need eight feeds of wheat, fern or dandelion in any combination, fifteen seconds apart, then a torchflower seed. Wrong food and early clicks consume nothing. Visible progress stays reserved for you for five minutes after the latest feed.
+T-Rex needs twelve raw-meat feeds, twenty seconds apart, then a bone. The first-to-twelfth-feed interval is at least three minutes forty seconds. Velociraptor and Dilophosaurus still need five raw-meat feeds, ten seconds apart, then a bone. Pteranodon needs five raw-fish feeds, ten seconds apart, then seagrass. Brachiosaurus, Triceratops and Stegosaurus need eight feeds of wheat, fern or dandelion in any combination, fifteen seconds apart, then a torchflower seed. Wrong food and early clicks consume nothing. Visible progress stays reserved for you for five minutes after the latest feed. T-Rex, Velociraptor and Dilophosaurus keep attacking throughout feeding; only the final bone completes taming. Feeding gives no truce.
 
-Feed two owned adults of the same species within six blocks. A successful pair puts a named species egg into your inventory; overflow drops beside you. Parents then have a five-minute breeding cooldown. In Creative mode, `/dinoeier` opens all eight egg choices and gives a real inventory item. Transferred eggs retain their original owner. Every species has its own inventory image. The seven hatchable species also have different placed shell models over the unchanged native sniffer-egg block.
+Feed two owned adults of the same species within six blocks. A successful pair puts a named species egg into your inventory; overflow drops beside you. Parents then have a five-minute breeding cooldown. In the Creative world's normal inventory, open **Spawn Eggs** or search **Dino-Ei**, then select the dinosaur egg. No command or client mod is required. The selected quantity becomes real eggs owned by you; transferred eggs retain their original owner. Every species has its own inventory image. The seven hatchable species also have different placed shell models over the unchanged native sniffer-egg block.
+
+The resource pack reserves these eight vanilla egg entries for the dinosaur catalog. Accept the updated server resource pack to see their names and icons. Outside Creative in a configured dinosaur world, they retain vanilla server behavior. `/dinoeier` remains available as a compatibility menu.
+
+| Replaced vanilla egg | Dinosaur egg |
+| --- | --- |
+| Bat | T-Rex |
+| Endermite | Triceratops |
+| Silverfish | Stegosaurus |
+| Vex | Brachiosaurus |
+| Phantom | Velociraptor |
+| Strider | Pteranodon |
+| Tadpole | Dilophosaurus |
+| Trader Llama | Mosasaurus |
 
 Place an egg where block placement is allowed. Incubation takes twenty minutes and growth takes fifteen minutes in every dinosaur world. A blocked hatch waits for space. Hatchlings start small. Triceratops horns, Stegosaurus plates and tail spikes, Pteranodon crest, and Dilophosaurus crests and frill have hatchling, juvenile and adult detail stages; the juvenile stage starts halfway through growth. Growth food advances these features too. Accepted food removes one minute from the remaining growth time, with thirty seconds between feeds. Young owned animals can follow and wander. Only adults can be ridden or released, fight or breed. Hatchlings already inherit the egg owner and initially Stay; they do not need taming again. Breaking an egg in Survival returns it, restarting incubation when placed again. Explosions destroy it.
 
-All seven wild land/flying species roam independently on reachable terrain in loaded areas. Wild T-Rex, Raptors and Dilophosaurs also attack Survival players. Owned adults defend you and themselves and attack your opponent. While riding, the attack button plays the species attack, including misses; only an aimed, visible target in range takes damage. Dilophosaurus bites and scratches, and spits black slime at distant targets to briefly blind and slow them. Other species bite, thrust horns or beaks, swing their tails or stomp. **Stay** stops autonomous combat immediately. An authorized mounted driver can still command an attack; dismounting preserves Stay. T-Rex deals twenty instead of twelve base damage before armor and other mitigation. Owners, passengers, tame pets and Creative/Spectator players are protected; attacks on other players require the server's PvP and protection rules to allow them.
+All seven wild land/flying species roam independently on reachable terrain in loaded areas. Wild T-Rex, Raptors and Dilophosaurs also attack Survival players. Owned adults defend you and themselves and attack your opponent. While riding, the attack button plays the species attack, including misses; only an aimed, visible target in range takes damage. Dilophosaurus bites and scratches, and spits black slime at distant targets to briefly blind and slow them. Other species bite, thrust horns or beaks, swing their tails or stomp. **Stay** stops autonomous combat immediately. An authorized mounted driver can still command an attack; dismounting preserves Stay. T-Rex deals ten health points (five hearts on Normal before armor and other mitigation). Owners, passengers, tame pets and Creative/Spectator players are protected; attacks on other players require the server's PvP and protection rules to allow them.
 
 ## Wild Mosasaurus
 
@@ -59,6 +74,6 @@ Fresh setup with module `dino` installs the pinned BetterModel/Geyser bridge sta
 `prototype-worlds` limits models, flight, advanced taming, eggs, growth and combat to selected worlds. Existing habitat tags still assign four animals to each original species without replacing native entities, UUIDs, owners or stay states. Dilophosaurus is the seventh species, available through its own persisted species and eggs. Without `prototype-worlds`, the configured `survival-worlds` list is the default. Optional model components failing leaves native gameplay available. Updating an existing installation is separate from fresh setup and needs a planned maintenance window. After changing models, clear the bridge's generated pack cache before regenerating it, since an unchanged model count can otherwise keep an old pack.
 
 
-Adult wild Pteranodon and owned Free-mode animals fly short routes and land at safe nearby sites. A successful player hit brings a wild adult down for at least sixty seconds; accepted fish feeds keep it grounded during taming. Young animals and Follow mode remain grounded.
+Adult wild Pteranodon and owned Free-mode animals fly short routes and land at safe nearby sites. A successful player hit brings a wild adult down for at least sixty seconds; accepted fish feeds keep it grounded during taming. Young animals remain grounded.
 
 Name tags show the saved custom name above the dinosaur, including after renaming or reconnecting. Ground walk/sprint paces vary by species: Brachiosaurus 1.4/3.5, Stegosaurus 1.5/4.5, Triceratops 2/7, T-Rex 2.5/9, Raptor 3/12, Dilophosaurus 2.8/10 and Pteranodon 2/4.5 blocks per second. Pteranodon flies at 12/18 blocks per second. These are gameplay values on open flat ground, not scientific claims; obstacles and effects influence actual motion.

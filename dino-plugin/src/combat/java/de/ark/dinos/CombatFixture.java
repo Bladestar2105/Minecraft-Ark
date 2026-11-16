@@ -47,6 +47,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
     private final Map<java.util.UUID,Integer> attacks = new HashMap<>();
     private CombatModelProbe modelProbe;
     private final java.util.List<String> attackTrace = new java.util.ArrayList<>();
+    private final java.util.List<String> pteraDamageSamples = new java.util.ArrayList<>();
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void swingObserved(PlayerArmSwingEvent event) {
@@ -93,6 +94,11 @@ public final class CombatFixture extends JavaPlugin implements Listener {
         lastDamage = event.getDamager().getType() + ":" + event.getEntity().getType()
                 + ":shooter=" + (event.getDamager() instanceof org.bukkit.entity.Projectile arrow ? arrow.getShooter() : "none");
         if (!(event.getDamager() instanceof Mob) || !event.getDamager().getPersistentDataContainer().has(NamespacedKey.fromString("arkdinos:species"))) return;
+        if (event.getFinalDamage()>0 && "pteranodon".equals(event.getDamager().getPersistentDataContainer().get(NamespacedKey.fromString("arkdinos:species"),PersistentDataType.STRING))) {
+            var mob=(Mob)event.getDamager();
+            try {pteraDamageSamples.add("tick="+org.bukkit.Bukkit.getCurrentTick()+",ground="+mob.isOnGround()+",y="+mob.getY()+",aerial="+call(getServer().getPluginManager().getPlugin("ArkDinos"),"aerial",new Class<?>[]{Mob.class},mob)+",damage="+event.getFinalDamage());}
+            catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
+        }
         for (String tag : event.getDamager().getScoreboardTags()) {
             if (!tag.startsWith("combat_")) continue;
             hits.merge(tag, 1, Integer::sum);
@@ -100,6 +106,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             if (previous != null) minimumGap = Math.min(minimumGap, org.bukkit.Bukkit.getCurrentTick() - previous);
         }
     }
+
 
     @EventHandler(priority = EventPriority.LOWEST)
     public void cancelDamage(EntityDamageByEntityEvent event) {
@@ -153,9 +160,10 @@ public final class CombatFixture extends JavaPlugin implements Listener {
                         + ";unexpected=" + unexpectedRegens + ";reason=" + lastRegenReason + ";amount=" + lastRegenAmount);
                 return true;
             }
-            if(args[0].equals("model-state")||args[0].equals("model-trace")||args[0].equals("model-proxy")) {
+            if(args[0].equals("model-state")||args[0].equals("model-trace")||args[0].equals("model-proxy")||args[0].equals("strike-boxes")) {
                 if(modelProbe==null)modelProbe=new CombatModelProbe(this);
                 Mob mob=(Mob)entity(args[1]);
+                if(args[0].equals("strike-boxes")){sender.sendMessage(modelProbe.strikeBoxes(mob));return true;}
                 if(args[0].equals("model-proxy")){sender.sendMessage(modelProbe.proxy(mob,getServer().getPlayer(args[2])));return true;}
                 if(args[0].equals("model-trace"))modelProbe.trace(mob,getServer().getPlayer(args[2]));
                 var player=getServer().getPlayer(args[2]);
@@ -163,12 +171,13 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             }
             if(args[0].equals("contact-state")) {
                 var player=getServer().getPlayer(args[1]);var mob=(Mob)player.getVehicle();var eye=player.getEyeLocation();
-                var result=player.getWorld().rayTrace(eye,eye.getDirection(),5,org.bukkit.FluidCollisionMode.NEVER,true,.2,e->{
+                var f=plugin.getClass().getDeclaredField("combat");f.setAccessible(true);var combat=f.get(plugin);
+                double range=(double)call(combat,"aimRange",new Class<?>[]{Mob.class,Location.class},mob,eye);
+                var result=player.getWorld().rayTrace(eye,eye.getDirection(),range,org.bukkit.FluidCollisionMode.NEVER,true,.2,e->{
                     try {var target=call(plugin,"combatTarget",new Class<?>[]{Entity.class},e);return target instanceof LivingEntity && !target.equals(player)&&!target.equals(mob);}
                     catch(ReflectiveOperationException error){throw new IllegalStateException(error);}
                 });
                 var contact=result==null?null:result.getHitEntity();Object resolved=contact==null?null:call(plugin,"combatTarget",new Class<?>[]{Entity.class},contact);
-                var f=plugin.getClass().getDeclaredField("combat");f.setAccessible(true);var combat=f.get(plugin);
                 sender.sendMessage("ray="+(contact==null?result:contact.getType()+":"+contact.getEntityId())+";resolved="+resolved+";los="+(contact!=null&&mob.hasLineOfSight(contact))+";reach="+(contact!=null&&(boolean)call(combat,"meleeReach",new Class<?>[]{Mob.class,Entity.class},mob,contact))+";valid="+(resolved instanceof LivingEntity living&&(boolean)call(combat,"validTarget",new Class<?>[]{Mob.class,LivingEntity.class},mob,living)));return true;
             }
             if(args[0].equals("menu")) {
@@ -189,6 +198,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
                 sender.sendMessage("frozen=true");return true;
             }
             if(args[0].equals("last-damage")){sender.sendMessage(lastDamage+";trace="+attackTrace);return true;}
+            if(args[0].equals("ptera-hits")){sender.sendMessage(pteraDamageSamples.isEmpty()?"none":String.join("|",pteraDamageSamples));return true;}
             if(args[0].equals("restore-protection")) {
                 for(var entry:brokenProtectionFields.entrySet())entry.getKey().set(brokenProtection,entry.getValue());
                 brokenProtectionFields.clear();brokenProtection=null;sender.sendMessage("restored=true");return true;
@@ -283,7 +293,7 @@ public final class CombatFixture extends JavaPlugin implements Listener {
                         + ";slow=" + victim.hasPotionEffect(org.bukkit.potion.PotionEffectType.SLOWNESS)); return true;
             }
             if (args[0].equals("cleanup")) {
-                held.clear();
+                held.clear();pteraDamageSamples.clear();
                 markedRegens = controlRegens = cancelledMarkedRegens = cancelledControlRegens = unexpectedRegens = 0;
                 getServer().getWorlds().forEach(world -> List.copyOf(world.getEntities()).forEach(entity -> {
                     if (entity.getScoreboardTags().stream().anyMatch(tag -> tag.startsWith("combat_"))) entity.remove();
@@ -358,7 +368,9 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             }
             if (args[0].equals("spit-wall")) {
                 var source = (Mob) entity(args[1]); var target = (LivingEntity) entity(args[2]);
-                var middle = source.getEyeLocation().toVector().add(target.getBoundingBox().getCenter()).multiply(.5);
+                var ball=held.keySet().stream().map(getServer()::getEntity)
+                        .filter(entity->entity instanceof org.bukkit.entity.Snowball shot && source.equals(shot.getShooter())).findFirst().orElseThrow();
+                var middle = ball.getLocation().toVector().add(target.getBoundingBox().getCenter()).multiply(.5);
                 var block = source.getWorld().getBlockAt(middle.getBlockX(), middle.getBlockY(), middle.getBlockZ());
                 block.setType(org.bukkit.Material.STONE); sender.sendMessage("wall=" + block.getX() + "," + block.getY() + "," + block.getZ()); return true;
             }
@@ -383,6 +395,12 @@ public final class CombatFixture extends JavaPlugin implements Listener {
                 sender.sendMessage("swung=true;" + detail + ";lastDamage=" + lastDamage); return true;
             }
             Mob mob = (Mob) entity(args[1]);
+            if (args[0].equals("suspend")) {
+                mob.setAI(true);mob.setAware(false);mob.setGravity(false);mob.teleport(new Location(mob.getWorld(),0,6,0));sender.sendMessage("ground="+mob.isOnGround());return true;
+            }
+            if (args[0].equals("ground")) {
+                mob.setGravity(true);mob.teleport(new Location(mob.getWorld(),0,4,0));return true;
+            }
             if (args[0].equals("unload")) {
                 getServer().getPluginManager().callEvent(new org.bukkit.event.world.EntitiesUnloadEvent(mob.getChunk(), List.of(mob)));
                 sender.sendMessage("unloaded=true"); return true;
@@ -410,6 +428,18 @@ public final class CombatFixture extends JavaPlugin implements Listener {
             }
             if (args[0].equals("scale")) mob.getAttribute(Attribute.SCALE).setBaseValue(Double.parseDouble(args[2]));
             var field = plugin.getClass().getDeclaredField("combat"); field.setAccessible(true); Object combat = field.get(plugin);
+            if (args[0].equals("air-state")) {
+                sender.sendMessage("ground="+mob.isOnGround()+";y="+mob.getY()+";aerial="+call(plugin,"aerial",new Class<?>[]{Mob.class},mob));return true;
+            }
+            if (args[0].equals("valid-target")) {
+                sender.sendMessage("valid="+call(combat,"validTarget",new Class<?>[]{Mob.class,LivingEntity.class},mob,getServer().getPlayer(args[2])));return true;
+            }
+            if (args[0].equals("melee-reach")) {
+                sender.sendMessage("reach="+call(combat,"meleeReach",new Class<?>[]{Mob.class,Entity.class},mob,entity(args[2])));return true;
+            }
+            if (args[0].equals("commanded-hit")) {
+                sender.sendMessage("landed="+call(combat,"damage",new Class<?>[]{Mob.class,LivingEntity.class,double.class,boolean.class},mob,getServer().getPlayer(args[2]),4.0,false));return true;
+            }
             if (args[0].equals("break-protection") || args[0].equals("break-gp-protection")) {
                 var protectionField = combat.getClass().getDeclaredField("protection"); protectionField.setAccessible(true);
                 Object protection = protectionField.get(combat);

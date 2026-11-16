@@ -5,7 +5,7 @@ final class FlightRules {
 
     static double autonomousSpeed(int phase, double distance) {
         if (!Double.isFinite(distance) || distance <= 0) return 0;
-        double speed = switch (phase) { case 1 -> .24; case 2 -> .32; case 3 -> .16; default -> 0; };
+        double speed = switch (phase) { case 1 -> .24; case 2 -> .32; case 3 -> .16; case 4 -> .9; default -> 0; };
         return Math.min(speed, distance);
     }
 

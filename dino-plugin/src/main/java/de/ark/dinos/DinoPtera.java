@@ -23,14 +23,15 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
 
-/** Short flights between loaded, clear perches; mounted flight remains in ArkDinos. */
+/** Loaded, clear perch flights and owner-follow flight; mounted flight remains in ArkDinos. */
 final class DinoPtera implements Listener,AutoCloseable {
     // Conservative all-animation envelope from animated-bounds.json, including every wing/yaw.
     private static final double RADIUS=5.2, BELOW=.56, ABOVE=3.12;
     private static final class Bird {
         final Mob mob;
-        int nextFlight=Bukkit.getCurrentTick()+200+ThreadLocalRandom.current().nextInt(200), phase, ticks;
+        int nextFlight=Bukkit.getCurrentTick()+200+ThreadLocalRandom.current().nextInt(200), nextFollow, phase, ticks;
         Location launch,landing,waypoint;
+        boolean waterEscape;
         Bird(Mob mob){this.mob=mob;}
     }
     private final ArkDinos plugin;
@@ -76,11 +77,61 @@ final class DinoPtera implements Listener,AutoCloseable {
             if(!clear(mob,body(start,start.getY()).union(body(lift,start.getY())))
                     ||!clear(mob,body(lift,Double.NEGATIVE_INFINITY).union(body(above,Double.NEGATIVE_INFINITY)))
                     ||!clear(mob,body(landing,landing.getY()).union(body(above,landing.getY()))))continue;
-            bird.launch=start;bird.landing=landing;bird.waypoint=lift.clone();bird.phase=1;bird.ticks=0;
+              bird.launch=start;bird.landing=landing;bird.waypoint=lift.clone();bird.phase=1;bird.ticks=0;bird.waterEscape=false;
             plugin.stop(mob);mob.setAI(true);mob.setGravity(false);mob.getPersistentDataContainer().set(airborne,PersistentDataType.BYTE,(byte)1);
             return true;
         }
         return false;
+    }
+
+    private Player lure(Mob mob) {
+        if(plugin.owned(mob))return null;
+        Player nearest=null;double distance=16*16;
+        for(var player:mob.getWorld().getPlayers()) {
+            double candidate=player.getLocation().distanceSquared(mob.getLocation());
+            var inventory=player.getInventory();
+            if(candidate<distance&&!player.isDead()&&plugin.survival(player)
+                    &&(CareRules.primary("pteranodon",inventory.getItemInMainHand().getType().name())||CareRules.primary("pteranodon",inventory.getItemInOffHand().getType().name()))&&mob.hasLineOfSight(player)) {nearest=player;distance=candidate;}
+        }
+        return nearest;
+    }
+
+    private Player followOwner(Mob mob) {
+        if(!plugin.owned(mob)||!plugin.adult(mob)||plugin.staying(mob)||plugin.roaming(mob))return null;
+        Player player;
+        try {player=Bukkit.getPlayer(UUID.fromString(plugin.owner(mob)));}catch(IllegalArgumentException error){return null;}
+        if(player==null||!player.isOnline()||player.isDead()||!plugin.survival(player)||!mob.getWorld().equals(player.getWorld())
+                ||mob.getLocation().distanceSquared(player.getLocation())>48*48)return null;
+        return player;
+    }
+
+    private boolean escapeWater(Bird bird,Player owner) {
+        var mob=bird.mob;var start=mob.getLocation();
+        var toward=owner.getLocation().toVector().subtract(start.toVector()).setY(0);
+        if(toward.lengthSquared()<.01)return false;
+        toward.normalize();
+        for(int offset:new int[]{0,6,12}) {
+            var destination=owner.getLocation().add(toward.clone().multiply(offset));
+            if(destination.distanceSquared(start)>48*48)continue;
+            var landing=landing(mob,destination.add(0,4,0),8);if(landing==null)continue;
+            var lift=start.clone();lift.setY(Math.max(start.getY(),landing.getY())+5);
+            if(lift.getY()>start.getY()+48)continue;
+            var above=landing.clone();above.setY(lift.getY());
+            if(!clear(mob,foldedBody(start).union(foldedBody(lift)),true)
+                    ||!clear(mob,body(lift,Double.NEGATIVE_INFINITY).union(body(above,Double.NEGATIVE_INFINITY)))
+                    ||!clear(mob,body(landing,landing.getY()).union(body(above,landing.getY()))))continue;
+            bird.launch=start;bird.landing=landing;bird.waypoint=lift;bird.phase=1;bird.ticks=0;bird.waterEscape=true;
+            mob.getPersistentDataContainer().set(airborne,PersistentDataType.BYTE,(byte)1);return true;
+        }
+        return false;
+    }
+
+    private void follow(Bird bird,Player owner) {
+        var mob=bird.mob;var point=mob.getLocation();var mount=owner.getVehicle().getLocation();
+        var behind=point.toVector().subtract(mount.toVector()).setY(0);
+        if(behind.lengthSquared()<.01)behind=mount.getDirection().setY(0).multiply(-1);
+        behind.normalize().multiply(12);
+        bird.waypoint=mount.clone().add(behind);bird.waypoint.setY(Math.min(mount.getY(),Math.min(bird.launch.getY()+48,mob.getWorld().getMaxHeight()-ABOVE-1)));
     }
 
     private BoundingBox body(Location point,double floor) {
@@ -88,13 +139,22 @@ final class DinoPtera implements Listener,AutoCloseable {
                 point.getX()+RADIUS,point.getY()+ABOVE,point.getZ()+RADIUS);
     }
 
+    private BoundingBox foldedBody(Location point) {
+        // Idle bounds, including the long beak at every yaw; wings stay folded during vertical launch.
+        return new BoundingBox(point.getX()-3.15,point.getY(),point.getZ()-3.15,point.getX()+3.15,point.getY()+2.7,point.getZ()+3.15);
+    }
+
     private boolean clear(Mob mob,BoundingBox box) {
+        return clear(mob,box,false);
+    }
+
+    private boolean clear(Mob mob,BoundingBox box,boolean water) {
         var world=mob.getWorld();if(box.getMinY()<world.getMinHeight()||box.getMaxY()>=world.getMaxHeight())return false;
         for(int x=(int)Math.floor(box.getMinX())-1;x<=(int)Math.floor(box.getMaxX())+1;x++)for(int z=(int)Math.floor(box.getMinZ())-1;z<=(int)Math.floor(box.getMaxZ())+1;z++) {
             if(!world.isChunkLoaded(x>>4,z>>4))return false;
             for(int y=(int)Math.floor(box.getMinY())-1;y<=(int)Math.floor(box.getMaxY())+1;y++) {
                 var block=world.getBlockAt(x,y,z);
-                if(block.isLiquid()&&box.overlaps(new BoundingBox(x,y,z,x+1,y+1,z+1))||block.getCollisionShape().overlaps(box.clone().shift(-x,-y,-z)))return false;
+                if(block.isLiquid()&&(!water||block.getType()!=org.bukkit.Material.WATER)&&box.overlaps(new BoundingBox(x,y,z,x+1,y+1,z+1))||block.getCollisionShape().overlaps(box.clone().shift(-x,-y,-z)))return false;
             }
         }
         return true;
@@ -121,11 +181,12 @@ final class DinoPtera implements Listener,AutoCloseable {
     }
 
     private void recover(Mob mob) {
+        var bird=birds.get(mob.getUniqueId());if(bird!=null)bird.waterEscape=false;
         mob.getPersistentDataContainer().remove(airborne);plugin.recoverAerial(mob);
     }
 
     private void finish(Bird bird) {
-        bird.phase=0;bird.nextFlight=Bukkit.getCurrentTick()+200+ThreadLocalRandom.current().nextInt(200);
+        bird.phase=0;bird.waterEscape=false;bird.nextFlight=Bukkit.getCurrentTick()+200+ThreadLocalRandom.current().nextInt(200);
         bird.mob.getPersistentDataContainer().remove(airborne);bird.mob.setGravity(true);plugin.stop(bird.mob);plugin.animation(bird.mob,"idle");
     }
 
@@ -134,28 +195,69 @@ final class DinoPtera implements Listener,AutoCloseable {
         while(iterator.hasNext()) {
             var bird=iterator.next();var mob=bird.mob;
             if(!eligible(mob)) {if(mob.isValid()&&controls(mob))recover(mob);iterator.remove();continue;}
-            if(bird.phase==0)continue;
+            var lure=lure(mob);
+            if(lure!=null) {
+                var data=mob.getPersistentDataContainer();data.set(groundUntil,PersistentDataType.LONG,Math.max(data.getOrDefault(groundUntil,PersistentDataType.LONG,0L),System.currentTimeMillis()+2000));
+                land(mob);
+                if(bird.phase==0&&!plugin.combatActive(mob)&&Bukkit.getCurrentTick()%10==0) {
+                    if(mob.getLocation().distanceSquared(lure.getLocation())<=9)plugin.stop(mob);
+                    else {mob.setAware(true);mob.getPathfinder().moveTo(lure,plugin.groundSpeed(mob,false));}
+                }
+            }
+            if(bird.phase==0) {
+                var owner=followOwner(mob);
+                if(owner==null||Bukkit.getCurrentTick()<bird.nextFollow||!mob.isOnGround()&&!mob.isInWater()||grounded(mob)||plugin.combatActive(mob)||!mob.getPassengers().isEmpty())continue;
+                bird.waterEscape=false;
+                if(!plugin.ownerFlyingOnPtera(owner)) {
+                    if(mob.isInWater()) {bird.nextFollow=Bukkit.getCurrentTick()+20;escapeWater(bird,owner);}
+                    if(bird.phase==0)continue;
+                } else {
+                    bird.launch=mob.getLocation();bird.waypoint=bird.launch.clone();
+                    bird.waypoint.setY(Math.min(bird.launch.getY()+5,mob.getWorld().getMaxHeight()-ABOVE-1));
+                    bird.phase=5;bird.ticks=0;bird.waterEscape=mob.isInWater();
+                }
+                mob.getPersistentDataContainer().set(airborne,PersistentDataType.BYTE,(byte)1);
+            }
             if(!mob.getPassengers().isEmpty()) {
                 bird.phase=0;mob.getPersistentDataContainer().remove(airborne);
                 if(!plugin.takeAerialRide(mob))recover(mob);continue;
             }
-            if(grounded(mob)||plugin.owned(mob)&&(!plugin.roaming(mob)||plugin.staying(mob))||plugin.combatActive(mob))land(mob);
+            if(bird.phase==4||bird.phase==5) {
+                var owner=followOwner(mob);
+                if(owner==null||!plugin.ownerFlyingOnPtera(owner)) {bird.nextFollow=Bukkit.getCurrentTick()+100;land(mob);}
+                else if(bird.phase==4)follow(bird,owner);
+            }
+            if(grounded(mob)||bird.waterEscape&&followOwner(mob)==null||bird.phase!=4&&bird.phase!=5&&!bird.waterEscape&&plugin.owned(mob)&&(!plugin.roaming(mob)||plugin.staying(mob))||plugin.combatActive(mob))land(mob);
             if(bird.phase==0)continue;
-            if(++bird.ticks>240||mob.isInWater()) {recover(mob);bird.phase=0;continue;}
+            if(bird.phase!=4&&++bird.ticks>240||mob.isInWater()&&!bird.waterEscape) {recover(mob);bird.phase=0;continue;}
             var point=mob.getLocation();
             if(bird.phase==3&&(mob.isOnGround()&&Math.abs(point.getY()-bird.landing.getY())<.5||point.distanceSquared(bird.landing)<.04)) {finish(bird);continue;}
             if(point.distanceSquared(bird.waypoint)<.09) {
-                if(bird.phase==1) {bird.phase=2;bird.waypoint=bird.landing.clone();bird.waypoint.setY(point.getY());}
+                if(bird.phase==5) {
+                    if(!clear(mob,body(point,Double.NEGATIVE_INFINITY))) {
+                        double ceiling=Math.min(bird.launch.getY()+48,mob.getWorld().getMaxHeight()-ABOVE-1);
+                        if(bird.waypoint.getY()>=ceiling) {recover(mob);bird.phase=0;continue;}
+                        bird.waypoint.setY(Math.min(ceiling,bird.waypoint.getY()+1));
+                    } else {bird.phase=4;bird.waterEscape=false;follow(bird,followOwner(mob));}
+                }
+                else if(bird.phase==1) {bird.phase=2;bird.waypoint=bird.landing.clone();bird.waypoint.setY(point.getY());}
                 else if(bird.phase==2) {bird.phase=3;bird.waypoint=bird.landing;}
             }
-            var direction=bird.waypoint.toVector().subtract(point.toVector());double speed=FlightRules.autonomousSpeed(bird.phase,point.distance(bird.waypoint));
-            var motion=direction.lengthSquared()==0?new Vector():direction.normalize().multiply(speed);
-            double floor=bird.phase==1?bird.launch.getY():bird.phase==3?bird.landing.getY():Double.NEGATIVE_INFINITY;
-            if(!clear(mob,body(point,floor).union(body(point.clone().add(motion),floor)))) {recover(mob);bird.phase=0;continue;}
+            var direction=bird.waypoint.toVector().subtract(point.toVector());double speed=FlightRules.autonomousSpeed(bird.phase==5?1:bird.phase,point.distance(bird.waypoint));
+            var motion=direction.lengthSquared()==0?new Vector():direction.clone().normalize().multiply(speed);
+            if(bird.phase==4) {
+                double horizontal=Math.hypot(direction.getX(),direction.getZ());
+                motion=horizontal<.05?new Vector():new Vector(direction.getX(),0,direction.getZ()).multiply(FlightRules.autonomousSpeed(4,horizontal)/horizontal);
+                motion.setY(Math.clamp(direction.getY(),-.4,.4));
+            }
+            double floor=bird.phase==1||bird.phase==4&&point.getY()<bird.launch.getY()+BELOW?bird.launch.getY():bird.phase==3?bird.landing.getY():Double.NEGATIVE_INFINITY;
+            boolean folded=bird.phase==5||bird.waterEscape&&bird.phase==1;
+            var sweep=folded?foldedBody(point).union(foldedBody(point.clone().add(motion))):body(point,floor).union(body(point.clone().add(motion),floor));
+            if(!clear(mob,sweep,bird.waterEscape&&(bird.phase==1||bird.phase==5))) {recover(mob);bird.phase=0;bird.nextFollow=Bukkit.getCurrentTick()+100;continue;}
             plugin.stop(mob);mob.setAI(true);mob.setGravity(false);
             if(motion.getX()*motion.getX()+motion.getZ()*motion.getZ()>.0001)mob.setRotation((float)Math.toDegrees(Math.atan2(-motion.getX(),motion.getZ())),0);
             plugin.aerialVelocity(mob,motion);
-            boolean folded=point.getY()<floor+.75;plugin.animation(mob,folded?"idle":bird.phase==1?"flap":"glide");
+            plugin.animation(mob,folded||point.getY()<floor+.75?"idle":bird.phase==1||motion.getY()>.05?"flap":"glide");
         }
     }
 

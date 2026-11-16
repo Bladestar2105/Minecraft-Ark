@@ -2,7 +2,7 @@
 allow-command-questing: true
 allow-command-quests-with-npcs: false
 clickable-prompts: false
-confirm-accept: true
+confirm-accept: false
 confirm-abandon: true
 generate-files-on-join: true
 give-journal-item: false

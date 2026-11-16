@@ -7,7 +7,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Mob;
 import org.bukkit.plugin.java.JavaPlugin;
 
-/** Optional presentation only; the native mob remains the mount and interaction target. */
+/** Optional model integration; the native mob remains the mount and interaction target. */
 final class DinoModels implements AutoCloseable {
     private final JavaPlugin plugin;
     private BetterModelAdapter adapter;
@@ -33,6 +33,14 @@ final class DinoModels implements AutoCloseable {
         } catch (RuntimeException | LinkageError error) {
             plugin.getLogger().warning("Dinosaur target unavailable: " + error.getMessage());
             return entity;
+        }
+    }
+
+    org.bukkit.util.BoundingBox strikeBounds(Mob mob) {
+        if(adapter==null)return null;
+        try { return adapter.strikeBounds(mob); }
+        catch(RuntimeException | LinkageError error) {
+            unload(mob);plugin.getLogger().warning("Dinosaur strike geometry unavailable: "+error.getMessage());return null;
         }
     }
 

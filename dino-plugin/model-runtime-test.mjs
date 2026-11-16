@@ -140,7 +140,7 @@ try {
       await copyFile(`${cache}/plugins/${name}`,`${directory}/plugins/${name}`);
       report.protectionSha256[name]=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/${name}`)).digest('hex');
     }
-    await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.0.jar`, `${directory}/plugins/ArkDinos.jar`);
+    await copyFile(process.env.DINO_PLUGIN_JAR ?? `${plugin}build/ArkDinos-1.2.2.jar`, `${directory}/plugins/ArkDinos.jar`);
     report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
     report.limits=['Direct Java protocol777 clients verify real ArkDinos gameplay and actual model/registry/packet state; visible Java/Bedrock/console rendering is a separate acceptance step.', 'Bridge pose checks enroll these Java clients in the actual Bridge viewer sets to receive real encoded GeyserUtils actors; they do not establish real Geyser/Bedrock sessions.'];
     await mkdir(`${directory}/plugins/ArkDinos`, {recursive:true});
@@ -237,7 +237,9 @@ try {
     assert.equal(wire.type,modelName?nativeIds.pig:nativeIds.ravager,modelName?'Unrelated model factory changed':'Owned GME actor must share native carrier interpolation in both prediction states');
     await command(`dm bridge-off ${name}`);return{ids,wire};
   };
-  if(process.env.DINO_MODEL_JOINTS_ONLY==='1') {
+  if(process.env.DINO_MODEL_DISTANCE_ONLY==='1') {
+    await (await import('./model-distance-runtime-checks.mjs')).default({check,command,inspect,delay,alice,readVi,report,eventually});
+  } else if(process.env.DINO_MODEL_JOINTS_ONLY==='1') {
     await (await import('./model-joint-runtime-checks.mjs')).default({check,command,inspect,delay,directory,report,alice});
   } else if(process.env.DINO_BRIDGE_RACE==='1') {
     await check('Zero-delay bridge task waits for publication and sends the initial actor exactly once',async()=>{
@@ -262,11 +264,15 @@ try {
   await check('Generated Java pack and pinned Geyser register eight distinct species egg items',async()=>{
     report.javaPackAudit=JSON.parse(execFileSync('python3',[`${root}dino-models/verify_java_pack.py`,`${directory}/plugins/BetterModel/build.zip`],{encoding:'utf8'}));
     const result=await command('dm egg-mappings');
-    assert.match(result,/javaAssets=24;/);assert.match(result,/eggPack=true;/);
+    assert.match(result,/javaAssets=34;/);assert.match(result,/eggPack=true;/);
     assert.match(result,/bedrockDefinitions=8;/);assert.match(result,/modelEntities=8;/);
     for(const name of species)assert.ok(result.includes(`arkdinos:egg_${name}`),`Missing native ${name} item mapping`);
     assert.ok(!log.match(/Error reading definition.*ark-dino-eggs|Failed to register custom item.*arkdinos/));
     return result;
+  });
+  await check('Native Geyser Creative alias entries reverse-map to usable vanilla Java stacks on every supported protocol',async()=>{
+    const result=await command('dm creative-alias-mappings');const counts=Object.fromEntries(result.trim().split(';').map(row=>{const [key,value]=row.split('=');return[key,Number(value)];}));
+    assert.equal(counts.aliases,8);assert.ok(counts.protocols>0);assert.equal(counts.roundtrips,8*counts.protocols);return result;
   });
   await check('Startup attachment waits for BetterModel pack readiness',async()=>{
     const state=await inspect('early');report.earlyStartup=state;
@@ -483,6 +489,7 @@ try {
     }
     return samples;
   });
+  await (await import('./model-distance-runtime-checks.mjs')).default({check,command,inspect,delay,alice,readVi,report,eventually});
   await check('Blocked velocity and pure falling do not play walk',async()=>{
     await command('tp ModelRider 0 4 12');
     await command('dm position trex 0 4 8');await command('fill 2 4 5 2 10 11 stone');
@@ -557,12 +564,16 @@ try {
       assert.ok(Math.abs(Number(attacking.riderY)-Number(before.riderY))<.00001,'Attack moved the native saddle');
       await delay(850);const ended=await inspect(name);assert.doesNotMatch(ended.running,/name=attack/);assert.match(ended.running,/name=walk/);
       assert.equal(await command(`dm token ${name} walk`),token,'Finishing the attack restarted the movement clock');
-      const masks=JSON.parse((await command(`dm animation-masks ${name} ${bridgeId}`)).trim());
-      report.combatDiagnostics={name,before,attacking,ended,masks};
       const animationNames=JSON.parse(await readFile(`${root}dino-models/models/ark_${name}/ark_${name}.bbmodel`,'utf8')).animations.map(a=>a.name).sort();
       const attackBit=2**animationNames.indexOf('attack'),walkBit=2**animationNames.indexOf('walk');
+      let masks;
+      // GME publishes properties on a separate updater after BetterModel ends the overlay.
+      await eventually(async()=>{
+        masks=JSON.parse((await command(`dm animation-masks ${name} ${bridgeId}`)).trim());
+        return masks.length>0&&(masks.at(-1)&attackBit)===0&&(masks.at(-1)&walkBit)!==0;
+      },'Encoded GME property must return to the ongoing walk',3000);
+      report.combatDiagnostics={name,before,attacking,ended,masks};
       assert.ok(masks.some(mask=>(mask&attackBit)!==0),'Attack must reach actual encoded GME animation property packets');
-      assert.ok((masks.at(-1)&attackBit)===0&&(masks.at(-1)&walkBit)!==0,'Encoded GME property must return to the ongoing walk');
       await command(`dm stopmotion ${name}`);await command(`dm dismount ${name}`);
       await command(`dm bridge-off ${name}`);samples[name]={before,attacking,ended,masks};
     }
@@ -636,6 +647,29 @@ try {
     }
     report.restartedJavaPackAudit=JSON.parse(execFileSync('python3',[`${root}dino-models/verify_java_pack.py`,`${directory}/plugins/BetterModel/build.zip`],{encoding:'utf8'}));
     for(const name of species)await command(`dm attach ${name}`);return{before,after};
+  });
+  await check('Normal Java raptor item packets survive foliage, tracking reentry and registry replacement',async()=>{
+    const viewer=new Client('JavaVisibility');clients.push(viewer);await eventually(()=>viewer.joined,'Java visibility viewer did not join');
+    await command('gamemode creative JavaVisibility');await command('tp JavaVisibility 220 4 4 180 0');
+    await command('dm stopmotion velociraptor');await command('dm position velociraptor 0 4 0');
+    await command('fill -2 4 2 2 6 2 cherry_leaves[persistent=true]');await delay(1000);
+    const itemDisplays=(from,ids)=>new Set(viewer.packets.slice(from).flatMap(packet=>{
+      if(packet.id!==0x65)return[];
+      const bytes=Buffer.from(packet.hex,'hex'),id=readVi(bytes).value;
+      return ids.includes(id)&&bytes.includes(Buffer.from('bettermodel:'))?[id]:[];
+    }));
+    const from=viewer.packets.length;await command('tp JavaVisibility 0 4 4 180 0');await delay(1000);
+    const before=await inspect('velociraptor'),ids=JSON.parse(before.packet);
+    assert.equal(ids.length,Number(before.displays));assert.ok(ids.length>=7);
+    assert.equal(itemDisplays(from,ids).size,ids.length,'Every Java model display needs its actual item metadata after tracking reentry');
+    viewer.look(0);await delay(150);viewer.look(180);
+    const replacedFrom=viewer.packets.length;await command('dm baselineclose velociraptor');
+    let after;
+    await eventually(async()=>{after=await inspect('velociraptor');return after.trackers==='1'&&JSON.stringify(JSON.parse(after.packet))!==JSON.stringify(ids);},'Missing raptor registry was not recreated');
+    const replacedIds=JSON.parse(after.packet);
+    await eventually(()=>itemDisplays(replacedFrom,replacedIds).size===replacedIds.length,'Replacement Java model items did not reach the viewer');
+    await command('fill -2 4 2 2 6 2 air');viewer.close();
+    return {displays:ids.length,replacedDisplays:replacedIds.length};
   });
   await command('dm shared stegosaurus');await delay(200);await verifyBridgeSpawn('stegosaurus',false,'shared_fixture');
   await check('Unloading an actor before the first sampler tick clears its bridge mapping',async()=>{

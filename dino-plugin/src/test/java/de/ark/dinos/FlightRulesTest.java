@@ -29,6 +29,8 @@ public final class FlightRulesTest {
   check(FlightRules.autonomousSpeed(2,.04)==.04,"autonomous flight must not overshoot a nearby waypoint");
   check(FlightRules.autonomousSpeed(3,8)==.16,"autonomous landing retains its controlled descent");
   check(FlightRules.autonomousSpeed(2,Double.NaN)==0&&FlightRules.autonomousSpeed(0,8)==0,"invalid autonomous state cannot move");
+  check(FlightRules.autonomousSpeed(4,8)==.9,"owner-follow flight keeps pace with a sprinting mount");
+  check(FlightRules.autonomousSpeed(4,.04)==.04,"owner-follow flight does not overshoot its trailing waypoint");
   System.out.println("PASS: normal/sprint flight, hover, finite steering, ceilings and bounded autonomous waypoints");
  }
  private static void check(boolean ok,String message){if(!ok)throw new AssertionError(message);}

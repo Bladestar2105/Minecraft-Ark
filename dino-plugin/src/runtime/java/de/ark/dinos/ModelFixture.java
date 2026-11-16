@@ -241,7 +241,24 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                     for(String species:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","mosasaurus"}) {
                         if(org.geysermc.geyser.registry.Registries.BEDROCK_ENTITY_DEFINITIONS.get().containsKey(org.geysermc.geyser.api.util.Identifier.of("modelengine:ark_"+species)))entities++;
                     }
-                    sender.sendMessage("javaAssets=24;eggPack="+eggPack+";bedrockDefinitions="+items.size()+";protocols="+versions.size()+";modelEntities="+entities+";items="+String.join(",",items));return true;
+                    sender.sendMessage("javaAssets=34;eggPack="+eggPack+";bedrockDefinitions="+items.size()+";protocols="+versions.size()+";modelEntities="+entities+";items="+String.join(",",items));return true;
+                }
+                case "creative-alias-mappings" -> {
+                    int protocols=0,roundtrips=0;
+                    for(var mappings:org.geysermc.geyser.registry.Registries.ITEMS.get().values()) {
+                        protocols++;
+                        for(String alias:new String[]{"bat","endermite","silverfish","vex","phantom","strider","tadpole","trader_llama"}) {
+                            String key="minecraft:"+alias+"_spawn_egg";var mapping=mappings.getMapping(key);
+                            var item=mappings.getCreativeItems().stream().map(org.cloudburstmc.protocol.bedrock.data.inventory.CreativeItemData::getItem)
+                                .filter(i->i.getDefinition().getRuntimeId()==mapping.getBedrockDefinition().getRuntimeId()).findFirst().orElseThrow();
+                            var reverse=mappings.getMapping(item);
+                            if(!reverse.getJavaItem().javaKey().asString().equals(key))throw new AssertionError("Creative alias reverse mapping: "+key);
+                            var stack=reverse.getJavaItem().translateToJava(null,item,reverse,mappings);
+                            if(stack.getAmount()!=item.getCount()||stack.getAmount()<1)throw new AssertionError("Creative alias lost its stack: "+key);
+                            roundtrips++;
+                        }
+                    }
+                    sender.sendMessage("aliases=8;protocols="+protocols+";roundtrips="+roundtrips);return true;
                 }
                 case "client-ids" -> {
                     var version=PacketEvents.getAPI().getPlayerManager().getUser(getServer().getPlayerExact(name)).getClientVersion();
@@ -380,6 +397,26 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                     sender.sendMessage(poses.entrySet().stream().map(entry->entry.getKey()+"="+entry.getValue()).collect(java.util.stream.Collectors.joining(";")));
                     return true;
                 }
+                case "distance-state" -> {
+                    var tracker=BetterModel.registry(mob.getUniqueId()).orElseThrow().tracker("ark_"+name);
+                    var player=getServer().getPlayerExact(args[2]);
+                    var legs=tracker.bones().stream().filter(b->b.name().name().startsWith("leg_")&&b.getDisplay()!=null).map(b->Integer.toString(b.getDisplay().id())).toList();
+                    sender.sendMessage("nativeTracked="+mob.getTrackedBy().contains(player)+";modelTracked="+tracker.getPipeline().isSpawned(player.getUniqueId())+";maxSight="+BetterModel.config().maxSight()+";legs="+String.join(",",legs));return true;
+                }
+                case "legacy-tracker" -> {
+                    var previous=BetterModel.registry(mob.getUniqueId()).orElseThrow().tracker("ark_"+name).asTrackerData();
+                    models.unload(mob);
+                    BetterModel.model("ark_"+name).orElseThrow().create(kr.toxicity.model.api.bukkit.platform.BukkitAdapter.adapt(mob),kr.toxicity.model.api.tracker.TrackerModifier.builder().damageAnimation(false).damageTint(false).build(),previous::applyAs);
+                    BetterModel.model("shared_fixture").orElseThrow().create(kr.toxicity.model.api.bukkit.platform.BukkitAdapter.adapt(mob));
+                    var registry=BetterModel.registry(mob.getUniqueId()).orElseThrow();registry.save();
+                    var source=registry.entity();String saved=source.modelData();
+                    registry.close();source.modelData(saved);BetterModel.registry(kr.toxicity.model.api.bukkit.platform.BukkitAdapter.adapt(mob)).orElseThrow();return true;
+                }
+                case "migration-state" -> {
+                    var registry=BetterModel.registry(mob.getUniqueId()).orElseThrow();var tracker=registry.tracker("ark_"+name);
+                    sender.sendMessage("data="+tracker.asTrackerData()+";persisted="+registry.entity().modelData()+";identity="+System.identityHashCode(tracker)+";shared="+System.identityHashCode(registry.tracker("shared_fixture"))+";passenger="+mob.getPassengers().contains(getServer().getPlayerExact(args[2])));return true;
+                }
+                case "migration-cleanup" -> {BetterModel.registry(mob.getUniqueId()).orElseThrow().remove("shared_fixture");return true;}
                 case "repeat", "gait", "token" -> {
                     var tracker=BetterModel.registry(mob.getUniqueId()).orElseThrow().tracker("ark_"+name);
                     var bone=tracker.bones().stream().filter(value->op.equals("token")?value.name().name().equals("body"):value.runningAnimation()!=null&&value.runningAnimation().name().equals(args[2])).findFirst().orElseThrow();

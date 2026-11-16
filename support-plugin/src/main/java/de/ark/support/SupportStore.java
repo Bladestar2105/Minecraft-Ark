@@ -9,7 +9,7 @@ import java.util.function.*;
 
 final class SupportStore {
     static final int MAX_TICKETS=1000,MAX_BYTES=16*1024*1024;
-    record Notice(UUID owner,UUID ticket,String priority,boolean admins) { }
+    record Notice(UUID owner,UUID ticket,String priority,boolean admins,String reply) { }
     private static final class Message {String author,message,created_at;}
     private static final class Ticket {
         String id,player_uuid,player_name,priority,status,created_at,updated_at;
@@ -64,7 +64,7 @@ final class SupportStore {
         if(next.size()>MAX_TICKETS || encoded.getBytes(StandardCharsets.UTF_8).length>MAX_BYTES)throw new ApiError(503,"support_capacity");
         requireOpen();try {AtomicFiles.write(file,encoded);tickets=next;}catch(Exception e){throw new ApiError(503,"storage_unavailable");}
     }
-    private void notify(Ticket ticket,boolean admins){if(closed||!enabled.getAsBoolean())return;try {notifier.accept(new Notice(UUID.fromString(ticket.player_uuid),UUID.fromString(ticket.id),ticket.priority,admins));}catch(RuntimeException ignored){ }}
+    private void notify(Ticket ticket,boolean admins,String reply){if(closed||!enabled.getAsBoolean())return;try {notifier.accept(new Notice(UUID.fromString(ticket.player_uuid),UUID.fromString(ticket.id),ticket.priority,admins,reply));}catch(RuntimeException ignored){ }}
     private static JsonObject view(Ticket ticket,boolean summary) {JsonObject json=Data.JSON.toJsonTree(ticket).getAsJsonObject();if(summary){json.remove("messages");json.addProperty("message_count",ticket.messages.size());}return json;}
     synchronized JsonObject create(UUID owner,String name,String priority,String message) {
         requireOpen();
@@ -74,7 +74,7 @@ final class SupportStore {
         if(own.stream().filter(t->t.status.equals("open")).count()>=5)throw new ApiError(429,"support_open_limit");
         Instant now=clock.get();if(own.stream().map(t->Instant.parse(t.created_at)).max(Comparator.naturalOrder()).filter(last->last.plusSeconds(60).isAfter(now)).isPresent())throw new ApiError(429,"support_cooldown");
         Ticket ticket=new Ticket();ticket.id=UUID.randomUUID().toString();ticket.player_uuid=owner.toString();ticket.player_name=name;ticket.priority=p;ticket.status="open";ticket.revision=1;ticket.created_at=now.toString();ticket.updated_at=ticket.created_at;ticket.messages.add(message("player",body,ticket.created_at));
-        commit(ticket);notify(ticket,true);return view(ticket,false);
+        commit(ticket);notify(ticket,true,null);return view(ticket,false);
     }
     synchronized JsonObject list(UUID owner,boolean admin) {
         requireOpen();
@@ -85,13 +85,13 @@ final class SupportStore {
     synchronized JsonObject reply(UUID owner,UUID id,long expected,String message,boolean admin) {
         Ticket ticket=copy(require(owner,id,admin));revision(ticket,expected);String body=text(message);
         if(!ticket.status.equals("open"))throw new ApiError(409,"support_closed");if(ticket.messages.size()>=50)throw new ApiError(409,"support_message_limit");
-        ticket.revision++;ticket.updated_at=clock.get().toString();ticket.messages.add(message(admin?"admin":"player",body,ticket.updated_at));commit(ticket);notify(ticket,!admin);return view(ticket,false);
+        ticket.revision++;ticket.updated_at=clock.get().toString();ticket.messages.add(message(admin?"admin":"player",body,ticket.updated_at));commit(ticket);notify(ticket,!admin,admin?body:null);return view(ticket,false);
     }
     synchronized JsonObject status(UUID id,long expected,String status) {
         Ticket ticket=copy(require(null,id,true));revision(ticket,expected);if(status==null || !Set.of("open","closed").contains(status))throw new ApiError(400,"invalid_status");
         if(ticket.status.equals(status))return view(ticket,false);
         if(status.equals("open")&&tickets.values().stream().filter(t->t.player_uuid.equals(ticket.player_uuid)&&t.status.equals("open")).count()>=5)throw new ApiError(429,"support_open_limit");
-        ticket.status=status;ticket.revision++;ticket.updated_at=clock.get().toString();commit(ticket);notify(ticket,false);return view(ticket,false);
+        ticket.status=status;ticket.revision++;ticket.updated_at=clock.get().toString();commit(ticket);notify(ticket,false,null);return view(ticket,false);
     }
     synchronized void delete(UUID id,long expected) {
         Ticket ticket=require(null,id,true);revision(ticket,expected);

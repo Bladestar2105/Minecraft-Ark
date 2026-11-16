@@ -30,6 +30,7 @@ import kr.toxicity.model.api.data.blueprint.BlueprintAnimation;
 import kr.toxicity.model.api.data.blueprint.BlueprintAnimator;
 import kr.toxicity.model.api.bone.BoneMovement;
 import kr.toxicity.model.api.bone.BoneName;
+import kr.toxicity.model.api.bone.BonePosition;
 import org.joml.Vector3f;
 import kr.toxicity.model.api.animation.AnimationModifier;
 import kr.toxicity.model.api.animation.AnimationOverrideState;
@@ -55,6 +56,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.BoundingBox;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -131,6 +133,25 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         if (!(entity instanceof HitBox hitBox)) return entity;
         Entity source = entity.getServer().getEntity(hitBox.source().uuid());
         return source == null ? entity : source;
+    }
+
+    BoundingBox strikeBounds(Mob mob) {
+        Model model=models.get(mob.getUniqueId());
+        if(model==null || model.tracker==null || model.tracker.isClosed())return null;
+        BoundingBox bounds=null;var origin=mob.getLocation();
+        for(String name:model.name.equals("ark_stegosaurus")?java.util.List.of("tail"):java.util.List.of("head","jaw")) {
+            var bone=model.tracker.bone(name);if(bone==null)continue;
+            var box=bone.getGroup().getHitBox();if(box==null)continue;
+            for(double x:new double[]{box.minX(),box.maxX()})for(double y:new double[]{box.minY(),box.maxY()})for(double z:new double[]{box.minZ(),box.maxZ()}) {
+                var point=bone.worldPosition(new BonePosition(new Vector3f(),new Vector3f((float)x,(float)y,(float)z),null));
+                double px=origin.getX()+point.x,py=origin.getY()+point.y,pz=origin.getZ()+point.z;
+                if(bounds==null)bounds=new BoundingBox(px,py,pz,px,py,pz);else bounds.union(px,py,pz);
+            }
+        }
+        // Tall dinosaurs can strike ground-level opponents beneath their visible head.
+        if(bounds!=null)bounds.resize(bounds.getMinX(),Math.min(bounds.getMinY(),mob.getBoundingBox().getMinY()),bounds.getMinZ(),
+                bounds.getMaxX(),Math.max(bounds.getMaxY(),mob.getBoundingBox().getMaxY()),bounds.getMaxZ());
+        return bounds;
     }
 
     BetterModelAdapter(JavaPlugin plugin) {
@@ -510,9 +531,22 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         }
         modeledCarriers.put(mob.getEntityId(), modelName);
         models.putIfAbsent(mob.getUniqueId(), new Model(mob, modelName));
-        var tracker = renderer.getOrCreate(BukkitAdapter.adapt(mob), TrackerModifier.DEFAULT,
-                created -> created.scaler(ModelScaler.value((float) (DinoSizes.adultScale(modelName)
-                        * (modelName.equals("ark_mosasaurus") ? 1 : growthScale(mob))))));
+        // Keep moving legs animated for every tracked viewer; BetterModel's separate sight limit
+        // can be shorter than native entity tracking. Visibility still follows entity tracking.
+        var registry = BetterModel.registry(BukkitAdapter.adapt(mob)).orElse(null);
+        var existing = registry == null ? null : registry.tracker(modelName);
+        var migration = existing != null && existing.modifier().sightTrace() ? existing.asTrackerData() : null;
+        if (migration != null) {
+            // getOrCreate keeps a restored tracker's immutable modifier; replace only our tracker.
+            existing.forRemoval(true);
+            registry.remove(modelName);
+        }
+        var modifier = (migration == null ? TrackerModifier.DEFAULT : migration.modifier()).toBuilder().sightTrace(false).build();
+        var tracker = renderer.getOrCreate(BukkitAdapter.adapt(mob), modifier, created -> {
+            if (migration != null) migration.applyAs(created);
+            created.scaler(ModelScaler.value((float) (DinoSizes.adultScale(modelName)
+                    * (modelName.equals("ark_mosasaurus") ? 1 : growthScale(mob)))));
+        });
         String phase = previous == null || previous.phase == null ? "idle" : previous.phase;
         Model current = models.get(mob.getUniqueId());
         if (current.tracker != tracker) { current.phase = null; current.detailStage = null; current.customName = null; }

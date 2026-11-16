@@ -33,7 +33,7 @@ progress and points needed for the next rank.
 
 ## Dinosaurs
 
-ArkDinos 1.2.0 includes eight original species: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor, Pteranodon, Dilophosaurus and wild Mosasaurus. Accept the server resource packs on Java and Bedrock. Wild animals can appear throughout suitable loaded terrain in configured dinosaur worlds and wander without a fixed home territory. Fences already present in older worlds remain physical obstacles.
+ArkDinos 1.2.2 includes eight original species: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor, Pteranodon, Dilophosaurus and wild Mosasaurus. Accept the server resource packs on Java and Bedrock. Wild animals can appear throughout suitable loaded terrain in configured dinosaur worlds and wander without a fixed home territory. Fences already present in older worlds remain physical obstacles.
 
 Taming in dinosaur worlds requires species food and a finishing item. **T-Rex needs twelve raw-meat feeds, twenty seconds apart, then a bone**; Raptor and Dilo need five meat feeds, ten seconds apart, then a bone. See [all food recipes](Dino-Riding.md) for fish eaters and herbivores. The legacy single-seed system only applies outside prototype worlds.
 
@@ -48,8 +48,7 @@ claims. Manage your land with `/claimslist`, `/trust Name`, `/untrust Name`,
 `/trustlist` and `/abandonclaim`. Starting budget: 1,000 blocks, increasing by 100
 per active hour up to 10,000. Public structures have separate protection.
 
-`/quests list` shows available quests. The numbers are list positions, not quest IDs: use the **display name**, such as `/quests take Nachtwache`, rather than `/quests take 7`. Nachtwache still requires Material fürs Lager. Example: `/quests take Werkzeugmacher`, then
-confirm with `Ja` (German for yes). Parties: `/party create Name`, `/party invite Name`,
+`/quests list` shows available quests. The numbers are list positions, not quest IDs: use the **display name**, such as `/quests take Nachtwache`, rather than `/quests take 7`. Nachtwache still requires Material fürs Lager. Example: `/quests take Werkzeugmacher` starts an available mission immediately, with no chat reply. Abandoning a mission still requires confirmation. Parties: `/party create Name`, `/party invite Name`,
 `/party accept`. Every member must accept the same quest individually. Creative
 actions do not count. Parties must be installed successfully for group commands.
 
@@ -73,3 +72,11 @@ pavilion is protected; building is allowed outside it.
 - `/support [low|normal|high] Message`: a private request, with ArkSupport.
 
 Read [Account security](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Account-Security), [Wardrobe](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Wardrobe), [Support](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Support) and [Administration](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Administration) for permissions and limits. Optional modules do not own your core account/password/profile.
+
+### Heal and find your own dinosaurs
+
+In Survival, feed an injured owned animal its normal primary food to restore up to two hearts every two seconds before growth or breeding. `/dinos` lists only your tamed animals. Hold a normal compass in either hand and click **[Kompass]** to select one. It follows loaded animals and otherwise points to the last recorded position. Travel to the target world and select it again for cross-world targets. Animals already unloaded before this update are first indexed when their area next loads.
+
+T-Rex hits deal five hearts on Normal before armor. Accepted taming food protects only the feeding player while progress remains valid; their positive melee or arrow hit clears that progress and protection. The recipe remains twelve feeds twenty seconds apart and one bone. An owned adult Pteranodon in Follow can accompany its owner flying another owned Pteranodon.
+
+Wild Pteranodons make flights between clear, loaded perches. Hold raw cod, salmon or tropical fish in either hand to lure a nearby animal in sight to land. They remain peaceful until actually hurt, then land and retaliate against the attacker on the ground. A hit temporarily keeps them grounded.

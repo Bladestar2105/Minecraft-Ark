@@ -70,6 +70,7 @@ class Client extends EventEmitter {
       if (id === 20) this.send(9);
       if (id === 3) { this.send(3); this.phase = 'play'; this.tick = setInterval(() => { this.send(0x21, Buffer.from([1])); this.send(0x0d); }, 50); }
     } else {
+      (this.packets??=[]).push({id,text:body.toString('utf8')});
       if (id === 0x2d) this.send(0x1c, body);
       if (id === 0x49) { const token = readVi(body); this.send(0, Buffer.concat([vi(token.value), body.subarray(token.end, token.end + 24), body.subarray(token.end + 48, token.end + 56)])); this.send(0x2c); }
       if (id === 0x32) { this.send(0x2c); this.joined = true; }
@@ -123,9 +124,9 @@ async function stop(){clients.forEach(c=>c.close());await command('save-all flus
 try {
  for(const name of ['libraries','versions','cache'])await symlink(`${cache}/${name}`,`${directory}/${name}`);
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
- await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.0.jar`,`${directory}/plugins/ArkDinos.jar`);
+ await copyFile(process.env.DINO_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.2.jar`,`${directory}/plugins/ArkDinos.jar`);
  report.pluginSha256=crypto.createHash('sha256').update(await readFile(`${directory}/plugins/ArkDinos.jar`)).digest('hex');
- await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\nwild-spawning:\n  enabled: false\n');
+ await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\n  - ark_creative\nwild-spawning:\n  enabled: false\n');
  await mkdir(`${directory}/fixture-classes`);
  execFileSync(`${javaHome}/bin/javac`,['--release','25','-sourcepath','','-cp',`${plugin}.deps/*`,'-d',`${directory}/fixture-classes`,`${plugin}src/care/java/de/ark/dinos/CareFixture.java`]);
  execFileSync(`${javaHome}/bin/jar`,['--create','--file',`${directory}/plugins/CareFixture.jar`,'-C',`${directory}/fixture-classes`,'.','-C',`${plugin}src/care/resources`,'.']);
@@ -135,6 +136,99 @@ try {
  let alice=new Client('CareOwner'),bob=new Client('CareOther');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Care clients did not join',30000);
  await command('gamemode survival @a');await command('effect give @a resistance 9999 4 true');await command('tp @a 0 4 3');await delay(500);
  await eventually(async()=>/Successfully filled/.test(await command('fill -16 3 -16 32 3 32 stone')),'Care fixture platform chunks did not load');
+ await check('Creative aliases yield eight owned dinosaur eggs through actual catalog selection packets',async()=>{
+  const aliases=[['BAT','trex',1],['ENDERMITE','triceratops',64],['SILVERFISH','stegosaurus',7],['VEX','brachiosaurus',2],['PHANTOM','velociraptor',3],['STRIDER','pteranodon',16],['TADPOLE','dilophosaurus',4],['TRADER_LLAMA','mosasaurus',32]];
+  const select=async(client,material,count,slot=36,source=client)=>{const packet=fields(await command(`carefixture creative-packet ${source.name} ${material} ${count} ${slot}`));assert.match(packet.hex,/^[0-9a-f]+$/);const from=client.packets.length;client.send(0x39,Buffer.from(packet.hex,'hex'));await delay(200);return from;};
+  await command('carefixture create-world ark_creative');await command('execute in minecraft:ark_creative run tp CareOwner 0 4 0');await command('gamemode creative CareOwner');
+  const selected=[];
+  for(const [alias,species,count]of aliases){await command('clear CareOwner');const from=await select(alice,alias+'_SPAWN_EGG',count);const item=await inventory(alice);assert.equal(item.hand,'SNIFFER_EGG',`${alias} must become a dinosaur egg`);assert.equal(item.eggs,String(count));assert.equal(item.eggSpecies,species);assert.equal(item.eggOwner,alice.uuid);assert.equal(item.eggModel,'arkdinos:egg_'+species);assert.ok(alice.packets.slice(from).some(p=>p.text.includes('arkdinos:egg_'+species)),'The client must receive the converted egg stack');selected.push(item);}
+  await command('clear CareOwner');await command('carefixture deny-creative true');await select(alice,'BAT_SPAWN_EGG',5);assert.equal((await inventory(alice)).eggs,'0');await command('carefixture deny-creative false');
+  await command('gamemode creative CareOther');await command('carefixture egg CareOther trex');await command('clear CareOwner');await select(alice,'held',9,36,bob);let item=await inventory(alice);assert.equal(item.eggs,'9');assert.equal(item.eggOwner,bob.uuid,'Transferred real eggs retain their original owner');
+  await command('clear CareOwner');await select(alice,'BAT_SPAWN_EGG',64,-1);assert.match(await command('carefixture egg-drops ark_creative'),new RegExp(`species=trex;owner=${alice.uuid};count=64`));
+  await command('carefixture create-world ark');await command('execute in minecraft:ark run tp CareOwner 0 4 0');await command('clear CareOwner');await select(alice,'BAT_SPAWN_EGG',5);item=await inventory(alice);assert.equal(item.hand,'BAT_SPAWN_EGG');assert.equal(item.eggs,'0');
+  await command('execute in minecraft:ark_creative run tp CareOwner 0 4 0');await command('gamemode survival CareOwner');await food(alice,'BAT_SPAWN_EGG',5);await select(alice,'PHANTOM_SPAWN_EGG',7);item=await inventory(alice);assert.equal(item.hand,'BAT_SPAWN_EGG');assert.equal(item.amount,'5');assert.equal(item.eggs,'0');
+  await command('gamemode creative CareOwner');
+  for(const [index,[alias,species]]of aliases.slice(0,7).entries()){
+   await command('clear CareOwner');await select(alice,alias+'_SPAWN_EGG',1);const x=-12+index*4;await command(`execute in minecraft:ark_creative run setblock ${x} 3 12 stone`);
+   assert.match(await command(`carefixture place CareOwner ${x} 4 12`),/cancelled=false;block=SNIFFER_EGG/);assert.match(await command(`carefixture ready ark_creative ${x} 4 12`),/block=AIR;nest=false/);
+   const baby=await inspect('care_hatch');assert.equal(baby.species,species);assert.equal(baby.owner,alice.uuid);await command('execute in minecraft:ark_creative run tag @e[tag=care_hatch] remove care_hatch');
+  }
+  await command('clear CareOwner');await select(alice,'TRADER_LLAMA_SPAWN_EGG',32);alice.look(0,0);alice.useItem();await delay(250);assert.match(await command('carefixture mosa-count ark_creative'),/mosa=0/);
+  await command('execute in minecraft:ark_creative run fill -18 5 -18 18 15 18 water');await command('execute in minecraft:ark_creative run tp CareOwner 0 9 0 0 0');await delay(150);alice.useItem();await eventually(async()=>/mosa=1/.test(await command('carefixture mosa-count ark_creative')),'Creative Mosa alias must spawn through the actual use-item packet');assert.equal((await inventory(alice)).eggs,'32');assert.equal((await inspect('care_mosa')).owner,'null');
+  await command('execute in minecraft:ark_creative run kill @e[tag=care_mosa]');await command('execute in minecraft:overworld run tp CareOwner 0 4 3');await command('gamemode survival @a');await command('clear @a');return selected;
+ });
+ await check('All seven tameable species accept their complete recipe and breed one correctly owned species egg',async()=>{
+  const recipes=[['trex','BEEF','BONE',12],['triceratops','WHEAT','TORCHFLOWER_SEEDS',8],['stegosaurus','WHEAT','TORCHFLOWER_SEEDS',8],['brachiosaurus','WHEAT','TORCHFLOWER_SEEDS',8],['velociraptor','BEEF','BONE',5],['pteranodon','COD','SEAGRASS',5],['dilophosaurus','BEEF','BONE',5]],results=[];
+  for(const [species,primary,finisher,feeds]of recipes){
+   const first='qa_tame_'+species,second='qa_pair_'+species;await spawnDino(first,species,0);await tame(alice,first,primary,finisher);const tamed=await inspect(first);assert.equal(tamed.owner,alice.uuid);assert.equal(tamed.feeds,'0');
+   await spawnDino(second,species,3,alice.uuid);await command('clear CareOwner');await food(alice,primary,3);await click(alice,first);await click(alice,second);const egg=await inventory(alice);assert.equal(egg.eggs,'1');assert.equal(egg.eggSpecies,species);assert.equal(egg.eggOwner,alice.uuid);assert.equal(egg.eggModel,'arkdinos:egg_'+species);
+   await click(alice,first);assert.equal((await inventory(alice)).amount,'1','Breeding cooldown must retain the remaining food');assert.equal((await inventory(alice)).eggs,'1');results.push({species,feeds,primary,finisher,tamed,egg});await command(`kill @e[tag=${first}]`);await command(`kill @e[tag=${second}]`);
+  }
+  await command('clear CareOwner');return results;
+ });
+ await check('Compass tracks only an owned dinosaur while preserving existing item metadata',async()=>{
+  const tag='care_compass';
+  try {
+   await spawnDino(tag,'triceratops',-12,alice.uuid);await delay(1200);const uuid=(await inspect(tag)).uuid;
+   await command('carefixture compass CareOwner');await command(`carefixture player-command CareOwner dinofind ${uuid}`);
+   const first=fields(await command('carefixture compass-state CareOwner'));assert.equal(first.target,'true','The normal held compass must acquire the requested owned pet');
+   assert.equal(first.tracked,'false');assert.equal(first.name,'true','Compass naming must survive target changes');assert.equal(first.x,'-12');
+   await command('carefixture compass CareOther');await command(`carefixture player-command CareOther dinofind ${uuid}`);
+   assert.equal(fields(await command('carefixture compass-state CareOther')).target,'false','Another player cannot track this pet');
+   await food(alice,'WHEAT',1);await command(`carefixture player-command CareOwner dinofind ${uuid}`);assert.equal((await inventory(alice)).hand,'WHEAT','Tracking without a compass must preserve the held item');
+   await command('carefixture compass CareOwner');await command(`carefixture player-command CareOwner dinofind ${uuid}`);
+   await command(`carefixture relocate ${tag} -8 0`);await eventually(async()=>fields(await command('carefixture compass-state CareOwner')).x==='-8','A moving owned pet must update its compass target');
+   await food(alice,'WHEAT',1);await command('carefixture compass CareOwner offhand');await command(`carefixture player-command CareOwner dinofind ${uuid}`);
+   const offhand=fields(await command('carefixture compass-state CareOwner offhand'));assert.equal(offhand.target,'true');assert.equal(offhand.name,'true');assert.equal(offhand.x,'-8');assert.equal((await inventory(alice)).hand,'WHEAT');
+   await command('carefixture create-world ark');await command('execute in minecraft:ark run tp CareOwner 0 5 0');await command('carefixture compass CareOwner');await command(`carefixture player-command CareOwner dinofind ${uuid}`);
+   assert.equal(fields(await command('carefixture compass-state CareOwner')).target,'false','A compass cannot acquire a pet in another world');
+   await command('execute in minecraft:overworld run tp CareOwner 0 4 3');
+   return {uuid,first,offhand};
+  } finally {await command(`kill @e[tag=${tag},limit=1]`);}
+ });
+ await check('Locator keeps owner locations through actual chunk unload and restart, then removes released or dead pets',async()=>{
+  const tag='care_locator';
+  try {
+   await spawnDino(tag,'triceratops',-12,alice.uuid);await command(`data merge entity @e[tag=${tag},limit=1] {CustomName:"LocatorPrivatePet",NoAI:1b}`);await delay(1200);
+   const locate=async(client,alias='dinos')=>{const from=client.packets.length;await command(`carefixture player-command ${client.name} ${alias}`);await delay(250);return client.packets.slice(from).map(p=>p.text).join('');};
+   const own=await locate(alice);assert.match(own,/Deine gezähmten Dinos:/);assert.match(own,/LocatorPrivatePet/);assert.match(own,/X -12/);assert.match(own,/aktuell/);
+   const other=await locate(bob);assert.doesNotMatch(other,/LocatorPrivatePet/);assert.doesNotMatch(other,/X -12/);
+   const uuid=(await inspect(tag)).uuid;await command(`carefixture relocate ${tag} 512 512`);await delay(1200);
+   assert.match(await locate(alice),/X 512/);await eventually(async()=>/unloaded=true/.test(await command('carefixture unload-chunk ark_model_test 32 32')),'The fixture teleport ticket did not release its pet chunk',30000);
+   assert.match(await command('carefixture chunk-loaded ark_model_test 32 32'),/loaded=false/);
+   const unloaded=await locate(alice,'dinofind');assert.match(unloaded,/LocatorPrivatePet/);assert.match(unloaded,/zuletzt gesehen/);
+   assert.match(await command('carefixture chunk-loaded ark_model_test 32 32'),/loaded=false/,'Locating must not reload the pet chunk');
+   await stop();await start();alice=new Client('CareOwner');bob=new Client('CareOther');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Locator restart clients did not join',30000);
+   const restored=await locate(alice);assert.match(restored,/LocatorPrivatePet/);assert.match(restored,/X 512/);assert.match(restored,/zuletzt gesehen/);
+   assert.doesNotMatch(await locate(bob),/LocatorPrivatePet/);assert.match(await command('carefixture chunk-loaded ark_model_test 32 32'),/loaded=false/);
+   await command('carefixture load-chunk ark_model_test 32 32');await delay(250);assert.equal((await inspect(tag)).uuid,uuid);
+   await command(`kill @e[tag=${tag},limit=1]`);await delay(150);assert.doesNotMatch(await locate(alice),/LocatorPrivatePet/,'A dead pet must leave the locator');
+   await spawnDino('care_locator_release','triceratops',-12,alice.uuid);await command('data merge entity @e[tag=care_locator_release,limit=1] {CustomName:"LocatorReleasedPet"}');await delay(1200);
+   assert.match(await locate(alice),/LocatorReleasedPet/);assert.match(await command('carefixture release care_locator_release'),/released=true/);
+   assert.doesNotMatch(await locate(alice),/LocatorReleasedPet/,'A released pet must leave the locator');await command('kill @e[tag=care_locator_release,limit=1]');
+   return {uuid,owner:own,other,unloaded,restored};
+  } finally {await command(`kill @e[tag=${tag},limit=1]`);}
+ });
+ await check('Owner healing consumes the right food before growth or breeding and respects health, mode and cooldown',async()=>{
+  const tag='care_healing';
+  try {
+   await spawnDino(tag,'trex',-12,alice.uuid);await command(`carefixture health ${tag} 10`);
+   await command(`carefixture time ${tag} adult-at 600000`);const age=(await inspect(tag)).adultAt;
+   await food(alice,'BEEF',3);await click(alice,tag);
+   assert.equal(Number((await inspect(tag)).health),14,'An injured owned dinosaur must heal two hearts per food');
+   assert.equal((await inventory(alice)).amount,'2');assert.equal((await inspect(tag)).adultAt,age,'Healing must precede growth');
+   assert.equal((await inspect(tag)).love,'0','Healing must not also enable breeding');
+   await click(alice,tag);assert.equal(Number((await inspect(tag)).health),14);assert.equal((await inventory(alice)).amount,'2','Healing cooldown must retain food');
+   await food(bob,'BEEF',1);await click(bob,tag);assert.equal(Number((await inspect(tag)).health),14);assert.equal((await inventory(bob)).amount,'1','Another player cannot heal or spend food');
+   await command('gamemode creative CareOwner');await food(alice,'BEEF',1);await click(alice,tag);
+   assert.equal(Number((await inspect(tag)).health),14);assert.equal((await inventory(alice)).amount,'1','Creative cannot heal');await command('gamemode survival CareOwner');
+   await food(alice,'BONE',1);await click(alice,tag);assert.equal(Number((await inspect(tag)).health),14);assert.equal((await inventory(alice)).amount,'1','A finisher is not healing food');
+   const maximum=Number((await inspect(tag)).maxHealth);await command(`carefixture health ${tag} ${maximum-1}`);await command(`carefixture time ${tag} heal-next 0`);
+   await food(alice,'BEEF',2);await click(alice,tag);assert.equal(Number((await inspect(tag)).health),maximum,'Healing must stop at maximum health');assert.equal((await inventory(alice)).amount,'1');
+   await click(alice,tag);assert.equal((await inventory(alice)).amount,'0','A healthy juvenile retains its existing growth-food behavior');
+   return {health:maximum,ageBefore:age,ageAfter:(await inspect(tag)).adultAt};
+  } finally {await command(`kill @e[tag=${tag},limit=1]`);}
+ });
  await check('Spawn-tick Rex identification prevents legacy one-seed taming before deferred restore',async()=>{
   const tag='care_spawn_tick';
   try {
@@ -334,7 +428,7 @@ try {
   await command('carefixture deny-spawn true');assert.match(await command(`carefixture wild-egg ${alice.name}`),/mosa=0/);await command('carefixture deny-spawn false');
   alice.useItem();await eventually(async()=>/mosa=1/.test(await command('carefixture mosa-count ark_model_test')),'Native use-item packet must create one wild Mosa');assert.equal((await inventory(alice)).eggs,'1','Creative spawn retains reusable egg');
   const mosa=await inspect('care_mosa');assert.equal(mosa.type,'DOLPHIN');assert.equal(mosa.owner,'null');assert.equal(mosa.adultAt,'0');assert.equal(mosa.growthDuration,'0');assert.equal(mosa.scale,'4.0');
-  await command(`gamemode survival ${alice.name}`);await food(alice,'COD',8);await click(alice,'care_mosa');assert.equal((await inspect('care_mosa')).owner,'null');assert.equal((await inventory(alice)).amount,'8');assert.equal((await inspect('care_mosa')).passengers,'0');
+  await command(`gamemode survival ${alice.name}`);await food(alice,'COD',8);await click(alice,'care_mosa');assert.equal((await inspect('care_mosa')).owner,'null');assert.equal((await inventory(alice)).amount,'8');assert.equal((await inspect('care_mosa')).passengers,'0');assert.equal((await inspect('care_mosa')).love,'0');assert.equal((await inspect('care_mosa')).breedUntil,'0');
   await command(`gamemode creative ${alice.name}`);await command(`carefixture egg ${alice.name} mosasaurus`);await command(`execute in minecraft:ark run tp ${alice.name} 0 10 0`);assert.match(await command(`carefixture wild-egg ${alice.name}`),/mosa=0/,'Main-world manual Mosa spawning is rejected');
  });
  assert.doesNotMatch(log,/Could not pass event|Task .*ArkDinos.*exception|Error occurred while (enabling|disabling) ArkDinos|Sniffer controller unavailable/);

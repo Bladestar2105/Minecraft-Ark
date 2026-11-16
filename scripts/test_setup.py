@@ -13,19 +13,37 @@ from build_plugins import download
 
 
 class SetupTests(unittest.TestCase):
-    def test_dino_module_uses_the_public_portal_origin_for_java_resource_pack(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            root = Path(tmp)
-            (root / 'data/ark').mkdir(parents=True)
-            (root / 'data/ark/level.dat').write_bytes(b'fixture')
-            (root / 'data/plugins').mkdir()
-            (root / 'data/plugins/ArkDinos-1.2.0.jar').write_bytes(b'fixture')
-            (root / '.env.example').write_text('EULA=FALSE\n')
-            with contextlib.redirect_stdout(io.StringIO()):
-                initialize(root, portal_url='https://portal.example:8443/?welcome=1')
-            properties = (root / 'data/server.properties').read_text()
-            self.assertIn('resource-pack=https://portal.example:8443/resources/dinos.zip\n', properties)
-            self.assertIn('require-resource-pack=true\n', properties)
+    def test_dino_module_uses_a_stable_model_digest_at_the_public_pack_origin(self):
+        from test_distribution import dino_models_fixture
+        from urllib.parse import parse_qs, urlsplit
+        urls = []
+        for changed in (False, False, True):
+            with self.subTest(changed=changed), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                (root / 'data/ark').mkdir(parents=True)
+                (root / 'data/ark/level.dat').write_bytes(b'fixture')
+                (root / 'data/plugins').mkdir()
+                (root / 'data/plugins/ArkDinos-1.2.2.jar').write_bytes(b'fixture')
+                (root / '.env.example').write_text('EULA=FALSE\n')
+                dino_models_fixture(root)
+                if changed:
+                    path = root / 'dino-models/models/ark_trex/ark_trex.bbmodel'
+                    model = json.loads(path.read_text()); model['fixtureVersion'] = 2
+                    path.write_text(json.dumps(model))
+                with contextlib.redirect_stdout(io.StringIO()):
+                    initialize(root, portal_url='https://portal.example:8443/?welcome=1')
+                properties = (root / 'data/server.properties').read_text()
+                url = next(line.split('=', 1)[1] for line in properties.splitlines() if line.startswith('resource-pack='))
+                urls.append(url)
+                parsed = urlsplit(url)
+                self.assertEqual((parsed.scheme, parsed.netloc, parsed.path), ('https', 'portal.example:8443', '/resources/dinos.zip'))
+                query = parse_qs(parsed.query)
+                self.assertEqual(set(query), {'v'})
+                self.assertRegex(query['v'][0], r'^[0-9a-f]{64}$')
+                self.assertIn('require-resource-pack=true\n', properties)
+                self.assertNotIn('resource-pack-sha1=', properties, 'The pack is generated only on server startup')
+        self.assertEqual(urls[0], urls[1], 'Identical public model inputs must reuse the same cache address')
+        self.assertNotEqual(urls[0], urls[2], 'Changed model inputs must invalidate the cache address')
 
     def test_public_portal_url_is_initialized_once_and_invalid_url_fails_before_credentials(self):
         for url in ['https://portal.example/', 'http://localhost:8090/', 'https://[::1]:8443/']:
@@ -171,6 +189,32 @@ class SetupTests(unittest.TestCase):
                     download({"name": "bridge.jar", "sha256": "0" * 64, **metadata}, root)
             self.assertEqual(list(root.iterdir()), [])
 
+    def test_mission_patch_uses_pinned_transformer_and_verifies_bundled_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "upstream.jar"
+            source.write_bytes(b"upstream quest fixture")
+            result = b"ordered native quests"
+            item = {"name": "Quests-5.3.2.jar", "url": source.as_uri(),
+                    "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                    "sha256": hashlib.sha256(result).hexdigest(),
+                    "patch": "quests-mission-availability",
+                    "bundled_path": "runtime-dependencies/Quests-5.3.2.jar"}
+            def transform(command, **kwargs):
+                self.assertTrue(command[-3].endswith("config/quests/upstream-patches/QuestsMissionAvailabilityFix.java"))
+                Path(command[-1]).write_bytes(result)
+            with patch("build_plugins.subprocess.run", side_effect=transform):
+                self.assertEqual(download(item, root / "built", root=root).read_bytes(), result)
+            bundled = root / item["bundled_path"]
+            bundled.parent.mkdir(); bundled.write_bytes(result)
+            with patch("build_plugins.urlopen", side_effect=AssertionError("must use bundled quests")), \
+                    patch("build_plugins.subprocess.run", side_effect=AssertionError("must not need Java")):
+                self.assertEqual(download(item, root / "installed", root=root).read_bytes(), result)
+                bundled.write_bytes(b"tampered")
+                with self.assertRaisesRegex(ValueError, "Artifact checksum"):
+                    download(item, root / "rejected", root=root)
+            self.assertFalse((root / "rejected" / item["name"]).exists())
+
     def test_portal_upgrade_can_create_private_directory_but_requires_world(self):
         from init import initialize_portal
         with tempfile.TemporaryDirectory() as tmp:
@@ -216,12 +260,13 @@ class SetupTests(unittest.TestCase):
 class FirstSetupTests(unittest.TestCase):
     def test_one_command_uses_verified_binaries_and_keeps_eula_unaccepted(self):
         from setup import setup
-        from test_distribution import plugins_fixture
+        from test_distribution import plugins_fixture, day_pack_fixture
         from test_world_setup import fixture
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             fixture(root)
             plugins_fixture(root)
+            day_pack_fixture(root)
             (root / ".env.example").write_text("EULA=FALSE\n")
             (root / "dependencies-runtime.json").write_text("[]")
             (root / "config").mkdir()
@@ -233,7 +278,7 @@ class FirstSetupTests(unittest.TestCase):
                 setup(root, ["accounts", "support"], portal_url="https://portal.example/")
             self.assertEqual((root / "data/ark/level.dat").read_bytes(), b"world")
             self.assertTrue((root / "data/plugins/ArkAccounts-1.0.2.jar").is_file())
-            self.assertTrue((root / "data/plugins/ArkSupport-1.0.1.jar").is_file())
+            self.assertTrue((root / "data/plugins/ArkSupport-1.0.2.jar").is_file())
             self.assertFalse((root / "data/plugins/ArkWardrobe-1.0.0.jar").exists())
             self.assertTrue((root / "secrets/panel-login.txt").is_file())
             self.assertIn('portal-url: "https://portal.example/"', (root / 'data/plugins/ArkAccounts/config.yml').read_text())

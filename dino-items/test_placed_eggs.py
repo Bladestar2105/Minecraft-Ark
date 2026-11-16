@@ -7,11 +7,59 @@ import struct
 import unittest
 import zlib
 
+from build_eggs import egg_pixels
+
 ROOT = Path(__file__).resolve().parent
 SPECIES = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus')
 
 
 class PlacedEggsTest(unittest.TestCase):
+    def test_shell_patterns_wrap_the_surface_without_repeating_inventory_icons(self):
+        for species in SPECIES:
+            name = 'ark_egg_' + species
+            model = json.loads((ROOT / 'models' / name / (name + '.bbmodel')).read_text())
+            texture = base64.b64decode(model['textures'][0]['source'].split(',')[1])
+            width, height = struct.unpack('>II', texture[16:24])
+            at, compressed = 8, b''
+            while at < len(texture):
+                length = struct.unpack('>I', texture[at:at + 4])[0]
+                if texture[at + 4:at + 8] == b'IDAT':
+                    compressed += texture[at + 8:at + 8 + length]
+                at += length + 12
+            pixels = zlib.decompress(compressed)
+            stride = 1 + width * 4
+            faces = {}
+            for side, face in model['elements'][0]['faces'].items():
+                u, v, u2, v2 = face['uv']
+                faces[side] = [tuple(pixels[y * stride + 1 + x * 4:y * stride + 5 + x * 4])
+                               for y in range(v, v2) for x in range(u, u2)]
+            self.assertEqual(len({tuple(face) for face in faces.values()}), 6,
+                             species + ': shell faces repeat the same picture')
+            icon = egg_pixels(species)
+            visible = [(x, y) for y in range(16) for x in range(16) if icon[y][x][3]]
+            for side, face in faces.items():
+                copied = sum(face[y * 16 + x] == icon[y][x] for x, y in visible)
+                self.assertLess(copied / len(visible), .6, (species, side, 'inventory silhouette stamped on shell'))
+
+            def edge(side, direction):
+                face = faces[side]
+                return {'top': face[:16], 'bottom': face[-16:],
+                        'left': face[::16], 'right': face[15::16]}[direction]
+
+            # Face orientation follows the cube's actual corner UVs, independent of the generator.
+            for a, ae, b, be, reverse in (
+                ('north', 'top', 'up', 'top', True), ('north', 'bottom', 'down', 'bottom', True),
+                ('north', 'left', 'east', 'right', False), ('north', 'right', 'west', 'left', False),
+                ('south', 'top', 'up', 'bottom', False), ('south', 'bottom', 'down', 'top', False),
+                ('south', 'left', 'west', 'right', False), ('south', 'right', 'east', 'left', False),
+                ('east', 'top', 'up', 'right', True), ('east', 'bottom', 'down', 'right', False),
+                ('west', 'top', 'up', 'left', False), ('west', 'bottom', 'down', 'left', True),
+            ):
+                other = edge(b, be)
+                self.assertEqual(edge(a, ae), other[::-1] if reverse else other, (species, a, ae, b, be))
+            self.assertGreater(len({pixel for side in faces for pixel in edge(side, 'top')}), 4,
+                               species + ': markings never reach shared edges')
+
     def test_seven_opaque_shells_cover_the_native_mesh_in_both_editions(self):
         textures = set()
         for species in SPECIES:
@@ -47,6 +95,11 @@ class PlacedEggsTest(unittest.TestCase):
             bedrock = geometry['bones'][0]['cubes'][0]
             self.assertEqual(bedrock['origin'], [-cube['to'][0], cube['from'][1], cube['from'][2]])
             self.assertEqual(bedrock['size'], [b - a for a, b in zip(cube['from'], cube['to'])])
+            for side, face in cube['faces'].items():
+                u, v, u2, v2 = face['uv']
+                self.assertEqual(bedrock['uv'][side],
+                                 {'uv': [u2, v2], 'uv_size': [u - u2, v - v2]} if side in ('up', 'down')
+                                 else {'uv': [u, v], 'uv_size': [u2 - u, v2 - v]})
         self.assertEqual(len(textures), len(SPECIES), 'Placed eggs need seven distinct species textures')
 
 

@@ -19,6 +19,7 @@ EGGS = {
     'dilophosaurus': ('Dilophosaurus', '#9b829e', '#5c476d', '#d5bbac', [1, 3, 4, 5, 5, 5, 5, 5, 5, 4, 3, 2]),
     'mosasaurus': ('Mosasaurus', '#528e99', '#284d65', '#b4d7c3', [2, 4, 5, 6, 6, 7, 7, 6, 6, 5, 3]),
 }
+CREATIVE_ALIASES = dict(zip(EGGS, ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama')))
 
 
 def rgb(value):
@@ -63,7 +64,7 @@ def encoded_json(value):
 
 
 def assets():
-    java, bedrock, atlas, definitions = {}, {}, {}, []
+    java, bedrock, atlas, definitions, names = {}, {}, {}, [], {}
     for species, (label, *_) in EGGS.items():
         name = 'egg_' + species
         key = 'arkdinos:' + name
@@ -71,18 +72,29 @@ def assets():
         java['assets/arkdinos/textures/item/' + name + '.png'] = texture
         java['assets/arkdinos/items/' + name + '.json'] = encoded_json({'model': {'type': 'minecraft:model', 'model': 'arkdinos:item/' + name}})
         java['assets/arkdinos/models/item/' + name + '.json'] = encoded_json({'parent': 'minecraft:item/generated', 'textures': {'layer0': 'arkdinos:item/' + name}})
+        alias = CREATIVE_ALIASES[species]
+        java['assets/minecraft/items/' + alias + '_spawn_egg.json'] = java['assets/arkdinos/items/' + name + '.json']
+        names['item.minecraft.' + alias + '_spawn_egg'] = 'Dino-Ei · ' + label
         bedrock['textures/items/arkdinos/' + name + '.png'] = texture
+        # Bedrock retains legacy egg paths as well as the current spawn_eggs folder.
+        bedrock['textures/items/egg_' + alias + '.png'] = texture
+        bedrock['textures/items/spawn_eggs/spawn_egg_' + alias + '.png'] = texture
         icon = 'arkdinos.' + name
         atlas[icon] = {'textures': 'textures/items/arkdinos/' + name}
         definitions.append({'type': 'definition', 'model': key, 'bedrock_identifier': key,
                             'display_name': label + (' Spawn-Ei' if species == 'mosasaurus' else '-Ei'),
                             'bedrock_options': {'icon': icon}})
+    for language in ('en_us', 'de_de'):
+        java['assets/minecraft/lang/' + language + '.json'] = encoded_json(names)
+        bedrock['texts/' + ('en_US' if language == 'en_us' else 'de_DE') + '.lang'] = ''.join(
+            'item.spawn_egg.entity.' + CREATIVE_ALIASES[species] + '.name=Dino-Ei · ' + label + '\n'
+            for species, (label, *_) in EGGS.items()).encode()
     bedrock['textures/item_texture.json'] = encoded_json({'resource_pack_name': 'ark_dino_eggs', 'texture_name': 'atlas.items', 'texture_data': atlas})
     # Stable UUIDs let Bedrock update this pack while keeping the model pack independent.
     bedrock['manifest.json'] = encoded_json({'format_version': 2, 'header': {
         'name': 'ARK Dinosaur Eggs', 'description': 'Eight original species egg sprites',
-        'uuid': '4b6d5dd8-9250-48cf-bc87-48251cfaf744', 'version': [1, 0, 0], 'min_engine_version': [1, 21, 0]},
-        'modules': [{'type': 'resources', 'uuid': '708d04a5-5dc7-490e-bb47-0a282214ddc2', 'version': [1, 0, 0]}]})
+        'uuid': '4b6d5dd8-9250-48cf-bc87-48251cfaf744', 'version': [1, 1, 0], 'min_engine_version': [1, 21, 0]},
+        'modules': [{'type': 'resources', 'uuid': '708d04a5-5dc7-490e-bb47-0a282214ddc2', 'version': [1, 1, 0]}]})
     return {'java': java, 'bedrock': bedrock, 'geyser': {'format_version': 2, 'items': {'minecraft:sniffer_egg': definitions}}}
 
 
@@ -92,7 +104,7 @@ def build():
     bundled['geyser'] = result['geyser']
     (ROOT / 'dino-items/egg-assets.json').write_text(json.dumps(bundled, indent=2) + '\n')
     (ROOT / 'dino-plugin/src/main/resources/egg-assets.properties').write_text(''.join(name + '=' + base64.b64encode(content).decode() + '\n' for name, content in result['java'].items()))
-    print('Built eight unique egg sprites, 24 Java assets and matching Geyser/Bedrock assets.')
+    print('Built eight unique egg sprites, 34 Java assets and matching Creative aliases on both editions.')
 
 
 def preview(folder):

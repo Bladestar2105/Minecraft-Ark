@@ -13,6 +13,12 @@ from fetch_world import safe_path
 
 ROOT = Path(__file__).resolve().parents[1]
 BUNDLED_BRIDGE = "runtime-dependencies/GeyserModelEngine-1.0.9.jar"
+PATCHES = {
+    "geyser-model-engine-task-publication":
+        ("dino-plugin/upstream-patches/GeyserModelEngineTaskPublicationFix.java", BUNDLED_BRIDGE),
+    "quests-mission-availability":
+        ("config/quests/upstream-patches/QuestsMissionAvailabilityFix.java", "runtime-dependencies/Quests-5.3.2.jar"),
+}
 
 
 def download(item, folder, *, root=ROOT):
@@ -24,12 +30,12 @@ def download(item, folder, *, root=ROOT):
         raise ValueError("Artifact symlink")
     algorithm = "sha512" if "sha512" in item else "sha256"
     patch = item.get("patch")
-    if patch is not None and patch != "geyser-model-engine-task-publication":
+    if patch is not None and patch not in PATCHES:
         raise ValueError("Unknown artifact patch")
     if patch and (algorithm != "sha256" or not isinstance(item.get("source_sha256"), str)
                   or len(item["source_sha256"]) != 64 or any(c not in "0123456789abcdef" for c in item["source_sha256"])):
         raise ValueError("Patched artifact requires a pinned upstream SHA-256")
-    if "bundled_path" in item and (not patch or item["bundled_path"] != BUNDLED_BRIDGE):
+    if "bundled_path" in item and (not patch or item["bundled_path"] != PATCHES[patch][1]):
         raise ValueError("Unexpected bundled dependency path")
     bundled = safe_path(root, item["bundled_path"]) if "bundled_path" in item else None
     if not target.exists():
@@ -42,12 +48,12 @@ def download(item, folder, *, root=ROOT):
             if hashlib.new(algorithm, content).hexdigest() != (item["source_sha256"] if patch else item[algorithm]):
                 raise ValueError("Checksum mismatch: " + item["name"])
             if patch:
-                with tempfile.TemporaryDirectory(prefix=".bridge-build-", dir=folder) as temporary:
+                with tempfile.TemporaryDirectory(prefix=".patch-build-", dir=folder) as temporary:
                     source, output = Path(temporary) / "upstream.jar", Path(temporary) / "patched.jar"
                     source.write_bytes(content)
                     java_home = os.environ.get("JAVA_HOME")
                     java = str(Path(java_home, "bin", "java")) if java_home else "java"
-                    subprocess.run([java, str(Path(root) / "dino-plugin/upstream-patches/GeyserModelEngineTaskPublicationFix.java"),
+                    subprocess.run([java, str(Path(root) / PATCHES[patch][0]),
                                     str(source), str(output)], check=True, capture_output=True, text=True)
                     content = output.read_bytes()
         if hashlib.new(algorithm, content).hexdigest() != item[algorithm]:
@@ -75,10 +81,10 @@ def build():
              "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"],
              "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest", "PortalInfoTest"],
              "wardrobe": ["WardrobeTest", "SignersTest", "CommandPolicyTest", "WardrobeRoutesTest"],
-             "support": ["SupportTest", "SupportRoutesTest", "SupportDeleteTest"]}
-    versions = {"dino": "ArkDinos-1.2.0", "atlas": "ArkAtlas-1.0.1",
+             "support": ["SupportTest", "SupportRoutesTest", "SupportDeleteTest", "SupportNotificationsTest"]}
+    versions = {"dino": "ArkDinos-1.2.2", "atlas": "ArkAtlas-1.0.1",
                 "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.2",
-                "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.1"}
+                "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.2"}
     packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",
                 "accounts": "accounts", "wardrobe": "wardrobe", "support": "support"}
     built = []
@@ -106,7 +112,7 @@ def build():
             run([java_tool("java"), "-cp", os.pathsep.join([cp, str(classes), str(checks)]),
                  f"de.ark.{packages[module]}.{main}",
                  *([str(ROOT / 'dino-plugin/src/main/resources/egg-assets.properties')] if main == 'EggAssetsTest' else [])])
-        run([java_tool("jar"), "--create", "--date", "2026-11-03T00:00:00Z", "--file",
+        run([java_tool("jar"), "--create", "--date", "2026-11-07T00:00:00Z" if module in {"accounts", "support"} else "2026-11-03T00:00:00Z", "--file",
              str(output / (versions[module] + ".jar")), "-C", str(classes), ".", "-C",
              str(folder / "src/main/resources"), "."])
         artifact = output / (versions[module] + ".jar")
