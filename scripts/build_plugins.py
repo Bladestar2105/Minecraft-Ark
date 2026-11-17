@@ -16,6 +16,9 @@ BUNDLED_BRIDGE = "runtime-dependencies/GeyserModelEngine-1.0.9.jar"
 PATCHES = {
     "geyser-model-engine-task-publication":
         ("dino-plugin/upstream-patches/GeyserModelEngineTaskPublicationFix.java", BUNDLED_BRIDGE),
+    "geyser-utils-entity-property-validation":
+        ("dino-plugin/upstream-patches/GeyserUtilsEntityPropertyValidationFix.java",
+         "runtime-dependencies/geyserutils-geyser-1.0-SNAPSHOT.jar"),
     "quests-mission-availability":
         ("config/quests/upstream-patches/QuestsMissionAvailabilityFix.java", "runtime-dependencies/Quests-5.3.2.jar"),
 }

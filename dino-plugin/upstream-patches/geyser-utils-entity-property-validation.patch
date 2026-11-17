@@ -1,0 +1,30 @@
+diff --git a/geyser/src/main/java/me/zimzaza4/geyserutils/geyser/GeyserUtils.java b/geyser/src/main/java/me/zimzaza4/geyserutils/geyser/GeyserUtils.java
+index 41c7abf..095c9c3 100644
+--- a/geyser/src/main/java/me/zimzaza4/geyserutils/geyser/GeyserUtils.java
++++ b/geyser/src/main/java/me/zimzaza4/geyserutils/geyser/GeyserUtils.java
+@@ -614,6 +614,21 @@ public class GeyserUtils implements Extension {
+                 if (entity.getPropertyManager() == null) return;
+-                if (entityPropertyPacket.getValue() instanceof Boolean value) {
+-                    entity.getPropertyManager().addProperty(new BooleanProperty(Identifier.of(entityPropertyPacket.getIdentifier()), false), value);
+-                } else if (entityPropertyPacket.getValue() instanceof Integer value) {
+-                    entity.getPropertyManager().addProperty(new IntProperty(Identifier.of(entityPropertyPacket.getIdentifier()), MAX_VALUE, MIN_VALUE, 0), value);
++                GeyserEntityProperties registeredProperties = entity.bedrockDefinition().registeredProperties();
++                if (registeredProperties == null || registeredProperties.isEmpty()) return;
++
++                String identifier;
++                try {
++                    identifier = Identifier.of(entityPropertyPacket.getIdentifier()).toString();
++                } catch (IllegalArgumentException invalidIdentifier) {
++                    return;
++                }
++                // The internal manager otherwise accepts undeclared names with property index -1.
++                int propertyIndex = registeredProperties.getPropertyIndex(identifier);
++                if (propertyIndex < 0) return;
++                var property = registeredProperties.getProperties().get(propertyIndex);
++                if (entityPropertyPacket.getValue() instanceof Boolean value && property instanceof BooleanProperty booleanProperty) {
++                    entity.getPropertyManager().addProperty(booleanProperty, value);
++                } else if (entityPropertyPacket.getValue() instanceof Integer value && property instanceof IntProperty intProperty) {
++                    entity.getPropertyManager().addProperty(intProperty, value);
++                } else {
++                    return;
+                 }
