@@ -399,6 +399,34 @@ class DistributionTests(unittest.TestCase):
                 package.package(root, "rejected-bridge")
             self.assertFalse((root / "dist/rejected-bridge").exists())
 
+    def test_bundled_geyserutils_installs_in_extensions_without_host_java_or_network(self):
+        from build_plugins import download
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            install_fixture(root)
+            dino_models_fixture(root)
+            content = b"verified GeyserUtils property validation fixture"
+            item = {"kind": "geyser-extension", "project": "geyser-utils-geyser",
+                    "name": "geyserutils-geyser-1.0-SNAPSHOT.jar",
+                    "url": "https://example.org/geyserutils.jar", "source_sha256": "0" * 64,
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                    "patch": "geyser-utils-entity-property-validation",
+                    "bundled_path": "runtime-dependencies/geyserutils-geyser-1.0-SNAPSHOT.jar"}
+            bundled = root / item["bundled_path"]
+            bundled.parent.mkdir()
+            bundled.write_bytes(content)
+            (root / "dependencies-runtime.json").write_text(json.dumps([item]))
+            with patch.dict(os.environ, {"PATH": ""}, clear=True), \
+                    patch("build_plugins.urlopen", side_effect=AssertionError("must use bundled JAR")):
+                install_plugins.install(root, modules=["dino"])
+                target = root / "data/plugins/Geyser-Spigot/extensions" / item["name"]
+                self.assertEqual(target.read_bytes(), content)
+                self.assertFalse((root / "data/plugins" / item["name"]).exists())
+                bundled.write_bytes(b"tampered")
+                with self.assertRaisesRegex(ValueError, "Artifact checksum mismatch"):
+                    download(item, root / "rejected", root=root)
+                self.assertFalse((root / "rejected" / item["name"]).exists())
+
     def test_project_bundle_contains_every_dinosaur_source_and_runtime_check(self):
         root = Path(__file__).resolve().parents[1]
         names = set(package.source_files(root))

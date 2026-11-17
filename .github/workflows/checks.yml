@@ -46,6 +46,7 @@ jobs:
           distribution: temurin
           java-version: '25'
       - run: python3 scripts/build_plugins.py
+      - run: python3 scripts/verify_geyser_properties.py
       - run: python3 scripts/package.py --version "app-${{ github.sha }}"
       - uses: actions/upload-artifact@v7
         with:
