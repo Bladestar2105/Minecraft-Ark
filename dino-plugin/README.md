@@ -134,7 +134,7 @@ The seven land species have AI-independent vertical buoyancy. A bounded water-co
 
 `DinoSizes` is the single source for adult render factors, back heights, native seat scaling and placement envelopes. Render scale is species factor × age; native scale is the calibrated seat factor × age. The native carrier remains compact: head/tail/wings are not full multipart land collision bodies. Hatching checks the larger model/native space before consuming the egg. Models now include coupled head/jaw override tracks for Stego/Brachio and repaired Raptor/Ptera joints. No `sit` or `rest` clip exists; the original sitting-specific report still needs its exact client state to reproduce visually.
 
-There is one passenger seat. Two riders require independently positioned seats, driver/passenger lifecycle and crossplay verification; simply allowing two native passengers would overlap them.
+In prototype worlds, adult T-Rex, Triceratops, Stegosaurus and Brachiosaurus carry a driver and one passenger. The rear seat sits 1.2 blocks behind the driver at the same height. Velociraptor, Dilophosaurus and Pteranodon carry one rider each. Mosasaurus is wild and cannot be mounted.
 
 Reproducible focused native checks (JDK 25, pinned local Paper cache):
 

@@ -443,6 +443,22 @@ class ModelPoseTest(unittest.TestCase):
                 self.assertGreater(max(p[2] for p in claw)-min(p[2] for p in claw),2)
                 self.assertGreater(max(p[1] for p in claw)-min(p[1] for p in claw),1)
 
+    def test_raptor_has_three_jointed_fingers_and_a_raised_inner_sickle_on_both_feet(self):
+        model=exported_model('velociraptor')
+        for animation,time in [('idle',0),('attack',.16)]:
+            points=pose(model,animation,time)
+            for side,sign in [('left',-1),('right',1)]:
+                for i in range(3):
+                    finger=['palm_'+side,f'finger_{side}_{i}',f'hand_claw_{side}_{i}_root',f'hand_claw_{side}_{i}_tip']
+                    for a,b in zip(finger,finger[1:]):
+                        self.assertTrue(posed_boxes_overlap(points[a],points[b]),(animation,a,b))
+                toe=points[f'claw_{side}_0'];arch=points['sickle_'+side+'0'];tip=points['sickle_'+side+'1']
+                self.assertTrue(posed_boxes_overlap(toe,arch) and posed_boxes_overlap(arch,tip))
+                self.assertGreater(max(p[1] for p in arch)-max(p[1] for p in toe),1)
+                self.assertGreater(max(p[1] for p in arch)-min(p[1] for p in tip),2)
+                self.assertGreater(min(p[1] for p in tip),.8)
+                self.assertLess(max(sign*p[0] for p in arch+tip),sign*model.groups['leg_'+side]['origin'][0]-2)
+
     def test_pteranodon_ground_wings_fold_beside_body_and_flight_opens(self):
         model=pteranodon()
         for animation in ['idle','walk','flap','glide']:

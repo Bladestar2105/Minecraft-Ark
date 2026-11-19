@@ -2,16 +2,16 @@
   "name": "ark_trex",
   "label": "T-Rex",
   "palette": [
-    "#68705a",
-    "#83896a",
-    "#b3ab87",
-    "#444c3e",
-    "#dbb358",
-    "#19241c",
-    "#eee1bc",
-    "#5a614b"
+    "#997653",
+    "#705940",
+    "#c6aa7f",
+    "#534536",
+    "#e0ac52",
+    "#251f1a",
+    "#e9d9b1",
+    "#68513e"
   ],
-  "description": "Massiger Sch\u00e4del \u00b7 schuppige Olivhaut \u00b7 muskul\u00f6se H\u00fcfte \u00b7 gebogene Elfenbeinkrallen",
+  "description": "Breiter Raubtiersch\u00e4del mit schweren Brauen \u00b7 umberbraune Querb\u00e4nder \u00b7 kr\u00e4ftige H\u00fcfte und kurze Zweifingerarme",
   "ground_parts": [
     "toe_left_0_base",
     "toe_left_0_tip",
@@ -49,6 +49,6 @@
     "leg_right"
   ],
   "walk_stride_blocks": 1.20821,
-  "cubes": 156,
+  "cubes": 200,
   "bones": 10
 }

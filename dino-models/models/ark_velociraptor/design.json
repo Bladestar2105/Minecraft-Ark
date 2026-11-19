@@ -2,16 +2,16 @@
   "name": "ark_velociraptor",
   "label": "Velociraptor",
   "palette": [
-    "#8b8067",
-    "#aa9b7a",
-    "#c5b99c",
-    "#514b3d",
-    "#dabb60",
-    "#22291e",
-    "#d8cdae",
-    "#69614e"
+    "#b08758",
+    "#826645",
+    "#d3b98d",
+    "#584534",
+    "#daa74b",
+    "#252017",
+    "#e0d0a6",
+    "#705237"
   ],
-  "description": "Waagerechter K\u00f6rper \u00b7 S-Hals \u00b7 schmaler Fang \u00b7 Sichelkrallen",
+  "description": "Sandbraune Schuppen mit dunklen B\u00e4ndern \u00b7 schmaler Fang und dreifingrige Greifh\u00e4nde \u00b7 hochgezogene Sichelkrallen",
   "ground_parts": [
     "toe_left_0_base",
     "toe_left_0_tip",
@@ -37,6 +37,6 @@
     "leg_right"
   ],
   "walk_stride_blocks": 0.969712,
-  "cubes": 136,
+  "cubes": 171,
   "bones": 10
 }
