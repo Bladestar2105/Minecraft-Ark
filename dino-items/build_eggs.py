@@ -8,16 +8,40 @@ import struct
 import zlib
 
 ROOT = Path(__file__).resolve().parents[1]
-# Each egg has its own silhouette, shell palette and hand-placed markings.
+# Shell, pigment and chalk colors are shared with the placed models. The glyphs are hand-pixeled at inventory scale.
 EGGS = {
-    'trex': ('T-Rex', '#83935b', '#334d36', '#c2c58b', [2, 3, 4, 5, 5, 6, 6, 6, 6, 5, 4, 2]),
-    'triceratops': ('Triceratops', '#c6aa78', '#76573d', '#eee0b6', [2, 4, 5, 6, 6, 6, 6, 6, 5, 4, 2]),
-    'stegosaurus': ('Stegosaurus', '#bc7253', '#743f3c', '#ebbc7c', [2, 3, 4, 5, 5, 5, 5, 5, 5, 4, 3, 2]),
-    'brachiosaurus': ('Brachiosaurus', '#a4b68b', '#627d60', '#e5dfae', [2, 4, 5, 6, 6, 7, 7, 7, 6, 6, 5, 3]),
-    'velociraptor': ('Velociraptor', '#c5a35c', '#67523e', '#e9d79d', [1, 2, 3, 4, 4, 4, 4, 4, 4, 3, 3, 2, 1]),
-    'pteranodon': ('Pteranodon', '#91aebb', '#455b7d', '#d8e0da', [1, 2, 3, 3, 4, 4, 4, 4, 4, 4, 3, 2, 1]),
-    'dilophosaurus': ('Dilophosaurus', '#9b829e', '#5c476d', '#d5bbac', [1, 3, 4, 5, 5, 5, 5, 5, 5, 4, 3, 2]),
-    'mosasaurus': ('Mosasaurus', '#528e99', '#284d65', '#b4d7c3', [2, 4, 5, 6, 6, 7, 7, 6, 6, 5, 3]),
+    'trex': ('T-Rex', '#a79d71', '#524836', '#e6d9ae', (
+        'wls', 'wlhhbs', 'wlhlblbs', 'whlpblbls', 'wllpwbblbws',
+        'wlpwlllbbpws', 'wlbpwblbppssd', 'sblbbllpwbbwd', 'sbwllplwbpssd',
+        'swwpllpbbwsd', 'spwbbpwwpsd', 'dspwbspsd', 'dsswsd', 'ddd')),
+    'triceratops': ('Triceratops', '#cbb18a', '#8a644d', '#f2e3bc', (
+        'wllbs', 'wlhhlbs', 'wlhhhllbs', 'wlhwlblbws', 'wllpwlbbwlbs',
+        'wlppllbwllbbs', 'sblwlllpwlwpwd', 'sbbllllpplbbwd', 'spwbbblwwbbsd',
+        'ssbpwbblppsd', 'dspwwwbwsd', 'dsswwsd', 'dddd')),
+    'stegosaurus': ('Stegosaurus', '#b38261', '#6e483d', '#ebc699', (
+        'wls', 'wlhbs', 'wlhhlls', 'wllwllbws', 'wlpwhllbbs',
+        'wlppblwlbws', 'sllbwlppbswd', 'sbbpplwwlbwd', 'sblwwblppwsd',
+        'swbllppwbsd', 'spwwbwlpsd', 'dspbbwsd', 'dsssd', 'ddd')),
+    'brachiosaurus': ('Brachiosaurus', '#a6b198', '#647760', '#e2e3c4', (
+        'wllbs', 'wlhhlbs', 'wlhhhlllbs', 'wlhllblwllbs', 'wllbplbblblbs',
+        'wlhwpllbhllbws', 'sllwlllwwllbwd', 'sbllllbpwbblwd', 'sblwwbblbbwwsd',
+        'sblpwbllwbbwd', 'dsbbllbbwbsd', 'dssbbwwsd', 'dssssd', 'dddd')),
+    'velociraptor': ('Velociraptor', '#dac9a9', '#7b5e48', '#f5edda', (
+        'ls', 'wlls', 'whhls', 'wlhhlbs', 'wlhhlpws', 'wlhlpwlbs',
+        'wllpwlblbs', 'wlpwllpbls', 'slllbpwbbd', 'sllwpwbbwd',
+        'sblpwlbwd', 'sbbblwwd', 'dsbwwd', 'dssd', 'dd')),
+    'pteranodon': ('Pteranodon', '#aab6b2', '#627477', '#e7e9db', (
+        'ls', 'lls', 'whlls', 'wlhhlbs', 'wlhllbbs', 'wllwllbbs',
+        'wlhllwllbs', 'sllwllwwbd', 'sllblwbbwd', 'sblwbbwwd',
+        'sbbllbwsd', 'dsbwwwd', 'dsswd', 'ddd')),
+    'dilophosaurus': ('Dilophosaurus', '#b19892', '#76555d', '#ead1b4', (
+        'wls', 'wlhls', 'wlhhlls', 'wlhplblbs', 'wllpwllbws',
+        'wlphllplbbs', 'sllplwppbwd', 'sllwlplblwd', 'sbplllwwsd',
+        'sbbpwlppsd', 'dspwblwsd', 'dsbwwsd', 'dsssd', 'dd')),
+    'mosasaurus': ('Mosasaurus', '#749890', '#3c5961', '#c9d8bb', (
+        'wllbs', 'wlhhlllbs', 'wlhhllwwlls', 'wlllwpplllbbs',
+        'wlhllwwllwppws', 'sllwwllllwwbbd', 'sbppllbwpwwbsd',
+        'sbwblppwblbsd', 'dsllwbbwwwsd', 'dsbbbbwsd', 'dsswsd', 'dddd')),
 }
 CREATIVE_ALIASES = dict(zip(EGGS, ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama')))
 
@@ -35,27 +59,20 @@ def png(pixels):
             + chunk(b'IDAT', zlib.compress(raw, 9)) + chunk(b'IEND', b''))
 
 
+def mix(a, b, amount):
+    return tuple(round(lo + (hi - lo) * amount) for lo, hi in zip(a, b))
+
+
 def egg_pixels(species):
-    _, shell, dark, light, widths = EGGS[species]
-    top = 15 - len(widths)
-    mask = {(x, y + top) for y, width in enumerate(widths) for x in range(8 - width, 8 + width)}
+    _, shell, pigment, chalk, rows = EGGS[species]
+    shell, pigment, chalk = map(rgb, (shell, pigment, chalk))
+    palette = {'d': mix(pigment, (29, 30, 29), .45), 'p': pigment, 's': mix(shell, pigment, .65),
+               'w': mix(shell, pigment, .34), 'b': shell, 'l': mix(shell, chalk, .55), 'h': chalk}
     pixels = [[(0, 0, 0, 0) for _ in range(16)] for _ in range(16)]
-    for x, y in mask:
-        edge = any((x + dx, y + dy) not in mask for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
-        marking = {
-            'trex': (x + y // 2) % 6 in (0, 1) and y in (5, 6, 9, 10, 11),
-            'triceratops': (x, y) in {(4, 8), (5, 7), (5, 9), (8, 5), (8, 6), (8, 7), (10, 8), (11, 7), (11, 9), (7, 12), (8, 12)},
-            'stegosaurus': abs(x - 7) + abs((y - 3) % 5 - 2) <= 2,
-            'brachiosaurus': (x, y) in {(4, 6), (5, 6), (4, 7), (9, 8), (10, 8), (10, 9), (5, 11), (6, 11), (6, 12), (11, 12)},
-            'velociraptor': (x + y // 2) % 5 == 0 and 4 <= y <= 12,
-            'pteranodon': abs(x - 7) == (y - 3) // 3 + 1 and 5 <= y <= 12,
-            'dilophosaurus': x in (5, 6, 9, 10) and y in (6, 7, 8, 11, 12),
-            'mosasaurus': y in (7 + (x // 3) % 2, 11 + (x // 3) % 2),
-        }[species]
-        color = dark if edge or marking else light if x < 6 and y < top + 6 else shell
-        channels = rgb(color)
-        shade = -15 if x > 9 or y > 11 else 7 if (x * 3 + y * 5) % 11 == 0 else 0
-        pixels[y][x] = tuple(max(0, min(255, c + shade)) for c in channels) + (255,)
+    for y, row in enumerate(rows, start=15 - len(rows)):
+        left = (16 - len(row)) // 2
+        for x, ink in enumerate(row, start=left):
+            pixels[y][x] = (*palette[ink], 255)
     return pixels
 
 
@@ -93,8 +110,8 @@ def assets():
     # Stable UUIDs let Bedrock update this pack while keeping the model pack independent.
     bedrock['manifest.json'] = encoded_json({'format_version': 2, 'header': {
         'name': 'ARK Dinosaur Eggs', 'description': 'Eight original species egg sprites',
-        'uuid': '4b6d5dd8-9250-48cf-bc87-48251cfaf744', 'version': [1, 1, 0], 'min_engine_version': [1, 21, 0]},
-        'modules': [{'type': 'resources', 'uuid': '708d04a5-5dc7-490e-bb47-0a282214ddc2', 'version': [1, 1, 0]}]})
+        'uuid': '4b6d5dd8-9250-48cf-bc87-48251cfaf744', 'version': [1, 2, 0], 'min_engine_version': [1, 21, 0]},
+        'modules': [{'type': 'resources', 'uuid': '708d04a5-5dc7-490e-bb47-0a282214ddc2', 'version': [1, 2, 0]}]})
     return {'java': java, 'bedrock': bedrock, 'geyser': {'format_version': 2, 'items': {'minecraft:sniffer_egg': definitions}}}
 
 

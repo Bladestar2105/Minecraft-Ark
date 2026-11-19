@@ -6,12 +6,11 @@ import build_models
 from test_model_poses import pose
 
 BASELINE = {
-    'triceratops': '26240c50ccec7fd1a6f57b2795f4937e8ce5bbee4940150bfc277a6deae29c80',
-    # The still-head attack track keeps BetterModel's head/jaw idle clocks synchronized.
-    'stegosaurus': '20894c6b9293dd9ada5af0cf46bc5bd6b2c7498bd00bacab2d3e661592616fa2',
-    # Includes the neck overlap and hip flesh required by the all-clip joint regression.
-    'pteranodon': '56756b064acd295dd095a1deab6192779f0a09aedce03f9e99c662592834b506',
-    'dilophosaurus': '7d012313990b5099ea6b04c4f0649cea8506e1ec953a737d502bc9e329925298',
+    # Adult film models with the original rider and passenger surfaces.
+    'triceratops': 'a4fe6995cd03430d477a9c50dc60f87d1434a1c0280e31bf67efc2c20a50f6d4',
+    'stegosaurus': 'd4751d78eb1b7af6b69bf67e0a927ef04aef6627e9ae1eb9d375d93c6119bf4d',
+    'pteranodon': '1187bc5564c03adc8f35e662b5f54861ba5d99f868e23aa82174bf262d0889ce',
+    'dilophosaurus': 'd2d4498eb9e7eea4d57bf22fce810b219a26629bcabca166672f8c605bfbc380',
 }
 PREFIXES = {'triceratops': ('brow_horn_', 'nose_horn'),
             'stegosaurus': ('plate_', 'neck_plate_', 'tail_plate_', 'tail_spike_'),

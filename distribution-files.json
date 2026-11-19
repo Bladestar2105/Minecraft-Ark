@@ -159,6 +159,7 @@
   "dino-models/test_mosasaurus.py",
   "dino-models/test_nametags.py",
   "dino-models/test_previews.py",
+  "dino-models/test_riding_surfaces.py",
   "dino-models/verify_animated_bounds.py",
   "dino-models/verify_bedrock_pack.py",
   "dino-models/verify_exports.py",

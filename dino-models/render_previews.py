@@ -113,6 +113,16 @@ def text(value,x,y,size=18,color='#dcebd8',weight='normal'):
 def save(name,content,width,height):
     path=OUT/(name+'.svg');path.write_text(svg(content,width,height));subprocess.run(['rtk','proxy','rsvg-convert','-o',str(path.with_suffix('.png')),str(path)],check=True,capture_output=True)
 
+def head_model(model):
+    head=next(group['uuid'] for group in model['groups'] if group['name']=='head')
+    def descendants(node,inside=False):
+        if isinstance(node,str):
+            if inside:yield node
+        else:
+            for child in node['children']:yield from descendants(child,inside or node['uuid']==head)
+    shapes=set(descendants(model['outliner'][0]))
+    return dict(model,elements=[cube for cube in model['elements'] if cube['uuid'] in shapes and cube['type']=='cube'])
+
 def main():
     models=[]
     for dirname in ['ark_trex','ark_triceratops','ark_stegosaurus','ark_brachiosaurus','ark_velociraptor','ark_pteranodon','ark_dilophosaurus','ark_mosasaurus']:
@@ -148,35 +158,34 @@ def main():
     content=text('Zähne / tatsächliche offene Mäuler',40,55,32,weight='bold')+text('Elfenbeinfarbene Ober- und Unterreihen · Eckpunkte gegen feste Maulgeometrie geprüft',40,92,17,'#9dbbb4')
     for i,(model,design) in enumerate(models[:5]+[models[6]]):
         x=25+(i%3)*600;y=125+(i//3)*470
-        prefixes=('tooth_','gums_','jaw','lower_jaw','oral_cavity','mouth','skull','snout','muzzle','head','beak','eye_','pupil_','brow_','cheek_','nostril_','nasal_rise','nose_horn')
-        head=dict(model,elements=[cube for cube in model['elements'] if cube['name'].startswith(prefixes)])
+        head=head_model(model)
+        head['elements']=[cube for cube in head['elements'] if not cube['name'].startswith(('frill_','brow_horn','nose_horn','crest_'))]
         content+=f'<rect x="{x}" y="{y}" width="575" height="445" rx="18" fill="#183034" stroke="#2c4749"/>'
         content+=text(design['label'],x+20,y+38,24,weight='bold')+model_svg(head,design,(x+20,y+75,535,340),view='mouth',animation='attack',time=.16,base_animation='idle')
     content+=text('Pteranodon behält seinen zahnlosen Schnabel.',40,1110,18,'#9dbbb4')
     save('zaehne-mauldetails',content,1850,1150)
     trice,trice_design=models[1]
-    head=dict(trice,elements=[c for c in trice['elements'] if c['name'].startswith(('head','snout','beak','eye_','pupil_','frill_','brow_horn','nose_horn','jaw','lower_jaw','tooth_','gums_','oral_cavity'))])
-    content=text('Triceratops / drei deutliche Hörner',40,55,32,weight='bold')+text('Zwei unveränderte Stirnhörner · größeres zentrales Nasenhorn · tatsächliche Quellgeometrie',40,92,17,'#9dbbb4')
-    for i,(view,label) in enumerate([('front','Vorne: drei getrennte Hornspitzen'),('side','Seite: Nasenhorn vor der Stirn')]):
+    head=head_model(trice)
+    content=text('Triceratops / drei Hörner',40,55,32,weight='bold')+text('Zwei gebogene Brauenhörner überragen das kürzere Nasenhorn.',40,92,17,'#9dbbb4')
+    for i,(view,label) in enumerate([('front','Hornspitzen von vorn'),('side','Hornbögen im Profil')]):
         x=25+i*750
         content+=f'<rect x="{x}" y="125" width="725" height="550" rx="18" fill="#183034" stroke="#2c4749"/>'
         content+=text(label,x+20,165,24,weight='bold')+model_svg(head,trice_design,(x+30,200,665,430),view=view)
     save('triceratops-drei-hoerner',content,1550,725)
     trex,design=models[0]
-    foot_model=dict(trex,elements=[c for c in trex['elements'] if c['name'].startswith(('shin_','raised_heel_','toe_','claw_','toe_claw_'))])
+    foot_model=dict(trex,elements=[c for c in trex['elements'] if c['name'].startswith(('calf_','shin_','raised_heel_','toe_','claw_','toe_claw_'))])
     right_foot=dict(trex,elements=[c for c in foot_model['elements'] if '_right' in c['name']])
     content=text('T-Rex / Füße mit gebogenen Krallen',45,61,31,weight='bold')+text('Drei gespreizte Einzelzehen · angehobene Ferse · große Elfenbeinkrallen',45,98,17,'#9dbbb4')
     for x,label,model,view in [(25,'Vorne',foot_model,'front'),(620,'Seite',right_foot,'side')]:
         content+=f'<rect x="{x}" y="130" width="555" height="430" rx="18" fill="#183034" stroke="#2c4749"/>'
         content+=text(label,x+24,169,22,weight='bold')+model_svg(model,design,(x+35,205,485,315),view)
-    content+=text('Modell-Detail zur Ansicht · keine blockigen Schuhe',45,605,17)
     save('trex-fuesse-vorne-seite',content,1200,650)
     hands=dict(trex,elements=[c for c in trex['elements'] if c['name'].startswith(('tiny_arm_','hand_'))])
     content=text('T-Rex / zwei Fingerkrallen pro Hand',45,61,31,weight='bold')+text('Tatsächliche Quellgeometrie und UV-Texturen · vergrößerte Detailansicht',45,98,17,'#9dbbb4')
     content+=model_svg(hands,design,(80,145,1040,440))
     save('trex-haende-krallen',content,1200,650)
     brachio,brachio_design=models[3]
-    content=text('Brachiosaurus / Schwanz bis zum Boden',45,61,31,weight='bold')+text('Seitenansicht · gestrichelt: Bodenhöhe y=0 · unveränderte Rücken- und Fußhöhe',45,98,17,'#9dbbb4')
+    content=text('Brachiosaurus / Schwanz bis zum Boden',45,61,31,weight='bold')+text('Die gestrichelte Linie markiert den Boden unter Füßen und Schwanzspitze.',45,98,17,'#9dbbb4')
     content+=model_svg(brachio,brachio_design,(80,145,1040,490),view='side',ground=True)
     save('brachiosaurus-schwanz-boden',content,1200,700)
     ptera,ptera_design=models[5]
@@ -187,7 +196,7 @@ def main():
         content+=text(label,x+20,y+35,23,weight='bold')+model_svg(ptera,ptera_design,(x+25,y+65,675,350),animation=animation,time=time)
     save('pteranodon-boden-flug',content,1550,1080)
     dilo,dilo_design=models[6]
-    content=text('Dilophosaurus / Faltkragen und Angriff',40,55,31,weight='bold')+text('Originaler JP-inspirierter Entwurf · animierte Quellgeometrie · keine PS5-Aufnahme',40,90,17,'#9dbbb4')
+    content=text('Dilophosaurus / Faltkragen und Angriff',40,55,31,weight='bold')+text('Beim Spucken entfalten sich die gelben Halsfächer mit dunkler Zeichnung und rotem Rand.',40,90,17,'#9dbbb4')
     for i,(animation,time,label) in enumerate([('idle',0,'Ruhe: Halsfächer gefaltet'),('spit',.4,'Spucken: Halsfächer geöffnet'),('attack',.34,'Biss und Krallenhieb')]):
         x=25+i*590
         content+=f'<rect x="{x}" y="125" width="565" height="550" rx="18" fill="#183034" stroke="#2c4749"/>'

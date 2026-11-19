@@ -2,16 +2,16 @@
   "name": "ark_dilophosaurus",
   "label": "Dilophosaurus",
   "palette": [
-    "#526b43",
-    "#89904e",
-    "#c4b16d",
-    "#293c29",
-    "#e6bc46",
-    "#17251d",
+    "#73814a",
+    "#566442",
+    "#d7bd78",
+    "#453b2a",
+    "#ecc044",
+    "#28251d",
     "#e5d6a4",
-    "#a8472d"
+    "#ac482f"
   ],
-  "description": "Zwei Kopfk\u00e4mme \u00b7 faltbarer rotgelber Halsf\u00e4cher \u00b7 olivfarbene Streifenhaut \u00b7 drei Fingerkrallen",
+  "description": "Zwei gew\u00f6lbte Kopfk\u00e4mme \u00b7 scharlachroter Halsf\u00e4cher mit gelber Zeichnung \u00b7 olivgr\u00fcne B\u00e4nderhaut",
   "ground_parts": [
     "toe_left_0_base",
     "toe_left_0_tip",
@@ -37,6 +37,6 @@
     "leg_right"
   ],
   "walk_stride_blocks": 0.862348,
-  "cubes": 226,
+  "cubes": 262,
   "bones": 38
 }

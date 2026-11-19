@@ -5,12 +5,19 @@ import re
 import struct
 import unittest
 import zlib
-from build_models import Model, png_texture, pteranodon, dilophosaurus
-from render_previews import animated_vertices, model_svg
+from build_models import Model, png_texture, pteranodon, dilophosaurus, triceratops
+from render_previews import animated_vertices, head_model, model_svg
 from test_model_poses import pose
 
 
 class TexturedPreviewTest(unittest.TestCase):
+    def test_head_detail_includes_nested_horns_and_the_moving_lower_beak(self):
+        model=triceratops()
+        head=head_model({'elements':model.elements,'groups':list(model.groups.values()),'outliner':[model.nodes['body']]})
+        names={cube['name'] for cube in head['elements']}
+        self.assertTrue({'head','mandible','jaw_hinge','brow_horn_13_tip','nose_horn3','cheek_fold_1'}<=names)
+        self.assertNotIn('neck_base',names)
+
     def test_detail_growth_overlays_match_independent_scale_and_attack_math(self):
         model=dilophosaurus();source={'elements':model.elements,'groups':list(model.groups.values()),'outliner':[model.nodes['body']],'animations':model.animations}
         normalized=lambda points:sorted(tuple(round(v,6) for v in p) for p in points)
