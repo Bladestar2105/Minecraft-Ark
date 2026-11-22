@@ -2,7 +2,7 @@
 // Disposable native swimming fixture. Run after scripts/build_plugins.py with JAVA_HOME (JDK25).
 // Set DINO_PAPER_JAR and DINO_PAPER_CACHE to a cached Paper26.3 server; DINO_SWIM_BASELINE=1 characterizes the old sink.
 // DINO_PLUGIN_JAR, DINO_DEPENDENCIES and DINO_SWIMMING_OUTPUT override the build jar, dependency directory and reports.
-// DINO_SWIM_ONLY=mounted,dismount,roof,exclusions,lifecycle selects independent scenarios for debugging; omit for every scenario.
+// DINO_SWIM_ONLY=bank,bankfollow,mounted,dismount,roof,exclusions,lifecycle selects scenarios; omit for every scenario.
 // No existing world is opened; direct protocol777 inputs do not establish Bedrock/console acceptance.
 import assert from 'node:assert/strict';
 import net from 'node:net';
@@ -127,6 +127,16 @@ async function spawnSwimmer(tag,species,x,z,{mode='stay',owner=offline,scale=1,b
  await eventually(async()=> (await inspect(tag)).ai==='true',`${tag} was not restored`);
  return inspect(tag);
 }
+async function buildNaturalBank() {
+ // Ground heights measured at the reported shore, translated to the fixture waterline at y=16.
+ for (const [z, top, end] of [[-1,11,-1], [0,13,0], [1,15,1], [2,16,2], [3,17,13]]) {
+  await command(`fill -6 4 ${z} 6 ${top - 1} ${end} dirt`);
+ }
+}
+async function clearBank() {
+ await command('fill -7 4 -3 7 15 13 water');
+ await command('fill -7 16 -3 7 22 13 air');
+}
 try {
  for(const name of ['libraries','versions','cache'])await symlink(`${cache}/${name}`,`${directory}/${name}`);
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
@@ -166,10 +176,86 @@ try {
     const tag=`sw_mount_${name}`;const before=await spawnSwimmer(tag,name,0,-12,{owner:alice.uuid,scale:scales[name]});await command(`swimfixture occupy ${tag} ${alice.name}`);await delay(100);assert.equal((await inspect(tag)).passengers,'1');
     await eventually(async()=>Number((await inspect(tag)).eye)>=15.85,`${name} mounted stayed underwater`,15000);const surfaced=await inspect(tag);assert.equal(surfaced.health,before.health);
     alice.input(1);await delay(200);const start=await inspect(tag);await delay(1500);const moved=await inspect(tag);alice.input(0);await delay(200);const speed=Math.hypot(Number(moved.x)-Number(start.x),Number(moved.z)-Number(start.z))*20/(Number(moved.tick)-Number(start.tick));assert.ok(speed>.5,`${name} failed water steering`);assert.ok(Number(moved.eye)>=15.8);assert.equal(moved.health,before.health);
-    if(name==='pteranodon'){alice.input(16);await delay(1000);assert.equal((await inspect(tag)).gravity,'true','Underwater Ptera incorrectly took off');alice.input(0);}
+    if(name==='pteranodon'){
+     assert.equal(moved.water,'true');assert.equal(moved.gravity,'true','Pteranodon took off without a jump');
+     alice.input(16);
+     await eventually(async()=>{
+      const flying=await inspect(tag);
+      return flying.gravity==='false' && flying.water==='false' && Number(flying.y)>Number(moved.y)+1;
+     },'Holding Jump did not lift the Pteranodon clear of the water');
+     alice.input(0);
+    }
     samples[name]={before,surfaced,moved,blocksPerSecond:speed};await command(`ride ${alice.name} dismount`);await command(`gamemode creative ${alice.name}`);await command(`tp ${alice.name} 0 20 0`);await command(`kill @e[tag=${tag}]`);await command(`gamemode survival ${alice.name}`);
    }
    await command('gamemode creative @a');return samples;
+  });
+  await scenario('bank','Adult T. rex, Brachiosaurus and Velociraptor can be ridden from deep water up a natural shore',async()=>{
+   const samples={};
+   await buildNaturalBank();
+   for (const species of ['trex','brachiosaurus','velociraptor']) {
+    const tag='sw_bank_'+species;
+    const before=await spawnSwimmer(tag,species,0,-6,{owner:alice.uuid,scale:scales[species]});
+    await command(`gamemode survival ${alice.name}`);
+    await command(`swimfixture occupy ${tag} ${alice.name}`);
+    alice.look(0,0);alice.input(0);
+    await eventually(async()=>Number((await inspect(tag)).eye)>=15.9,species+' did not float to the surface');
+    alice.input(1);
+    await eventually(async()=>{
+     const state=await inspect(tag);
+     return Number(state.z)>5 && Number(state.y)>=17 && state.water==='false' && state.onGround==='true';
+    },species+' remained in the water against the bank',8500);
+    alice.input(0);
+    const landed=await inspect(tag);
+    assert.equal(landed.passengers,'1');assert.equal(landed.health,before.health);
+    samples[species]={before,landed};
+    await command(`ride ${alice.name} dismount`);await command('gamemode creative @a');await command('tp @a 0 20 0');
+    await command(`kill @e[tag=${tag}]`);
+   }
+   await clearBank();
+   return samples;
+  });
+  await scenario('bank','A ridden T. rex can exit at a one-block lip but cannot scale a fence or push its rider into a roof',async()=>{
+   const samples={};
+   for(const obstacle of ['wall','fence','roof','ledge']){
+    await command(`fill -7 4 0 7 ${obstacle==='wall'?17:16} 12 dirt`);
+    if(obstacle==='fence')await command('fill -7 17 0 7 17 0 oak_fence');
+    if(obstacle==='roof')await command('fill -7 22 -3 7 22 3 stone');
+    const tag='sw_bank_'+obstacle;
+    await spawnSwimmer(tag,'trex',0,-1.69,{owner:alice.uuid,scale:scales.trex});
+    await command(`gamemode survival ${alice.name}`);await command(`swimfixture occupy ${tag} ${alice.name}`);alice.look(0,0);alice.input(0);
+    await eventually(async()=>Number((await inspect(tag)).eye)>=15.9,'T. rex did not reach the surface');
+    const resting=await inspect(tag);await delay(500);const still=await inspect(tag);
+    assert.ok(Math.abs(Number(still.z)-Number(resting.z))<.01&&Number(still.y)<14,'Idle T. rex climbed the bank');
+    alice.input(1);
+    if(obstacle==='ledge'){
+     await eventually(async()=>{const s=await inspect(tag);return Number(s.z)>2&&Number(s.y)>=17&&s.water==='false';},'T. rex could not step onto the one-block lip',8500);
+    }else{
+     await eventually(async()=>Number((await inspect(tag)).z)>-2,'T. rex did not reach the obstacle');
+     for(let i=0;i<12;i++){
+      await delay(125);
+      const sample=await inspect(tag);
+      assert.ok(Number(sample.z)<0,`T. rex crossed the ${obstacle}`);
+      if(obstacle==='roof')assert.ok(Number(sample.riderTop)<=22,'Rider crossed the roof');
+      if(obstacle==='wall')assert.ok(Number(sample.y)<14,'T. rex climbed a two-block wall');
+     }
+    }
+    alice.input(0);const after=await inspect(tag);samples[obstacle]=after;
+    assert.equal(after.passengers,'1');
+    await command(`ride ${alice.name} dismount`);await command('gamemode creative @a');await command('tp @a 0 20 0');
+    await command(`kill @e[tag=${tag}]`);await clearBank();
+   }
+   return samples;
+  });
+  await scenario('bankfollow','An adult T. rex in Follow mode can walk out toward its owner on the bank',async()=>{
+   await buildNaturalBank();
+   const tag='sw_follow_bank';
+   await command(`gamemode survival ${alice.name}`);await command(`tp ${alice.name} 0.5 17 8.5`);
+   const before=await spawnSwimmer(tag,'trex',0,-5,{mode:'follow',owner:alice.uuid,scale:scales.trex,height:12.8});
+   await eventually(async()=>{const s=await inspect(tag);return Number(s.z)>3&&Number(s.y)>=17&&s.water==='false';},'Unridden T. rex did not leave the water in Follow mode',12000);
+   const after=await inspect(tag);assert.equal(after.health,before.health);
+   await command('gamemode creative @a');await command('tp @a 0 20 0');await command(`kill @e[tag=${tag}]`);
+   await clearBank();
+   return {before,after};
   });
   await scenario('dismount','Submerged Ravager keeps its rider but native Sneak and game-mode cleanup still dismount',async()=>{
    const samples={};

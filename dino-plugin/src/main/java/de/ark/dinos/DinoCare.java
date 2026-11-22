@@ -59,6 +59,7 @@ final class DinoCare implements Listener, AutoCloseable {
     private final ArkDinos plugin;
     private final EggVisuals visuals;
     private final Set<Chunk> nestingChunks=new HashSet<>();
+    private final Set<Block> deniedHatches=new HashSet<>();
     private final BukkitTask timer;
     private final NamespacedKey eggSpecies,eggOwner,adultAt,growNext,healNext,tameActor,tameFeeds,tameNext,tameExpiry,loveUntil,breedUntil;
 
@@ -339,7 +340,7 @@ final class DinoCare implements Listener, AutoCloseable {
         chunk.getPersistentDataContainer().set(nestKey,PersistentDataType.TAG_CONTAINER,data);
         return new Nest(nest.species(),nest.owner(),deadline);
     }
-    private void remove(Block block) { visuals.remove(block);block.getChunk().getPersistentDataContainer().remove(nestKey(block)); }
+    private void remove(Block block) { deniedHatches.remove(block);visuals.remove(block);block.getChunk().getPersistentDataContainer().remove(nestKey(block)); }
     private void index(Chunk chunk) {
         if(plugin.prototype(chunk.getWorld()) && chunk.getPersistentDataContainer().getKeys().stream().anyMatch(this::nestKey))nestingChunks.add(chunk);
     }
@@ -399,7 +400,12 @@ final class DinoCare implements Listener, AutoCloseable {
     public void eggInfo(PlayerInteractEvent event) {
         if(event.getClickedBlock()==null)return;Nest nest=nest(event.getClickedBlock());if(nest==null)return;
         long remaining=(nest.hatchAt()-System.currentTimeMillis()+999)/1000;
-        message(event.getPlayer(),label(nest.species())+"-Ei · "+(remaining>0?"noch "+remaining+" s Brutzeit.":"wartet auf freien Platz und erlaubten Schlupf."));
+        String status;
+        if(remaining>0)status="noch "+remaining+" s Brutzeit.";
+        else if(!hatchSpace(event.getClickedBlock(),nest.species()))status="Brutzeit vorbei. Das Jungtier braucht freien Platz über und neben dem Ei.";
+        else if(deniedHatches.contains(event.getClickedBlock()))status="Schlupf hier verhindert. Versetze das Ei an einen erlaubten Brutplatz.";
+        else status="Brutzeit vorbei. Das Jungtier schlüpft gleich.";
+        message(event.getPlayer(),label(nest.species())+"-Ei · "+status);
     }
     private void tick() {
         long now=System.currentTimeMillis();
@@ -423,7 +429,7 @@ final class DinoCare implements Listener, AutoCloseable {
             }
             if(!found)nestingChunks.remove(chunk);
         }
-        visuals.retain(activeNests);
+        deniedHatches.retainAll(activeNests);visuals.retain(activeNests);
     }
     private boolean hatchSpace(Block egg,String species) {
         String model="ark_"+species;
@@ -461,12 +467,14 @@ final class DinoCare implements Listener, AutoCloseable {
             var scale=entity.getAttribute(Attribute.SCALE);if(scale!=null)scale.setBaseValue(DinoGrowth.scale(now+duration,now,duration));
             entity.addScoreboardTag("ark_dino");entity.addScoreboardTag("ark_dino_tamed");entity.setPersistent(true);entity.setRemoveWhenFarAway(false);
             if(entity instanceof Sniffer sniffer) { sniffer.setAdult();sniffer.setBreed(false); }
+            if(entity instanceof Ravager ravager && plugin.getServer().getPluginManager().isPluginEnabled("WorldGuard"))DinoHatchingProtection.mark(plugin,ravager);
         });
-        if(!mob.isValid() || mob.isDead())return;
+        mob.removeMetadata(DinoHatchingProtection.METADATA,plugin);
+        if(!mob.isValid() || mob.isDead()) { deniedHatches.add(block);return; }
         remove(block);block.setType(Material.AIR,false);plugin.restore(mob);hearts(mob);
     }
     @Override public void close() {
-        timer.cancel();visuals.close();nestingChunks.clear();
+        timer.cancel();visuals.close();nestingChunks.clear();deniedHatches.clear();
         for(Player player:plugin.getServer().getOnlinePlayers())if(player.getOpenInventory().getTopInventory().getHolder() instanceof EggMenu)player.closeInventory();
     }
 }

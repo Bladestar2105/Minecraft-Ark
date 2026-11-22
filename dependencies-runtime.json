@@ -41,8 +41,11 @@
     "version_id": "fiHLM6oY",
     "version": "7.0.21",
     "url": "https://cdn.modrinth.com/data/DKY9btbd/versions/fiHLM6oY/worldguard-bukkit-7.0.21.jar",
-    "sha512": "4253b97627f93ea007d91e977c15f5f4a3219865589083fa3b523d8b15a2cfe26d71076c8eb98c0122e7fde618ad3fc44cb986dbd40a222f09678b91a98245c2",
-    "kind": "plugin"
+    "kind": "plugin",
+    "source_sha256": "070223c535629f3f5d15f002388c1e3ae615a5f4ba051e7ccfb5d716540547a9",
+    "sha256": "347616fd03d7c6b7f5599db030a93ccc7c3256f650126c5c7065de2a67703e20",
+    "patch": "worldguard-owned-egg-hatch",
+    "bundled_path": "runtime-dependencies/worldguard-bukkit-7.0.21.jar"
   },
   {
     "project": "griefprevention",

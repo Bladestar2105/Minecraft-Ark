@@ -20,7 +20,13 @@ import org.bukkit.util.Vector;
 /** Surface buoyancy for land carriers, applied after manual control and independent of their AI mode. */
 final class DinoSwimming implements AutoCloseable {
     private final ArkDinos plugin;
-    private final Map<UUID, Mob> swimmers = new HashMap<>();
+    private final Map<UUID, Swimmer> swimmers = new HashMap<>();
+
+    private static final class Swimmer {
+        final Mob mob;
+        boolean byWater = true; // A restored animal can already be standing halfway out of the water.
+        Swimmer(Mob mob) { this.mob = mob; }
+    }
 
     DinoSwimming(ArkDinos plugin) { this.plugin = plugin; }
 
@@ -31,7 +37,7 @@ final class DinoSwimming implements AutoCloseable {
     }
 
     void restore(Entity entity) {
-        if (eligible(entity)) swimmers.put(entity.getUniqueId(), (Mob) entity);
+        if (eligible(entity)) swimmers.put(entity.getUniqueId(), new Swimmer((Mob) entity));
         else unload(entity);
     }
 
@@ -40,22 +46,53 @@ final class DinoSwimming implements AutoCloseable {
     void tick() {
         var iterator = swimmers.values().iterator();
         while (iterator.hasNext()) {
-            Mob mob = iterator.next();
+            Swimmer swimmer = iterator.next();
+            Mob mob = swimmer.mob;
             if (!mob.isValid() || mob.isDead() || !eligible(mob)) { iterator.remove(); continue; }
-            if (!mob.isInWater() || mob.isInLava()) continue; // Paper includes bubble columns in water.
-            if (plugin.aerial(mob) || plugin.flying(mob)) continue;
+            boolean wet = mob.isInWater(); // Paper includes bubble columns in water.
+            if (!wet && !swimmer.byWater) continue;
+            if (mob.isInLava() || plugin.aerial(mob) || plugin.flying(mob)) continue;
+            Vector velocity = mob.getVelocity();
             World world = mob.getWorld();
             BoundingBox box = mob.getBoundingBox();
             if (!loaded(world, box)) continue;
-            OptionalInt surface = surface(world, box);
+            // Keep contact through a native hop onto the first shelf while the rear still hangs above water.
+            OptionalInt surface = surface(world, wet ? box : box.clone().expandDirectional(0, -2, 0));
+            swimmer.byWater = wet || surface.isPresent();
             if (surface.isEmpty()) continue;
-            Vector velocity = mob.getVelocity();
-            double upward = SwimRules.verticalVelocity(mob.getEyeLocation().getY(), surface.getAsInt(), velocity.getY());
-            if (upward > 0 && !ridersClear(mob, upward)) upward = Math.min(0, velocity.getY());
+            int waterline = surface.getAsInt();
+            double rise = waterline + 1 - box.getMinY();
+            if (!wet && (rise <= 0 || rise > 1.5)) continue;
+            boolean bank = bankAhead(mob, box, velocity, rise);
+            if (!wet && !bank) continue;
+            double upward = bank ? Math.min(.26, rise)
+                    : SwimRules.verticalVelocity(mob.getEyeLocation().getY(), waterline, velocity.getY());
+            if (!bank && upward > 0 && !ridersClear(mob, 0, upward, 0)) upward = Math.min(0, velocity.getY());
             velocity.setY(upward);
             if (!loaded(world, box.clone().expandDirectional(velocity))) velocity.setX(0).setZ(0);
             mob.setVelocity(velocity);
         }
+    }
+
+    private boolean bankAhead(Mob mob, BoundingBox body, Vector velocity, double rise) {
+        if (rise <= 0 || rise > body.getHeight() + 1) return false;
+        double dx = velocity.getX(), dz = velocity.getZ();
+        // A native collision can zero the movement of a following animal while its navigator still walks into the bank.
+        if (mob.isAware() && mob.getForwardsMovement() > 0 && mob.getPathfinder().hasPath()) {
+            double yaw = Math.toRadians(mob.getYaw());
+            double stride = Math.min(.25, mob.getForwardsMovement());
+            dx = -Math.sin(yaw) * stride;
+            dz = Math.cos(yaw) * stride;
+        }
+        if (Math.hypot(dx, dz) < .01) return false;
+        World world = mob.getWorld();
+        BoundingBox next = body.clone().shift(dx, 0, dz);
+        if (!loaded(world, next.clone().expand(1, 0, 1)) || !mob.wouldCollideUsing(next)) return false;
+        // Require terrain at the feet. Native collision can also report a boat or an overhead obstruction.
+        BoundingBox toes = new BoundingBox(next.getMinX(), body.getMinY() + .01, next.getMinZ(),
+                next.getMaxX(), body.getMinY() + .15, next.getMaxZ());
+        return !blocksClear(world, toes) && !mob.wouldCollideUsing(body.clone().expandDirectional(0, rise, 0))
+                && !mob.wouldCollideUsing(next.shift(0, rise, 0)) && ridersClear(mob, dx, rise, dz);
     }
 
     private OptionalInt surface(World world, BoundingBox box) {
@@ -107,19 +144,22 @@ final class DinoSwimming implements AutoCloseable {
         return true;
     }
 
-    private boolean ridersClear(Mob mob, double upward) {
-        World world = mob.getWorld();
+    private boolean ridersClear(Mob mob, double dx, double dy, double dz) {
         for (Entity rider : plugin.passengers(mob)) {
-            BoundingBox sweep = rider.getBoundingBox().expandDirectional(0, upward, 0);
-            if (sweep.getMinY() < world.getMinHeight() || sweep.getMaxY() >= world.getMaxHeight()) return false;
-            for (int x = (int) Math.floor(sweep.getMinX()) - 1; x <= (int) Math.floor(sweep.getMaxX()) + 1; x++)
-                for (int z = (int) Math.floor(sweep.getMinZ()) - 1; z <= (int) Math.floor(sweep.getMaxZ()) + 1; z++) {
-                    if (!world.isChunkLoaded(x >> 4, z >> 4)) return false;
-                    for (int y = Math.max(world.getMinHeight(), (int) Math.floor(sweep.getMinY()) - 1);
-                         y <= Math.min(world.getMaxHeight() - 1, (int) Math.floor(sweep.getMaxY()) + 1); y++)
-                        if (world.getBlockAt(x, y, z).getCollisionShape().overlaps(sweep.clone().shift(-x, -y, -z))) return false;
-                }
+            if (!blocksClear(mob.getWorld(), rider.getBoundingBox().expandDirectional(dx, dy, dz))) return false;
         }
+        return true;
+    }
+
+    private static boolean blocksClear(World world, BoundingBox sweep) {
+        if (sweep.getMinY() < world.getMinHeight() || sweep.getMaxY() >= world.getMaxHeight()) return false;
+        for (int x = (int) Math.floor(sweep.getMinX()) - 1; x <= (int) Math.floor(sweep.getMaxX()) + 1; x++)
+            for (int z = (int) Math.floor(sweep.getMinZ()) - 1; z <= (int) Math.floor(sweep.getMaxZ()) + 1; z++) {
+                if (!world.isChunkLoaded(x >> 4, z >> 4)) return false;
+                for (int y = Math.max(world.getMinHeight(), (int) Math.floor(sweep.getMinY()) - 1);
+                     y <= Math.min(world.getMaxHeight() - 1, (int) Math.floor(sweep.getMaxY()) + 1); y++)
+                    if (world.getBlockAt(x, y, z).getCollisionShape().overlaps(sweep.clone().shift(-x, -y, -z))) return false;
+            }
         return true;
     }
 

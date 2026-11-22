@@ -31,6 +31,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public final class CareFixture extends JavaPlugin implements Listener {
     private boolean denyPlacement,denySpawn,denyCreative;
     private String spawnIdentity="none";
+    private final Map<java.util.UUID,Double> spawnScales=new java.util.HashMap<>();
+    private final Map<java.util.UUID,CreatureSpawnEvent.SpawnReason> spawnReasons=new java.util.HashMap<>();
     public void onEnable() { getServer().getPluginManager().registerEvents(this,this); }
     private NamespacedKey key(String name) { return NamespacedKey.fromString("arkdinos:"+name); }
     private Object care() throws ReflectiveOperationException {
@@ -52,6 +54,21 @@ public final class CareFixture extends JavaPlugin implements Listener {
                 +";health="+((org.bukkit.entity.LivingEntity)entity).getHealth()+";maxHealth="+((org.bukkit.entity.LivingEntity)entity).getAttribute(org.bukkit.attribute.Attribute.MAX_HEALTH).getValue()
                 +";passengers="+entity.getPassengers().size()+";x="+entity.getX()+";y="+entity.getY()+";z="+entity.getZ();
     }
+    // Resolved only in the full-stack test. The same fixture also runs on plain Paper.
+    private static final class HatchModels {
+        static String inspect(Mob baby,String name) throws ReflectiveOperationException {
+            var registry=kr.toxicity.model.api.BetterModel.registry(baby.getUniqueId()).orElse(null);
+            var tracker=registry==null?null:registry.tracker(name);
+            var bedrock=org.geysermc.geyser.registry.Registries.BEDROCK_ENTITY_DEFINITIONS.get().containsKey(org.geysermc.geyser.api.util.Identifier.of("modelengine:"+name));
+            var bridge=baby.getServer().getPluginManager().getPlugin("GeyserModelEngine");
+            var manager=bridge.getClass().getMethod("getModelManager").invoke(bridge);
+            var entities=(Map<?,?>)manager.getClass().getMethod("getEntitiesCache").invoke(manager);
+            var actors=(Map<?,?>)entities.get(baby.getEntityId());int active=0;
+            if(actors!=null && tracker!=null)for(var actor:actors.values())if(actor.getClass().getMethod("getEntityTracker").invoke(actor)==tracker)active++;
+            return ";model="+(tracker==null?"none":tracker.name())+";render="+(tracker==null?0:tracker.scaler().scale(tracker))
+                    +";bedrock="+bedrock+";bridge="+active;
+        }
+    }
     @EventHandler(priority=EventPriority.HIGH)
     public void protection(BlockPlaceEvent event) { if(denyPlacement)event.setCancelled(true); }
     @EventHandler(priority=EventPriority.HIGH)
@@ -66,6 +83,8 @@ public final class CareFixture extends JavaPlugin implements Listener {
     public void spawn(CreatureSpawnEvent event) {
         if(event.getSpawnReason()!=CreatureSpawnEvent.SpawnReason.EGG && event.getSpawnReason()!=CreatureSpawnEvent.SpawnReason.SPAWNER_EGG || !event.getEntity().getPersistentDataContainer().has(key("species")))return;
         spawnIdentity=state(event.getEntity());event.getEntity().addScoreboardTag(event.getEntity() instanceof org.bukkit.entity.Dolphin?"care_mosa":"care_hatch");
+        spawnScales.put(event.getEntity().getUniqueId(),event.getEntity().getAttribute(org.bukkit.attribute.Attribute.SCALE).getBaseValue());
+        spawnReasons.put(event.getEntity().getUniqueId(),event.getSpawnReason());
         if(denySpawn)event.setCancelled(true);
     }
     @Override public boolean onCommand(CommandSender sender,Command command,String label,String[] args) {
@@ -258,6 +277,31 @@ public final class CareFixture extends JavaPlugin implements Listener {
                 case "deny-place" -> denyPlacement=Boolean.parseBoolean(args[1]);
                 case "deny-spawn" -> denySpawn=Boolean.parseBoolean(args[1]);
                 case "spawn-identity" -> sender.sendMessage(spawnIdentity);
+                case "hatched" -> {
+                    var babies=getServer().getWorld("ark").getEntitiesByClass(Mob.class).stream()
+                            .filter(mob -> mob.getScoreboardTags().contains("care_hatch") && args[1].equals(mob.getPersistentDataContainer().get(key("species"),PersistentDataType.STRING))).toList();
+                    if(babies.size()!=1){sender.sendMessage("count="+babies.size());break;}
+                    var baby=babies.getFirst();
+                    sender.sendMessage(state(baby)+";count=1;beforeScale="+spawnScales.get(baby.getUniqueId())+";persistent="+baby.isPersistent()
+                            +";tagged="+baby.getScoreboardTags().contains("ark_dino_tamed")+";permit="+baby.hasMetadata("arkdinos-owned-egg-hatch")
+                            +";reason="+spawnReasons.get(baby.getUniqueId())+HatchModels.inspect(baby,"ark_"+args[1]));
+                }
+                case "unowned-egg-spawn" -> {
+                    var player=getServer().getPlayerExact(args[1]);var at=new org.bukkit.Location(player.getWorld(),Integer.parseInt(args[2]),Integer.parseInt(args[3]),Integer.parseInt(args[4]));
+                    var mob=player.getWorld().spawn(at,org.bukkit.entity.Ravager.class,CreatureSpawnEvent.SpawnReason.EGG,true,entity -> {
+                        entity.getPersistentDataContainer().set(key("species"),PersistentDataType.STRING,"dilophosaurus");
+                        entity.getPersistentDataContainer().set(key("owner"),PersistentDataType.STRING,player.getUniqueId().toString());
+                        entity.addScoreboardTag("ark_dino_tamed");entity.setMetadata("arkdinos-owned-egg-hatch",new org.bukkit.metadata.FixedMetadataValue(this,(java.util.function.Predicate<Object>)regions -> true));
+                    });sender.sendMessage("spawned="+mob.isValid());
+                }
+                case "gp-claim" -> {
+                    var owner=getServer().getPlayerExact(args[1]);var gp=getServer().getPluginManager().getPlugin("GriefPrevention");
+                    Object store=gp.getClass().getField("dataStore").get(gp);
+                    var claim=Class.forName("me.ryanhamshire.GriefPrevention.Claim",true,gp.getClass().getClassLoader());
+                    var result=store.getClass().getMethod("createClaim",org.bukkit.World.class,int.class,int.class,int.class,int.class,int.class,int.class,java.util.UUID.class,claim,Long.class,Player.class)
+                            .invoke(store,owner.getWorld(),Integer.parseInt(args[2]),Integer.parseInt(args[3]),-64,319,Integer.parseInt(args[4]),Integer.parseInt(args[5]),owner.getUniqueId(),null,null,null);
+                    sender.sendMessage("claimCreated="+result.getClass().getField("succeeded").getBoolean(result));
+                }
                 case "drops" -> {
                     int count=0;for(Entity entity:getServer().getWorld(args[1]).getEntities())if(entity instanceof org.bukkit.entity.Item item && item.getItemStack().hasItemMeta()
                             && item.getItemStack().getItemMeta().getPersistentDataContainer().has(key("egg-species")))count+=item.getItemStack().getAmount();

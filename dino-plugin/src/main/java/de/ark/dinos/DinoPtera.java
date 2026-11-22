@@ -131,7 +131,7 @@ final class DinoPtera implements Listener,AutoCloseable {
         var behind=point.toVector().subtract(mount.toVector()).setY(0);
         if(behind.lengthSquared()<.01)behind=mount.getDirection().setY(0).multiply(-1);
         behind.normalize().multiply(12);
-        bird.waypoint=mount.clone().add(behind);bird.waypoint.setY(Math.min(mount.getY(),Math.min(bird.launch.getY()+48,mob.getWorld().getMaxHeight()-ABOVE-1)));
+        bird.waypoint=mount.clone().add(behind);bird.waypoint.setY(Math.min(mount.getY(),mob.getWorld().getMaxHeight()-ABOVE-1));
     }
 
     private BoundingBox body(Location point,double floor) {
