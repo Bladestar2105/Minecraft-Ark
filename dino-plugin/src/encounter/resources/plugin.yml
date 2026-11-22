@@ -1,0 +1,7 @@
+name: EncounterFixture
+version: 1
+main: de.ark.encounterfixture.EncounterFixture
+api-version: 26.3
+depend: [ArkDinos]
+commands:
+  encounterfixture: {}

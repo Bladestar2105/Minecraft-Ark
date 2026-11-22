@@ -292,6 +292,7 @@ class PanelTests(unittest.TestCase):
         home.mkdir()
         (home / "worlds.json").write_text(json.dumps({"worlds": [
             {"id": "../server.properties", "name": "bad", "min_x": 0, "max_x": 10, "min_z": 0, "max_z": 10},
+            {"id": ["minecraft:jurassic_archipelago"], "name": "bad", "min_x": 0, "max_x": 10, "min_z": 0, "max_z": 10},
             {"id": "minecraft:overworld", "name": "bad", "min_x": 10 ** 1000, "max_x": 10 ** 1001, "min_z": 0, "max_z": 10}]}))
         response = self.client.get("/api/map/players")
         self.assertEqual(response.status_code, 200)
@@ -319,6 +320,28 @@ class PanelTests(unittest.TestCase):
         self.assertEqual(world["terrain_bounds"], {"min_x": -10240, "max_x": 10240, "min_z": -10240, "max_z": 10240})
         self.assertEqual(response.json["players"], [dict(name=".Explorer", dimension=world["id"], world=world["name"], x=12.5, y=75, z=-8)])
         self.assertEqual(self.client.get("/api/map/terrain?world=minecraft:ark_exploration").status_code, 404)
+
+    def test_jurassic_map_is_opt_in_and_preserves_actual_rendered_bounds(self):
+        self.login()
+        home = self.data / "admin-map"
+        home.mkdir()
+        dimension = "minecraft:jurassic_archipelago"
+        (home / "jurassic_archipelago.png").write_bytes(b"Generated Jurassic terrain")
+        (home / "worlds.json").write_text(json.dumps({"worlds": [
+            dict(id=dimension, name="Jurassic Archipelago", min_x=-16384, max_x=16384,
+                 min_z=-16384, max_z=16384, terrain_bounds=dict(min_x=4096, max_x=6144, min_z=2048, max_z=4096))]}))
+        outputs = ['Explorer has the following entity data: [5000d, 75d, 3000d]',
+                   'Explorer has the following entity data: "minecraft:jurassic_archipelago"']
+        with patch.object(self.containers.items["minecraft-ark"], "exec_run", side_effect=[ExecResult(0, out.encode()) for out in outputs]):
+            response = self.client.get("/api/map/players")
+        worlds = {world["id"]: world for world in response.json["worlds"]}
+        self.assertEqual(worlds[dimension]["min_x"], -16384)
+        self.assertEqual(worlds[dimension]["terrain_bounds"], dict(min_x=4096, max_x=6144, min_z=2048, max_z=4096))
+        self.assertEqual(response.json["players"][0]["world"], "Jurassic Archipelago")
+        image = self.client.get("/api/map/terrain", query_string={"world": dimension})
+        self.addCleanup(image.close)
+        self.assertEqual(image.status_code, 200)
+        self.assertEqual(image.data, b"Generated Jurassic terrain")
 
     def test_map_serves_each_world_image_from_a_fixed_allowlist(self):
         self.login()
@@ -777,6 +800,21 @@ class PanelTests(unittest.TestCase):
         self.assertFalse((self.state / 'config-backups').exists())
         unrelated = original + '  lobby:\n    worlds: [lobby]\n    shares: [inventory]\n'
         self.assertEqual(self.mutate('/api/configs/mv-groups', {'content': unrelated}, method='put').status_code, 200)
+
+    def test_optional_jurassic_inventory_group_is_independent(self):
+        original = {'groups': {'survival': {'worlds': ['ark', 'ark_nether', 'ark_the_end'], 'shares': ['all']},
+                               'creative': {'worlds': ['ark_creative'], 'shares': ['all']}}}
+        validate_yaml('mv-groups', yaml.safe_dump(original))
+        for group in ['survival', 'creative']:
+            content = json.loads(json.dumps(original))
+            content['groups'][group]['worlds'].append('jurassic_archipelago')
+            with self.subTest(group=group), self.assertRaises(PanelError):
+                validate_yaml('mv-groups', yaml.safe_dump(content))
+        original['groups']['jurassic'] = {'worlds': ['jurassic_archipelago'], 'shares': ['all']}
+        validate_yaml('mv-groups', yaml.safe_dump(original))
+        original['groups']['jurassic']['shares'] = ['inventory']
+        with self.assertRaises(PanelError):
+            validate_yaml('mv-groups', yaml.safe_dump(original))
 
     def test_actual_unknown_properties_are_editable_but_new_or_protected_keys_are_rejected(self):
         self.login()

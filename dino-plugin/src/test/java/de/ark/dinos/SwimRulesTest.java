@@ -4,7 +4,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public final class SwimRulesTest {
     public static void main(String[] args) {
-        for(String species:new String[]{"triceratops","stegosaurus","brachiosaurus","trex","velociraptor","dilophosaurus","pteranodon"})
+        for(String species:new String[]{"triceratops","stegosaurus","brachiosaurus","trex","velociraptor","dilophosaurus","pteranodon","gallimimus"})
             check(SwimRules.supports(species),"Land species must recover at the surface: "+species);
         check(!SwimRules.supports("mosasaurus")&&!SwimRules.supports(null)&&!SwimRules.supports("cow"),"Aquatic and unrelated entities must retain their own controller");
         check(SwimRules.verticalVelocity(10,14,-.5)>0,"A submerged, sinking animal must ascend even with no input");

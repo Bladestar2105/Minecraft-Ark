@@ -6,7 +6,7 @@ from test_model_poses import inside_box, pose
 
 
 SPECIES = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus',
-           'velociraptor', 'pteranodon', 'dilophosaurus', 'mosasaurus')
+           'velociraptor', 'pteranodon', 'dilophosaurus', 'mosasaurus', 'gallimimus')
 
 
 class NametagTest(unittest.TestCase):

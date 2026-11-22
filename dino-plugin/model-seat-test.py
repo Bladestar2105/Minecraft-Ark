@@ -21,7 +21,7 @@ paths.extend(sorted(p for p in (paper_cache / 'libraries').rglob('*.jar') if not
 classes = OUTPUT / 'classes'
 classes.mkdir(exist_ok=True)
 source = ROOT / 'dino-plugin/src/main/java/de/ark/dinos'
-sources = [source / f'{name}.java' for name in ('DinoModels', 'BetterModelAdapter', 'BetterModelCleanup', 'DinoPassengerOrder', 'BedrockSeats', 'DinoGrowth', 'DinoSizes', 'EggAssets')]
+sources = [source / f'{name}.java' for name in ('DinoModels', 'BetterModelAdapter', 'BetterModelCleanup', 'DinoPassengerOrder', 'BedrockSeats', 'DinoGrowth', 'DinoSizes', 'ModelBounds', 'EggAssets')]
 sources += [ROOT / f'dino-plugin/src/runtime/java/de/ark/dinos/{name}.java' for name in ('ModelSeatProbe', 'ModelSeatOptionalProbe')]
 classpath = ':'.join(map(str, paths))
 agent = next(p for p in paths if p.name.startswith('byte-buddy-agent-'))

@@ -2,8 +2,8 @@ package de.ark.dinos;
 
 public final class GroundSpeedsTest {
     public static void main(String[] args) {
-        String[] speciesNames={"brachiosaurus","stegosaurus","triceratops","trex","velociraptor","dilophosaurus","pteranodon"};
-        double[][] expected={{1.4,3.5},{1.5,4.5},{2,7},{2.5,9},{3,12},{2.8,10},{2,4.5}};
+        String[] speciesNames={"brachiosaurus","stegosaurus","triceratops","trex","velociraptor","dilophosaurus","pteranodon","gallimimus"};
+        double[][] expected={{1.4,3.5},{1.5,4.5},{2,7},{2.5,9},{3,12},{2.8,10},{2,4.5},{2,7}};
         var slow=GroundSpeeds.pace("brachiosaurus");
         for(int i=0;i<speciesNames.length;i++) {
             String species=speciesNames[i];

@@ -1,6 +1,6 @@
 # Original dinosaur assets
 
-Eight original, film-inspired prehistoric animals share editable Blockbench 5 models, embedded 64×64 skin atlases and native Bedrock exports. Sloping sections shape the chest, abdomen and skull of each species.
+Nine original, film-inspired prehistoric animals share editable Blockbench 5 models, embedded 64×64 skin atlases and native Bedrock exports. Sloping sections shape the chest, abdomen and skull of each species.
 
 The umber T-Rex has a broad skull, heavy brows, powerful thighs and short two-fingered arms. The sand-colored Velociraptor has a slim banded muzzle, three grasping fingers per hand and a hooked inner claw on each foot. Triceratops carries two curved brow horns and a shorter nasal horn ahead of its scalloped shield. Stegosaurus has low shoulders, high hips, alternating copper-colored plates and four splayed tail spikes. Brachiosaurus rises over tall forelimbs into a curved neck and rounded nasal crest.
 
@@ -20,7 +20,19 @@ rtk proxy python3 dino-models/test_riding_surfaces.py
 rtk proxy python3 dino-models/test_mosasaurus.py
 rtk proxy python3 dino-models/test_growth_details.py
 rtk proxy python3 dino-models/test_nametags.py
+rtk proxy python3 dino-models/test_gallimimus.py
+rtk proxy python3 dino-models/test_runtime_bounds.py
 ```
+
+Gallimimus has its own 179-cube, twelve-bone ostrich-like anatomy: a small toothless
+head, long narrow neck, high hind limbs, small three-fingered forearms and a thin
+balancing tail. It is not a Raptor variant. Its `graze` loop reaches grass level;
+separate `walk` and `run` loops use measured 1.630854 / 3.135356-block strides and
+edition-matched speed clocks, including growth scaling. The new gameplay paces
+are 2 / 7 blocks per second. The source renderer includes a labeled Gallimimus
+idle/grazing/running gallery; these images do not establish in-game rendering.
+`test_gallimimus.py` checks anatomy, grazing height, gait clearance and the budget;
+the general rider tests include the adult Gallimimus through every new phase.
 
 The public source is text-only: `models/<id>/` contains `<id>.bbmodel`, `<id>.geo.json`, `<id>.animation.json`, `config.json` and `design.json`, alongside the generation/verification scripts, this README and the CC0 license. Textures are embedded in each BBModel. `build_models.py` deterministically regenerates the model exports and standalone PNGs when needed. `verify_exports.py` validates embedded PNG dimensions, chunk checksums, opacity, sampled material variation, UV bounds and exact source/Bedrock face rectangles. It compares an external PNG when present and checks the calibrated back height of all seven rideable species, including 1.191365 blocks for Dilophosaurus. Asset verifiers do not depend on previews, private spike files, absolute paths or separately published textures.
 
@@ -44,6 +56,16 @@ Triceratops horns, all Stegosaurus plates and tail spikes, Pteranodon’s crest,
 
 Walking has a longer planted stance, a lifted return and per-leg vertical compensation. Bipeds alternate legs; quadrupeds use four phases. `walk_stride_blocks` in each design records the mean foot's Z travel during the 60% planted stance divided by that stance fraction as geometry metadata. Land walks use an incremental clock from ground speed, clamped to 0.35–1.8 cycles per second; the species ground targets of 1–2 blocks per second walking and 2–7 sprinting produce a bounded 0.35–1.75 cycles per second on Java and Bedrock. This avoids rapid cycling with short voxel legs and phase jumps as young dinosaurs grow. Walk tracks retain their exact original linear pose path, resampled at 50 ms intervals so BetterModel receives small target steps despite whole-tick display interpolation. The existing fast mount travel can still outpace the short planted foot sweep. `test_model_poses.py` samples the clock at both mount speeds, three growth scales and 30/60 frames per second. `verify_gait.py` independently samples 101 instants per leg, requiring a planted stance, visible swing clearance and at most 0.2 model units of floor penetration between keyframes. Independent corner transforms sample all animation channels at keyframes and intermediate rotations at no more than 0.25 degrees; the seven land/flight models are grounded exactly in rest pose. No inverse kinematics or terrain adaptation is provided.
 
+The same transformed final cube corners generate all six limits in
+`dino-plugin/src/main/java/de/ark/dinos/ModelBounds.java`. `DinoSizes` uses these
+shared envelopes for scaled clearance and hatching; the aquatic controller uses
+their source axes (with forward = -Z) for spawning, swimming and breaching.
+After intentional geometry or animation changes, run
+`python3 dino-models/verify_animated_bounds.py --write-runtime`. Ordinary bounds
+verification and the text-only plugin build reject stale runtime limits. The
+0.25-degree corner sampling is a source-model check, not a console rendering
+test or a proof of every client interpolation state.
+
 `render_previews.py` uses embedded PNG pixels and each face's UV rectangle, with a per-pixel depth buffer for intersecting details such as eyes. It evaluates the actual idle bone pose by default, including nested folding joints. Run it with Python 3 and `rsvg-convert` installed to regenerate the eight PNG/SVG previews, idle/attack gallery, six open-mouth tooth closeups, contact sheet, Dilophosaurus folded/open/attack poses, T-Rex feet/hands, Brachiosaurus tail side view Pteranodon idle/walk/flap/glide poses with its seated-player reference, Stegosaurus plate details, and Mosasaurus swimming/bite/size comparisons. `test_previews.py` checks that changing UVs, embedded pixels or bone poses changes the rendered image. These orthographic asset previews are not screenshots from Minecraft.
 
 The actual BetterModel 3.6.0/GeyserModelEngine 1.0.9 packs and runtime evidence are local under `output/dino-assets-runtime-20261107/`. `verify_compiled.py` reconstructs every compiled Java corner through vanilla item-display transforms and compares it with the editable source (tolerance 0.001 model units); it also checks UVs, exact textures and all generated Bedrock references. This catches arbitrary-angle errors that an axis-aligned spike or comparing two exporters cannot catch.
@@ -55,3 +77,11 @@ Mosasaurus is a wild aquatic model: four articulated flippers, a powerful tapere
 Pteranodon keeps its fixed calibrated back while its crest is reangled ahead of the rider; independently posed crest cubes clear the measured 0.6 × 1.8 block native player box with an 0.08-block margin across every phase. Flap and glide tuck both hindlegs back; ground feet and folded wings retain their existing poses. Stegosaurus has alternating small neck/tail plates attached to the corresponding moving bones and large back plates beside the rider, with the same independent saddle-clearance checks.
 
 Each dinosaur also has an empty `name_anchor` above its moving head. It renders no cubes. ArkDinos positions its ordinary native TextDisplay there, allowing consistent custom names without the BetterModel per-viewer name-label cache. `test_nametags.py` checks all eight source and Bedrock anchors.
+
+`pack_fingerprint.py pack.zip [other.zip]` separates the archive SHA-256 from a
+canonical content SHA-256 over sorted names and each uncompressed entry hash.
+Comparison checks compressed payloads and ZIP metadata separately, so timestamp
+changes cannot masquerade as changed model content. Native gameplay reports keep
+initial/restart manifest UUIDs, versions and both hashes. An optional fixture
+probe regenerates final inputs over a copied intermediate pack cache to check
+identity reuse; it does not test a real client's cold or warm pack cache.

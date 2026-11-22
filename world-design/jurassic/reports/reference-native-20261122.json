@@ -1,0 +1,186 @@
+{
+  "format": 1,
+  "status": "native_reference_passed_scenic_and_device_acceptance_open",
+  "date": "2026-11-22",
+  "world": "jurassic_archipelago",
+  "profile": "classic_adventure",
+  "world_uuid": "b180c565-9ad6-4473-9dec-39e9c08b5dd1",
+  "seed": 19930611,
+  "generator_version": "1",
+  "definition_sha256": "e8d0919db3408d1cffcc76624805db2ac20e20b256f9ab90997b72192e051eb3",
+  "implementation_sha256": "3f25c9ac07f89e31ab0588cf3f779f591d1d220439f0e2a0978600ec228d3fb4",
+  "minecraft": "26.3",
+  "paper": "26.3-258-main@9ee1fac",
+  "api": "26.3.build.258-stable",
+  "java": "openjdk version \"25.0.5\" 2026-10-20 LTS\nOpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)\nOpenJDK 64-Bit Server VM Temurin-25.0.5+8 (build 25.0.5+8-LTS, mixed mode, sharing)",
+  "paper_sha256": "c5df5fb9f6155e48380c67c6e2b2dc2581b7db1a4b665d2c3818057b7efb6692",
+  "generation_plugin_sha256": "23795b263d0e686e3393a7af15652e204e831cf946a533a1c61ff63eb874fe19",
+  "delivered_plugin_sha256": "93bc4fa2bca9fd4691afe45374b49a390dbfdf1265da7df6e22ad38609cf1878",
+  "native_height": {
+    "min_inclusive": -64,
+    "max_exclusive": 320
+  },
+  "generated_reference_bounds_inclusive": {
+    "min_x": 7168,
+    "min_z": 2048,
+    "max_x": 9215,
+    "max_z": 4095
+  },
+  "full_chunk_validation": {
+    "status": "passed",
+    "map_type": "saved surface block / biome terrain with height shading",
+    "bounds": [
+      7168,
+      2048,
+      9216,
+      4096
+    ],
+    "north": "negative Z",
+    "world_size": 2048,
+    "resolution": 512,
+    "blocks_per_pixel": 4.0,
+    "total_pixels": 262144,
+    "sampled_pixels": 262144,
+    "missing_pixels": 0,
+    "regions_read": 16,
+    "chunks_read": 16384,
+    "full_chunks": 16384,
+    "missing_chunks": 0,
+    "unavailable_chunks": 0,
+    "verify_all_chunks": true,
+    "expected_chunks": 16384,
+    "verified_chunks": 16384,
+    "incomplete_chunks": 0,
+    "status_counts": {
+      "minecraft:full": 16384
+    },
+    "elapsed_seconds": 5.135
+  },
+  "pause_and_restart": {
+    "paused_done": 36,
+    "restored_done": 36,
+    "uuid_and_all_definition_bindings_equal": true
+  },
+  "fault_injection": {
+    "kind": "overstated persisted cursor, not a process-crash test",
+    "actual_completed_before_injection": 36,
+    "stored_done": 1024,
+    "observed_rewound_done": 36
+  },
+  "delivered_jar_postcheck": {
+    "passed": true,
+    "startup_opened_without_open_command": true,
+    "startup_job_active": false,
+    "completed_prefix_verified": 16384,
+    "completed_cursor_unchanged": true,
+    "elapsed_seconds": 65.122
+  },
+  "foliage": {
+    "palette_entries_checked": 14290,
+    "states": [
+      {
+        "id": "minecraft:jungle_leaves",
+        "properties": {
+          "distance": "7",
+          "persistent": "true",
+          "waterlogged": "false"
+        }
+      }
+    ]
+  },
+  "probes": [
+    {
+      "x": 8192,
+      "y": 79,
+      "z": 3072,
+      "ground": "GRAVEL",
+      "above": "AIR"
+    },
+    {
+      "x": 8060,
+      "y": 80,
+      "z": 3000,
+      "ground": "GRASS_BLOCK",
+      "above": "AIR"
+    },
+    {
+      "x": 8220,
+      "y": 78,
+      "z": 3130,
+      "ground": "GRASS_BLOCK",
+      "above": "SHORT_GRASS"
+    }
+  ],
+  "fallen_trunk_probe": {
+    "block_data": "minecraft:dark_oak_log[axis=y]",
+    "x": 8082,
+    "y": 85,
+    "z": 3036
+  },
+  "performance": {
+    "generation_wall_seconds_including_restart_and_checkpoint_injection": 1059.658,
+    "reference_chunks_per_wall_second": 15.462,
+    "steady_status_sample_count": 508,
+    "sampled_average_mspt": {
+      "min": 0.288471702970297,
+      "median": 0.5090018152970297,
+      "p95": 1.357890227722772,
+      "max": 4.620779465346534
+    },
+    "tps_one_sample_component_min": 19.9956492799775,
+    "sampled_rss_max_bytes": 1256308736,
+    "sampled_loaded_custom_world_chunks_max": 4,
+    "sampled_custom_world_entities_max": 0,
+    "measurement_note": "MSPT statistics are distributions of reported rolling averages, not raw per-tick percentiles. No players, custom models or pack clients were present."
+  },
+  "storage": {
+    "custom_dimension_bytes": 92584387,
+    "custom_dimension_file_count": 49,
+    "saved_reference_region_entries": 16384,
+    "saved_all_region_entries_including_neighbor_prototypes": 22500
+  },
+  "linear_full_square_projection": {
+    "chunks": 4194304,
+    "ratio_to_reference": 256,
+    "seconds": 271272,
+    "custom_dimension_bytes": 23701603072,
+    "warning": "Planning estimate only. This reference is a mostly forest/plains inland region; ocean, mountains, structures and region halos change storage and generation cost. Production ecology/client cost has not been measured."
+  },
+  "reference_image": {
+    "filename": "reference-native.png",
+    "type": "saved_surface_block_biome_map_not_client_screenshot",
+    "sha256": "11afd69eb38ed826d4e8e6ca47a6f180cb5c29720bf23335873544dae9da5790"
+  },
+  "final_archive": {
+    "filename": "jurassic_archipelago-final-isolated-save-v2.tar.gz",
+    "kind": "complete_isolated_native_save_final_binding_jar",
+    "level_name": "fixture",
+    "bytes": 24885175,
+    "sha256": "52832c5db4491404862c154be1dea0100e8049693457dfc9be105c38ef455740",
+    "plugin_sha256": "93bc4fa2bca9fd4691afe45374b49a390dbfdf1265da7df6e22ad38609cf1878"
+  },
+  "generation_archive": {
+    "filename": "jurassic_archipelago-generation-save.tar.gz",
+    "kind": "complete_isolated_native_save_generation_jar",
+    "bytes": 24884115,
+    "sha256": "83e5e50f03170564dd39e9c52851dd5443e277c06591f4b4d1c609eb34a79d23",
+    "plugin_sha256": "23795b263d0e686e3393a7af15652e204e831cf946a533a1c61ff63eb874fe19"
+  },
+  "archive_safety": {
+    "relative_paths_and_normalized_owners_verified": true,
+    "shared_level_dat_included": true,
+    "rcon_server_properties_excluded": true
+  },
+  "open_acceptance": [
+    "Scenic film likeness: current clearing is a regular oval with a straight gravel access trail; organic valley/forest refinement is open.",
+    "All five camera views remain provisional and lack actual client screenshots.",
+    "The other five islands and remaining Nublar mandatory sets are not covered by this generated reference receipt.",
+    "No native Gallimimus herd/scene/model, Java rendered client, Bedrock client, physical Switch, inventory or travel acceptance is established by this terrain fixture."
+  ],
+  "harness_note": "Initial harness exited after an incorrect grass-at-center assumption; explicit planned gravel trail and two adjacent grass probes were then independently checked natively with the delivered JAR.",
+  "binding_guard_postcheck": [
+    "Final binding implementation auto-opens matching native world and verifies all16384 prefix chunks",
+    "Copied marker UUID refused; world remains unavailable and checkpoint unchanged",
+    "Wrong-UUID checkpoint refused before existing-world configuration writes"
+  ]
+}

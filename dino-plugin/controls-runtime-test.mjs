@@ -155,6 +155,18 @@ try {
    const edge=fields(await command('controlsfixture wild-edge'));assert.equal(edge.clear,'false');assert.equal(edge.after,edge.before);
    return {tick,count,edge};
   });
+  await check('Initial biome preference never confines a wild Gallimimus crossing into desert',async()=>{
+   await command('gamemode creative @a');
+   const before=fields(await command('controlsfixture wild-crossing'));
+   await eventually(async()=>(await inspect('wildlife_crossing')).ground==='true','New wild carrier must settle before native pathfinding');
+   assert.match(await command('controlsfixture ground-path wildlife_crossing 18 .5'),/path=true/,'Native crossing route must be traversable');
+   await eventually(async()=>Number((await inspect('wildlife_crossing')).x)>10,'Native pathfinding never crossed the biome boundary',15000);
+   const crossed=await inspect('wildlife_crossing');await command('controlsfixture wild-tick 1');await delay(1200);
+   const after=await inspect('wildlife_crossing');assert.equal(after.uuid,before.uuid);assert.equal(after.species,'gallimimus');
+   assert.ok(Number(after.x)>8,'Population scan must not return a roaming animal to its preferred spawn biome');
+   await command('kill @e[tag=wildlife_crossing]');await command(`gamemode survival ${alice.name}`);
+   return {before,crossed,after};
+  });
   await check('No Survival players means no new encounters; taming preserves the same natural animal',async()=>{
    await command('controlsfixture wild-cleanup');await command('gamemode creative @a');await command('controlsfixture wild-tick 30');assert.equal(fields(await command('controlsfixture wild-counts')).natural,'0');
    await command(`gamemode survival ${alice.name}`);await command('controlsfixture wild-tick 40');

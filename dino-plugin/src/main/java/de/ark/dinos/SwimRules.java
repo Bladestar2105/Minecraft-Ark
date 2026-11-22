@@ -8,7 +8,7 @@ final class SwimRules {
 
     static boolean supports(String species) {
         return switch (species) {
-            case "triceratops", "stegosaurus", "brachiosaurus", "trex", "velociraptor", "dilophosaurus", "pteranodon" -> true;
+            case "triceratops", "stegosaurus", "brachiosaurus", "trex", "velociraptor", "dilophosaurus", "pteranodon", "gallimimus" -> true;
             case null, default -> false;
         };
     }

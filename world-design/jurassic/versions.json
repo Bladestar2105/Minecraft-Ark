@@ -1,0 +1,49 @@
+{
+  "checked_at": "2026-11-22",
+  "upstream": {
+    "minecraft_release": "26.3",
+    "minecraft_snapshot": "26.4-snapshot-10",
+    "minecraft_source": "https://launchermeta.mojang.com/mc/game/version_manifest_v2.json",
+    "paper_26_3_build": 258,
+    "paper_channel": "STABLE",
+    "paper_sha256": "c5df5fb9f6155e48380c67c6e2b2dc2581b7db1a4b665d2c3818057b7efb6692",
+    "paper_source": "https://fill.papermc.io/v3/projects/paper/versions/26.3/builds/latest",
+    "geyser_version": "2.12.1-b1306",
+    "geyser_source": "https://download.geysermc.org/v2/projects/geyser/versions/2.12.1/builds/1306"
+  },
+  "source_pins": {
+    "paper_runtime": "26.3/246",
+    "paper_compile_api": "26.3.build.236-stable",
+    "geyser": "2.12.1-b1298"
+  },
+  "observed_existing_server_read_only": {
+    "paper": "26.3-257-main@d81ca50",
+    "paper_api": "26.3.build.257-stable",
+    "java": "Temurin 25.0.5+8",
+    "geyser": "2.12.1-b1306",
+    "geyserutils_extension_sha256": "3d764418b47dfbaba0fb20bd3d3fa471b02e77a4a32c73d147a6e366bfe1214a",
+    "arkdinos_jar_sha256": "f5eb045428329ed06118038db9ed1d0d0dbca95248d06f7a98c30f9523350eff",
+    "production_changes_in_this_task": false
+  },
+  "fixture_versions": {
+    "reference_world": "Paper 26.3/258, Java 25.0.5+8",
+    "multi_world_atlas": "Paper 26.3/257, Java 25.0.5+8",
+    "dinosaur_protocol_regressions": "Paper 26.3/246, Java 25.0.5+8",
+    "official_clients": [],
+    "physical_consoles": []
+  },
+  "base_pr": {
+    "number": 15,
+    "head": "edf95c041bc3315948686bc4199a3ac5fcae3140",
+    "state_at_start": "open",
+    "initial_head": "bc8f408d2278a5ed3826131fe5b8a3f9d8eda52f",
+    "state_at_final_refresh": "open"
+  },
+  "receiver_fix_pr": {
+    "number": 14,
+    "head": "a04119af062ffedda49850e159059b65993a5235",
+    "state_at_start": "open",
+    "source_changes_included": true,
+    "client_crash_resolution_proven": false
+  }
+}

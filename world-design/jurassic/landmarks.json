@@ -1,0 +1,1258 @@
+{
+  "format": 1,
+  "world": "jurassic_archipelago",
+  "landmarks": [
+    {
+      "id": "nublar_gallimimus",
+      "island": "nublar",
+      "name": "Gallimimus-Ebene",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "production_imageengine2015",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        8192,
+        3072
+      ],
+      "rotation": 0,
+      "extent": [
+        1400,
+        800
+      ],
+      "kind": "meadow",
+      "access": [
+        [
+          7492,
+          3072
+        ],
+        [
+          8892,
+          3072
+        ]
+      ],
+      "cameras": [
+        {
+          "id": "crest_herd",
+          "position": [
+            8060,
+            90,
+            3000
+          ],
+          "yaw": -90,
+          "pitch": 8
+        },
+        {
+          "id": "ground_flight",
+          "position": [
+            8060,
+            82,
+            3090
+          ],
+          "yaw": -90,
+          "pitch": 0
+        },
+        {
+          "id": "behind_log_rex",
+          "position": [
+            8220,
+            83,
+            3130
+          ],
+          "yaw": 110,
+          "pitch": 2
+        },
+        {
+          "id": "chase_side",
+          "position": [
+            8192,
+            87,
+            3200
+          ],
+          "yaw": 180,
+          "pitch": 5
+        },
+        {
+          "id": "valley_panorama",
+          "position": [
+            7790,
+            105,
+            2790
+          ],
+          "yaw": -52,
+          "pitch": 10
+        }
+      ],
+      "core_extent": [
+        384,
+        256
+      ],
+      "source_detail": "production_imageengine2015",
+      "encounter_status": "not_implemented",
+      "camera_height_note": "Provisional world y values; use generator terrain and native collision checks before client capture."
+    },
+    {
+      "id": "nublar_arrival_falls",
+      "island": "nublar",
+      "name": "Ankunftswasserfall und Helikopterlandeplatz",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        6500,
+        1600
+      ],
+      "rotation": 0,
+      "extent": [
+        260,
+        300
+      ],
+      "kind": "helipad",
+      "access": [
+        [
+          6600,
+          1730
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Waterfall and helipad scene; road to park is a compressed addition."
+    },
+    {
+      "id": "nublar_brachiosaurus",
+      "island": "nublar",
+      "name": "Erste Brachiosaurus-Begegnung",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        9200,
+        4200
+      ],
+      "rotation": 0,
+      "extent": [
+        600,
+        400
+      ],
+      "kind": "meadow",
+      "access": [
+        [
+          9200,
+          4408
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "nublar_main_gate",
+      "island": "nublar",
+      "name": "Jurassic-Park-Haupttor",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        8000,
+        4300
+      ],
+      "rotation": 0,
+      "extent": [
+        52,
+        36
+      ],
+      "kind": "gate",
+      "access": [
+        [
+          8000,
+          4260
+        ],
+        [
+          8000,
+          4340
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "nublar_tour_road",
+      "island": "nublar",
+      "name": "Dschungel-Tourstraße",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        8150,
+        4550
+      ],
+      "rotation": 0,
+      "extent": [
+        20,
+        450
+      ],
+      "kind": "trail",
+      "access": [
+        [
+          8000,
+          4340
+        ],
+        [
+          8200,
+          4900
+        ]
+      ],
+      "cameras": [],
+      "route": [
+        [
+          8000,
+          4340
+        ],
+        [
+          8050,
+          4510
+        ],
+        [
+          8200,
+          4750
+        ],
+        [
+          8200,
+          4900
+        ]
+      ]
+    },
+    {
+      "id": "nublar_visitor_center",
+      "island": "nublar",
+      "name": "Besucherzentrum und Vorplatz",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        8200,
+        5000
+      ],
+      "rotation": 0,
+      "extent": [
+        200,
+        160
+      ],
+      "kind": "visitor_center",
+      "access": [
+        [
+          8200,
+          4900
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Intact 1993 roof, rotunda, skeletons and walkable central interiors. Later ruin is mutually exclusive in reserved world_2015."
+    },
+    {
+      "id": "nublar_kitchen",
+      "island": "nublar",
+      "name": "Küche",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        8250,
+        5030
+      ],
+      "rotation": 0,
+      "extent": [
+        36,
+        28
+      ],
+      "kind": "utility",
+      "access": [
+        [
+          8250,
+          5052
+        ]
+      ],
+      "cameras": [],
+      "parent_id": "nublar_visitor_center"
+    },
+    {
+      "id": "nublar_control_room",
+      "island": "nublar",
+      "name": "Kontrollraum",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        8150,
+        5030
+      ],
+      "rotation": 0,
+      "extent": [
+        36,
+        28
+      ],
+      "kind": "utility",
+      "access": [
+        [
+          8150,
+          5052
+        ]
+      ],
+      "cameras": [],
+      "parent_id": "nublar_visitor_center"
+    },
+    {
+      "id": "nublar_lab_hatchery",
+      "island": "nublar",
+      "name": "Labor und Brutbereich",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        8195,
+        5050
+      ],
+      "rotation": 0,
+      "extent": [
+        44,
+        28
+      ],
+      "kind": "lab",
+      "access": [
+        [
+          8195,
+          5072
+        ]
+      ],
+      "cameras": [],
+      "parent_id": "nublar_visitor_center"
+    },
+    {
+      "id": "nublar_rex_breakout",
+      "island": "nublar",
+      "name": "T.-rex-Ausbruchsstelle",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        9300,
+        2900
+      ],
+      "rotation": 0,
+      "extent": [
+        220,
+        170
+      ],
+      "kind": "rex_breakout",
+      "access": [
+        [
+          9300,
+          2780
+        ],
+        [
+          9300,
+          3020
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Historic fence is breached; road, drop and scene positions are layout interpretations."
+    },
+    {
+      "id": "nublar_raptor_pen",
+      "island": "nublar",
+      "name": "Ursprüngliche Raptorenhalteanlage",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        7800,
+        5400
+      ],
+      "rotation": 0,
+      "extent": [
+        90,
+        80
+      ],
+      "kind": "raptor_pen",
+      "access": [
+        [
+          7800,
+          5448
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "nublar_triceratops",
+      "island": "nublar",
+      "name": "Triceratops-Wiese",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        9600,
+        5400
+      ],
+      "rotation": 0,
+      "extent": [
+        500,
+        350
+      ],
+      "kind": "meadow",
+      "access": [
+        [
+          9600,
+          5583
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "nublar_maintenance",
+      "island": "nublar",
+      "name": "Wartung und Stromversorgung",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        8100,
+        5900
+      ],
+      "rotation": 0,
+      "extent": [
+        160,
+        140
+      ],
+      "kind": "utility",
+      "access": [
+        [
+          8100,
+          5978
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "nublar_nedry_route",
+      "island": "nublar",
+      "name": "Nedrys Route und East-Dock-Abzweig",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp1993",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        9500,
+        6400
+      ],
+      "rotation": 0,
+      "extent": [
+        420,
+        340
+      ],
+      "kind": "trail",
+      "access": [
+        [
+          9300,
+          6300
+        ],
+        [
+          9700,
+          6500
+        ]
+      ],
+      "cameras": [],
+      "route": [
+        [
+          9000,
+          6000
+        ],
+        [
+          9300,
+          6300
+        ],
+        [
+          9500,
+          6400
+        ],
+        [
+          10000,
+          6600
+        ],
+        [
+          11150,
+          6500
+        ]
+      ]
+    },
+    {
+      "id": "nublar_east_dock",
+      "island": "nublar",
+      "name": "East-Dock-Küstenzugang",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        11700,
+        6500
+      ],
+      "rotation": 0,
+      "extent": [
+        180,
+        120
+      ],
+      "kind": "dock",
+      "access": [
+        [
+          11600,
+          6500
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Usable harbor and sea route are own additions; sign reference does not prove this built dock footprint."
+    },
+    {
+      "id": "sorna_coastal_landing",
+      "island": "sorna",
+      "name": "Küstenanlandung",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_tlw1997",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -6000,
+        -500
+      ],
+      "rotation": 0,
+      "extent": [
+        420,
+        280
+      ],
+      "kind": "dock",
+      "access": [
+        [
+          -6000,
+          -700
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Landing atmosphere references 1997; added berths join the archipelago travel network."
+    },
+    {
+      "id": "sorna_herbivore_country",
+      "island": "sorna",
+      "name": "Große Pflanzenfresserlandschaft",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_tlw1997",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -10000,
+        -3500
+      ],
+      "rotation": 0,
+      "extent": [
+        1400,
+        800
+      ],
+      "kind": "meadow",
+      "access": [
+        [
+          -10000,
+          -3092
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_wet_forest",
+      "island": "sorna",
+      "name": "Hohe Stämme und Farnschluchten",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_tlw1997",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -8000,
+        -7500
+      ],
+      "rotation": 0,
+      "extent": [
+        1200,
+        900
+      ],
+      "kind": "grassland",
+      "access": [
+        [
+          -8000,
+          -7042
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Tree and fern landscape; no claim of grass-only biome or one real-location island."
+    },
+    {
+      "id": "sorna_trailer_camp",
+      "island": "sorna",
+      "name": "Forschungstrailer an der Klippenkante",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_tlw1997",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -4500,
+        -6500
+      ],
+      "rotation": 0,
+      "extent": [
+        230,
+        170
+      ],
+      "kind": "camp",
+      "access": [
+        [
+          -4500,
+          -6407
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_collection_camp",
+      "island": "sorna",
+      "name": "InGen-Jagd- und Sammelbereich",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_tlw1997",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -6500,
+        -4500
+      ],
+      "rotation": 0,
+      "extent": [
+        300,
+        240
+      ],
+      "kind": "camp",
+      "access": [
+        [
+          -6500,
+          -4372
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_rex_family",
+      "island": "sorna",
+      "name": "T.-rex-Nest- und Familienlandschaft",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_tlw1997",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -4500,
+        -8500
+      ],
+      "rotation": 0,
+      "extent": [
+        650,
+        500
+      ],
+      "kind": "nest",
+      "access": [
+        [
+          -4500,
+          -8242
+        ]
+      ],
+      "cameras": [],
+      "encounter_status": "not_implemented"
+    },
+    {
+      "id": "sorna_tall_grass",
+      "island": "sorna",
+      "name": "Zusammenhängendes hohes Gras",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_tlw1997",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -5000,
+        -4000
+      ],
+      "rotation": 0,
+      "extent": [
+        1100,
+        550
+      ],
+      "kind": "grassland",
+      "access": [
+        [
+          -5000,
+          -3717
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_worker_village",
+      "island": "sorna",
+      "name": "Verlassenes Arbeiterdorf und Funkbereich",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_tlw1997",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -4500,
+        -2500
+      ],
+      "rotation": 0,
+      "extent": [
+        450,
+        350
+      ],
+      "kind": "village",
+      "access": [
+        [
+          -4500,
+          -2317
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_forest_falls",
+      "island": "sorna",
+      "name": "Wald- und Wasserfallübergang",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_tlw1997",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -7000,
+        -6500
+      ],
+      "rotation": 0,
+      "extent": [
+        320,
+        400
+      ],
+      "kind": "river",
+      "access": [
+        [
+          -7000,
+          -6292
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_airstrip",
+      "island": "sorna",
+      "name": "Kleine Landebahn",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp2001",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -11500,
+        -6000
+      ],
+      "rotation": 0,
+      "extent": [
+        110,
+        650
+      ],
+      "kind": "airstrip",
+      "access": [
+        [
+          -11500,
+          -5680
+        ],
+        [
+          -11400,
+          -6300
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_crash_route",
+      "island": "sorna",
+      "name": "Flugzeug- und Absturzroute",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp2001",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -11000,
+        -6400
+      ],
+      "rotation": 0,
+      "extent": [
+        420,
+        180
+      ],
+      "kind": "trail",
+      "access": [
+        [
+          -11000,
+          -6302
+        ]
+      ],
+      "cameras": [],
+      "route": [
+        [
+          -11500,
+          -6300
+        ],
+        [
+          -11200,
+          -6380
+        ],
+        [
+          -11000,
+          -6400
+        ],
+        [
+          -10750,
+          -6800
+        ]
+      ]
+    },
+    {
+      "id": "sorna_ingen_lab",
+      "island": "sorna",
+      "name": "Verlassener Labor- und Brutkomplex",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp2001",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -10400,
+        -7500
+      ],
+      "rotation": 0,
+      "extent": [
+        260,
+        200
+      ],
+      "kind": "lab",
+      "access": [
+        [
+          -10400,
+          -7392
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_raptor_nests",
+      "island": "sorna",
+      "name": "Raptorennester und industrielle Innenräume",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp2001",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -9900,
+        -7800
+      ],
+      "rotation": 0,
+      "extent": [
+        250,
+        220
+      ],
+      "kind": "nest",
+      "access": [
+        [
+          -9900,
+          -7682
+        ]
+      ],
+      "cameras": [],
+      "encounter_status": "not_implemented"
+    },
+    {
+      "id": "sorna_aviary",
+      "island": "sorna",
+      "name": "Drahtvoliere im Flusscanyon",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp2001",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -11000,
+        -9300
+      ],
+      "rotation": 0,
+      "extent": [
+        500,
+        360
+      ],
+      "kind": "aviary",
+      "access": [
+        [
+          -11200,
+          -9150
+        ],
+        [
+          -10800,
+          -9450
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Wire cage, elevated walkways and vertical river canyon; not a glass dome."
+    },
+    {
+      "id": "sorna_river_route",
+      "island": "sorna",
+      "name": "Bootsroute im nebligen Flusscanyon",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp2001",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -9500,
+        -10000
+      ],
+      "rotation": 0,
+      "extent": [
+        1200,
+        180
+      ],
+      "kind": "river",
+      "access": [
+        [
+          -10300,
+          -10000
+        ],
+        [
+          -8500,
+          -10300
+        ]
+      ],
+      "cameras": [],
+      "route": [
+        [
+          -11000,
+          -9300
+        ],
+        [
+          -10300,
+          -10000
+        ],
+        [
+          -9300,
+          -10600
+        ],
+        [
+          -8500,
+          -10300
+        ]
+      ]
+    },
+    {
+      "id": "sorna_river_dock",
+      "island": "sorna",
+      "name": "Flussanleger",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp2001",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -8500,
+        -10300
+      ],
+      "rotation": 0,
+      "extent": [
+        120,
+        80
+      ],
+      "kind": "dock",
+      "access": [
+        [
+          -8500,
+          -10252
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_river_crane",
+      "island": "sorna",
+      "name": "Kran am Fluss",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp2001",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -8900,
+        -10100
+      ],
+      "rotation": 0,
+      "extent": [
+        80,
+        100
+      ],
+      "kind": "crane",
+      "access": [
+        [
+          -8900,
+          -10042
+        ]
+      ],
+      "cameras": []
+    },
+    {
+      "id": "sorna_rescue_beach",
+      "island": "sorna",
+      "name": "Rettungsstrand",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "film_jp2001",
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -13500,
+        -4500
+      ],
+      "rotation": 0,
+      "extent": [
+        260,
+        500
+      ],
+      "kind": "meadow",
+      "access": [
+        [
+          -13300,
+          -4500
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Beach approach references film; connected coast and sailing route are additions."
+    },
+    {
+      "id": "matanceros_bay",
+      "island": "matanceros",
+      "name": "Ruhige Bucht und Versorgungspfad",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -10300,
+        8900
+      ],
+      "rotation": 0,
+      "extent": [
+        300,
+        180
+      ],
+      "kind": "dock",
+      "access": [
+        [
+          -10300,
+          8998
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Own addition: accessible coast, forest valleys and sheltered bay."
+    },
+    {
+      "id": "muerta_mangrove_station",
+      "island": "muerta",
+      "name": "Verfallener Mangrovensteg",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        -3900,
+        10800
+      ],
+      "rotation": 0,
+      "extent": [
+        140,
+        100
+      ],
+      "kind": "dock",
+      "access": [
+        [
+          -3900,
+          10858
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Own addition: wet ravines and fragmented mangrove coast; no repeated village."
+    },
+    {
+      "id": "tacano_basin_trail",
+      "island": "tacano",
+      "name": "Beckenpfad und Versorgungsrest",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        1300,
+        -8100
+      ],
+      "rotation": 0,
+      "extent": [
+        180,
+        140
+      ],
+      "kind": "utility",
+      "access": [
+        [
+          1300,
+          -8022
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Own addition: basin network and old service paths in dense inland forest."
+    },
+    {
+      "id": "pena_cliff_landing",
+      "island": "pena",
+      "name": "Schmales Klippenplateau",
+      "profile": "classic_adventure",
+      "source_ids": [
+        "design_addition"
+      ],
+      "interpretation": true,
+      "status": "planned",
+      "position": [
+        2400,
+        3700
+      ],
+      "rotation": 0,
+      "extent": [
+        100,
+        100
+      ],
+      "kind": "helipad",
+      "access": [
+        [
+          2400,
+          3758
+        ]
+      ],
+      "cameras": [],
+      "design_detail": "Own addition: exposed plateau, steep coast and challenging flight approach."
+    }
+  ]
+}

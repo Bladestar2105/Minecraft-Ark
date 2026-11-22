@@ -48,7 +48,8 @@ else:
 
 SERVICES = {"minecraft": "minecraft-ark", "dns": "minecraft-dns"}
 MAP_TERRAINS = {"minecraft:overworld": "admin-map/island.png", "minecraft:ark_creative": "admin-map/creative.png",
-                "minecraft:ark_exploration": "admin-map/exploration.png"}
+                "minecraft:ark_exploration": "admin-map/exploration.png",
+                "minecraft:jurassic_archipelago": "admin-map/jurassic_archipelago.png"}
 CONFIGS = {key: dict(name=name, path=path, reload_target=target, format="yaml", group=group,
                     restart_required=target is None, requires_stopped=False)
            for key, name, path, target, group in [
@@ -242,6 +243,9 @@ def validate_yaml(config_id, content):
         if not isinstance(groups, dict) or not groups:
             raise PanelError("Inventargruppen benötigen eine groups-Zuordnung.")
         protected_worlds = {"ark", "ark_nether", "ark_the_end", "ark_creative"}
+        if any(isinstance(group, dict) and isinstance(group.get("worlds"), list)
+               and "jurassic_archipelago" in group["worlds"] for group in groups.values()):
+            protected_worlds.add("jurassic_archipelago")
         for name, group in groups.items():
             if not isinstance(group, dict) or not isinstance(group.get("worlds"), list) or not isinstance(group.get("shares"), list):
                 raise PanelError("Jede Inventargruppe benötigt worlds und shares als Listen.")
@@ -255,6 +259,9 @@ def validate_yaml(config_id, content):
         if (membership.keys() != protected_worlds or len({membership.get(world) for world in ["ark", "ark_nether", "ark_the_end"]}) != 1
                 or membership.get("ark_creative") == membership.get("ark")):
             raise PanelError("Survival, Nether und Ende müssen gemeinsam und von Kreativ getrennt bleiben.")
+        if ("jurassic_archipelago" in membership and membership["jurassic_archipelago"]
+                in {membership["ark"], membership["ark_creative"]}):
+            raise PanelError("Jurassic Archipelago benötigt eine eigene Inventargruppe, getrennt von ARK und Kreativ.")
     return value
 
 
@@ -996,10 +1003,12 @@ def create_app(test_config=None):
             pass
         configured = document.get("worlds", [])
         for world in configured[:10] if isinstance(configured, list) else []:
-            if (not isinstance(world, dict) or world.get("id") not in worlds or not bounds(world)
+            if (not isinstance(world, dict) or not isinstance(world.get("id"), str) or world["id"] not in MAP_TERRAINS or not bounds(world)
                     or not isinstance(world.get("name"), str) or not 1 <= len(world["name"]) <= 80
                     or any(ord(char) < 32 for char in world["name"])):
                 continue
+            if world["id"] not in worlds:
+                worlds[world["id"]] = dict(id=world["id"], terrain=False)
             worlds[world["id"]].update(name=world["name"], **bounds(world))
             worlds[world["id"]]["terrain_bounds"] = bounds(world.get("terrain_bounds"))
             worlds[world["id"]]["terrain_updated_at"] = date(world.get("terrain_updated_at"))

@@ -60,6 +60,8 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     private DinoSwimming swimming;
     private DinoSeats seats;
     private DinoWildSpawns wildSpawns;
+    private DinoHerd herd;
+    private DinoEncounter encounter;
     private NamespacedKey speciesKey;
     private NamespacedKey flightKey;
     private boolean stopUnavailable;
@@ -95,6 +97,8 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(seats, this);
         getServer().getWorlds().forEach(world -> world.getEntities().forEach(this::restore));
         wildSpawns = new DinoWildSpawns(this);
+        herd = new DinoHerd(this);
+        encounter = new DinoEncounter(this);
         getServer().getScheduler().runTaskTimer(this, this::follow, 20L, 20L);
         getServer().getScheduler().runTaskTimer(this, this::ride, 1L, 1L);
     }
@@ -109,6 +113,8 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         if (ptera != null) ptera.close();
         if (swimming != null) swimming.close();
         if (seats != null) seats.close();
+        if (encounter != null) encounter.close();
+        if (herd != null) herd.close();
         if (wildSpawns != null) wildSpawns.close();
         flying.clear();
         landing.clear();
@@ -122,6 +128,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     @Override public boolean onCommand(org.bukkit.command.CommandSender sender, org.bukkit.command.Command command,
                                        String label, String[] args) {
         if (command.getName().equalsIgnoreCase("dinos")) {
+            if (args.length > 0 && args[0].equalsIgnoreCase("scene")) return encounter.command(sender, args);
             if (sender instanceof Player player) return locator.command(player, args);
             sender.sendMessage("Nur Spieler können ihre eigenen gezähmten Dinos orten.");
             return true;
@@ -252,6 +259,9 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     boolean roamPtera(Mob mob) { return ptera!=null&&ptera.roam(mob); }
     void landPtera(Mob mob) { if(ptera!=null)ptera.land(mob); }
     boolean combatActive(Mob mob) { return combat.active(mob); }
+    boolean sceneActor(Entity entity) { return encounter!=null && encounter.owns(entity); }
+    List<Mob> sceneActors(org.bukkit.World world) { return encounter==null?List.of():encounter.activeActors(world); }
+    boolean sceneDamage(Mob mob,Entity target) { return encounter!=null && encounter.permitsDamage(mob,target); }
     double groundSpeed(Mob mob,boolean running) {
         var pace=prototype(mob)?GroundSpeeds.pace(species(mob)):null;
         return pace==null?(running?1.15:.85):GroundSpeeds.pathMultiplier(pace,running,mob.getAttribute(org.bukkit.attribute.Attribute.MOVEMENT_SPEED).getBaseValue());
@@ -316,7 +326,8 @@ public final class ArkDinos extends JavaPlugin implements Listener {
                 ravager.setCanJoinRaid(false);
             }
             mob.setAI(true);
-            mob.setPersistent(!mob.getScoreboardTags().contains(DinoWildSpawns.NATURAL_TAG));
+            mob.setPersistent(EncounterRules.persistent(owned(mob),mob.getScoreboardTags().contains(DinoWildSpawns.NATURAL_TAG),
+                    sceneActor(mob)));
             mob.setRemoveWhenFarAway(false);
             mob.setCanPickupItems(false);
             mob.setDespawnInPeacefulOverride(TriState.FALSE);
@@ -343,6 +354,10 @@ public final class ArkDinos extends JavaPlugin implements Listener {
     public void removed(org.bukkit.event.entity.EntityRemoveEvent event) {
         if (owned(event.getEntity()) && event.getCause() != org.bukkit.event.entity.EntityRemoveEvent.Cause.UNLOAD)
             locator.forget(event.getEntity());
+    }
+
+    boolean safeWildSpawn(org.bukkit.Location point, String species) {
+        return wildSpawns != null && wildSpawns.protectionAllows(point) && wildSpawns.space(point, species);
     }
 
     Mob spawnWild(org.bukkit.Location point, String species) {
@@ -402,6 +417,7 @@ public final class ArkDinos extends JavaPlugin implements Listener {
         DinoWildSpawns.preserve(mob);
         mob.getPersistentDataContainer().remove(publicRideKey);
         mob.getPersistentDataContainer().set(ownerKey, PersistentDataType.STRING, player.getUniqueId().toString());
+        if(encounter!=null) encounter.adopted(mob);
         mob.getPersistentDataContainer().set(stayKey, PersistentDataType.BYTE, (byte) 0);
         mob.removeScoreboardTag("ark_dino_wild");
         mob.addScoreboardTag("ark_dino_tamed");

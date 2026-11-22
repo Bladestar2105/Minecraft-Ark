@@ -1,0 +1,3 @@
+# Reopen only a previously explicitly created, matching world. Never create one
+# or resume a generation job automatically at server startup.
+open-bound-world-on-start: true

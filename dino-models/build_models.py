@@ -43,6 +43,14 @@ def png_texture(colors,species=None):
                 shade=noise*.5+7*mottling
                 if species in ('ark_stegosaurus','ark_pteranodon','ark_dilophosaurus'):
                     shade-=15*max(0,math.cos(u*.95+math.sin(v*.22)+v*.23))
+            if species=='ark_gallimimus':
+                if material in (0,1,2,7):
+                    barb=math.cos(u*1.55+math.sin(v*.52)*.75+v*.23)
+                    shade=noise*.45+6*mottling+9*barb
+                elif material==3:
+                    shade=noise*.45+5*math.cos(v*1.45+(u//4)*.6)
+                elif material==6:
+                    shade=noise*.28+5*math.sin(u*.55+v*.16)
             row.extend(max(0,min(255,round(c+shade))) for c in rgb);row.append(255)
         rows.append(row)
     return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>2I5B',64,64,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(b''.join(rows)))+chunk(b'IEND',b'')
@@ -195,6 +203,8 @@ class Model:
             values.sort()
         elif self.name=='ark_brachiosaurus':
             tracks={'leg_front_left':('position',[(0,[0,0,0]),(.18,[0,5,0]),(.32,[0,5,0]),(.42,[0,0,0]),(.75,[0,0,0])])}
+        elif self.name=='ark_gallimimus':
+            tracks={'head':rotate_clip([[-8,0,0],[10,0,0],[-3,0,0]])}
         elif self.name=='ark_pteranodon':
             tracks={'head':[rotate_clip([[-12,0,0],[18,0,0],[-3,0,0]]),('position',[(0,[0,0,0]),(.16,[0,0,1]),(.34,[0,0,-3]),(.52,[0,0,-1]),(.75,[0,0,0])])]}
         else:raise ValueError(self.name)
@@ -250,6 +260,7 @@ class Model:
         (out/(self.name+'.animation.json')).write_text(json.dumps(dict(format_version='1.8.0',animations=animations),indent=2)+'\n')
         (out/'config.json').write_text(json.dumps(dict(head_rotation=True,material='entity_alphatest_change_color_one_sided',blend_transition=True,binding_bones={self.name:['*']},anim_textures={},texture_materials={},disable_part_visibility=True),indent=2)+'\n')
         design=dict(name=self.name,label=self.label,palette=self.colors,description=self.description,ground_parts=self.feet,leg_bones=self.legs,walk_stride_blocks=self.walk_stride_blocks,cubes=len(self.elements),bones=len(self.groups))
+        if self.name=='ark_gallimimus':design.update(run_stride_blocks=self.run_stride_blocks,native_carrier='SNIFFER',rideable=True,diet='herbivore',ecology='loose_herd')
         if self.name=='ark_mosasaurus':design.update(aquatic=True,swim_stride_blocks=self.walk_stride_blocks,native_carrier='DOLPHIN',native_collision_scale=4,rideable=False,mouth_anchor_blocks=[0,1.0625,-9.4375])
         (out/'design.json').write_text(json.dumps(design,indent=2)+'\n')
         return m
@@ -481,6 +492,151 @@ def velociraptor():
             m.beam(f'hand_claw_{side}_{i}_tip',hook,[hook[0]-sign*.2,14.45,hook[2]-.6],.40,.4,arm,5)
     return m.finish()
 
+
+def gallimimus():
+    m=Model('ark_gallimimus','Gallimimus',['#bc8e68','#90694e','#e1c6a0','#635c50','#dbaf5b','#292620','#7a7161','#77533e'],
+            'S-förmiger Hals und zahnloser Schnabel · lange Laufbeine mit drei Zehen · feines Federkleid rekonstruiert')
+
+    def axial_segment(name,start,end,width,depth,bone,back,belly):
+        rise,run=end[1]-start[1],end[2]-start[2]
+        length=math.hypot(rise,run);rotation=(math.degrees(math.atan2(run,rise)),0,0)
+        join=min(length*.22,depth*.36)
+        x,y,z=start
+        for suffix,breadth,low,high,color in (
+                ('',1,-.29,.29,0),('_back',.74,.16,.50,back),('_belly',.73,-.50,-.16,belly)):
+            half=width*breadth/2
+            m.cube(name+suffix,[x-half,y-join,z+low*depth],[x+half,y+length+join,z+high*depth],
+                   bone,color,rotation,start)
+
+    m.bone('body',[0,29,2])
+    m.profile('trunk',[(-11.5,2.4,26,30.7),(-7,4.3,23.3,32.7),(1.5,5.5,22.5,33.4),
+                      (6,6.8,23.2,33.3),(10,5.6,24.6,32.5),(13,3.0,26.3,31.1)],belly=2)
+    m.cube('torso',[-3.25,31,-6],[3.25,33.5,9],color=1)
+    m.bone('neck',[0,31,-6],'body')
+    neck=[(0,29.8,-7.0),(0,33.2,-10.0),(0,36.9,-13.2),(0,40.0,-14.25),
+          (0,43.05,-13.45),(0,46.7,-13.75),(0,49.45,-15.3),(0,50.8,-17.35)]
+    m.bone('neck_upper',neck[4],'neck')
+    for i,(start,end,width,depth) in enumerate(zip(neck,neck[1:],
+                                                  [4.7,4.0,3.15,2.65,2.3,2.05,2.3],
+                                                  [5.45,4.2,3.3,2.7,2.45,2.3,2.4])):
+        axial_segment(f'neck_core_{i}',start,end,width,depth,'neck' if i<4 else 'neck_upper',1,2)
+    m.bone('head',[0,50.55,-17.3],'neck_upper')
+    m.profile('skull',[(-20.6,1.0,50.0,51.65),(-19.15,1.68,49.75,52.4),
+                      (-17.5,1.73,49.75,52.65),(-16.1,1.37,50.0,51.95)],'head',belly=2)
+    m.profile('beak',[(-23.9,.68,49.82,50.20),(-22.65,1.02,49.88,50.88),
+                      (-20.75,1.18,49.92,51.4),(-19.9,1.27,49.93,51.46)],'head',6)
+    m.bone('jaw',[0,49.82,-17.95],'head')
+    m.profile('beak_lower',[(-23.8,.65,49.62,49.76),(-22.55,.94,49.48,49.81),
+                            (-20.25,1.13,49.35,49.86)],'jaw',6)
+    m.profile('mandible',[(-20.4,1.12,49.35,49.83),(-18.3,1.48,49.30,49.84),
+                          (-16.65,1.16,49.65,50.2)],'jaw',belly=2)
+    m.eyes(1.65,50.95,-19.31,size=.72)
+    for sign in (-1,1):
+        m.beam(f'brow_{sign}',[sign*1.43,51.75,-20.15],[sign*1.54,52.05,-17.9],
+               .48,.38,'head',1)
+        m.beam(f'cheek_{sign}',[sign*1.31,50.35,-20.15],[sign*1.49,50.8,-17.25],
+               .46,.50,'head',2)
+        lo,hi=sorted([sign*1.093,sign*1.21])
+        m.cube(f'nostril_{sign}',[lo,50.38,-21.62],[hi,50.56,-21.16],'head',5)
+
+    m.bone('tail',[0,28,8],'body')
+    tail=[(0,28.3,8),(0,28.85,13),(0,29.35,19),(0,29.65,25),(0,29.75,31),
+          (0,29.5,36.5),(0,29.0,42),(0,28.2,47),(0,27.25,52)]
+    m.bone('tail_tip',tail[4],'tail')
+    for i,(start,end,width,depth) in enumerate(zip(tail,tail[1:],
+                                                  [5.3,4.0,3.15,2.45,1.85,1.38,.98,.6],
+                                                  [5.7,4.65,3.45,2.7,1.95,1.42,1.05,.6])):
+        axial_segment(f'tail_segment_{i}',start,end,width,depth,'tail' if i<4 else 'tail_tip',
+                      2 if i<4 else 0,7 if i in (2,4,6) else 1)
+
+    for side,x in [('left',-6.7),('right',6.7)]:
+        sign=1 if x>0 else -1
+        for i,(start,end,width,depth,color) in enumerate([
+                ((4.0,31.2,-8.8),(5.15,30.4,-2.4),1.9,2.15,0),
+                ((4.35,28.4,-7.4),(5.45,28.6,-1.0),1.55,2.1,2),
+                ((5.25,30.45,-2.9),(6.42,31.0,5.7),1.55,2.55,7),
+                ((5.65,28.1,-.95),(6.65,28.9,6.8),1.6,2.9,0)]):
+            a=(sign*start[0],*start[1:]);b=(sign*end[0],*end[1:])
+            m.beam(f'flank_{side}_{i}',a,b,width,depth,'body',color)
+
+        leg='leg_'+side;m.bone(leg,[x,29,5],'body');m.legs.append(leg)
+        knee=[sign*7.45,19.8,.55];hock=[sign*7.48,8.9,6.6];foot=[sign*7.5,1.4,1.45]
+        m.beam('thigh_'+side,[x,29,5],knee,3.35,3.4,leg)
+        m.beam('haunch_'+side,[sign*7.1,29.8,5.25],[sign*7.85,24.0,3.35],3.25,4.70,leg)
+        m.beam('thigh_flank_'+side,[sign*8.25,28.3,4.6],[sign*8.25,22.15,1.5],1.35,2.85,leg,1)
+        m.beam('thigh_taper_'+side,[sign*7.5,24.5,3.4],knee,2.65,3,leg,0)
+        m.beam('knee_'+side,[sign*7.42,20.6,.95],[sign*7.46,18.8,1.15],2.4,2.5,leg,1)
+        m.beam('shin_'+side,knee,hock,1.48,1.58,leg,3)
+        m.beam('calf_'+side,[sign*7.46,19.65,.85],[sign*7.47,14.2,3.95],1.94,2.15,leg,1)
+        m.beam('hock_'+side,[sign*7.48,10.0,6.12],[sign*7.48,8.23,6.13],1.62,1.65,leg,3)
+        m.beam('metatarsus_'+side,hock,foot,1.24,1.30,leg,3)
+        m.beam('tarsus_ridge_'+side,[sign*7.50,8.45,5.88],[sign*7.5,2.25,1.18],.69,.68,leg,6)
+        m.cube('foot_pad_'+side,[foot[0]-1,0.52,.2],[foot[0]+1,1.63,2.2],leg,3)
+        for i,offset in enumerate((-1,0,1)):
+            px=foot[0]+offset*.61;pivot=[px,0,1.45];rotation=(0,-offset*14,0)
+            length=4.25 if offset==0 else 3.35-.25*sign*offset
+            for part,wide,low,high,front,rear,color in (
+                    ('',.49,0,1.22,.53,-.05,3),
+                    ('_tip',.37,0,1.04,.85,.48,3),
+                    ('_claw',.25,.13,1.21,1,.77,6)):
+                m.cube(f'toe_{side}_{i}{part}',[px-wide,low,1.45-front*length],
+                       [px+wide,high,1.45-rear*length],leg,color,rotation,pivot,ground=True)
+
+        arm='arm_'+side
+        shoulder=[sign*4.55,29.05,-7.0];elbow=[sign*5.45,22.5,-3.65]
+        wrist=[sign*5.7,19.9,-8.1];palm=[sign*5.62,19.12,-9.33]
+        m.bone(arm,shoulder,'body')
+        m.beam('upper_arm_'+side,shoulder,elbow,1.53,1.72,arm)
+        m.beam('forearm_'+side,elbow,wrist,1.13,1.32,arm,1)
+        m.beam('palm_'+side,wrist,palm,.84,1.03,arm,3)
+        m.beam('shoulder_'+side,[sign*4.65,29.3,-7.15],[sign*5.58,24.1,-4.2],1.94,2.05,arm,0)
+        for i,(ay,az,by,bz,width,material) in enumerate([
+                (27.7,-6.1,22.2,-4.0,1.08,7),(24.3,-4.1,20.55,-6.85,.74,1)]):
+            m.beam(f'arm_covert_{side}_{i}',[sign*5.68,ay,az],[sign*6.0,by,bz],
+                   width,width*.95,arm,material)
+        for i,(y,z,length) in enumerate([(19.55,-9.02,1.9),(19.05,-9.21,2.35),(18.65,-8.92,1.62)]):
+            start=[palm[0],y,z];knuckle=[sign*5.45,y-.42,z-length*.64]
+            end=[sign*5.41,y-.75,z-length]
+            m.beam(f'finger_{side}_{i}',start,knuckle,.44,.40,arm,3)
+            m.beam(f'finger_{side}_{i}_tip',knuckle,end,.36,.34,arm,3)
+            m.beam(f'finger_{side}_{i}_claw',end,[sign*5.15,y-1.05,z-length-.43],.27,.27,arm,6)
+    m.finish()
+    walk=next(a for a in m.animations if a['name']=='walk')
+    walk['anim_time_update']=f'query.anim_time + query.delta_time * math.clamp(query.ground_speed / ({m.walk_stride_blocks:.6f} * query.model_scale), 0.35, 2.4)'
+    # The splayed toes need extra clearance between the walk's stance keyframes.
+    walk_floor_margin=.09
+    for track in walk['animators'].values():
+        for key in track['keyframes']:
+            if key['channel']=='position':key['data_points'][0]['y']=str(float(key['data_points'][0]['y'])+walk_floor_margin)
+    tracks={};strides=[]
+    for leg in m.legs:
+        source=walk['animators'][m.groups[leg]['uuid']]['keyframes']
+        rotations=[k for k in source if k['channel']=='rotation']
+        positions={k['time']:float(k['data_points'][0]['y']) for k in source if k['channel']=='position'}
+        foot=[v for c in m.elements if c['name'] in m.feet and c['uuid'] in m.nodes[leg]['children'] for v in vertices(c)]
+        pivot=m.groups[leg]['origin'];rotation=[];position=[]
+        def turned(point,angle):
+            return [a+b for a,b in zip(rotate([a-b for a,b in zip(point,pivot)],[angle,0,0]),pivot)]
+        for k in rotations:
+            time=k['time'];old=float(k['data_points'][0]['x']);angle=old*2
+            lift=positions[time]+min(turned(v,old)[1] for v in foot)-.04-walk_floor_margin
+            rotation.append((time,[angle,0,0]))
+            position.append((time,[0,-min(turned(v,angle)[1] for v in foot)+max(0,lift)*1.8+.12,0]))
+        tracks[leg]=[('rotation',rotation),('position',position)]
+        z=[sum(turned(v,a)[2] for v in foot)/len(foot) for a in [32,-32]]
+        strides.append((z[1]-z[0])/16/.6)
+    m.run_stride_blocks=round(sum(strides)/len(strides),6)
+    tracks['tail']=('rotation',[(0,[0,-7,0]),(.5,[0,7,0]),(1,[0,-7,0])])
+    tracks['tail_tip']=('rotation',[(0,[1,2,0]),(.25,[-1,-3,0]),(.5,[1,-2,0]),(.75,[-1,3,0]),(1,[1,2,0])])
+    tracks['neck']=('rotation',[(0,[-10,0,0]),(.25,[-15,0,0]),(.5,[-10,0,0]),(.75,[-15,0,0]),(1,[-10,0,0])])
+    tracks['head']=('rotation',[(0,[8,0,0]),(.25,[11,0,0]),(.5,[8,0,0]),(.75,[11,0,0]),(1,[8,0,0])])
+    m.animate('run',1,tracks)
+    m.animations[-1]['anim_time_update']=f'query.anim_time + query.delta_time * math.clamp(query.ground_speed / ({m.run_stride_blocks:.6f} * query.model_scale), 0.35, 2.4)'
+    m.animate('graze',4,{'neck':('rotation',[(0,[0,0,0]),(.85,[-104,0,0]),(2.85,[-104,0,0]),(4,[0,0,0])]),
+                         'neck_upper':('rotation',[(0,[0,0,0]),(.85,[-34,0,0]),(2.85,[-34,0,0]),(4,[0,0,0])]),
+                         'head':('rotation',[(0,[0,0,0]),(.85,[43,-3,0]),(2,[48,3,0]),(2.85,[43,0,0]),(4,[0,0,0])])})
+    return m
+
 def pteranodon():
     m=Model('ark_pteranodon','Pteranodon',['#827669','#675f58','#c8b192','#554332','#c9a054','#2a2826','#b69168','#996e59'],'Lang ausgestrichener Schnabel und keilförmiger Kamm · geknickte Flügel mit kupferbrauner Flughaut')
     m.bone('body',[0,21,1]);m.mass('torso',[-4.3,16,-6],[4.3,26,7])
@@ -670,7 +826,7 @@ def mosasaurus():
     return m
 
 if __name__=='__main__':
-    models=[trex(),triceratops(),stegosaurus(),brachiosaurus(),velociraptor(),pteranodon(),dilophosaurus(),mosasaurus()]
+    models=[trex(),triceratops(),stegosaurus(),brachiosaurus(),velociraptor(),gallimimus(),pteranodon(),dilophosaurus(),mosasaurus()]
     for m in models:
         m.export();print(m.name,len(m.elements),'cubes',len(m.groups),'bones')
     (ROOT/'LICENSE.txt').write_text('Original dinosaur geometry, textures, animations and preview generators: CC0 1.0 Universal.\nhttps://creativecommons.org/publicdomain/zero/1.0/\nCreated for this project, 2026-11-07. No third-party dinosaur assets.\n')

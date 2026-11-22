@@ -1,9 +1,39 @@
 """Independent corner transforms at keyframes and intermediate linear rotations."""
 from itertools import product
 from pathlib import Path
-import json, math
+import argparse, json, math
 
 ROOT=Path(__file__).resolve().parent
+RUNTIME=ROOT.parent/'dino-plugin/src/main/java/de/ark/dinos/ModelBounds.java'
+
+
+def render_runtime_bounds(bounds):
+    """Six source-space limits, rounded outward rather than inferred from culling boxes."""
+    cases=[]
+    for item in sorted(bounds,key=lambda item:item['name']):
+        values=[math.floor(value*1_000_000)/1_000_000 for value in item['min']]
+        values += [math.ceil(value*1_000_000)/1_000_000 for value in item['max']]
+        numbers=', '.join(f'{value:.6f}' for value in values)
+        cases.append(f'            case "{item["name"]}" -> new Envelope({numbers});')
+    return '''package de.ark.dinos;
+
+// Generated from final animated cube corners by dino-models/verify_animated_bounds.py.
+final class ModelBounds {
+    private ModelBounds() { }
+
+    record Envelope(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+        double halfWidth() { return Math.max(Math.abs(minX), Math.abs(maxX)); }
+        double halfLength() { return Math.max(Math.abs(minZ), Math.abs(maxZ)); }
+    }
+
+    static Envelope source(String modelName) {
+        return switch (modelName) {
+'''+'\n'.join(cases)+'''
+            default -> throw new IllegalArgumentException("Unknown dinosaur model " + modelName);
+        };
+    }
+}
+'''
 
 def transform(point, pivot, angles):
     x,y,z=[a-b for a,b in zip(point,pivot)]
@@ -60,6 +90,15 @@ def check(name):
     return dict(name=name,min=low,max=high,corner_samples=count,maximum_rotation_step_degrees=.25)
 
 if __name__=='__main__':
+    parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--write-runtime',action='store_true',help='Regenerate shared Java envelopes after intentional model changes')
+    args=parser.parse_args()
     result=[check(p.name) for p in sorted((ROOT/'models').iterdir()) if p.is_dir()]
+    source=render_runtime_bounds(result)
+    if args.write_runtime:
+        RUNTIME.parent.mkdir(parents=True,exist_ok=True)
+        RUNTIME.write_text(source)
+    elif RUNTIME.exists():
+        assert RUNTIME.read_text()==source, 'Runtime envelopes differ from final animated models; run verify_animated_bounds.py --write-runtime'
     (ROOT/'animated-bounds.json').write_text(json.dumps(result,indent=2)+'\n')
     print('PASS animated bounds:',len(result),'models',sum(r['corner_samples'] for r in result),'corner samples')

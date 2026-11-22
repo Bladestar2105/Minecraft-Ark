@@ -10,6 +10,7 @@ from test_model_poses import boxes_overlap, exported_model, pose
 # and old back surfaces as (half-width, front Z, rear Z, height below hips) in pixels.
 # The hip is 0.6 blocks above the measured mounted player's feet.
 SEATS = {
+    'gallimimus': (1.00, 0, 2.09375, 1, [(3.2, -6, 9, 0)]),
     'trex': (2.10, .107950, 3.907772, 2, [(5.04, -8, 12, 0), (5.4, 5, 16, 1)]),
     'triceratops': (1.45, 0, 2.809375, 2, [(5.76, -10, 14, 0), (6.84, 9, 19, 3)]),
     'stegosaurus': (1.55, 0, 2.906250, 2, [(5.04, -11, 14, 0), (6.48, 8, 19, 1)]),

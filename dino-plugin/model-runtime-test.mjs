@@ -22,8 +22,8 @@ const paperCache = process.env.DINO_MODEL_CACHE ?? cache;
 const paperJar = process.env.DINO_MODEL_PAPER ?? `${cache}/paper.jar`;
 const output = process.env.DINO_MODEL_OUTPUT ?? `${root}output/dino-adapter-runtime-20261107`;
 // Independent acceptance values from the agreed adult proportions, not the implementation under test.
-const adultFactors={trex:2.1,triceratops:1.45,stegosaurus:1.55,brachiosaurus:2.15,velociraptor:1,pteranodon:1,dilophosaurus:1.15};
-const backs={trex:1.860844,triceratops:1.9375,stegosaurus:1.875,brachiosaurus:2.5,velociraptor:1.489667,pteranodon:1.619054,dilophosaurus:1.191365};
+const adultFactors={trex:2.1,triceratops:1.45,stegosaurus:1.55,brachiosaurus:2.15,velociraptor:1,pteranodon:1,dilophosaurus:1.15,gallimimus:1};
+const backs={trex:1.860844,triceratops:1.9375,stegosaurus:1.875,brachiosaurus:2.5,velociraptor:1.489667,pteranodon:1.619054,dilophosaurus:1.191365,gallimimus:2.09375};
 const ravager=name=>['trex','velociraptor','dilophosaurus'].includes(name);
 const expectedNativeScale=name=>backs[name]*adultFactors[name]/(ravager(name)?2.2625:2.09375);
 // Java's plugin dependency resolver does not read the inherited proxy environment itself.
@@ -151,14 +151,30 @@ try {
     // PNG previews are untracked; use the installer's embedded-texture extraction on a fresh checkout.
     'import sys; from pathlib import Path; sys.path.insert(0,sys.argv[1]); from install_plugins import dino_item_files,dino_model_files; root=Path(sys.argv[2]); server=Path(sys.argv[3]); models=dino_model_files(root); files=dino_item_files(root)+(models if sys.argv[4]=="1" else [(name,content) for name,content in models if name.endswith(".png") and "/ark_egg_" not in name]); [(p.parent.mkdir(parents=True,exist_ok=True),p.write_bytes(content)) for name,content in files for p in [server/name.removeprefix("data/")]]',
     `${root}scripts`, root, directory, gameplay?'1':'0']);
+  if (!fallback) {
+    const receiver = `${directory}/plugins/Geyser-Spigot/extensions/geyserutils-geyser-1.0-SNAPSHOT.jar`;
+    if (process.env.DINO_GEYSER_UTILS_EXTENSION) await copyFile(process.env.DINO_GEYSER_UTILS_EXTENSION, receiver);
+    const expectedReceiver = JSON.parse(await readFile(`${root}dependencies-runtime.json`, 'utf8')).find(item => item.project === 'geyser-utils-geyser');
+    const receiverHash = crypto.createHash('sha256').update(await readFile(receiver)).digest('hex');
+    assert.equal(receiverHash, expectedReceiver.sha256, 'Native model fixture must run the pinned GeyserUtils receiver');
+    report.geyserUtilsExtensionSha256 = receiverHash;
+  }
   const generatedPack = `${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack`;
   await rm(generatedPack, { recursive: true, force: true });
   await rm(`${generatedPack}.zip`, { force: true });
+  if (process.env.DINO_REUSE_PREVIOUS_PACK_CACHE === '1') {
+    assert.ok(gameplay && process.env.DINO_PREVIOUS_MODEL_REPORT, 'Cache regeneration probe needs the previous isolated gameplay report');
+    const previous = JSON.parse(await readFile(process.env.DINO_PREVIOUS_MODEL_REPORT, 'utf8'));
+    const pack = (previous.packsAfterRestart ?? previous.packs).bedrock;
+    await cp(`${previous.fixture}/${pack.path.slice(0,-4)}`, generatedPack, { recursive: true });
+    report.seededIntermediatePackCache = true;
+    report.limits.push('Server-side regeneration with an intermediate pack cache only; real cold/warm client cache acceptance was not run.');
+  }
   const geyserConfig = `${directory}/plugins/Geyser-Spigot/config.yml`;
   execFileSync('python3', ['-c', 'import pathlib,sys,yaml; p=pathlib.Path(sys.argv[1]); c=yaml.safe_load(p.read_text()); c["bedrock"]["address"]="127.0.0.1"; c["bedrock"]["port"]=int(sys.argv[2]); p.write_text(yaml.safe_dump(c,sort_keys=False))', geyserConfig, String(await freePort())]);
   await mkdir(`${directory}/plugins/BetterModel/models`, { recursive: true });
   report.modelSources={};
-  const rideSpecies = ['trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus'];
+  const rideSpecies = ['trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus', 'gallimimus'];
   const species = [...rideSpecies, 'mosasaurus'];
   for (const name of species) {
     await copyFile(`${root}dino-models/models/ark_${name}/ark_${name}.bbmodel`, `${directory}/plugins/BetterModel/models/ark_${name}.bbmodel`);
@@ -179,7 +195,7 @@ try {
   if(!gameplay)await copyFile(`${root}dino-models/models/ark_trex/ark_trex.bbmodel`,`${directory}/plugins/BetterModel/models/shared_fixture.bbmodel`);
   if(process.env.DINO_SAVED_MODEL_WORLD)await cp(process.env.DINO_SAVED_MODEL_WORLD,`${directory}/ark`,{recursive:true});
   await mkdir(`${directory}/fixture-classes`);
-  execFileSync(`${javaHome}/bin/javac`, ['--release', '25', '-sourcepath', '', '-cp', `${plugin}.deps/*:${directory}/plugins/GeyserModelEngine-1.0.9.jar`, '-d', `${directory}/fixture-classes`, ...(gameplay ? [`${plugin}src/runtime/java/de/ark/dinos/ModelGameplayFixture.java`] : [...['DinoModels', 'BetterModelAdapter', 'BetterModelCleanup', 'DinoPassengerOrder', 'BedrockSeats', 'DinoGrowth', 'DinoSizes', 'EggAssets'].map(name => `${plugin}src/main/java/de/ark/dinos/${name}.java`), ...(!fallback?[`${plugin}src/runtime/java/de/ark/dinos/BridgeRaceProbe.java`]:[]), `${plugin}src/runtime/java/de/ark/dinos/${fallback?'ModelFallbackFixture':'ModelFixture'}.java`])]);
+  execFileSync(`${javaHome}/bin/javac`, ['--release', '25', '-sourcepath', '', '-cp', `${plugin}.deps/*:${directory}/plugins/GeyserModelEngine-1.0.9.jar`, '-d', `${directory}/fixture-classes`, ...(gameplay ? [`${plugin}src/runtime/java/de/ark/dinos/ModelGameplayFixture.java`] : [...['DinoModels', 'BetterModelAdapter', 'BetterModelCleanup', 'DinoPassengerOrder', 'BedrockSeats', 'DinoGrowth', 'DinoSizes', 'ModelBounds', 'EggAssets'].map(name => `${plugin}src/main/java/de/ark/dinos/${name}.java`), ...(!fallback?[`${plugin}src/runtime/java/de/ark/dinos/BridgeRaceProbe.java`]:[]), `${plugin}src/runtime/java/de/ark/dinos/${fallback?'ModelFallbackFixture':'ModelFixture'}.java`])]);
   await mkdir(`${directory}/fixture-resources`);
   await copyFile(`${plugin}src/main/resources/egg-assets.properties`,`${directory}/fixture-resources/egg-assets.properties`);
   let fixtureYaml = 'name: ModelFixture\nversion: 1.0.0\nmain: de.ark.dinos.ModelFixture\napi-version: \'26.3\'\ndepend: [BetterModel, packetevents, GeyserModelEngine]\ncommands:\n  dm: {}\n';
@@ -203,7 +219,7 @@ try {
       const state=await command('dm');assert.match(state,/scale=1.2;invisible=false;passengers=1/);if(process.env.DINO_SAVED_MODEL_WORLD){
         assert.match(state,/loaded=true/);assert.match(state,fallback==='without-models'?/trackers=unavailable;shared=unavailable/:/trackers=\[\];shared=\[shared_fixture\]/);
         const nativeAll=state.match(/;nativeAll=(.*)/)[1].trim().split('|').map(row=>row.split(':'));
-        assert.equal(nativeAll.length,8,'Saved fallback must include all eight species');
+        assert.ok(nativeAll.length>=8 && nativeAll.length<=species.length,'Saved fallback keeps the eight historical species and accepts Gallimimus when present');
         for(const[name,scale,invisible,trackers]of nativeAll){
           assert.ok(Math.abs(Number(scale)-(name==='trex'?1.2:name==='mosasaurus'?4:1))<.002,`${name} retained model calibration`);assert.equal(invisible,'false');
           assert.equal(trackers,fallback==='without-models'?'unavailable':name==='stegosaurus'?'[shared_fixture]':'[]');
@@ -252,7 +268,7 @@ try {
       assert.doesNotMatch(log,/Cannot invoke .*sendEntityData.*because .*task.*null|Exception.*bridge-publication-probe/);return report.race;
     });
   } else {
-  await check('Pinned model stack registers all eight models',async()=>{
+  await check('Pinned model stack registers all nine models',async()=>{
     const registered=(await command('dm model-registrations')).trim().split(';');
     report.modelRegistrations=registered;
     assert.deepEqual(registered,species.map(name=>`${name}:java=true,bedrock=true`));
@@ -261,18 +277,18 @@ try {
   if(process.env.DINO_MODEL_NAMES_ONLY) {
     await (await import('./name-runtime-checks.mjs')).default({check,command,alice,clients,Client,eventually,delay,inspect,species,nativeIds,readVi,spawns,report});
   } else {
-  await check('Generated Java pack and pinned Geyser register eight distinct species egg items',async()=>{
+  await check('Generated Java pack and pinned Geyser register nine distinct species egg items',async()=>{
     report.javaPackAudit=JSON.parse(execFileSync('python3',[`${root}dino-models/verify_java_pack.py`,`${directory}/plugins/BetterModel/build.zip`],{encoding:'utf8'}));
     const result=await command('dm egg-mappings');
-    assert.match(result,/javaAssets=34;/);assert.match(result,/eggPack=true;/);
-    assert.match(result,/bedrockDefinitions=8;/);assert.match(result,/modelEntities=8;/);
+    assert.match(result,/javaAssets=38;/);assert.match(result,/eggPack=true;/);
+    assert.match(result,/bedrockDefinitions=9;/);assert.match(result,/modelEntities=9;/);
     for(const name of species)assert.ok(result.includes(`arkdinos:egg_${name}`),`Missing native ${name} item mapping`);
     assert.ok(!log.match(/Error reading definition.*ark-dino-eggs|Failed to register custom item.*arkdinos/));
     return result;
   });
   await check('Native Geyser Creative alias entries reverse-map to usable vanilla Java stacks on every supported protocol',async()=>{
     const result=await command('dm creative-alias-mappings');const counts=Object.fromEntries(result.trim().split(';').map(row=>{const [key,value]=row.split('=');return[key,Number(value)];}));
-    assert.equal(counts.aliases,8);assert.ok(counts.protocols>0);assert.equal(counts.roundtrips,8*counts.protocols);return result;
+    assert.equal(counts.aliases,9);assert.ok(counts.protocols>0);assert.equal(counts.roundtrips,9*counts.protocols);return result;
   });
   await check('Startup attachment waits for BetterModel pack readiness',async()=>{
     const state=await inspect('early');report.earlyStartup=state;
@@ -288,8 +304,8 @@ try {
     await command('dm dismount baseline');await command('dm baselineclose baseline');return wire;
   });
   report.measurements = {};
-  const bodyMids={trex:1.423344,triceratops:1.25,stegosaurus:1.21875,brachiosaurus:1.90625,velociraptor:1.145916,pteranodon:1.306554,dilophosaurus:.9};
-  await check('Seven actual native seat and collision measurements; emitted player-first passenger packets',async()=>{
+  const bodyMids={trex:1.423344,triceratops:1.25,stegosaurus:1.21875,brachiosaurus:1.90625,velociraptor:1.145916,pteranodon:1.306554,dilophosaurus:.9,gallimimus:1.6};
+  await check('Eight actual native seat and collision measurements; emitted player-first passenger packets',async()=>{
     for (const [i, name] of rideSpecies.entries()) {
       await command(`dm spawn ${name} ${i*7}`); await delay(500);
       await command(`dm mount ${name} ModelRider`); await delay(400);
@@ -429,7 +445,7 @@ try {
     await command('dm unload trex');await eventually(async()=>/active=0;stale=0/.test(await command('dm bridge-state trex')),'Unloaded GME actor survived its tracker');
     await command('dm attach trex');await eventually(async()=>/active=1;stale=0/.test(await command('dm bridge-state trex')),'Reattached GME actor does not use the current tracker');
     await command('dm attach early');assert.equal(Number((await inspect('early')).scale),expectedNativeScale('trex'));
-    return 'No duplicate trackers; unload and reset restore caller scale; all seven reattach';
+    return 'No duplicate trackers; unload and reset restore caller scale; all eight reattach';
   });
   await check('Only owned bridge actor spawn factories change, including an initially uncached actor',async()=>{
     const result={};
@@ -531,7 +547,7 @@ try {
     assert.ok(fallbackPoses.length>=1,'Stopping the bridge stream must restore an absolute native carrier pose');
     await command('dm dismount triceratops');return report.bridgeMovement;
   });
-  await check('Juvenile growth scales the real native carrier and model together for all seven species',async()=>{
+  await check('Juvenile growth scales the real native carrier and model together for all eight species',async()=>{
     const samples={};
     for(const name of rideSpecies){
       const adult=await inspect(name);await command(`dm prepare-juvenile ${name}`);const birth=await inspect(name);

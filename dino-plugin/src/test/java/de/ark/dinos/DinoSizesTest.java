@@ -22,9 +22,9 @@ public final class DinoSizesTest {
                 "Rex hatchling render scale combines species size and persisted growth");
         var rex = DinoSizes.adultBounds("ark_trex");
         close(rex.width(), 2.91, "Rex visible width rounds outward");
-        close(rex.height(), 5.28, "Rex visible height rounds outward");
-        close(rex.length(), 11.96, "Rex visible length rounds outward");
-        close(DinoSizes.adultBounds("ark_pteranodon").width(), 8.17, "Flight clearance includes unfolded wings");
+        close(rex.height(), 5.41, "Rex visible height rounds outward");
+        close(rex.length(), 12.18, "Rex visible length rounds outward");
+        close(DinoSizes.adultBounds("ark_pteranodon").width(), 8.16, "Flight clearance includes unfolded wings");
         for (String model : models) {
             double attachment = model.equals("ark_trex") || model.equals("ark_velociraptor") || model.equals("ark_dilophosaurus") ? 2.2625 : 2.09375;
             close(DinoSizes.nativeScale(model) * attachment, DinoSizes.backHeight(model), model + " native mount matches the visible saddle");
@@ -35,15 +35,25 @@ public final class DinoSizesTest {
             }
         }
         close(DinoSizes.nativeScale("ark_mosasaurus"), 4, "Aquatic collision keeps its native controller scale");
-        // Independently sampled envelope extrema, before the species multiplier.
-        envelopeContains("ark_trex", -.69244277, -.010177325, -2.205604287);
-        envelopeContains("ark_trex", .69244277, 2.658206253, 3.503061974);
-        envelopeContains("ark_stegosaurus", 2.421701509, 2.764584078, 3.504479267);
-        envelopeContains("ark_brachiosaurus", .6875, 5.822123601, 4.198447115);
-        envelopeContains("ark_pteranodon", -4.080704534, -.546060649, -3.188734881);
-        envelopeContains("ark_pteranodon", 4.080704534, 3.107420001, 2.371607158);
-        envelopeContains("ark_dilophosaurus", .879351914, 2.263617670, 2.814958485);
-        envelopeContains("ark_mosasaurus", 5.492842444, -2.317136732, 14.500933993);
+        // Independently transformed final-model extrema, before the species multiplier.
+        envelopeContains("ark_brachiosaurus", -0.715625000000000, -0.002764965246550, -2.755067246155886);
+        envelopeContains("ark_brachiosaurus", 0.715625000000000, 5.816724605325704, 4.198447114381509);
+        envelopeContains("ark_dilophosaurus", -1.040077957397711, -0.008087253469159, -1.959144051359056);
+        envelopeContains("ark_dilophosaurus", 1.040077957397711, 2.229001931552599, 2.814958484131847);
+        envelopeContains("ark_mosasaurus", -5.553240170888869, -2.273787826741154, -10.072389615728401);
+        envelopeContains("ark_mosasaurus", 5.553240170888869, 3.634844674793386, 14.512855271476568);
+        envelopeContains("ark_pteranodon", -4.077197167314868, -0.536371904676064, -3.183206616449002);
+        envelopeContains("ark_pteranodon", 4.077197167314868, 3.097386116372260, 2.367850701733349);
+        envelopeContains("ark_stegosaurus", -1.551743556538070, 0.000000000000000, -2.482357806302712);
+        envelopeContains("ark_stegosaurus", 2.602229773018967, 2.737500000000000, 3.638056312933649);
+        envelopeContains("ark_trex", -0.692442769595454, -0.010177324923287, -2.286794624286744);
+        envelopeContains("ark_trex", 0.692442769595454, 2.562666736630999, 3.509220876231562);
+        envelopeContains("ark_triceratops", -0.936768608916124, -0.016121210559007, -2.928636908382682);
+        envelopeContains("ark_triceratops", 0.936989433821639, 2.396702080721023, 2.691636740603795);
+        envelopeContains("ark_velociraptor", -0.842322637129099, -0.009598669639068, -2.059645687526335);
+        envelopeContains("ark_velociraptor", 0.842322637129099, 2.117936802491760, 3.562878447285873);
+        envelopeContains("ark_gallimimus", -.635959149566, -.011930838259, -2.059880633595);
+        envelopeContains("ark_gallimimus", .635959149566, 3.293321466985, 3.268043567587);
         reject(() -> DinoSizes.adultScale("ark_unknown"), "Unknown species cannot silently receive a mismatched scale");
         reject(() -> DinoSizes.backHeight("ark_mosasaurus"), "Unrideable Mosasaurus has no saddle height");
         System.out.println("PASS: species proportions, adult and hatchling back heights, unchanged aquatic size");

@@ -88,13 +88,14 @@ final class SpawnLeaderboard implements Listener, AutoCloseable {
         }
     }
 
-    private World world() { return Bukkit.getWorld("ark"); }
+    private World world() { return Bukkit.getWorld(plugin.getConfig().getString("leaderboard-world", "ark")); }
     private Location position() { World world = world(); return world == null ? null : world.getSpawnLocation().add(8.5, 4, .5); }
     private boolean owned(Entity entity) { return entity instanceof TextDisplay && Byte.valueOf((byte) 1).equals(entity.getPersistentDataContainer().get(marker, PersistentDataType.BYTE)); }
 
     private void removeLoaded() {
-        World world = world();
-        if (world != null) for (TextDisplay entity : world.getEntitiesByClass(TextDisplay.class)) if (owned(entity)) entity.remove();
+        // A configuration reload can move the display to another world.
+        if (display != null && Bukkit.getEntity(display) instanceof TextDisplay entity && owned(entity)) entity.remove();
+        for (World world : Bukkit.getWorlds()) for (TextDisplay entity : world.getEntitiesByClass(TextDisplay.class)) if (owned(entity)) entity.remove();
         display = null;
     }
 

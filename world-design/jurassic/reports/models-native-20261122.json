@@ -1,0 +1,376 @@
+{
+  "recorded_on": "2026-11-22",
+  "status": "native_engine_and_protocol_checks_passed_with_client_acceptance_open",
+  "source_budget": "budget-native-20261122.md",
+  "source_parity": {
+    "all_nine_current_dinosaur_bbmodel_geometry_animation_hashes_match_native_model_run": true,
+    "all_eight_current_placed_egg_bbmodel_geometry_animation_hashes_match_native_model_run": true,
+    "all_eight_current_placed_egg_source_budgets_recounted": true,
+    "gallimimus": {
+      "bbmodel": "80c31e8546a4bbf1077922062bd6f5e4f9d96151792ec178bc15f58fc366187b",
+      "geo.json": "f7c69731a81e8f7b82bb91d0f88a0487194bc5cd66ab0c47760f58b8d307c9f5",
+      "animation.json": "a6b3725a9616b03fd0076abe38aa64e1cd17d17d41c4bb8d292246e00f57e35a"
+    }
+  },
+  "native_model_runtime": {
+    "harness": "dino-plugin/model-runtime-test.mjs",
+    "plugin_sha256": "3fa312efb5b3f1d4084217c87da1f086255c557b3701ade11ef7116b2bfcb1c9",
+    "groups_passed": 7,
+    "paper": "26.3-246-main@b31b4b5",
+    "java": "Temurin 25.0.5+8-LTS",
+    "bettermodel": "3.6.0",
+    "geyser_model_engine": "1.0.9",
+    "bridge_sha256": "ec18241f9a6be0cd1dfa05664cbfb27fac8c075a641973131d22e83ae1db61d8",
+    "geyserutils_geyser_receiver_sha256": "3d764418b47dfbaba0fb20bd3d3fa471b02e77a4a32c73d147a6e366bfe1214a",
+    "groups": [
+      "Installed candidate and real Geyser registries expose all nine models and both resource packs",
+      "Actual Gallimimus uses its own model, calibrated single rider and running animation",
+      "Actual trex driver and passenger keep their native vehicles through real model rebuild",
+      "Actual triceratops driver and passenger keep their native vehicles through real model rebuild",
+      "Actual stegosaurus driver and passenger keep their native vehicles through real model rebuild",
+      "Actual brachiosaurus driver and passenger keep their native vehicles through real model rebuild",
+      "Actual candidate growth and all nine model registrations survive a clean server restart"
+    ],
+    "limits": [
+      "Direct Java protocol777 clients verify real ArkDinos gameplay and actual model/registry/packet state; visible Java/Bedrock/console rendering is a separate acceptance step.",
+      "Bridge pose checks enroll these Java clients in the actual Bridge viewer sets to receive real encoded GeyserUtils actors; they do not establish real Geyser/Bedrock sessions."
+    ]
+  },
+  "pack_fingerprint_algorithm": "SHA256 of sorted UTF-8 filename + NUL + uncompressed entry SHA256 hex + LF; directories excluded",
+  "compiled_packs": {
+    "java": {
+      "initial": {
+        "bytes": 1956875,
+        "sha256": "5e3df3585d2c61a077c8f4906366a17711668b5bfe9f2140a1e8fbf7da6308fa",
+        "canonical_content_sha256": "4576f25285356152b47ee9a3e2acba32fe3abf2a5ca7fef0660acdb98a0c07e1"
+      },
+      "restart": {
+        "bytes": 1956875,
+        "sha256": "5e3df3585d2c61a077c8f4906366a17711668b5bfe9f2140a1e8fbf7da6308fa",
+        "canonical_content_sha256": "4576f25285356152b47ee9a3e2acba32fe3abf2a5ca7fef0660acdb98a0c07e1"
+      },
+      "restart_comparison": {
+        "same_zip": true,
+        "same_canonical_content": true,
+        "changed_content_entries": [],
+        "only_zip_timestamps_changed": false,
+        "same_header_uuid": null,
+        "same_header_version": null
+      }
+    },
+    "bedrock": {
+      "initial": {
+        "bytes": 1053399,
+        "sha256": "f8edabbb33634236cc7b37920def66fc2484eba5898eaea10476988682e5351e",
+        "canonical_content_sha256": "d1818befcfd977f1e23dfe05a9913bf6436eb94c5d3f3ee6c4c63826ec8cd5cf",
+        "header": {
+          "description": "GeyserModelEngine For Geyser",
+          "min_engine_version": [
+            1,
+            21,
+            100
+          ],
+          "name": "GeyserModelEngine",
+          "uuid": "d901b26c-d71c-413b-a63b-ae2621edc7c7",
+          "version": [
+            0,
+            0,
+            1
+          ]
+        }
+      },
+      "restart": {
+        "bytes": 1053399,
+        "sha256": "41687ab71a5f102ad1ea873c7d1fc1bde0dfcfa060693b3c63ab7aecbc3a17dd",
+        "canonical_content_sha256": "d1818befcfd977f1e23dfe05a9913bf6436eb94c5d3f3ee6c4c63826ec8cd5cf",
+        "header": {
+          "description": "GeyserModelEngine For Geyser",
+          "min_engine_version": [
+            1,
+            21,
+            100
+          ],
+          "name": "GeyserModelEngine",
+          "uuid": "d901b26c-d71c-413b-a63b-ae2621edc7c7",
+          "version": [
+            0,
+            0,
+            1
+          ]
+        }
+      },
+      "restart_comparison": {
+        "same_zip": false,
+        "same_canonical_content": true,
+        "changed_content_entries": [],
+        "only_zip_timestamps_changed": true,
+        "same_header_uuid": true,
+        "same_header_version": true
+      }
+    },
+    "bedrockEggs": {
+      "initial": {
+        "bytes": 11276,
+        "sha256": "06b106d234fb70dde7c7a87476df2a4780c65c1d13aaec9f613504616511dd16",
+        "canonical_content_sha256": "f76ea6c282c3238d8a35f6fa3cfab2d85a2ef66dc526776c37498cbfd2bb0b67",
+        "header": {
+          "description": "Nine original species egg sprites",
+          "min_engine_version": [
+            1,
+            21,
+            0
+          ],
+          "name": "ARK Dinosaur Eggs",
+          "uuid": "4b6d5dd8-9250-48cf-bc87-48251cfaf744",
+          "version": [
+            1,
+            3,
+            0
+          ]
+        }
+      },
+      "restart": {
+        "bytes": 11276,
+        "sha256": "06b106d234fb70dde7c7a87476df2a4780c65c1d13aaec9f613504616511dd16",
+        "canonical_content_sha256": "f76ea6c282c3238d8a35f6fa3cfab2d85a2ef66dc526776c37498cbfd2bb0b67",
+        "header": {
+          "description": "Nine original species egg sprites",
+          "min_engine_version": [
+            1,
+            21,
+            0
+          ],
+          "name": "ARK Dinosaur Eggs",
+          "uuid": "4b6d5dd8-9250-48cf-bc87-48251cfaf744",
+          "version": [
+            1,
+            3,
+            0
+          ]
+        }
+      },
+      "restart_comparison": {
+        "same_zip": true,
+        "same_canonical_content": true,
+        "changed_content_entries": [],
+        "only_zip_timestamps_changed": false,
+        "same_header_uuid": true,
+        "same_header_version": true
+      }
+    }
+  },
+  "compiled_geometry_audits": {
+    "java": {
+      "ok": true,
+      "models": 3705,
+      "cuboids": 7048
+    },
+    "bedrock": {
+      "ok": true,
+      "models": 17,
+      "geometries": 34,
+      "files": 140
+    },
+    "bedrock_entity_split": {
+      "dinosaurs": 9,
+      "placed_eggs": 8
+    }
+  },
+  "shared_source_animated_bounds": {
+    "report": "dino-models/animated-bounds.json",
+    "report_sha256": "1340f7f4b5f19d7b3e087890a7e31a30f058df33c598053092a71569898b11a4",
+    "runtime": "dino-plugin/src/main/java/de/ark/dinos/ModelBounds.java",
+    "runtime_sha256": "772bcf8983274f4cbacc60d79a2fa9feff7a097df480ad29fc48b043cb5f1a28",
+    "models": 9,
+    "corner_samples": 26004552,
+    "maximum_rotation_sample_step_degrees": 0.25,
+    "runtime_source_parity": "passed; six limits rounded outward to six decimal places",
+    "mosasaurus_runtime_max_y_blocks": 3.634845,
+    "limits": "Dense deterministic per-clip sampling, not an analytic proof for arbitrary simultaneous blends or terrain transforms."
+  },
+  "earlier_binary_regressions": {
+    "cohort_caveat": "These suites ran on the exact earlier JARs below, not the final scene-guard JAR. Final model inputs match the model-runtime cohort. Final scene contact is recorded separately.",
+    "aquatic": {
+      "harness": "dino-plugin/aquatic-runtime-test.mjs",
+      "groups_passed": 21,
+      "plugin_sha256": "44b54219e185f597a195c41bc68aa4c718e4e06faf7d184eb709fb5c08204cd2",
+      "paper": "26.3-246-main@b31b4b5 (2026-11-09T12:57:12Z) (Implementing API version 26.3.build.246-stable)",
+      "worldguard": "7.0.21+2424-da30a99",
+      "griefprevention": "16.18.8",
+      "boundary_fixture_correction": {
+        "reason": "Captured positions derived from the old envelope intersect the final animation clearance envelope with air or glass",
+        "surface_water_top": 16,
+        "old_surface_y": 12.4974,
+        "old_position_final_top": 16.132245,
+        "corrected_surface_y": 12.362555,
+        "preserved_water_margin": 0.0026,
+        "preserved_wall_margin": 0.042211780404422,
+        "production_code_changed": false,
+        "old_invalid_positions_asserted_unsafe": true
+      },
+      "boundary_distance_gain_blocks": 11.247531147094787,
+      "corner_net_inward_blocks": 4.498598666128702,
+      "corner_retry_progress_blocks": 10.211138311036823,
+      "limits": [
+        "Direct Java protocol777 test clients, not an official Java client, Mineflayer, Bedrock or PS5.",
+        "Damage uses native Mob.attack and interactions use Bukkit calls or dispatched native events.",
+        "The unloaded-neighbor guard uses a remote water pocket, a dispatched EntityMoveEvent, and an AI/velocity stimulus; natural entity ticking at an unloaded frontier is not reproduced.",
+        "Existing direct protocol physics/input fixture; no official rendered Java/Bedrock/Switch client acceptance."
+      ]
+    },
+    "swimming": {
+      "harness": "dino-plugin/swimming-runtime-test.mjs",
+      "groups_passed": 10,
+      "plugin_sha256": "44b54219e185f597a195c41bc68aa4c718e4e06faf7d184eb709fb5c08204cd2",
+      "paper": "26.3-246-main@b31b4b5",
+      "groups": [
+        "Seven land species float in wild, Stay, Free and owner-offline Follow modes for sixty seconds at adult carrier scales",
+        "A growing small Sniffer uses its current native eye height",
+        "All seven mounted species recover, preserve health and accept real forward input in deep water",
+        "Adult T. rex, Brachiosaurus and Velociraptor can be ridden from deep water up a natural shore",
+        "A ridden T. rex can exit at a one-block lip but cannot scale a fence or push its rider into a roof",
+        "An adult T. rex in Follow mode can walk out toward its owner on the bank",
+        "Submerged Ravager keeps its rider but native Sneak and game-mode cleanup still dismount",
+        "Water ceiling respects real rider collision without granting drowning immunity",
+        "Water plants and waterlogged blocks count as water; lava, Mosasaurus and ordinary mobs are excluded",
+        "Unloaded water probes do not load chunks; death, unload and shutdown remove swimmer state"
+      ],
+      "limits": [
+        "Direct protocol777 Java client exercises native entity physics and input; no official/Bedrock/PS5 client.",
+        "No rendering stack; adult carrier scale is applied directly to exercise real collision and eye height.",
+        "Mounted fixture reserves ArkDinos riding map before native addPassenger; actual protocol input controls movement."
+      ]
+    },
+    "wildlife": {
+      "harness": "dino-plugin/wildlife-runtime-test.mjs",
+      "groups_passed": 7,
+      "plugin_sha256": "80704d2e57686137eb5db5bb3fe240e34204e4b541c0864f9161480fb87c4d53",
+      "paper": "26.3-246-main@b31b4b5",
+      "groups": [
+        "Natural world encounters obey the player budget, are unsaved and never force chunks",
+        "Initial biome preference never confines a wild Gallimimus crossing into desert",
+        "No Survival players means no new encounters; taming preserves the same natural animal",
+        "Successful leashing preserves a natural animal immediately, while cancelled leashes do not",
+        "Aquatic encounters require full-body border clearance and cannot overlap living entities",
+        "WorldGuard global spawning denial, named regions and GriefPrevention claims prevent encounters",
+        "Tamed and named natural encounters survive a real restart with their UUIDs"
+      ],
+      "limits": [
+        "Direct protocol777 Java clients exercise real entity interactions, inventory ItemStacks and persistence; no official/Bedrock/PS5 client.",
+        "Inventory clicks and cancelled interactions use dispatched native Paper events against actual inventories.",
+        "Juvenile deadlines advance through fixture-only PDC edits; real server restart verifies mode and former-owner persistence."
+      ]
+    }
+  },
+  "stale_server_cache_negative_control": {
+    "expected_source_parity_failure": true,
+    "before_intermediate_59": {
+      "zip_sha256": "1aac60aea6c2cdb4359f951754a9368afd6f65f70864764974aa797eefcfdc2a",
+      "canonical_content_sha256": "1c5ee8f38ee9fbca4656a04ac3ec970b6ece972a013d7b960f3de25f263d5734",
+      "header": {
+        "name": "GeyserModelEngine",
+        "description": "GeyserModelEngine For Geyser",
+        "uuid": "b45369fd-f720-4915-bf33-368c9c9bac82",
+        "version": [
+          0,
+          0,
+          1
+        ],
+        "min_engine_version": [
+          1,
+          21,
+          100
+        ]
+      }
+    },
+    "retained_cache_with_final_179_inputs": {
+      "zip_sha256": "547341397cacec9580f6d84696a79b2a894d7dd1ff39f052e402852f636c51ca",
+      "canonical_content_sha256": "1c5ee8f38ee9fbca4656a04ac3ec970b6ece972a013d7b960f3de25f263d5734",
+      "header": {
+        "name": "GeyserModelEngine",
+        "description": "GeyserModelEngine For Geyser",
+        "uuid": "b45369fd-f720-4915-bf33-368c9c9bac82",
+        "version": [
+          0,
+          0,
+          1
+        ],
+        "min_engine_version": [
+          1,
+          21,
+          100
+        ]
+      }
+    },
+    "fresh_cache_final_179": {
+      "zip_sha256": "41687ab71a5f102ad1ea873c7d1fc1bde0dfcfa060693b3c63ab7aecbc3a17dd",
+      "canonical_content_sha256": "d1818befcfd977f1e23dfe05a9913bf6436eb94c5d3f3ee6c4c63826ec8cd5cf",
+      "header": {
+        "name": "GeyserModelEngine",
+        "description": "GeyserModelEngine For Geyser",
+        "uuid": "d901b26c-d71c-413b-a63b-ae2621edc7c7",
+        "version": [
+          0,
+          0,
+          1
+        ],
+        "min_engine_version": [
+          1,
+          21,
+          100
+        ]
+      }
+    },
+    "old_to_retained_cache": {
+      "same_zip": false,
+      "same_canonical_content": true,
+      "changed_content_entries": [],
+      "only_zip_timestamps_changed": true,
+      "same_header_uuid": true,
+      "same_header_version": true
+    },
+    "retained_to_fresh_final": {
+      "same_zip": false,
+      "same_canonical_content": false,
+      "changed_content_entries": [
+        "animations/ark_gallimimus.json",
+        "manifest.json",
+        "models/entity/gm_kn5koch.json",
+        "models/entity/gm_kn5koch_tint.json",
+        "render_controllers/ark_gallimimus.json",
+        "textures/entity/gm_d7txgm0.png",
+        "textures/entity/gm_d7txgm0_tintlum.png"
+      ],
+      "only_zip_timestamps_changed": false,
+      "same_header_uuid": false,
+      "same_header_version": true
+    },
+    "geometry": {
+      "installed_input": {
+        "bones": 12,
+        "cubes": 179
+      },
+      "retained_generated_geometry": {
+        "bones": 10,
+        "cubes": 59
+      },
+      "fresh_generated_geometry": {
+        "bones": 12,
+        "cubes": 179
+      }
+    },
+    "update_step": "With Minecraft stopped, back up and move only ResourcePack/generated_pack/ and generated_pack.zip outside that directory before generation; preserve inputs, unrelated packs and mappings.",
+    "public_update_instructions": [
+      "dino-items/README.md",
+      "docs/Update-2026-11-16.md"
+    ],
+    "scope": "Isolated native server regeneration; production pack/cache was not changed and no real cold/warm client cache was exercised."
+  },
+  "open_acceptance": [
+    "Official Java visual review, Bedrock desktop and Switch/console rendering.",
+    "Cold and warm real-client resource-pack cache update acceptance.",
+    "Texture UV appearance, animation readability, saddle/seat occlusion and growth at real client camera angles.",
+    "Multi-entity and many-nest device frame-time, memory, draw-call and sustained server-load measurements.",
+    "Simplified nest geometry/UV/texture comparison; no reduced variant or device-load result is claimed."
+  ]
+}

@@ -1,0 +1,234 @@
+{
+  "format": 1,
+  "world": "jurassic_archipelago",
+  "seed": 19930611,
+  "profile": "classic_adventure",
+  "generator_version": "1",
+  "definition_sha256": "e8d0919db3408d1cffcc76624805db2ac20e20b256f9ab90997b72192e051eb3",
+  "border": {
+    "center": [
+      0,
+      0
+    ],
+    "size": 32768
+  },
+  "implementation_sha256": "3f25c9ac07f89e31ab0588cf3f779f591d1d220439f0e2a0978600ec228d3fb4",
+  "full_square_chunks": 4194304,
+  "generated_regions": [
+    {
+      "id": "nublar_reference",
+      "bounds": {
+        "min_x": 7168,
+        "min_z": 2048,
+        "max_x": 9215,
+        "max_z": 4095
+      },
+      "full_chunks": 16384,
+      "validation": "native_saved_full_chunks",
+      "accepted": false
+    }
+  ],
+  "accepted_regions": [],
+  "islands": [
+    {
+      "id": "sorna",
+      "status": "planned"
+    },
+    {
+      "id": "nublar",
+      "status": "partially_generated"
+    },
+    {
+      "id": "matanceros",
+      "status": "planned"
+    },
+    {
+      "id": "muerta",
+      "status": "planned"
+    },
+    {
+      "id": "tacano",
+      "status": "planned"
+    },
+    {
+      "id": "pena",
+      "status": "planned"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "nublar_gallimimus",
+      "status": "generated"
+    },
+    {
+      "id": "nublar_arrival_falls",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_brachiosaurus",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_main_gate",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_tour_road",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_visitor_center",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_kitchen",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_control_room",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_lab_hatchery",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_rex_breakout",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_raptor_pen",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_triceratops",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_maintenance",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_nedry_route",
+      "status": "planned"
+    },
+    {
+      "id": "nublar_east_dock",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_coastal_landing",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_herbivore_country",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_wet_forest",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_trailer_camp",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_collection_camp",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_rex_family",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_tall_grass",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_worker_village",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_forest_falls",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_airstrip",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_crash_route",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_ingen_lab",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_raptor_nests",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_aviary",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_river_route",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_river_dock",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_river_crane",
+      "status": "planned"
+    },
+    {
+      "id": "sorna_rescue_beach",
+      "status": "planned"
+    },
+    {
+      "id": "matanceros_bay",
+      "status": "planned"
+    },
+    {
+      "id": "muerta_mangrove_station",
+      "status": "planned"
+    },
+    {
+      "id": "tacano_basin_trail",
+      "status": "planned"
+    },
+    {
+      "id": "pena_cliff_landing",
+      "status": "planned"
+    }
+  ],
+  "previous_world_release": "world-2026-11-06",
+  "acceptance": "pending",
+  "artifacts": [
+    {
+      "filename": "jurassic_archipelago-generation-save.tar.gz",
+      "kind": "complete_isolated_native_save_generation_jar",
+      "bytes": 24884115,
+      "sha256": "83e5e50f03170564dd39e9c52851dd5443e277c06591f4b4d1c609eb34a79d23",
+      "plugin_sha256": "23795b263d0e686e3393a7af15652e204e831cf946a533a1c61ff63eb874fe19"
+    },
+    {
+      "filename": "jurassic_archipelago-final-isolated-save-v2.tar.gz",
+      "kind": "complete_isolated_native_save_final_binding_jar",
+      "level_name": "fixture",
+      "bytes": 24885175,
+      "sha256": "52832c5db4491404862c154be1dea0100e8049693457dfc9be105c38ef455740",
+      "plugin_sha256": "93bc4fa2bca9fd4691afe45374b49a390dbfdf1265da7df6e22ad38609cf1878"
+    }
+  ],
+  "native_plugin_sha256": "23795b263d0e686e3393a7af15652e204e831cf946a533a1c61ff63eb874fe19",
+  "delivered_plugin_sha256": "93bc4fa2bca9fd4691afe45374b49a390dbfdf1265da7df6e22ad38609cf1878",
+  "limitations": [
+    "Film likeness and official-client/device acceptance remain pending.",
+    "Only the reference rectangle is generated; outer islands and other sites are planned.",
+    "Dynamic dinosaur encounters are not baked into the terrain archive."
+  ]
+}

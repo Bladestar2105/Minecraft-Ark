@@ -2,7 +2,7 @@
 import base64, hashlib, json, math, struct, zlib
 from build_models import ROOT, vertices
 
-expected={'ark_trex','ark_triceratops','ark_stegosaurus','ark_brachiosaurus','ark_velociraptor','ark_pteranodon','ark_dilophosaurus','ark_mosasaurus'}
+expected={'ark_trex','ark_triceratops','ark_stegosaurus','ark_brachiosaurus','ark_velociraptor','ark_pteranodon','ark_dilophosaurus','ark_mosasaurus','ark_gallimimus'}
 assert {p.name for p in (ROOT/'models').iterdir() if p.is_dir()}==expected
 summary=[]
 for name in sorted(expected):
@@ -50,16 +50,18 @@ for name in sorted(expected):
     assert all(min(v[1] for v in vertices(c))>=-1e-6 for c in foot)
     names={c['name'] for c in cubes}
     expected_anims=({'idle','swim','attack'} if name=='ark_mosasaurus' else {'idle','walk','attack'})|({'flap','glide'} if name=='ark_pteranodon' else {'spit'} if name=='ark_dilophosaurus' else set())
+    if name=='ark_gallimimus':expected_anims|={'graze','run'}
     if name in ['ark_triceratops','ark_stegosaurus','ark_pteranodon','ark_dilophosaurus']:expected_anims|={'growth_baby','growth_juvenile','growth_adult'}
     assert {a['name'] for a in m['animations']}==expected_anims
     for a in m['animations']:
         finite=a['name'] in ['attack','spit'];assert a['loop']==('once' if finite else 'loop')
         ba=anims[a['name']];assert ba['loop'] is (not finite) and ba['animation_length']==a['length']
         if finite:assert groups['body']['uuid'] not in a['animators'],'Combat cannot move the saddle/body'
-        if a['name'] in ['walk','swim']:
-            stride=design['walk_stride_blocks'];assert 0<stride<(10 if name=='ark_mosasaurus' else 2)
+        if a['name'] in ['walk','swim','run']:
+            stride=design['run_stride_blocks'] if a['name']=='run' else design['walk_stride_blocks'];assert 0<stride<(10 if name=='ark_mosasaurus' else 5 if a['name']=='run' else 2)
             clock=(f'query.modified_distance_moved / ({stride:.6f} * query.model_scale) + query.life_time * 0.15' if name=='ark_mosasaurus'
                    else 'query.anim_time + query.delta_time * math.clamp(query.ground_speed / 4, 0.35, 1.8)')
+            if name=='ark_gallimimus':clock=f'query.anim_time + query.delta_time * math.clamp(query.ground_speed / ({stride:.6f} * query.model_scale), 0.35, 2.4)'
             assert a.get('anim_time_update')==ba.get('anim_time_update')==clock,'Locomotion clock differs between source and Bedrock'
         for uid,track in a['animators'].items():
             assert uid in parents and track['name'] in groups
@@ -94,7 +96,7 @@ for name in sorted(expected):
         assert len(sampled)>=4,'Skin/horn faces need actual texture variation: '+name+'/'+cube['name']
     assert len({tuple(f['uv']) for c in cubes for f in c['faces'].values()})>12,'All faces share flat palette swatches'
     if name!='ark_mosasaurus':
-        back_name,back_top={'ark_trex':('torso',1.860844),'ark_triceratops':('back',1.9375),'ark_stegosaurus':('back',1.875),'ark_brachiosaurus':('barrel',2.5),'ark_velociraptor':('back_stripe',1.489667),'ark_pteranodon':('torso',1.619054),'ark_dilophosaurus':('back_stripe',1.191365)}[name]
+        back_name,back_top={'ark_trex':('torso',1.860844),'ark_triceratops':('back',1.9375),'ark_stegosaurus':('back',1.875),'ark_brachiosaurus':('barrel',2.5),'ark_velociraptor':('back_stripe',1.489667),'ark_pteranodon':('torso',1.619054),'ark_dilophosaurus':('back_stripe',1.191365),'ark_gallimimus':('torso',2.09375)}[name]
         assert abs(max(v[1] for c in cubes if c['name']==back_name for v in vertices(c))/16-back_top)<1e-6,'Calibrated mount back height changed'
     external=p/(name+'.png')
     if external.exists():assert external.read_bytes()==tex,'External texture mismatch: '+name
@@ -120,6 +122,6 @@ for name in sorted(expected):
             assert {f'hand_claw_{side}_{i}_tip' for i in range(3)}<=names
     if name=='ark_pteranodon':assert len([n for n in names if n.startswith('wing_finger_')])==8 and len([n for n in names if n.startswith('membrane_') and not n.startswith('membrane_trailing')])>=16 and max(v[0] for v in points)-min(v[0] for v in points)>125
     summary.append(dict(name=name,label=design['label'],cubes=len(cubes),bones=len(bones),animations=sorted(expected_anims),rest_ground_y=round(minimum,6),height=round(max(v[1] for v in points),2),sha256=hashlib.sha256((p/(name+'.bbmodel')).read_bytes()).hexdigest()))
-report=dict(ok=True,models=summary,checks=['Eight species with distinctive geometry and finite combat clips','Java/Bedrock cube, bone, texture and animation parity','Valid finite dimensions and references','Seven land/flight rest poses grounded; aquatic fluke may extend below native feet','T-Rex: three separate splayed toes per foot, raised heel, visible curved ivory toe and finger claws','Continuous looping phases, finite body-stable attacks and measured distance-based Bedrock walk clocks','Embedded PNG dimensions, checksums, opaque material variation and face UV bounds; optional external texture parity'],limits=['Asset source checks; actual engine compilation is recorded separately under output/.','Walk cycles compensate foot height and use distance clocks, without inverse kinematics or terrain adaptation.','Asset checks do not exercise gameplay flight, taming, saddles or passenger metadata.','No console client tested.'])
+report=dict(ok=True,models=summary,checks=['Nine species with distinctive geometry and finite combat clips','Java/Bedrock cube, bone, texture and animation parity','Valid finite dimensions and references','Eight land/flight rest poses grounded; aquatic fluke may extend below native feet','T-Rex: three separate splayed toes per foot, raised heel, visible curved ivory toe and finger claws','Continuous looping phases, finite body-stable attacks and measured distance-based Bedrock walk clocks','Embedded PNG dimensions, checksums, opaque material variation and face UV bounds; optional external texture parity'],limits=['Asset source checks; actual engine compilation is recorded separately under output/.','Walk cycles compensate foot height and use distance clocks, without inverse kinematics or terrain adaptation.','Asset checks do not exercise gameplay flight, taming, saddles or passenger metadata.','No console client tested.'])
 (ROOT/'verification.json').write_text(json.dumps(report,indent=2)+'\n')
 print('PASS',len(summary),'species; geometry/animation parity, land feet/aquatic rig, distinctive features and embedded textures')

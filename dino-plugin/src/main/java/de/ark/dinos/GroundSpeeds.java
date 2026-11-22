@@ -12,6 +12,7 @@ final class GroundSpeeds {
             case "velociraptor" -> new Pace(3,12);
             case "dilophosaurus" -> new Pace(2.8,10);
             case "pteranodon" -> new Pace(2,4.5);
+            case "gallimimus" -> new Pace(2,7);
             case null,default -> null;
         };
     }

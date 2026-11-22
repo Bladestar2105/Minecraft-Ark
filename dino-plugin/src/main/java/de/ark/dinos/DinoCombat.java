@@ -133,7 +133,7 @@ final class DinoCombat implements Listener {
     }
 
     boolean permits(Mob mob, Entity target) {
-        return attacking == mob && target instanceof LivingEntity living
+        return plugin.sceneDamage(mob,target) || attacking == mob && target instanceof LivingEntity living
                 && living.equals(attackTarget) && validTarget(mob, living, attackActor);
     }
 
@@ -212,6 +212,7 @@ final class DinoCombat implements Listener {
             cancel(mob); lastAttack.remove(mob.getUniqueId()); return true;
         });
         for (Mob mob : wild.values()) {
+            if(plugin.sceneActor(mob)) continue;
             if (!active(mob) && available(mob) && predator(mob)) {
                 Player nearest = null;
                 double distance = 16 * 16;
@@ -221,7 +222,7 @@ final class DinoCombat implements Listener {
                 }
                 if (nearest != null) targets.put(mob.getUniqueId(), nearest);
             }
-            if (!active(mob)) plugin.wanderWild(mob);
+            if (!active(mob) && !"gallimimus".equals(plugin.species(mob))) plugin.wanderWild(mob);
         }
         for (Mob mob : java.util.stream.Stream.concat(wild.values().stream(), plugin.companions().stream()).toList()) {
             if (!active(mob)) continue;
