@@ -1,0 +1,99 @@
+{
+  "atlas_jar_sha256": "fc3b226a93fa92689d571a08580fb764c00463958caff7924c3b5638014c4dc0",
+  "runtime": "Paper 26.3 build 257 / Java 25.0.5",
+  "clients": "direct protocol777 loopback client; no official rendering, Bedrock or console",
+  "checks": [
+    {
+      "name": "native runtime versions",
+      "status": "passed",
+      "detail": "Checking version, please wait...\n"
+    },
+    {
+      "name": "world-specific MapView IDs",
+      "status": "passed",
+      "detail": "ark=0:ark;jurassic=1:jurassic_archipelago\n"
+    },
+    {
+      "name": "legacy-world starter",
+      "status": "passed",
+      "detail": "world=ark;maps=0:ark:ark;records=[arkatlas:ark_atlas_starter]\n"
+    },
+    {
+      "name": "BYTE-only legacy atlas accepted without duplicate",
+      "status": "passed",
+      "detail": "world=ark;maps=0:ark:null;records=[arkatlas:ark_atlas_starter]\n"
+    },
+    {
+      "name": "foreign legacy atlas does not suppress new starter",
+      "status": "passed",
+      "detail": "world=jurassic_archipelago;maps=0:ark:null,1:jurassic_archipelago:jurassic_archipelago;records=[arkatlas:ark_atlas_starter, arkatlas:starter_be76f3ed-a1fc-330f-8130-ee82f0370f1c]\n"
+    },
+    {
+      "name": "world return does not duplicate either atlas",
+      "status": "passed",
+      "detail": "world=ark;maps=0:ark:null,1:jurassic_archipelago:jurassic_archipelago;records=[arkatlas:ark_atlas_starter, arkatlas:starter_be76f3ed-a1fc-330f-8130-ee82f0370f1c]\n"
+    },
+    {
+      "name": "MapView IDs and worlds survive restart",
+      "status": "passed",
+      "detail": "ark=0:ark;jurassic=1:jurassic_archipelago\n"
+    },
+    {
+      "name": "both atlas items and starter records persist",
+      "status": "passed",
+      "detail": "world=ark;maps=0:ark:null,1:jurassic_archipelago:jurassic_archipelago;records=[arkatlas:ark_atlas_starter, arkatlas:starter_be76f3ed-a1fc-330f-8130-ee82f0370f1c]\n"
+    },
+    {
+      "name": "duplicate map identity reload rejected atomically",
+      "status": "passed",
+      "detail": "Atlas konnte nicht geladen werden: MapView-ID wird von mehreren Atlas-Welten verwendet. Bisherige Atlanten bleiben aktiv.\n"
+    },
+    {
+      "name": "existing items still work after rejected reload",
+      "status": "passed",
+      "detail": "world=jurassic_archipelago;maps=0:ark:null,1:jurassic_archipelago:jurassic_archipelago;records=[arkatlas:ark_atlas_starter, arkatlas:starter_be76f3ed-a1fc-330f-8130-ee82f0370f1c]\n"
+    },
+    {
+      "name": "valid multiworld reload",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "name": "missing active PNG reload rejected atomically",
+      "status": "passed",
+      "detail": "Atlas konnte nicht geladen werden: Fehlendes Kartenbild f\u00fcr aktiven Atlas: ark. Bisherige Atlanten bleiben aktiv.\n"
+    },
+    {
+      "name": "missing active PNG keeps original map identities",
+      "status": "passed",
+      "detail": "ark=0:ark;jurassic=1:jurassic_archipelago\n"
+    },
+    {
+      "name": "existing atlas items survive missing PNG rejection",
+      "status": "passed",
+      "detail": "world=jurassic_archipelago;maps=0:ark:null,1:jurassic_archipelago:jurassic_archipelago;records=[arkatlas:ark_atlas_starter, arkatlas:starter_be76f3ed-a1fc-330f-8130-ee82f0370f1c]\n"
+    },
+    {
+      "name": "restored PNG reload accepted",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "name": "startup without a PNG remains allowed",
+      "status": "passed",
+      "detail": null
+    },
+    {
+      "name": "first available PNG can replace pending startup map",
+      "status": "passed",
+      "detail": null
+    }
+  ],
+  "source_sha256": {
+    "atlas-plugin/src/main/java/de/ark/atlas/LeaderboardRules.java": "739502b788c3ab3fc1d2553786c2b8af1ed346a7852873a1f795fe6874e89d8e",
+    "atlas-plugin/src/main/java/de/ark/atlas/SpawnLeaderboard.java": "84d92870e4613c6ef43eed14cbbeb0ce469fc763e64a535951c33e63dffcd0c0",
+    "atlas-plugin/src/main/java/de/ark/atlas/AtlasRules.java": "4f2c2ebc65c56d250f4d7767dec62720d9acd4775a5e102118d1049e0e7193b7",
+    "atlas-plugin/src/main/java/de/ark/atlas/ArkAtlas.java": "00c0052d73b6abbf89a84f171d1f5d1331f5525aee85c3c521c1f8b250fb007c"
+  },
+  "status": "passed"
+}

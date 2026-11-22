@@ -1,0 +1,282 @@
+{
+  "status": "passed",
+  "date": "2026-11-22",
+  "scope": "Native temporary-encounter lifecycle, actual natural chase, and loaded/non-entity-ticking admission/cleanup. Flat isolated loopback fixture; no production world or model stack.",
+  "runtime": {
+    "paper": "26.3 build258",
+    "java": "Temurin25.0.5+8",
+    "client": "direct protocol777 Survival viewer",
+    "paper_launcher_sha256": "c5df5fb9f6155e48380c67c6e2b2dc2581b7db1a4b665d2c3818057b7efb6692"
+  },
+  "arkdinos_jar_sha256": "f08fd024c91c49e7235df4676aeaa79545cb8ef3831d0ce0bb06f562bdb40212",
+  "checks_passed": 90,
+  "cases": [
+    {
+      "name": "lifecycle",
+      "role": "lifecycle",
+      "status": "passed",
+      "checks": 23,
+      "input_cohort": "initial_matrix",
+      "raw_report_sha256": "a68d547510019f870a0380ed135d8a7647561a729c2655889941fc9affe48d9f",
+      "compiled_fixture_class_sha256": "eb80cb4d6bdabcbda65fc85458c11384ba8797181d099bbc24c9ea4fdf82d8ad",
+      "compiled_fixture_jar_sha256": "d0bdeedcd32fc26408c4a6e0553868fb1372f682e7c72e228e9ae029426daf36",
+      "server_exit_code": 0,
+      "fixture_ticket_peak": 311,
+      "scene_ticket_peak": 0,
+      "forced_chunk_peak": 0,
+      "metrics": {
+        "same_interaction_adoption_restores_original_cooldown": true,
+        "owned_and_adopted_animals_preserved": true,
+        "foreign_tag_persistence_and_control_preserved": true,
+        "no_viewer_abort_and_cooldown_verified": true,
+        "independent_world_and_nearby_budget_refusals_verified": true
+      }
+    },
+    {
+      "name": "near_chase",
+      "role": "full_positive_chase",
+      "status": "passed",
+      "checks": 19,
+      "input_cohort": "initial_matrix",
+      "raw_report_sha256": "d299dea388560ddf99a6a4f6086ceb7c58426e1a10956eed283f760429022f82",
+      "compiled_fixture_class_sha256": "eb80cb4d6bdabcbda65fc85458c11384ba8797181d099bbc24c9ea4fdf82d8ad",
+      "compiled_fixture_jar_sha256": "e82eb2c948ae023847a7209e6e124e40f0c4e69a25770aba3b388acdd949652f",
+      "server_exit_code": 0,
+      "fixture_ticket_peak": 311,
+      "scene_ticket_peak": 0,
+      "forced_chunk_peak": 0,
+      "metrics": {
+        "scene_ticks": 440,
+        "prey_native_max_ages": [
+          435,
+          435,
+          435,
+          435,
+          435,
+          435,
+          435,
+          435
+        ],
+        "prey_with_multiple_away_samples": 8,
+        "away_samples_per_prey": [
+          20,
+          21,
+          23,
+          25,
+          29,
+          34,
+          35,
+          35
+        ],
+        "min_pair_distance_blocks": 36.990456954589405,
+        "rex_displacement_blocks": 128.68145691345248,
+        "stationary_paths_40_ticks": 0,
+        "persistent_temporary_samples": 0,
+        "missing_activation_cooldown_samples": 0,
+        "foreign_cooldown_samples": 0
+      },
+      "cleanup": {
+        "remaining_scene_actors": 0,
+        "remaining_cooldown_entries": 0,
+        "released_plugin_tickets": {}
+      }
+    },
+    {
+      "name": "original_far_full_chase",
+      "role": "full_positive_chase",
+      "status": "passed",
+      "checks": 20,
+      "input_cohort": "lazy_and_original_far",
+      "raw_report_sha256": "a136f92b5c3669f3282ffc44e21a8e1b1524fdf8c43908a30c22633bed134595",
+      "compiled_fixture_class_sha256": "b64064fbcde9f837ae95f744c7fa9fbbc2a2af4d393c1e55e3082a0845818e73",
+      "compiled_fixture_jar_sha256": "dbb28a6c97ab2e25dcc3c73adb83ed18ca7ecf9c24edc53d9aab1542316564e8",
+      "server_exit_code": 0,
+      "fixture_ticket_peak": 311,
+      "scene_ticket_peak": 0,
+      "forced_chunk_peak": 0,
+      "metrics": {
+        "scene_ticks": 440,
+        "prey_native_max_ages": [
+          430,
+          430,
+          430,
+          430,
+          430,
+          430,
+          430,
+          430
+        ],
+        "prey_with_multiple_away_samples": 8,
+        "away_samples_per_prey": [
+          8,
+          8,
+          17,
+          25,
+          35,
+          39,
+          39,
+          39
+        ],
+        "min_pair_distance_blocks": 33.60872288372268,
+        "rex_displacement_blocks": 133.26875166922358,
+        "stationary_paths_40_ticks": 0,
+        "persistent_temporary_samples": 0,
+        "missing_activation_cooldown_samples": 0,
+        "foreign_cooldown_samples": 0
+      },
+      "cleanup": {
+        "remaining_scene_actors": 0,
+        "remaining_cooldown_entries": 0,
+        "released_plugin_tickets": {}
+      }
+    },
+    {
+      "name": "loaded_lazy_admission",
+      "role": "no_ticket_refusal",
+      "status": "passed",
+      "checks": 7,
+      "input_cohort": "lazy_and_original_far",
+      "raw_report_sha256": "bb0ab7aec777a68d11d227ab2f5cdfefc81ffa18ee8bc17469c9846b9b651e94",
+      "compiled_fixture_class_sha256": "b64064fbcde9f837ae95f744c7fa9fbbc2a2af4d393c1e55e3082a0845818e73",
+      "compiled_fixture_jar_sha256": "a1b09e1bcbbf003c8c1fc86e8b3631e8fa6ff067ff03a1aa1285cb2f1c22ab61",
+      "server_exit_code": 0,
+      "fixture_ticket_peak": 0,
+      "scene_ticket_peak": 0,
+      "forced_chunk_peak": 0,
+      "metrics": {
+        "viewer_offset_south_blocks": 160,
+        "view_distance": 20,
+        "simulation_distance": 3,
+        "scene_centers_loaded": 9,
+        "scene_center_load_levels": [
+          "BORDER"
+        ],
+        "native_probe_valid": true,
+        "native_probe_is_ticking": false,
+        "refusal": "Scene refused: Scene actors require entity-ticking chunks; move closer or check simulation distance",
+        "scene_actors_remaining": 0,
+        "cooldown_entries_remaining": 0,
+        "owned_pet_and_foreign_animal_preserved": true,
+        "plugin_tickets": {},
+        "forced_chunks": 0
+      }
+    },
+    {
+      "name": "final_far_full_chase",
+      "role": "full_positive_chase",
+      "status": "passed",
+      "checks": 21,
+      "input_cohort": "final_expanded",
+      "raw_report_sha256": "5f95493e5a73d39edb170bd68cccb74f25c63031f555a80653af74e1c6471d12",
+      "compiled_fixture_class_sha256": "8ccde8cea5b959e791cd0511afcddc29f9e3e57d0833a6889b1d5d327331e465",
+      "compiled_fixture_jar_sha256": "c57d9150a9ebc502102aaa3fcc9b1829b7c7e143176a20162e43407f75386a1d",
+      "server_exit_code": 0,
+      "fixture_ticket_peak": 381,
+      "scene_ticket_peak": 0,
+      "forced_chunk_peak": 0,
+      "metrics": {
+        "scene_ticks": 440,
+        "prey_native_max_ages": [
+          426,
+          426,
+          426,
+          426,
+          426,
+          426,
+          426,
+          426
+        ],
+        "prey_with_multiple_away_samples": 8,
+        "away_samples_per_prey": [
+          24,
+          24,
+          26,
+          30,
+          30,
+          30,
+          30,
+          30
+        ],
+        "min_pair_distance_blocks": 40.311869480562336,
+        "rex_displacement_blocks": 129.41984468813058,
+        "stationary_paths_40_ticks": 0,
+        "persistent_temporary_samples": 0,
+        "missing_activation_cooldown_samples": 0,
+        "foreign_cooldown_samples": 0
+      },
+      "cleanup": {
+        "remaining_scene_actors": 0,
+        "remaining_cooldown_entries": 0,
+        "released_plugin_tickets": {}
+      }
+    }
+  ],
+  "boundary_observation": {
+    "role": "correct_boundary_abort_observation",
+    "counts_as_full_positive_chase": false,
+    "input_cohort": "lazy_and_original_far",
+    "raw_report_sha256": "9f10f4e1d4d44eb460adffe88a71b1e3ff9771c22b30ccca491136bdb4e07843",
+    "fixture_ticket_peak": 311,
+    "observation": {
+      "scene_tick": 400,
+      "prey_position": [
+        8245.8245,
+        80,
+        3088.2182
+      ],
+      "chunk": [
+        515,
+        193
+      ],
+      "native_is_ticking": false,
+      "native_age": 395,
+      "survival_viewer_offset_south_blocks": 200
+    },
+    "cleanup": {
+      "scene_tick": 410,
+      "remaining_scene_actors": 0,
+      "remaining_cooldown_entries": 0,
+      "scene_ticket_peak": 0,
+      "forced_chunk_peak": 0,
+      "released_plugin_tickets": {}
+    },
+    "interpretation": "The original fixture ended at ticking chunk row192. Entering loaded non-ticking row193 correctly aborted the scene. This is retained as boundary evidence, excluded from full-positive totals. The final fixture adds a bounded south margin and peaks at381 tickets."
+  },
+  "input_cohorts": {
+    "initial_matrix": {
+      "source_sha256": {
+        "dino-plugin/encounter-runtime-test.py": "531205d57e0bc3f0cd77c88050a12c1672f269e1c249aaf7f356360956f71650",
+        "dino-plugin/src/encounter/java/de/ark/encounterfixture/EncounterFixture.java": "f94fd337f79f05a77d880a6348e325ec48d84b5300a799937e4f4631811ab39c",
+        "dino-plugin/src/encounter/resources/plugin.yml": "2bd22639daa19230930afa19254cbb996aa184414f0baf3caf467efa9ee8a48f",
+        "dino-plugin/src/encounter/client.mjs": "822a66a7be04be7d7ea8bbe151117614eaa8936d36f61c0f9872fa955affbc85"
+      },
+      "scope": "Lifecycle and near cases. Compared with lazy_and_original_far, differences are limited to lazy setup/preflight, its viewer position and an empty read-only status field. Exact initial Python/Java bytes were reconstructed and verified against original hashes. Final corridor/assertion changes are recorded separately in final_expanded."
+    },
+    "lazy_and_original_far": {
+      "source_sha256": {
+        "dino-plugin/encounter-runtime-test.py": "3469043527f177e50527f51a19bfbf6a5ebfc32abe11e234eb0b0bb7db7bbc4b",
+        "dino-plugin/src/encounter/java/de/ark/encounterfixture/EncounterFixture.java": "77f05db49fa84d00fa16e0944e362a7febcf0e018b194b398e4e31ab6b74bfec",
+        "dino-plugin/src/encounter/resources/plugin.yml": "2bd22639daa19230930afa19254cbb996aa184414f0baf3caf467efa9ee8a48f",
+        "dino-plugin/src/encounter/client.mjs": "822a66a7be04be7d7ea8bbe151117614eaa8936d36f61c0f9872fa955affbc85"
+      },
+      "scope": "Lazy admission and original far cases. Complete source snapshot frozen outside the checkout before execution."
+    },
+    "final_expanded": {
+      "source_sha256": {
+        "dino-plugin/encounter-runtime-test.py": "6c2a68866a17ae355dc7f94fb2f8cc287c4dec0ff9f702c37b6b51bde0c4f386",
+        "dino-plugin/src/encounter/java/de/ark/encounterfixture/EncounterFixture.java": "e61af226301aa09a9cd8dbef9ab072a3c17c13ec6a9bf83350dae62451478feb",
+        "dino-plugin/src/encounter/resources/plugin.yml": "2bd22639daa19230930afa19254cbb996aa184414f0baf3caf467efa9ee8a48f",
+        "dino-plugin/src/encounter/client.mjs": "822a66a7be04be7d7ea8bbe151117614eaa8936d36f61c0f9872fa955affbc85",
+        "dino-plugin/src/encounter/README.md": "a7ade3c250c74fecb0d0f97bbd104a2856c5ed92d61a5abc5fa472d7fb3188ac"
+      },
+      "scope": "Final far case. Adds south fixture margin, explicit 440-tick/eight-age completion assertions, and expected JAR hash pin. No production changes."
+    }
+  },
+  "limits": [
+    "Positive lifecycle/chase fixtures deliberately hold entity-ticking chunks with temporary fixture-only tickets (311 originally,381 after the measured south-margin correction); ArkDinos allocates none.",
+    "The separate view20/simulation3 case uses no fixture/plugin/permanent tickets. No scene actors or cooldown bookkeeping remain after its explicit refusal.",
+    "Full positive chase cases require440scene ticks, eight prey native ages>400, actual multiple away-motion samples for all8, no40tick aware/path freeze, and complete cleanup.",
+    "Lifecycle adoption primes five feeds and sends a real protocol finisher interaction; full feeding cooldown duration is not tested.",
+    "No rendered Java/Bedrock/console client, custom-model visual acceptance, film landscape appearance or device stability is claimed."
+  ]
+}

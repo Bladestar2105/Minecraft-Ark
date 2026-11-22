@@ -647,7 +647,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
 
     void animation(Mob mob, String phase) {
         Model model = models.get(mob.getUniqueId());
-        if (model == null || !Set.of("idle", "walk", "flap", "glide", "swim").contains(phase)) return;
+        if (model == null || !Set.of("idle", "walk", "run", "graze", "flap", "glide", "swim").contains(phase)) return;
         var registry = BetterModel.registry(mob.getUniqueId()).orElse(null);
         var tracker = registry == null ? null : registry.tracker(model.name);
         if (tracker == null) {
@@ -667,7 +667,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
         boolean scheduled = tracker.isScheduled();
         if (phase.equals(model.phase) && scheduled == model.phaseScheduled) return;
         if (model.phase != null) tracker.stopAnimation(model.phase);
-        tracker.animate(growthClip(model, tracker.renderer().animations().get(phase), false), phase.equals("walk") || phase.equals("swim") ? AnimationModifier.builder()
+        tracker.animate(growthClip(model, tracker.renderer().animations().get(phase), false), phase.equals("walk") || phase.equals("run") || phase.equals("swim") ? AnimationModifier.builder()
                 .type(AnimationIterator.Type.LOOP).priority(100).speed(() -> model.walkSpeed).build() : PHASE);
         model.phase = phase;
         model.phaseScheduled = scheduled;
@@ -728,6 +728,7 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
             case "ark_pteranodon" -> .899698;
             case "ark_dilophosaurus" -> .862348;
             case "ark_mosasaurus" -> 6;
+            case "ark_gallimimus" -> 1.630854;
             default -> throw new IllegalArgumentException("Unknown dinosaur model " + name);
         };
     }
@@ -760,6 +761,17 @@ final class BetterModelAdapter implements Listener, AutoCloseable {
                 }
                 boolean walking = model.mob.isOnGround() && location.getWorld().equals(previous.getWorld())
                         && dx * dx + dz * dz > .0001;
+                if (model.name.equals("ark_gallimimus")) {
+                    double speed = Math.hypot(dx, dz) * 20;
+                    boolean running = walking && speed > 3;
+                    double stride = running ? 3.135356 : walkStride(model.name);
+                    model.walkSpeed = (float) Math.clamp(speed / (stride * growthScale(model.mob)), .35, 2.4);
+                    boolean grazing = !walking && model.mob.getPassengers().isEmpty()
+                            && !model.mob.getPersistentDataContainer().has(new NamespacedKey(plugin, "owner"))
+                            && model.mob.getPersistentDataContainer().has(new NamespacedKey(plugin, "grazing"), PersistentDataType.BYTE);
+                    animation(model.mob, walking ? running ? "run" : "walk" : grazing ? "graze" : "idle");
+                    continue;
+                }
                 // Match the Bedrock incremental clock without rapid short-stride/juvenile cycling.
                 if (walking) model.walkSpeed = (float) Math.clamp(Math.hypot(dx, dz) * 20 / 4, .35, 1.8);
                 animation(model.mob, walking ? "walk" : "idle");

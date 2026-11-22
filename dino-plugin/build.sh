@@ -43,6 +43,9 @@ fetch worldguard-bukkit-7.0.21-api.jar 070223c535629f3f5d15f002388c1e3ae615a5f4b
 
 "$task_java_home/bin/javac" --release 25 -sourcepath '' -cp '.deps/*' -d build/classes src/main/java/de/ark/dinos/*.java
 "$task_java_home/bin/javac" --release 25 -cp build/classes -d build/test-classes src/test/java/de/ark/dinos/*.java
+"$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.HerdRulesTest
+"$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.EncounterRulesTest
+"$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.GallimimusRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.TamingRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.RidingRulesTest
 "$task_java_home/bin/java" -cp build/classes:build/test-classes de.ark.dinos.SeatRulesTest

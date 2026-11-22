@@ -88,6 +88,15 @@ public final class AquaticFixture extends JavaPlugin implements Listener {
         if (!(sender instanceof org.bukkit.command.ConsoleCommandSender) && !(sender instanceof org.bukkit.command.RemoteConsoleCommandSender)) return true;
         try {
             var plugin = getServer().getPluginManager().getPlugin("ArkDinos");
+            if (args[0].equals("model-bounds")) {
+                var type=Class.forName("de.ark.dinos.DinoAquatic",true,plugin.getClass().getClassLoader());
+                var field=type.getDeclaredField("MODEL_UP");field.setAccessible(true);var values=(double[])field.get(null);
+                var sideField=type.getDeclaredField("MODEL_SIDES");sideField.setAccessible(true);var sides=(double[])sideField.get(null);
+                var forwardField=type.getDeclaredField("MODEL_FORWARD");forwardField.setAccessible(true);var forward=(double[])forwardField.get(null);
+                sender.sendMessage("minY="+java.util.Arrays.stream(values).min().orElseThrow()+";maxY="+java.util.Arrays.stream(values).max().orElseThrow()
+                        +";minSide="+java.util.Arrays.stream(sides).min().orElseThrow()+";maxSide="+java.util.Arrays.stream(sides).max().orElseThrow()
+                        +";minForward="+java.util.Arrays.stream(forward).min().orElseThrow()+";maxForward="+java.util.Arrays.stream(forward).max().orElseThrow());return true;
+            }
             if (args[0].equals("spawn") || args[0].equals("spawn-paused")) {
                 var world = args.length > 6 ? getServer().getWorld(args[6]) : getServer().getWorlds().getFirst();
                 var dolphin = world.spawn(new Location(world, Double.parseDouble(args[3]), Double.parseDouble(args[4]), Double.parseDouble(args[5])), Dolphin.class, mob -> {

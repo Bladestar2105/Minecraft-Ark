@@ -2,6 +2,8 @@ package de.ark.dinos;
 
 public final class WildSpawnRulesTest {
     public static void main(String[] args) {
+        check("gallimimus".equals(WildSpawnRules.species("jurassic_archipelago", "minecraft:plains", 20)), "New archipelago grassland starts Gallimimus ecology");
+        check(WildSpawnRules.species("ark", "minecraft:plains", 20).equals(WildSpawnRules.species("minecraft:plains", 20)), "Existing world keeps its wildlife mix");
         check(WildSpawnRules.limit(0, 8, 64) == 0, "No wildlife population is created without players");
         check(WildSpawnRules.limit(2, 8, 64) == 16, "Player population sets the budget");
         check(WildSpawnRules.limit(20, 8, 64) == 64, "World hard cap bounds large servers");

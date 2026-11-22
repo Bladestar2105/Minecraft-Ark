@@ -11,7 +11,7 @@ import zlib
 from build_eggs import egg_pixels
 
 ROOT = Path(__file__).resolve().parent
-SPECIES = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus')
+SPECIES = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus', 'gallimimus')
 
 
 def models(species):

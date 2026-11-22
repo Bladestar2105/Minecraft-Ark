@@ -16,9 +16,9 @@ from fetch_world import safe_path
 PLUGINS = {"dino": ("ArkDinos", "1.2.2"), "atlas": ("ArkAtlas", "1.0.1"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
            "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.2"),
-           "access": ("ArkAccessBridge", "1.1.1")}
-DEFAULT_MODULES = [module for module in PLUGINS if module != "access"]
-DINO_MODELS = ("trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon", "dilophosaurus", "mosasaurus")
+           "access": ("ArkAccessBridge", "1.1.1"), "jurassic": ("ArkJurassic", "0.1.0")}
+DEFAULT_MODULES = [module for module in PLUGINS if module not in {"access", "jurassic"}]
+DINO_MODELS = ("trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon", "dilophosaurus", "mosasaurus", "gallimimus")
 DINO_DEPENDENCIES = {"bettermodel", "geyser-model-engine", "geyser-model-engine-extension",
                      "geyser-utils-spigot", "geyser-utils-geyser"}
 LONG_DAY_FILES = ("pack.mcmeta", "data/minecraft/tags/function/load.json",
@@ -67,7 +67,7 @@ def verify_own_plugins(root=ROOT, modules=None):
             raise ValueError("Invalid native own-plugin path, version or checksum.")
         entries[module] = item
     if entries.keys() != PLUGINS.keys():
-        raise ValueError("Manifest must describe all seven own plugins.")
+        raise ValueError("Manifest must describe every registered own plugin.")
     for module in modules:
         item = entries[module]
         source = safe_path(root, item["path"])
@@ -104,7 +104,7 @@ def dino_item_files(root):
     assets = json.loads(safe_path(root, 'dino-items/egg-assets.json').read_text())
     expected = {'manifest.json', 'textures/item_texture.json'} | {
         'textures/items/arkdinos/egg_' + species + '.png' for species in DINO_MODELS}
-    aliases = ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama')
+    aliases = ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama', 'armadillo')
     expected |= {'textures/items/egg_' + alias + '.png' for alias in aliases}
     expected |= {'textures/items/spawn_eggs/spawn_egg_' + alias + '.png' for alias in aliases}
     expected |= {'texts/en_US.lang', 'texts/de_DE.lang'}

@@ -1,0 +1,7 @@
+name: EncounterContactFixture
+version: 1
+main: de.ark.encountercontact.ContactFixture
+api-version: 26.3
+depend: [ArkDinos, EncounterFixture]
+commands:
+  encountercontact: {}

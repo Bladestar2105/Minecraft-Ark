@@ -1,4 +1,4 @@
-"""Build seven opaque species shells around the unchanged native Sniffer Egg."""
+"""Build eight opaque species shells around the unchanged native Sniffer Egg."""
 import base64
 from functools import lru_cache
 import json
@@ -21,7 +21,7 @@ PROFILES = {
     'trex': (3.9, .88, -.28), 'triceratops': (2.8, .96, .16),
     'stegosaurus': (3.55, .79, -.18), 'brachiosaurus': (3.12, 1.0, .08),
     'velociraptor': (5.3, .66, .60), 'pteranodon': (5.0, .71, -.54),
-    'dilophosaurus': (4.45, .83, .32),
+    'dilophosaurus': (4.45, .83, .32), 'gallimimus': (4.9, .72, .18),
 }
 
 
@@ -217,7 +217,7 @@ def build():
         for path, content in outputs.items():
             (folder / path).write_text(json.dumps(content, indent=2) + '\n')
         (folder / (name + '.png')).write_bytes(texture)
-    print('Built seven distinct placed egg shells for Java and Bedrock.')
+    print('Built eight distinct placed egg shells for Java and Bedrock.')
 
 
 if __name__ == '__main__':

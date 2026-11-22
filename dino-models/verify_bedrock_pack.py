@@ -1,4 +1,4 @@
-"""Verify the compiled fifteen-model Bridge pack against its installed source exports."""
+"""Verify the compiled seventeen-model Bridge pack against its installed source exports."""
 import base64
 import hashlib
 import json
@@ -8,7 +8,7 @@ import uuid
 import zipfile
 
 root=Path(__file__).resolve().parents[1]
-species=('trex','triceratops','stegosaurus','brachiosaurus','velociraptor','pteranodon','dilophosaurus','mosasaurus')
+species=('trex','triceratops','stegosaurus','brachiosaurus','velociraptor','pteranodon','dilophosaurus','mosasaurus','gallimimus')
 expected=['ark_'+name for name in species]+['ark_egg_'+name for name in species if name!='mosasaurus']
 path=Path(sys.argv[1])
 with zipfile.ZipFile(path) as pack:
@@ -29,7 +29,7 @@ with zipfile.ZipFile(path) as pack:
                 assert identifier not in geometries, f'Duplicate geometry {identifier}'
                 geometries[identifier]=geometry
     entities=[name for name in names if name.startswith('entity/') and name.endswith('.json')]
-    assert set(entities)=={f'entity/{name}.json' for name in expected}, 'Expected exactly eight dinosaurs and seven placed eggs'
+    assert set(entities)=={f'entity/{name}.json' for name in expected}, 'Expected exactly nine dinosaurs and eight placed eggs'
     checked=0
     for name in expected:
         directory=root/('dino-items' if name.startswith('ark_egg_') else 'dino-models')/'models'/name
@@ -53,5 +53,5 @@ with zipfile.ZipFile(path) as pack:
         assert json.loads(pack.read(f'animation_controllers/{name}.json'))['animation_controllers']
         assert json.loads(pack.read(f'render_controllers/{name}.json'))['render_controllers']
         checked+=1
-    assert checked==15
+    assert checked==len(expected)
 print(json.dumps(dict(ok=True,models=checked,geometries=len(geometries),files=len(names),sha256=hashlib.sha256(path.read_bytes()).hexdigest())))

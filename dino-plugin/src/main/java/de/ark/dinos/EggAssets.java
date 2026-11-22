@@ -16,12 +16,12 @@ final class EggAssets {
         properties.load(source);
         Map<String, byte[]> assets = new HashMap<>();
         for (String path : properties.stringPropertyNames()) {
-            if (!path.matches("assets/(?:arkdinos/(?:items|models/item|textures/item)/egg_[a-z]+\\.(?:json|png)|minecraft/(?:items/(?:bat|endermite|silverfish|vex|phantom|strider|tadpole|trader_llama)_spawn_egg\\.json|lang/(?:en_us|de_de)\\.json))")) {
+            if (!path.matches("assets/(?:arkdinos/(?:items|models/item|textures/item)/egg_[a-z]+\\.(?:json|png)|minecraft/(?:items/(?:bat|endermite|silverfish|vex|phantom|strider|tadpole|trader_llama|armadillo)_spawn_egg\\.json|lang/(?:en_us|de_de)\\.json))")) {
                 throw new IOException("Invalid dinosaur egg asset path: " + path);
             }
             assets.put(path, Base64.getDecoder().decode(properties.getProperty(path)));
         }
-        if (assets.size() != 34) throw new IOException("Expected 34 dinosaur egg assets");
+        if (assets.size() != 38) throw new IOException("Expected 38 dinosaur egg assets");
         return Map.copyOf(assets);
     }
 }

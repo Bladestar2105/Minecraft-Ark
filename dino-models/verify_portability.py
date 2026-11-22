@@ -5,15 +5,19 @@ import shutil, subprocess, sys, tempfile
 ROOT=Path(__file__).resolve().parent
 with tempfile.TemporaryDirectory(prefix='dino-assets-portability-') as directory:
     target=Path(directory)/'dino-models';target.mkdir()
-    for name in ['build_models.py','verify_exports.py','verify_animated_bounds.py','verify_gait.py','test_model_poses.py','test_riding_surfaces.py','test_growth_details.py','test_nametags.py','test_mosasaurus.py','LICENSE.txt','README.md']:
+    for name in ['build_models.py','verify_exports.py','verify_animated_bounds.py','verify_gait.py','test_model_poses.py','test_riding_surfaces.py','test_growth_details.py','test_nametags.py','test_mosasaurus.py','test_gallimimus.py','test_runtime_bounds.py','LICENSE.txt','README.md']:
         shutil.copy2(ROOT/name,target/name)
     for folder in (ROOT/'models').iterdir():
         out=target/'models'/folder.name;out.mkdir(parents=True)
         for name in [folder.name+'.bbmodel',folder.name+'.geo.json',folder.name+'.animation.json','config.json','design.json']:
             shutil.copy2(folder/name,out/name)
+    runtime=ROOT.parent/'dino-plugin/src/main/java/de/ark/dinos/ModelBounds.java'
+    runtime_copy=target.parent/'dino-plugin/src/main/java/de/ark/dinos/ModelBounds.java'
+    runtime_copy.parent.mkdir(parents=True)
+    shutil.copy2(runtime,runtime_copy)
     assert not list(target.rglob('*.png'))
     assert not (target/'original-spike-hashes.json').exists() and not (target/'previews').exists()
-    for name in ['verify_exports.py','verify_animated_bounds.py','verify_gait.py','test_model_poses.py','test_riding_surfaces.py','test_growth_details.py','test_nametags.py','test_mosasaurus.py']:
+    for name in ['verify_exports.py','verify_animated_bounds.py','verify_gait.py','test_model_poses.py','test_riding_surfaces.py','test_growth_details.py','test_nametags.py','test_mosasaurus.py','test_gallimimus.py','test_runtime_bounds.py']:
         subprocess.run([sys.executable,str(target/name)],cwd=directory,check=True)
     assert not list(target.rglob('*.png'))
     external=next((target/'models').iterdir());image=external/(external.name+'.png');image.write_bytes(b'corrupt')

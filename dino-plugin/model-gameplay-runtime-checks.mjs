@@ -1,13 +1,19 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { once } from 'node:events';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 
 export default async function run({check,command,alice,clients,Client,eventually,delay,report,start,server,directory,root,readVi,string}) {
  const audit=()=>JSON.parse(execFileSync('python3',[`${root}dino-models/verify_java_pack.py`,`${directory}/plugins/BetterModel/build.zip`],{encoding:'utf8'}));
+ const fingerprintsInitial={};
+ const fingerprint=path=>JSON.parse(execFileSync('python3',[`${root}dino-models/pack_fingerprint.py`,path],{encoding:'utf8',maxBuffer:32*1024*1024}));
+ const summary=fp=>({sha256:fp.zip_sha256,canonical_content_sha256:fp.canonical_content_sha256,canonical_algorithm:fp.canonical_algorithm,...(fp.header?{header:fp.header}:{})});
+ const savedFingerprint=async(kind,path,stage)=>{const data=fingerprint(path),record=`${directory}/pack-${kind}-${stage}.json`;await writeFile(record,JSON.stringify(data));return{data,record};};
+ const compareSaved=(before,after)=>JSON.parse(execFileSync('python3',['-c','import json,sys; sys.path.insert(0,sys.argv[1]); from pack_fingerprint import compare; print(json.dumps(compare(json.load(open(sys.argv[2])),json.load(open(sys.argv[3])))))',`${root}dino-models`,before,after],{encoding:'utf8'}));
+
  const auditBedrock=()=>JSON.parse(execFileSync('python3',[`${root}dino-models/verify_bedrock_pack.py`,`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack.zip`],{encoding:'utf8'}));
- const species=['trex','triceratops','stegosaurus','brachiosaurus','velociraptor','pteranodon','dilophosaurus','mosasaurus'];
+ const species=['trex','triceratops','stegosaurus','brachiosaurus','velociraptor','pteranodon','dilophosaurus','gallimimus','mosasaurus'];
  const factors={trex:2.1,triceratops:1.45,stegosaurus:1.55,brachiosaurus:2.15};
  const fields=text=>Object.fromEntries(text.trim().split(';').map(row=>{const at=row.indexOf('=');return[row.slice(0,at),row.slice(at+1)];}));
  const inspect=async tag=>fields(await command(`dm inspect ${tag}`));
@@ -37,14 +43,22 @@ export default async function run({check,command,alice,clients,Client,eventually
   assert.equal(mob.active,'1');assert.equal(mob.stale,'0');assert.equal(mob.trackers,'1');
   return{mob,driver,guest};
  };
- await check('Installed candidate and real Geyser registries expose all eight models and both resource packs',async()=>{
+ await check('Installed candidate and real Geyser registries expose all nine models and both resource packs',async()=>{
   const registrations=(await command('dm registrations')).trim().split(';');
-  assert.deepEqual(registrations.slice(0,8),species.map(name=>`${name}:true:true`));
-  const registry=fields(registrations.slice(8).join(';'));assert.equal(registry.eggs,'7');assert.equal(registry.bedrockEggs,'7');assert.ok(Number(registry.protocols)>0);assert.ok(Number(registry.packs)>=2);
+  assert.deepEqual(registrations.slice(0,species.length),species.map(name=>`${name}:true:true`));
+  const registry=fields(registrations.slice(species.length).join(';'));assert.equal(registry.eggs,'8');assert.equal(registry.bedrockEggs,'8');assert.ok(Number(registry.protocols)>0);assert.ok(Number(registry.packs)>=2);
   report.javaPackAudit=audit();report.bedrockPackAuditInitial=auditBedrock();
   report.packs={};
   for(const [kind,path] of Object.entries({java:'plugins/BetterModel/build.zip',bedrock:'plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack.zip',bedrockEggs:'plugins/Geyser-Spigot/packs/ark-dino-eggs.mcpack'})) {
-   const bytes=await readFile(`${directory}/${path}`);assert.ok(bytes.length>1000);report.packs[kind]={path,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')};
+   const bytes=await readFile(`${directory}/${path}`);assert.ok(bytes.length>1000);const fp=await savedFingerprint(kind,`${directory}/${path}`,'initial');fingerprintsInitial[kind]=fp;report.packs[kind]={path,bytes:bytes.length,...summary(fp.data)};
+  }
+  if(process.env.DINO_PREVIOUS_MODEL_REPORT) {
+   const previous=JSON.parse(await readFile(process.env.DINO_PREVIOUS_MODEL_REPORT,'utf8'));report.previousPackComparisons={};
+   for(const [kind,fp] of Object.entries(fingerprintsInitial)) {
+    const pack=(previous.packsAfterRestart??previous.packs)[kind];
+    const old=await savedFingerprint(kind,`${previous.fixture}/${pack.path}`,'intermediate');
+    report.previousPackComparisons[kind]={baseline:'local intermediate assets after restart; no client cache tested',before:summary(old.data),after:summary(fp.data),...compareSaved(old.record,fp.record)};
+   }
   }
   const protections=await command('dm protections');
   for(const name of ['WorldEdit','WorldGuard','GriefPrevention'])assert.match(protections,new RegExp(`${name}=true`),`${name} must be enabled in the combined stack`);
@@ -53,13 +67,23 @@ export default async function run({check,command,alice,clients,Client,eventually
   assert.equal((await command('version ArkDinos')).split('\n')[0],`ArkDinos version ${version}`);
   return{registrations,protections,packs:report.packs,pluginSha256:report.pluginSha256};
  });
+ if(report.seededIntermediatePackCache)return;
  for(const [i,name] of species.entries()) {
   const type=['trex','velociraptor','dilophosaurus'].includes(name)?'ravager':name==='mosasaurus'?'dolphin':'sniffer';
-  if(name==='mosasaurus')await command('fill 47 4 -4 60 13 4 water');
+  if(name==='mosasaurus')await command('fill 63 4 -4 77 13 4 water');
   const wild=name==='mosasaurus',owner=wild?'':`,"arkdinos:owner":"${alice.uuid}"`;
-  await command(`summon ${type} ${i*7} ${wild?8:4} 0 {Tags:["model_game_${name}","ark_dino","${wild?'ark_dino_wild':'ark_dino_tamed'}"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"${name}"${owner},"arkdinos:stay":1b,"arkdinos:growth-duration":900000L}}`);
+  await command(`summon ${type} ${wild?70:i*7} ${wild?8:4} 0 {Tags:["model_game_${name}","ark_dino","${wild?'ark_dino_wild':'ark_dino_tamed'}"],NoAI:1b,PersistenceRequired:1b,BukkitValues:{"arkdinos:species":"${name}"${owner},"arkdinos:stay":1b,"arkdinos:growth-duration":900000L}}`);
  }
  for(const name of species)await eventually(async()=>!((await command(`dm inspect model_game_${name}`)).includes('ERROR')),`${name} candidate did not attach its real model`);
+ await check('Actual Gallimimus uses its own model, calibrated single rider and running animation',async()=>{
+  const tag='model_game_gallimimus';await command(`dm share ${tag}`);await mount(alice,tag);
+  const before=await inspect(tag);assert.equal((await player(alice)).vehicle,before.id);assert.equal(Number(before.render),1);assert.equal(Number(before.scale),1);
+  await mount(bob,tag);assert.equal((await player(alice)).vehicle,before.id);assert.notEqual((await player(bob)).vehicle,before.id);assert.equal((await inspect(tag)).extra,'none','Gallimimus cannot invent a second seat');
+  alice.look(0);alice.input(65);await delay(500);const during=await inspect(tag);alice.input(0);
+  assert.equal(during.phase,'run');assert.ok(Number(during.walkSpeed)>1.5&&Number(during.walkSpeed)<=2.4);
+  assert.ok(Math.hypot(Number(during.x)-Number(before.x),Number(during.z)-Number(before.z))>1,'Real sprint input must move the new species');
+  await exit();return{before,during};
+ });
  for(const name of Object.keys(factors))await check(`Actual ${name} driver and passenger keep their native vehicles through real model rebuild`,async()=>{
   const tag=`model_game_${name}`;await command(`dm share ${tag}`);await mount(alice,tag);await mount(bob,tag);
   const before=await assertMounted(tag);assert.equal(Number(before.mob.render),factors[name]);
@@ -106,7 +130,7 @@ export default async function run({check,command,alice,clients,Client,eventually
   const moved=await assertMounted(tag);assert.ok(Math.hypot(Number(moved.mob.x)-Number(after.mob.x),Number(moved.mob.z)-Number(after.mob.z))>.2);
   const packAudit=audit();observer.close();await exit();return{before,after,moved,bridgePoses,packAudit};
  });
- await check('Actual candidate growth and all eight model registrations survive a clean server restart',async()=>{
+ await check('Actual candidate growth and all nine model registrations survive a clean server restart',async()=>{
    const before={};for(const name of species){const tag=`model_game_${name}`;if(name!=='mosasaurus')await command(`dm age ${tag} 450000`);before[name]=await inspect(tag);assert.equal(before[name].sightTrace,'false');}
   await exit();clients.forEach(client=>client.close());await command('save-all flush');const stopped=server();stopped.stdin.write('stop\n');await once(stopped,'exit');await start();
   alice=new Client('ModelRider');bob=new Client('ModelGuest');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Both clients must reconnect after real restart',30000);
@@ -115,11 +139,11 @@ export default async function run({check,command,alice,clients,Client,eventually
    const tag=`model_game_${name}`;await eventually(async()=>{after[name]=await inspect(tag);return after[name].active==='1'&&after[name].stale==='0';},`${name} must restore its actual model after restart`);
    assert.equal(after[name].uuid,before[name].uuid);assert.equal(after[name].adultAt,before[name].adultAt);assert.equal(after[name].extra,'none');
     assert.equal(after[name].sightTrace,'false',`${name} restored its old animation sight cutoff`);
-   const factor={...factors,velociraptor:1,pteranodon:1,dilophosaurus:1.15,mosasaurus:1}[name];
+   const factor={...factors,velociraptor:1,pteranodon:1,dilophosaurus:1.15,gallimimus:1,mosasaurus:1}[name];
    const growth=name==='mosasaurus'?1:.45+.55*Math.min(1,Math.max(0,1-(Number(after[name].adultAt)-Number(after[name].time))/900000));
    assert.ok(Math.abs(Number(after[name].render)-factor*growth)<.002,`${name} must advance growth by the real reboot duration`);
   }
-  const registrations=(await command('dm registrations')).trim().split(';');assert.deepEqual(registrations.slice(0,8),species.map(name=>`${name}:true:true`));assert.equal(fields(registrations.slice(8).join(';')).eggs,'7');assert.equal(fields(registrations.slice(8).join(';')).bedrockEggs,'7');
+  const registrations=(await command('dm registrations')).trim().split(';');assert.deepEqual(registrations.slice(0,species.length),species.map(name=>`${name}:true:true`));assert.equal(fields(registrations.slice(species.length).join(';')).eggs,'8');assert.equal(fields(registrations.slice(species.length).join(';')).bedrockEggs,'8');
   const packAudit=audit(),bedrockPackAudit=auditBedrock();
   const fallback=[];
   for(const op of ['unload','native']) {
@@ -135,5 +159,6 @@ export default async function run({check,command,alice,clients,Client,eventually
   return{before,after,registrations,packAudit,bedrockPackAudit,fallback,remounted};
  });
  report.packsAfterRestart={};
- for(const [kind,pack] of Object.entries(report.packs)) {const bytes=await readFile(`${directory}/${pack.path}`);report.packsAfterRestart[kind]={...pack,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex')};}
+ report.packRestartComparisons={};
+ for(const [kind,pack] of Object.entries(report.packs)) {const bytes=await readFile(`${directory}/${pack.path}`);const fp=await savedFingerprint(kind,`${directory}/${pack.path}`,'restart');report.packsAfterRestart[kind]={...pack,bytes:bytes.length,...summary(fp.data)};report.packRestartComparisons[kind]=compareSaved(fingerprintsInitial[kind].record,fp.record);}
 }

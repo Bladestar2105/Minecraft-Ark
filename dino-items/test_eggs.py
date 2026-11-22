@@ -7,7 +7,7 @@ import unittest
 from build_eggs import assets as generated_assets
 
 ROOT = Path(__file__).resolve().parents[1]
-SPECIES = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus', 'mosasaurus')
+SPECIES = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus', 'mosasaurus', 'gallimimus')
 
 
 class EggAssetsTest(unittest.TestCase):
@@ -20,7 +20,7 @@ class EggAssetsTest(unittest.TestCase):
         self.assertEqual(header['version'], module['version'])
 
     def test_normal_creative_aliases_use_species_art_and_names_on_both_editions(self):
-        aliases = ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama')
+        aliases = ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama', 'armadillo')
         result = generated_assets()
         for alias, species in zip(aliases, SPECIES):
             path = f'assets/minecraft/items/{alias}_spawn_egg.json'
@@ -44,9 +44,9 @@ class EggAssetsTest(unittest.TestCase):
         self.assertEqual(generated_assets(), {'java': java, 'bedrock': bedrock, 'geyser': assets['geyser']}, 'Regenerate assets after changing egg art')
         mappings = assets['geyser']['items']['minecraft:sniffer_egg']
         self.assertEqual(assets['geyser']['format_version'], 2)
-        self.assertEqual(len(java), 34)
-        self.assertEqual(len(mappings), 8)
-        self.assertEqual(len(set(value for name, value in java.items() if name.endswith('.png'))), 8)
+        self.assertEqual(len(java), 38)
+        self.assertEqual(len(mappings), 9)
+        self.assertEqual(len(set(value for name, value in java.items() if name.endswith('.png'))), 9)
         atlas = json.loads(bedrock['textures/item_texture.json'])['texture_data']
         for species in SPECIES:
             name = 'egg_' + species

@@ -32,7 +32,7 @@ final class SpeciesRules {
     private static boolean compatible(String name, boolean ravager) {
         if (name == null) return false;
         return ravager ? ravager(name)
-                : name.equals("triceratops") || name.equals("stegosaurus") || name.equals("brachiosaurus") || name.equals("pteranodon");
+                : name.equals("triceratops") || name.equals("stegosaurus") || name.equals("brachiosaurus") || name.equals("pteranodon") || name.equals("gallimimus");
     }
 
     static boolean ravager(String species) {

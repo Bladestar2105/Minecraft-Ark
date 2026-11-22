@@ -1,0 +1,47 @@
+{
+  "name": "ark_gallimimus",
+  "label": "Gallimimus",
+  "palette": [
+    "#bc8e68",
+    "#90694e",
+    "#e1c6a0",
+    "#635c50",
+    "#dbaf5b",
+    "#292620",
+    "#7a7161",
+    "#77533e"
+  ],
+  "description": "S-f\u00f6rmiger Hals und zahnloser Schnabel \u00b7 lange Laufbeine mit drei Zehen \u00b7 feines Federkleid rekonstruiert",
+  "ground_parts": [
+    "toe_left_0",
+    "toe_left_0_tip",
+    "toe_left_0_claw",
+    "toe_left_1",
+    "toe_left_1_tip",
+    "toe_left_1_claw",
+    "toe_left_2",
+    "toe_left_2_tip",
+    "toe_left_2_claw",
+    "toe_right_0",
+    "toe_right_0_tip",
+    "toe_right_0_claw",
+    "toe_right_1",
+    "toe_right_1_tip",
+    "toe_right_1_claw",
+    "toe_right_2",
+    "toe_right_2_tip",
+    "toe_right_2_claw"
+  ],
+  "leg_bones": [
+    "leg_left",
+    "leg_right"
+  ],
+  "walk_stride_blocks": 1.630854,
+  "cubes": 179,
+  "bones": 12,
+  "run_stride_blocks": 3.135356,
+  "native_carrier": "SNIFFER",
+  "rideable": true,
+  "diet": "herbivore",
+  "ecology": "loose_herd"
+}

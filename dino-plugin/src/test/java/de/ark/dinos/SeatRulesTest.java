@@ -5,7 +5,7 @@ public final class SeatRulesTest {
     public static void main(String[] args) {
         for (String species : new String[]{"trex", "triceratops", "stegosaurus", "brachiosaurus"})
             check(SeatRules.supports(species), "Large adult species needs a second seat: " + species);
-        for (String species : new String[]{"pteranodon", "velociraptor", "dilophosaurus", "mosasaurus", "unknown", ""})
+        for (String species : new String[]{"pteranodon", "velociraptor", "dilophosaurus", "gallimimus", "mosasaurus", "unknown", ""})
             check(!SeatRules.supports(species), "Species without a large saddle must keep one seat: " + species);
         check(!SeatRules.supports(null), "Unknown species must fail closed");
         offset(0, 0, -1.2);

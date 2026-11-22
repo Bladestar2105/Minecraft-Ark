@@ -1,0 +1,89 @@
+{
+  "recorded_on": "2026-11-22",
+  "status": "passed",
+  "harness": "dino-plugin/encounter-contact-runtime-test.py",
+  "plugin_sha256": "f08fd024c91c49e7235df4676aeaa79545cb8ef3831d0ce0bb06f562bdb40212",
+  "groups_passed": 11,
+  "paper": "26.3-258-main@9ee1fac",
+  "paper_sha256": "c5df5fb9f6155e48380c67c6e2b2dc2581b7db1a4b665d2c3818057b7efb6692",
+  "java": "Temurin 25.0.5+8-LTS",
+  "server_exit_code": 0,
+  "fixture": {
+    "world": "jurassic_archipelago",
+    "shared_budgets": [
+      12,
+      12
+    ],
+    "protocol": 777,
+    "viewer_mode": "SURVIVAL",
+    "natural_spawning": false,
+    "owned_chunk_tickets": 51,
+    "scene_chunk_tickets": 0,
+    "forced_chunks": 0,
+    "setup": "Only GRAZING positions the actual scene Rex and first Gallimimus two blocks apart. Fixture AI freeze is continuously maintained; no later positioning, phase mutation or positive fixture damage.",
+    "final_cleanup": "Only adopted animal remains; every fixture ticket released."
+  },
+  "external_cancellation": {
+    "scheduled_contacts": 2,
+    "scene_ticks": [
+      140,
+      160
+    ],
+    "native_scene_tick_stack": true,
+    "high_priority_external_listener_cancelled": true,
+    "health_before": 14.0,
+    "health_after": 14.0
+  },
+  "allowed_native_scheduler_strike": {
+    "scene_tick": 180,
+    "native_scene_tick_stack": true,
+    "in_flight_permission": true,
+    "monitor_cancelled": false,
+    "health_before": 14.0,
+    "health_after": 4.0
+  },
+  "ownership": {
+    "setup": "Native tame() plus Stay mode, not a feed-cooldown test.",
+    "owned": true,
+    "scene_member_after_adoption": false,
+    "health_after_two_attack_periods": 4.0
+  },
+  "negative_guard_probes": {
+    "count": 2,
+    "hurt_immunity_cleared": true,
+    "not_scene_scheduler": true,
+    "permission_denied_and_events_cancelled": true
+  },
+  "matched_old_binary_red": {
+    "plugin_sha256": "44b54219e185f597a195c41bc68aa4c718e4e06faf7d184eb709fb5c08204cd2",
+    "expected_failure": "Production scheduler strike causes real health loss",
+    "native_scheduler_stack": true,
+    "external_cancelled": false,
+    "cancelled_monitor": true,
+    "health_before": 14.0,
+    "health_after": 14.0,
+    "server_exit_code": 0
+  },
+  "matched_intermediate_green_sha256": "117c3627a55f5ee566c2803ee92935a59677a3fca49ecefc5c7e7296b0af4d7c",
+  "same_java_fixture_source_as_matched_red_green": true,
+  "contact_java_fixture_sha256": "9d4a145f299da33716e67365449579fb6233478af13ca4ba6d4ca83b6841d140",
+  "groups": [
+    "Fresh flat fixture owns bounded tickets; scene owns none",
+    "Actual protocol777 viewer is Survival",
+    "Real scene starts using shared 12/12 budget",
+    "Stationary contact arranged only during GRAZING",
+    "External cancellation preserves health on genuine scheduled contacts",
+    "Production scheduler strike causes real health loss",
+    "Permission covers only in-flight exact pair",
+    "Owned prey survives two scheduled periods without scene attack",
+    "Direct negative probes cannot reuse the scene authorization",
+    "Cleanup retains adopted animal and removes only temporary actors",
+    "Fixture releases every chunk ticket"
+  ],
+  "limits": [
+    "Continuously AI-frozen stationary contact test; natural chase evidence comes from a separate harness.",
+    "Direct protocol777 Survival viewer; no official rendered Java/Bedrock/console clients or model plugin.",
+    "External HIGH-priority fixture listener cancels the real native event; no actual WorldGuard/GriefPrevention installation.",
+    "Owned-prey setup calls native tame(); feeding/cooldown behavior is outside this test."
+  ]
+}

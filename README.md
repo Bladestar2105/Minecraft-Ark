@@ -4,9 +4,16 @@ A prepared survival adventure world, separate creative area and Java/Bedrock cro
 
 [Official wiki](https://github.com/Bladestar2105/Minecraft-Ark/wiki) · [Deutsch](https://github.com/Bladestar2105/Minecraft-Ark/wiki/Home-DE) · [All-in-One guide](https://github.com/Bladestar2105/Minecraft-Ark/wiki/All-in-One) · [Fixed world download](https://github.com/Bladestar2105/Minecraft-Ark/releases/tag/world-2026-11-06)
 
+The separate [Jurassic Archipelago test world](world-design/jurassic/README.md)
+adds reproducible generation, shared landmark data, Gallimimus and multi-world
+maps. This is an intermediate reference delivery; the complete six-island world
+and official-client/device acceptance remain open. It does not replace the fixed
+world download or existing player saves. [Checked versions](world-design/jurassic/versions.json)
+distinguish source pins, observed runtime and the current upstream release.
+
 - 20,480 × 20,480 survival blocks, seed `20261103`, 1,638,400 pregenerated chunks.
 - 16 villages/64 houses, 12 dinosaur habitats, trader/witch/pirate camps, boss arenas, quests and an atlas with 55 locations.
-- Dinosaur care includes owner feeding to heal injured pets, `/dinos` compass tracking, and Pteranodons that follow a flying owner or land for fish. Meat predators remain hostile throughout feeding; only the final bone completes taming. Eight models, surface swimming, public riding and second seats remain available. Real Java/Bedrock/console visual acceptance remains open. See the [dinosaur review](docs/Dinosaur-Review-2026-11-10.md) and [November 16 update notes](docs/Update-2026-11-16.md).
+- Dinosaur care includes owner feeding to heal injured pets, `/dinos` compass tracking, and Pteranodons that follow a flying owner or land for fish. Meat predators remain hostile throughout feeding; only the final bone completes taming. The source now includes nine models, with Gallimimus in the Jurassic extension, alongside surface swimming, public riding and existing second seats. Real Java/Bedrock/console visual acceptance remains open. See the [dinosaur review](docs/Dinosaur-Review-2026-11-10.md) and [November 16 update notes](docs/Update-2026-11-16.md).
 - Separate creative inventories, ender chest and experience; items drop on death in survival.
 - Local administration plus an isolated player portal with shared server passwords, optional recovery and own statistics.
 - Optional built-in skin editor/wardrobe/signing and persistent private support requests.

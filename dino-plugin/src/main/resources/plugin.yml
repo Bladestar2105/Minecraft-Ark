@@ -13,3 +13,7 @@ commands:
   dinoeier:
     description: Dino-Eier im Kreativmodus einer Dino-Welt auswählen
     usage: /dinoeier
+permissions:
+  ark.jurassic.scene:
+    description: Start or stop the optional temporary Jurassic test encounter.
+    default: op

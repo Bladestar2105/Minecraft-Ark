@@ -78,7 +78,7 @@ final class DinoWildSpawns implements AutoCloseable {
                     attempts++;
                     Location point = candidate(player);
                     if (point == null) continue;
-                    String species = WildSpawnRules.species(world.getBiome(point).getKey().toString(), ThreadLocalRandom.current().nextInt(100));
+                    String species = WildSpawnRules.species(world.getName(), world.getBiome(point).getKey().toString(), ThreadLocalRandom.current().nextInt(100));
                     if (species == null) continue;
                     if ("mosasaurus".equals(species)) point.subtract(0, 5, 0);
                     final Location at = point;
@@ -109,7 +109,7 @@ final class DinoWildSpawns implements AutoCloseable {
         return world.getWorldBorder().isInside(point) ? point : null;
     }
 
-    private boolean space(Location point, String species) {
+    boolean space(Location point, String species) {
         World world = point.getWorld();
         boolean aquatic = "mosasaurus".equals(species);
         if (!aquatic && !GROUND.contains(world.getBlockAt(point.getBlockX(), point.getBlockY() - 1, point.getBlockZ()).getType())) return false;
@@ -145,7 +145,7 @@ final class DinoWildSpawns implements AutoCloseable {
         return world.getNearbyEntities(box).stream().noneMatch(entity -> entity instanceof org.bukkit.entity.LivingEntity);
     }
 
-    private boolean protectionAllows(Location point) {
+    boolean protectionAllows(Location point) {
         var manager = plugin.getServer().getPluginManager();
         var guard = manager.getPlugin("WorldGuard");
         if (guard != null && !guard.isEnabled()) {

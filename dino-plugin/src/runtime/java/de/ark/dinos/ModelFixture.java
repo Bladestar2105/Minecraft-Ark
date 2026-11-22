@@ -200,7 +200,7 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                 case "bridge-race-finish" -> {BridgeRaceProbe.finish();sender.sendMessage("finished=true");return true;}
                 case "model-registrations" -> {
                     var rows=new ArrayList<String>();
-                    for(String species:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","mosasaurus"}) {
+                    for(String species:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","gallimimus","mosasaurus"}) {
                         String model="ark_"+species;
                         boolean java=BetterModel.model(model).isPresent();
                         boolean bedrock=org.geysermc.geyser.registry.Registries.BEDROCK_ENTITY_DEFINITIONS.get()
@@ -234,20 +234,20 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                             if(!entry.getValue().itemDefinition().getComponentData().toString().contains(icon))throw new AssertionError("Bedrock runtime item lacks egg icon");
                             items.add(definition.model().toString());found++;
                         }
-                        if(found!=8)throw new AssertionError("Expected eight eggs per Bedrock protocol, found "+found);
+                        if(found!=9)throw new AssertionError("Expected nine eggs per Bedrock protocol, found "+found);
                     }
                     boolean eggPack=org.geysermc.geyser.registry.Registries.RESOURCE_PACKS.get().containsKey(UUID.fromString("4b6d5dd8-9250-48cf-bc87-48251cfaf744"));
                     int entities=0;
-                    for(String species:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","mosasaurus"}) {
+                    for(String species:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","gallimimus","mosasaurus"}) {
                         if(org.geysermc.geyser.registry.Registries.BEDROCK_ENTITY_DEFINITIONS.get().containsKey(org.geysermc.geyser.api.util.Identifier.of("modelengine:ark_"+species)))entities++;
                     }
-                    sender.sendMessage("javaAssets=34;eggPack="+eggPack+";bedrockDefinitions="+items.size()+";protocols="+versions.size()+";modelEntities="+entities+";items="+String.join(",",items));return true;
+                    sender.sendMessage("javaAssets=38;eggPack="+eggPack+";bedrockDefinitions="+items.size()+";protocols="+versions.size()+";modelEntities="+entities+";items="+String.join(",",items));return true;
                 }
                 case "creative-alias-mappings" -> {
                     int protocols=0,roundtrips=0;
                     for(var mappings:org.geysermc.geyser.registry.Registries.ITEMS.get().values()) {
                         protocols++;
-                        for(String alias:new String[]{"bat","endermite","silverfish","vex","phantom","strider","tadpole","trader_llama"}) {
+                        for(String alias:new String[]{"bat","endermite","silverfish","vex","phantom","strider","tadpole","trader_llama","armadillo"}) {
                             String key="minecraft:"+alias+"_spawn_egg";var mapping=mappings.getMapping(key);
                             var item=mappings.getCreativeItems().stream().map(org.cloudburstmc.protocol.bedrock.data.inventory.CreativeItemData::getItem)
                                 .filter(i->i.getDefinition().getRuntimeId()==mapping.getBedrockDefinition().getRuntimeId()).findFirst().orElseThrow();
@@ -258,7 +258,7 @@ public final class ModelFixture extends JavaPlugin implements Listener {
                             roundtrips++;
                         }
                     }
-                    sender.sendMessage("aliases=8;protocols="+protocols+";roundtrips="+roundtrips);return true;
+                    sender.sendMessage("aliases=9;protocols="+protocols+";roundtrips="+roundtrips);return true;
                 }
                 case "client-ids" -> {
                     var version=PacketEvents.getAPI().getPlayerManager().getUser(getServer().getPlayerExact(name)).getClientVersion();

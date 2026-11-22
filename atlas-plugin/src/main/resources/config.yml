@@ -1,2 +1,10 @@
 # Generated native map ID. Keep this file and the world map data together.
 map-id: -1
+# Additional atlas worlds are opt-in. Their PNGs remain 128–2048 square pixels.
+# worlds:
+#   jurassic_archipelago:
+#     map-id: -1
+#     sites-file: jurassic_archipelago/sites.yml
+#     terrain-file: jurassic_archipelago/terrain.png
+# Legacy map IDs, starter records and BYTE-only map items still belong to ark.
+leaderboard-world: ark

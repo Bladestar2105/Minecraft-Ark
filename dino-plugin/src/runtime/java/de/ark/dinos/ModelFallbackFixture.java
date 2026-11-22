@@ -64,7 +64,7 @@ public final class ModelFallbackFixture extends JavaPlugin {
         var nativeStates=new java.util.ArrayList<String>();
         for(var entity:getServer().getWorlds().getFirst().getEntities())if(entity instanceof Mob candidate){
             String species=candidate.getPersistentDataContainer().get(new NamespacedKey(this,"species"),PersistentDataType.STRING);
-            if(species==null||!java.util.Set.of("trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","mosasaurus").contains(species))continue;
+            if(species==null||!java.util.Set.of("trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","gallimimus","mosasaurus").contains(species))continue;
             models.attach(candidate,"ark_"+species);
             nativeStates.add(species+":"+candidate.getAttribute(Attribute.SCALE).getBaseValue()+":"+candidate.isInvisible()+":"+registryNames(candidate));
         }

@@ -1,4 +1,8 @@
 # Coordinates refer to the actual ark terrain. Add the generated manifest sites.
 world: ark
 extent: 10240
+# Center of the square image in block coordinates; extent is its half-width.
+origin-x: 0
+origin-z: 0
+zoom-divisors: [1, 4, 8]
 sites: []

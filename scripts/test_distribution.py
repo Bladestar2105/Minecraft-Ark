@@ -16,7 +16,7 @@ import package
 PLUGINS = {"dino": ("ArkDinos", "1.2.2"), "atlas": ("ArkAtlas", "1.0.1"),
            "panel": ("ArkPanelBridge", "1.0.0"), "accounts": ("ArkAccounts", "1.0.2"),
            "wardrobe": ("ArkWardrobe", "1.0.0"), "support": ("ArkSupport", "1.0.2"),
-           "access": ("ArkAccessBridge", "1.1.1")}
+           "access": ("ArkAccessBridge", "1.1.1"), "jurassic": ("ArkJurassic", "0.1.0")}
 
 
 def plugins_fixture(root):
@@ -82,7 +82,7 @@ def dino_models_fixture(root):
                   if (parent / 'dino-items/egg-assets.json').is_file())
     (root / 'dino-items').mkdir()
     (root / 'dino-items/egg-assets.json').write_bytes(source.read_bytes())
-    species = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus', 'mosasaurus')
+    species = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor', 'pteranodon', 'dilophosaurus', 'mosasaurus', 'gallimimus')
     models = [('dino-models', 'ark_' + name) for name in species]
     models += [('dino-items', 'ark_egg_' + name) for name in species if name != 'mosasaurus']
     for directory, model in models:
@@ -96,6 +96,10 @@ def dino_models_fixture(root):
 
 
 class InstallerTests(unittest.TestCase):
+    def test_jurassic_module_is_explicit_and_does_not_replace_world_release(self):
+        self.assertEqual(install_plugins.PLUGINS.get("jurassic"), ("ArkJurassic", "0.1.0"))
+        self.assertNotIn("jurassic", install_plugins.DEFAULT_MODULES)
+
     def test_support_release_pin_matches_current_notification_module(self):
         self.assertEqual(install_plugins.PLUGINS["support"], ("ArkSupport", "1.0.2"))
 
@@ -173,10 +177,10 @@ class InstallerTests(unittest.TestCase):
             self.assertTrue(pack.is_file(), 'Dino installation must include the Bedrock egg graphics')
             with zipfile.ZipFile(pack) as archive:
                 atlas = json.loads(archive.read('textures/item_texture.json'))['texture_data']
-                self.assertEqual(len(atlas), 8)
-                self.assertEqual(len({archive.read(value['textures'] + '.png') for value in atlas.values()}), 8)
+                self.assertEqual(len(atlas), 9)
+                self.assertEqual(len({archive.read(value['textures'] + '.png') for value in atlas.values()}), 9)
             mappings = json.loads((geyser / 'custom_mappings/ark-dino-eggs.json').read_text())
-            self.assertEqual(len(mappings['items']['minecraft:sniffer_egg']), 8)
+            self.assertEqual(len(mappings['items']['minecraft:sniffer_egg']), 9)
             self.assertTrue(all(path.read_bytes() == b'operator model cache' for path in preserved))
 
     def test_model_dependencies_and_required_bedrock_pack_follow_module_selection(self):
@@ -227,7 +231,7 @@ class InstallerTests(unittest.TestCase):
                 if change.endswith('existing'):
                     self.assertEqual(target.read_text(), 'existing operator model')
 
-    def test_dino_selection_installs_eight_animals_and_seven_placed_egg_models(self):
+    def test_dino_selection_installs_nine_animals_and_eight_placed_egg_models(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             install_fixture(root)
@@ -236,9 +240,9 @@ class InstallerTests(unittest.TestCase):
                 install_plugins.install(root, ['dino'])
             java = root / 'data/plugins/BetterModel/models'
             bedrock = root / 'data/plugins/Geyser-Spigot/extensions/geysermodelengineextension/input'
-            self.assertEqual(len(list(java.glob('ark_*.bbmodel'))), 15)
-            self.assertEqual(len(list(bedrock.glob('ark_*'))), 15)
-            self.assertEqual(len(list(java.glob('ark_egg_*.bbmodel'))), 7)
+            self.assertEqual(len(list(java.glob('ark_*.bbmodel'))), 17)
+            self.assertEqual(len(list(bedrock.glob('ark_*'))), 17)
+            self.assertEqual(len(list(java.glob('ark_egg_*.bbmodel'))), 8)
             self.assertFalse((java / 'ark_egg_mosasaurus.bbmodel').exists())
             for folder in bedrock.iterdir():
                 self.assertEqual(sorted(p.name for p in folder.iterdir()),
@@ -393,11 +397,39 @@ class DistributionTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     download(item, extracted / "rejected", root=extracted)
                 self.assertFalse((extracted / "rejected" / item["name"]).exists())
-            self.assertEqual(len(list(output.glob("*.jar"))), 7)
+            self.assertEqual(len(list(output.glob("*.jar"))), len(PLUGINS))
             derived.write_bytes(b"tampered before packaging")
             with patch("package.download", return_value=derived), self.assertRaisesRegex(ValueError, "Bundled dependency checksum"):
                 package.package(root, "rejected-bridge")
             self.assertFalse((root / "dist/rejected-bridge").exists())
+
+    def test_bundled_geyserutils_installs_in_extensions_without_host_java_or_network(self):
+        from build_plugins import download
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            install_fixture(root)
+            dino_models_fixture(root)
+            content = b"verified GeyserUtils property validation fixture"
+            item = {"kind": "geyser-extension", "project": "geyser-utils-geyser",
+                    "name": "geyserutils-geyser-1.0-SNAPSHOT.jar",
+                    "url": "https://example.org/geyserutils.jar", "source_sha256": "0" * 64,
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                    "patch": "geyser-utils-entity-property-validation",
+                    "bundled_path": "runtime-dependencies/geyserutils-geyser-1.0-SNAPSHOT.jar"}
+            bundled = root / item["bundled_path"]
+            bundled.parent.mkdir()
+            bundled.write_bytes(content)
+            (root / "dependencies-runtime.json").write_text(json.dumps([item]))
+            with patch.dict(os.environ, {"PATH": ""}, clear=True), \
+                    patch("build_plugins.urlopen", side_effect=AssertionError("must use bundled JAR")):
+                install_plugins.install(root, modules=["dino"])
+                target = root / "data/plugins/Geyser-Spigot/extensions" / item["name"]
+                self.assertEqual(target.read_bytes(), content)
+                self.assertFalse((root / "data/plugins" / item["name"]).exists())
+                bundled.write_bytes(b"tampered")
+                with self.assertRaisesRegex(ValueError, "Artifact checksum mismatch"):
+                    download(item, root / "rejected", root=root)
+                self.assertFalse((root / "rejected" / item["name"]).exists())
 
     def test_project_bundle_contains_every_dinosaur_source_and_runtime_check(self):
         root = Path(__file__).resolve().parents[1]
@@ -511,9 +543,9 @@ class DistributionTests(unittest.TestCase):
             with zipfile.ZipFile(archives[0]) as bundle:
                 self.assertEqual(set(bundle.namelist()), {".env.example", "README.md", "check.mjs", "distribution-files.json", "own-plugins.json", *[item["path"] for item in entries]})
                 self.assertTrue(all(info.date_time == (2026, 11, 7, 0, 0, 0) for info in bundle.infolist()))
-            self.assertEqual(len(list(first.glob("*.jar"))), 7)
+            self.assertEqual(len(list(first.glob("*.jar"))), len(PLUGINS))
             sums = (first / "SHA256SUMS").read_text().splitlines()
-            self.assertEqual(len(sums), 8)
+            self.assertEqual(len(sums), len(PLUGINS)+1)
             for line in sums:
                 digest, name = line.split("  ")
                 self.assertEqual(hashlib.sha256((first / name).read_bytes()).hexdigest(), digest)

@@ -134,6 +134,7 @@ try {
   await command('fill -25 4 -25 25 4 25 stone');await command('fill -25 5 -25 25 16 -25 glass');await command('fill -25 5 25 25 16 25 glass');await command('fill -25 5 -24 -25 16 24 glass');await command('fill 25 5 -24 25 16 24 glass');await command('fill -24 5 -24 24 15 24 water');
   await move('AquaticObserver',0,10,3);await command('attribute AquaticObserver minecraft:max_health base set 500');await command('effect give AquaticObserver instant_health 1 10 true');await command('effect give AquaticObserver water_breathing infinite 0 true');
   await spawnMosa();await command('aquaticfixture spawn aquatic_ordinary ordinary 12 8 0');await delay(150);
+  const modelBounds=Object.fromEntries((await command('aquaticfixture model-bounds')).trim().split(';').map(row=>{const [key,value]=row.split('=');return[key,Number(value)];}));report.modelBounds=modelBounds;for(const key of ['minY','maxY','minSide','maxSide','minForward','maxForward'])assert.ok(Number.isFinite(modelBounds[key]),'Fixture needs finite current model bounds');
   await check('Mosa has a large wild Dolphin carrier while ordinary dolphins retain native goals',async()=>{
     const mosa=await inspect('aquatic_mosa'),ordinary=await inspect('aquatic_ordinary');assert.equal(Number(mosa.scale),4);assert.equal(Number(mosa.maxHealth),200);assert.equal(Number(ordinary.scale),1);assert.ok(ordinary.goals.includes('dolphin_jump'));assert.ok(!mosa.goals.includes('dolphin_jump'));assert.ok(!mosa.goals.includes('breath_air'));assert.ok(mosa.goals.includes('random_swimming'));return {mosa,ordinary};
   });
@@ -232,7 +233,16 @@ try {
   });
   await check('Boundary recovery clears a rejected upward native path without stranding the Mosa',async()=>{
     await resetMosa();await command('aquaticfixture activation 16 6 4');await move('AquaticObserver',40,10,0);
-    await command('aquaticfixture teleport aquatic_mosa 0 12.4974 0 0');await command('aquaticfixture path aquatic_mosa 3 14 0');await delay(2500);
+    const legacyY=12.4974,waterTop=16;
+    assert.match(await command('execute if block 0 16 0 air'),/Test passed/,'The fixture water ends below the measured model top at its historical position');
+    if(legacyY+modelBounds.maxY>=waterTop) {
+      await command(`aquaticfixture teleport aquatic_mosa 0 ${legacyY} 0 0`);
+      assert.match(await command('aquaticfixture safety aquatic_mosa'),/safe=false/,'The final tail fin must reject the old physically obstructed placement');
+    }
+    // Keep the original 0.0026-block water margin with the final animated geometry.
+    const boundaryY=waterTop-modelBounds.maxY-.0026;
+    await command(`aquaticfixture teleport aquatic_mosa 0 ${boundaryY} 0 0`);assert.match(await command('aquaticfixture safety aquatic_mosa'),/safe=true;navigation=true/);
+    await command('aquaticfixture path aquatic_mosa 3 14 0');await delay(2500);
     const blocked=await inspect('aquatic_mosa'),safety=await command('aquaticfixture safety aquatic_mosa');await delay(5000);const beforeClear=await inspect('aquatic_mosa');
     report.boundaryProbe={blocked,safety,beforeClear};assert.ok(Number(beforeClear.distance)-Number(blocked.distance)>1,'Mosa remained stuck at a safe water boundary');
     await command('aquaticfixture teleport aquatic_mosa 11.4 10 0 0');await command('aquaticfixture path aquatic_mosa -10 10 0');await delay(2500);const wall=await inspect('aquatic_mosa');await delay(5500);const wallAfter=await inspect('aquatic_mosa');
@@ -257,14 +267,29 @@ try {
     await command(`aquaticfixture activation ${prior.waterActivation} ${prior.view} ${prior.simulation}`);return report.activationProbe;
   });
   await check('Persisted live surface-margin breach resumes from stopped NoAI when loaded without changing entity',async()=>{
-    await resetMosa();await command('aquaticfixture activation 16 6 4');await command('aquaticfixture teleport aquatic_mosa 0 12.646769972037134 0 -157.90941');
-    await command('data modify entity @e[tag=aquatic_mosa,limit=1] BukkitValues."arkdinos:breach-origin-y" set value 12.49884014719662d');await command('data modify entity @e[tag=aquatic_mosa,limit=1] NoAI set value 1b');
+    await resetMosa();await command('aquaticfixture activation 16 6 4');
+    // Preserve the captured pose's tiny launch margin and current height above launch.
+    const originY=16-modelBounds.maxY-.00115985280338,currentY=originY+.147929824840514;
+    await command(`aquaticfixture teleport aquatic_mosa 0 ${currentY} 0 -157.90941`);
+    await command(`data modify entity @e[tag=aquatic_mosa,limit=1] BukkitValues."arkdinos:breach-origin-y" set value ${originY}d`);await command('data modify entity @e[tag=aquatic_mosa,limit=1] NoAI set value 1b');
     const before=await inspect('aquatic_mosa'),safetyBefore=await command('aquaticfixture safety aquatic_mosa');await delay(5000);const after=await inspect('aquatic_mosa'),safetyAfter=await command('aquaticfixture safety aquatic_mosa');
     report.surfaceMarginProbe={before,safetyBefore,after,safetyAfter};assert.equal(after.uuid,before.uuid);assert.equal(after.breachOrigin,'null');assert.match(safetyAfter,/safe=true;navigation=true/);assert.ok(Number(after.horizontal)-Number(before.horizontal)>1,'Recovered Mosa must resume horizontal swimming');assert.equal(after.health,before.health);return report.surfaceMarginProbe;
   });
   await check('Corner recovery makes net inward progress and accepts a fresh native path without jitter-only success',async()=>{
     await resetMosa();await command('aquaticfixture activation 64 6 4');await command('aquaticfixture stop-wander aquatic_mosa');
-    await command('aquaticfixture teleport aquatic_mosa -0.04691707458942336 9.975689623215539 13.387228889792365 117.513275');await command('aquaticfixture path aquatic_mosa 0 9 0');
+    const original={x:-0.04691707458942336,y:9.975689623215539,z:13.387228889792365,yaw:117.513275};
+    const angle=original.yaw*Math.PI/180;
+    const corners=[modelBounds.minSide,modelBounds.maxSide].flatMap(side=>[modelBounds.minForward,modelBounds.maxForward].map(forward=>({x:side*Math.cos(angle)-forward*Math.sin(angle),z:side*Math.sin(angle)+forward*Math.cos(angle)})));
+    const edge=corners.reduce((a,b)=>a.z>b.z?a:b);
+    if(original.z+edge.z>=25) {
+      await command(`aquaticfixture teleport aquatic_mosa ${original.x} ${original.y} ${original.z} ${original.yaw}`);
+      assert.match(await command('aquaticfixture safety aquatic_mosa'),/safe=false/,'The final animation clearance envelope must reject the old pose inside the glass wall');
+      assert.match(await command(`execute if block ${Math.floor(original.x+edge.x)} ${Math.floor(original.y)} 25 glass`),/Test passed/);
+    }
+    // Preserve the old pose's measured wall gap with the final side/forward envelope.
+    const z=25-.042211780404422-edge.z;
+    await command(`aquaticfixture teleport aquatic_mosa ${original.x} ${original.y} ${z} ${original.yaw}`);assert.match(await command('aquaticfixture safety aquatic_mosa'),/safe=true;navigation=true/);
+    await command('aquaticfixture path aquatic_mosa 0 9 0');
     const before=await inspect('aquatic_mosa');await delay(25000);const natural=await inspect('aquatic_mosa');
     const target=Number(natural.z)>3?[0,9,0]:[0,9,-6];await command(`aquaticfixture path aquatic_mosa ${target.join(' ')}`);await delay(5000);const retried=await inspect('aquatic_mosa');
     const inward=Number(before.z)-Number(natural.z),targetDistance=state=>Math.hypot(Number(state.x)-target[0],Number(state.z)-target[2]);

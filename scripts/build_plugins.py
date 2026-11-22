@@ -16,6 +16,9 @@ BUNDLED_BRIDGE = "runtime-dependencies/GeyserModelEngine-1.0.9.jar"
 PATCHES = {
     "geyser-model-engine-task-publication":
         ("dino-plugin/upstream-patches/GeyserModelEngineTaskPublicationFix.java", BUNDLED_BRIDGE),
+    "geyser-utils-entity-property-validation":
+        ("dino-plugin/upstream-patches/GeyserUtilsEntityPropertyValidationFix.java",
+         "runtime-dependencies/geyserutils-geyser-1.0-SNAPSHOT.jar"),
     "quests-mission-availability":
         ("config/quests/upstream-patches/QuestsMissionAvailabilityFix.java", "runtime-dependencies/Quests-5.3.2.jar"),
     "worldguard-owned-egg-hatch":
@@ -69,6 +72,7 @@ def download(item, folder, *, root=ROOT):
 
 
 def build():
+    subprocess.run([sys.executable, str(ROOT / "world-design/jurassic/generate.py"), "compile"], cwd=ROOT, check=True)
     subprocess.run([sys.executable, str(ROOT / "dino-models/verify_portability.py")], cwd=ROOT, check=True)
     subprocess.run([sys.executable, str(ROOT / "dino-items/test_eggs.py")], cwd=ROOT, check=True)
     subprocess.run([sys.executable, str(ROOT / "dino-items/test_placed_eggs.py")], cwd=ROOT, check=True)
@@ -78,16 +82,16 @@ def build():
     java_home = os.environ.get("JAVA_HOME")
     def java_tool(name):
         return str(Path(java_home, "bin", name)) if java_home else name
-    tests = {"dino": ["TamingRulesTest", "RidingRulesTest", "SeatRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest", "DinoGrowthTest", "CareRulesTest", "EggAssetsTest", "GroundSpeedsTest", "SwimRulesTest", "DinoSizesTest", "WildSpawnRulesTest"], "atlas": ["AtlasRulesTest"],
+    tests = {"jurassic": ["TerrainTest", "JobRulesTest", "GeneratorTest", "WorldBindingTest"], "dino": ["GallimimusRulesTest", "HerdRulesTest", "EncounterRulesTest", "TamingRulesTest", "RidingRulesTest", "SeatRulesTest", "SpeciesRulesTest", "FlightRulesTest", "DinoPassengerOrderTest", "DinoGrowthTest", "CareRulesTest", "EggAssetsTest", "GroundSpeedsTest", "SwimRulesTest", "DinoSizesTest", "WildSpawnRulesTest"], "atlas": ["AtlasRulesTest"],
              "panel": ["BridgeProtocolTest", "RuntimeSettingsTest"],
              "access": ["AccessRulesTest", "PremiumRulesTest", "PremiumIdentitiesTest"],
              "accounts": ["SessionTest", "AccountsTest", "OperatorTest", "SecretCommandTest", "CommandPolicyTest", "ModuleRegistryTest", "PrivateApiTest", "PortalInfoTest"],
              "wardrobe": ["WardrobeTest", "SignersTest", "CommandPolicyTest", "WardrobeRoutesTest"],
              "support": ["SupportTest", "SupportRoutesTest", "SupportDeleteTest", "SupportNotificationsTest"]}
-    versions = {"dino": "ArkDinos-1.2.2", "atlas": "ArkAtlas-1.0.1",
+    versions = {"jurassic": "ArkJurassic-0.1.0", "dino": "ArkDinos-1.2.2", "atlas": "ArkAtlas-1.0.1",
                 "panel": "ArkPanelBridge-1.0.0", "access": "ArkAccessBridge-1.1.1", "accounts": "ArkAccounts-1.0.2",
                 "wardrobe": "ArkWardrobe-1.0.0", "support": "ArkSupport-1.0.2"}
-    packages = {"dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",
+    packages = {"jurassic": "jurassic", "dino": "dinos", "atlas": "atlas", "panel": "panel", "access": "access",
                 "accounts": "accounts", "wardrobe": "wardrobe", "support": "support"}
     built = []
     for module, mains in tests.items():

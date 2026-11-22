@@ -169,10 +169,13 @@
   {
     "project": "geyser-utils-geyser",
     "name": "geyserutils-geyser-1.0-SNAPSHOT.jar",
-    "version": "1.0-SNAPSHOT",
+    "version": "1.0-SNAPSHOT+property-validation",
     "url": "https://github.com/GeyserExtensionists/GeyserUtils/releases/download/latest/geyserutils-geyser-1.0-SNAPSHOT.jar",
-    "sha256": "8ed7b7dbece8341277652d4ee01706913e725cdf19b9664025bbb870299ec12a",
-    "kind": "geyser-extension"
+    "sha256": "3d764418b47dfbaba0fb20bd3d3fa471b02e77a4a32c73d147a6e366bfe1214a",
+    "kind": "geyser-extension",
+    "source_sha256": "8ed7b7dbece8341277652d4ee01706913e725cdf19b9664025bbb870299ec12a",
+    "patch": "geyser-utils-entity-property-validation",
+    "bundled_path": "runtime-dependencies/geyserutils-geyser-1.0-SNAPSHOT.jar"
   },
   {
     "project": "packetevents",

@@ -1,0 +1,13 @@
+name: ArkJurassic
+version: 0.1.0
+main: de.ark.jurassic.ArkJurassic
+api-version: '26.3'
+load: STARTUP
+description: Explicit, resumable Jurassic test-world generation.
+commands:
+  jurassic:
+    permission: ark.jurassic.admin
+    usage: /jurassic open|generate reference|generate all|pause|resume|status|probe x z
+permissions:
+  ark.jurassic.admin:
+    default: op

@@ -57,11 +57,13 @@ public final class ModelGameplayFixture extends JavaPlugin {
         }
         var adapter=field(field(plugin(),"models"),"adapter");
         Object seat=((Map<?,?>)field(adapter,"extraSeats")).get(mob.getEntityId());
+        Object visual=((Map<?,?>)field(adapter,"models")).get(mob.getUniqueId());
         return "id="+mob.getEntityId()+";uuid="+mob.getUniqueId()+";tracker="+System.identityHashCode(tracker)
                 +";oldClosed="+(old!=null&&old.isClosed())+";replaced="+(old!=null&&old!=tracker)
                 +";actor="+actor(mob)+";oldActor="+previousActors.getOrDefault(mob.getUniqueId(),-1)
                 +";active="+active+";stale="+stale+";scale="+mob.getAttribute(org.bukkit.attribute.Attribute.SCALE).getBaseValue()
                 +";render="+tracker.scaler().scale(tracker)+";time="+System.currentTimeMillis()+";adultAt="+mob.getPersistentDataContainer().get(NamespacedKey.fromString("arkdinos:adult-at"),PersistentDataType.LONG)+";original="+mob.getPersistentDataContainer().get(NamespacedKey.fromString("arkdinos:model-original-scale"),PersistentDataType.DOUBLE)+";extra="+(seat==null?"none":seat)
+                +";phase="+field(visual,"phase")+";walkSpeed="+field(visual,"walkSpeed")
                 +";trackers="+BetterModel.registry(mob.getUniqueId()).orElseThrow().trackers().size()
                 +";driver="+call(plugin(),"driver",new Class<?>[]{Mob.class},mob)
                 +";x="+mob.getX()+";y="+mob.getY()+";z="+mob.getZ()+";yaw="+mob.getYaw()+";sightTrace="+tracker.modifier().sightTrace();
@@ -77,10 +79,10 @@ public final class ModelGameplayFixture extends JavaPlugin {
                 }
                 case "registrations" -> {
                     var rows=new ArrayList<String>();
-                    for(String name:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","mosasaurus"})
+                    for(String name:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","gallimimus","mosasaurus"})
                         rows.add(name+":"+BetterModel.model("ark_"+name).isPresent()+":"+org.geysermc.geyser.registry.Registries.BEDROCK_ENTITY_DEFINITIONS.get().containsKey(org.geysermc.geyser.api.util.Identifier.of("modelengine:ark_"+name)));
                     int eggs=0,bedrockEggs=0;
-                    for(String name:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus"}) {
+                    for(String name:new String[]{"trex","triceratops","stegosaurus","brachiosaurus","velociraptor","pteranodon","dilophosaurus","gallimimus"}) {
                         if(BetterModel.model("ark_egg_"+name).isPresent())eggs++;
                         if(org.geysermc.geyser.registry.Registries.BEDROCK_ENTITY_DEFINITIONS.get().containsKey(org.geysermc.geyser.api.util.Identifier.of("modelengine:ark_egg_"+name)))bedrockEggs++;
                     }

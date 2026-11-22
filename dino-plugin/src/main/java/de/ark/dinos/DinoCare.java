@@ -214,6 +214,7 @@ final class DinoCare implements Listener, AutoCloseable {
             case STRIDER_SPAWN_EGG -> "pteranodon";
             case TADPOLE_SPAWN_EGG -> "dilophosaurus";
             case TRADER_LLAMA_SPAWN_EGG -> "mosasaurus";
+            case ARMADILLO_SPAWN_EGG -> "gallimimus";
             default -> null;
         };
         if(species==null)return;
@@ -249,7 +250,7 @@ final class DinoCare implements Listener, AutoCloseable {
     public void opened(InventoryOpenEvent event) { refreshEggs(event.getPlayer().getInventory());refreshEggs(event.getInventory()); }
     private String label(String species) { return switch(species) {
         case "trex" -> "T-Rex";case "triceratops" -> "Triceratops";case "stegosaurus" -> "Stegosaurus";
-        case "brachiosaurus" -> "Brachiosaurus";case "velociraptor" -> "Velociraptor";case "dilophosaurus" -> "Dilophosaurus";case "mosasaurus" -> "Mosasaurus";default -> "Pteranodon";
+        case "brachiosaurus" -> "Brachiosaurus";case "velociraptor" -> "Velociraptor";case "dilophosaurus" -> "Dilophosaurus";case "mosasaurus" -> "Mosasaurus";case "gallimimus" -> "Gallimimus";default -> "Pteranodon";
     }; }
     private void give(Player player,ItemStack item) {
         player.getInventory().addItem(item).values().forEach(extra -> player.getWorld().dropItemNaturally(player.getLocation(),extra));

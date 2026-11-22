@@ -123,9 +123,23 @@ def head_model(model):
     shapes=set(descendants(model['outliner'][0]))
     return dict(model,elements=[cube for cube in model['elements'] if cube['uuid'] in shapes and cube['type']=='cube'])
 
+def gallimimus_gallery():
+    folder=ROOT/'models/ark_gallimimus'
+    model=json.loads((folder/'ark_gallimimus.bbmodel').read_text())
+    design=json.loads((folder/'design.json').read_text())
+    content=text('Gallimimus / Grasen und Herdenlauf',40,55,31,weight='bold')
+    content+=text('Tatsächliches Quellmodell und Animationen · keine Minecraft-Clientbilder',40,90,18,'#9dbbb4')
+    for index,(label,clip,time) in enumerate([('Ruhe','idle',0),('Grasen','graze',1),('Fluchtlauf','run',.3)]):
+        x=25+index*590
+        content+=text(label,x+20,150,24,weight='bold')
+        content+=model_svg(model,design,(x+20,180,530,430),view='side',animation=clip,time=time)
+    content+=text(str(design['cubes'])+' Würfel · '+str(design['bones'])+' Knochen · eigene zahnlose Anatomie',45,675,18)
+    save('gallimimus-poses',content,1800,720)
+
 def main():
+    gallimimus_gallery()
     models=[]
-    for dirname in ['ark_trex','ark_triceratops','ark_stegosaurus','ark_brachiosaurus','ark_velociraptor','ark_pteranodon','ark_dilophosaurus','ark_mosasaurus']:
+    for dirname in ['ark_trex','ark_triceratops','ark_stegosaurus','ark_brachiosaurus','ark_velociraptor','ark_pteranodon','ark_dilophosaurus','ark_mosasaurus','ark_gallimimus']:
         p=ROOT/'models'/dirname;m=json.loads((p/(dirname+'.bbmodel')).read_text());m['elements']=[e for e in m['elements'] if e['type']=='cube'];d=json.loads((p/'design.json').read_text());models.append((m,d))
         subtitle=d['description'].split(' · ')
         content=text('ARK / '+d['label'],55,65,32,weight='bold')+text(' · '.join(subtitle[:2]),55,99,17,'#9dbbb4')
@@ -135,7 +149,7 @@ def main():
         content+=text('Editierbare CC0-Entwürfe · '+animations+' · Java- und Bedrock-Quelldateien',55,791,15,'#85a69d')
         save(dirname,content,1200,830)
 
-    content=text('ARK / Dinosaurier und Mosasaurus',42,62,32,weight='bold')+text('Acht CC0-Modelle · echte Geometrie, Hauttexturen und Angriffe',42,94,16,'#9dbbb4')
+    content=text('ARK / Dinosaurier und Mosasaurus',42,62,32,weight='bold')+text('Neun CC0-Modelle · echte Geometrie, Hauttexturen und Angriffe',42,94,16,'#9dbbb4')
     for i,(m,d) in enumerate(models):
         col,row=i%3,i//3;x=28+col*488;y=125+row*450
         content+=f'<rect x="{x}" y="{y}" width="472" height="432" rx="18" fill="#183034" stroke="#2c4749"/>'
@@ -146,15 +160,15 @@ def main():
         content+=text(special,x+22,y+411,13,'#80a79d')
     content+=text('Lokale Modellvorschau · echte PNG-UVs und Tiefentest · PS5-Darstellung noch nicht geprüft',42,1514,15,'#8bada3')
     save('dinosaurier-uebersicht',content,1500,1550)
-    content=text('Alle acht / Ruhe und Angriff',40,55,33,weight='bold')+text('Tatsächliche Geometrie, Texturen und Knochenposen · Modellansichten, keine Konsolen-Screenshots',40,92,17,'#9dbbb4')
-    moments={'ark_trex':.16,'ark_velociraptor':.16,'ark_dilophosaurus':.16,'ark_triceratops':.34,'ark_stegosaurus':.34,'ark_brachiosaurus':.25,'ark_pteranodon':.34,'ark_mosasaurus':.2}
+    content=text('Alle neun / Ruhe und Angriff',40,55,33,weight='bold')+text('Tatsächliche Geometrie, Texturen und Knochenposen · Modellansichten, keine Konsolen-Screenshots',40,92,17,'#9dbbb4')
+    moments={'ark_trex':.16,'ark_velociraptor':.16,'ark_dilophosaurus':.16,'ark_triceratops':.34,'ark_stegosaurus':.34,'ark_brachiosaurus':.25,'ark_pteranodon':.34,'ark_mosasaurus':.2,'ark_gallimimus':.34}
     for i,(model,design) in enumerate(models):
         x=25+(i%2)*1000;y=125+(i//2)*535
         content+=f'<rect x="{x}" y="{y}" width="975" height="510" rx="18" fill="#183034" stroke="#2c4749"/>'
         content+=text(design['label'],x+22,y+38,27,weight='bold')+text('Ruhe',x+22,y+72,16,'#a7c2b4')+text('Angriff',x+510,y+72,16,'#a7c2b4')
         content+=model_svg(model,design,(x+20,y+100,455,380))
         content+=model_svg(model,design,(x+505,y+100,450,380),animation='attack',time=moments[design['name']],base_animation='idle')
-    save('dinosaurier-ruhe-angriff',content,2050,2300)
+    save('dinosaurier-ruhe-angriff',content,2050,2835)
     content=text('Zähne / tatsächliche offene Mäuler',40,55,32,weight='bold')+text('Elfenbeinfarbene Ober- und Unterreihen · Eckpunkte gegen feste Maulgeometrie geprüft',40,92,17,'#9dbbb4')
     for i,(model,design) in enumerate(models[:5]+[models[6]]):
         x=25+(i%3)*600;y=125+(i//3)*470
@@ -250,6 +264,6 @@ def main():
             comparison+=model_svg(old,design,(60,top+50,800,235))+model_svg(model,design,(940,top+50,800,235))
         comparison+=text('Gleiche orthografische Ansicht · Quellgeometrie mit echten UV-Texturen · kein Minecraft-/PS5-Screenshot',40,2045,18,'#9dbbb4')
         save(str(ROOT.parent/'output/dino-visual-quality-20261108/before-after'),comparison,1800,2080)
-    print('Rendered eight models, combat overview, aquatic scale comparison, rider clearance and species details')
+    print('Rendered nine models, combat overview, aquatic scale comparison, rider clearance and species details')
 
 if __name__=="__main__":main()

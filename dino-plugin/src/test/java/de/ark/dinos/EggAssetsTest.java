@@ -10,8 +10,8 @@ public final class EggAssetsTest {
     public static void main(String[] args) throws Exception {
         try (var source = Files.newInputStream(Path.of(args[0]))) {
             var assets = EggAssets.read(source);
-            if (assets.size() != 34) throw new AssertionError("All species and Creative alias assets required");
-            for (String species : new String[]{"trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon", "dilophosaurus", "mosasaurus"}) {
+            if (assets.size() != 38) throw new AssertionError("All species and Creative alias assets required");
+            for (String species : new String[]{"trex", "triceratops", "stegosaurus", "brachiosaurus", "velociraptor", "pteranodon", "dilophosaurus", "mosasaurus", "gallimimus"}) {
                 var texture = assets.get("assets/arkdinos/textures/item/egg_" + species + ".png");
                 if (texture == null || !Arrays.equals(Arrays.copyOf(texture, 8), new byte[]{(byte)137,80,78,71,13,10,26,10})) {
                     throw new AssertionError("Missing PNG for " + species);

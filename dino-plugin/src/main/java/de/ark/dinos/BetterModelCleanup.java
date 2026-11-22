@@ -20,7 +20,7 @@ import java.util.UUID;
 /** Removes only our saved presentation when the optional crossplay stack is incomplete. */
 final class BetterModelCleanup implements AutoCloseable {
     private static final Set<String> NAMES = Set.of("ark_trex", "ark_triceratops", "ark_stegosaurus",
-            "ark_brachiosaurus", "ark_velociraptor", "ark_pteranodon", "ark_dilophosaurus", "ark_mosasaurus");
+            "ark_brachiosaurus", "ark_velociraptor", "ark_pteranodon", "ark_dilophosaurus", "ark_mosasaurus", "ark_gallimimus");
     private final JavaPlugin plugin;
     private final Map<UUID, Mob> carriers = new HashMap<>();
     private final ModelEventListener reload;

@@ -190,6 +190,14 @@ public final class ControlsFixture extends JavaPlugin implements Listener {
                 }
                 case "wild-space" -> sender.sendMessage("clear="+call(module("wildSpawns"),"space",new Class<?>[]{org.bukkit.Location.class,String.class},
                         new org.bukkit.Location(getServer().getWorlds().getFirst(),Double.parseDouble(args[2]),Double.parseDouble(args[3]),Double.parseDouble(args[4])),args[1]));
+                case "wild-crossing" -> {
+                    var world=getServer().getWorlds().getFirst();
+                    for(int x=-2;x<=24;x++)for(int y=4;y<=8;y++)for(int z=-4;z<=4;z++)
+                        world.setBiome(x,y,z,x<8?org.bukkit.block.Biome.PLAINS:org.bukkit.block.Biome.DESERT);
+                    Mob mob=(Mob)call(plugin(),"spawnWild",new Class<?>[]{org.bukkit.Location.class,String.class},
+                            new org.bukkit.Location(world,.5,4,.5),"gallimimus");
+                    mob.addScoreboardTag("wildlife_crossing");sender.sendMessage(state(mob));
+                }
                 case "wild-cleanup" -> call(module("wildSpawns"),"close",new Class<?>[]{});
                 case "wild-spawn" -> {
                     Mob mob=(Mob)call(plugin(),"spawnWild",new Class<?>[]{org.bukkit.Location.class,String.class},

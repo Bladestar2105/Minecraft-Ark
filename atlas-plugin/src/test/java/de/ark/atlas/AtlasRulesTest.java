@@ -6,6 +6,22 @@ import java.util.Map;
 
 public final class AtlasRulesTest {
     public static void main(String[] args) {
+        AtlasRules.Layout archipelago = new AtlasRules.Layout(4096, -2048, 16384, List.of(1, 4, 8));
+        AtlasRules.Window large = AtlasRules.window(archipelago, 1, 0, 0);
+        check(large.equals(new AtlasRules.Window(4096, -2048, 32768)), "each world has its own origin and extent");
+        check(AtlasRules.window(archipelago, 4, 30000, -30000).equals(new AtlasRules.Window(16384, -14336, 8192)), "new world zoom clamps to its own border");
+        check(AtlasRules.sourceIndex(archipelago, large, 0, true, 1024) == 4, "custom origin does not offset PNG sampling");
+        check(AtlasRules.sourceIndex(archipelago, large, 127, false, 1024) == 1020, "custom world southern sample");
+        check(AtlasRules.nextZoom(new AtlasRules.Layout(0, 0, 16384, List.of(1, 2, 16)), 2) == 16, "zoom divisors belong to each world");
+        check(AtlasRules.atlasMatches(null, "ark"), "old unqualified atlas still belongs to ark");
+        check(!AtlasRules.atlasMatches(null, "jurassic_archipelago"), "old atlas never satisfies new world starter");
+        check(!AtlasRules.atlasMatches("ark", "jurassic_archipelago"), "foreign atlas is not a local atlas");
+        check(AtlasRules.atlasMatches("jurassic_archipelago", "jurassic_archipelago"), "world identity is explicit");
+        for (List<Integer> zooms : List.of(List.of(4, 8), List.of(1, 1), List.of(1, 0), List.of(1, 3))) {
+            boolean rejected = false;
+            try { new AtlasRules.Layout(0, 0, 16384, zooms); } catch (IllegalArgumentException expected) { rejected = true; }
+            check(rejected, "invalid or fractional zoom spans rejected");
+        }
         AtlasRules.Window overview = AtlasRules.window(1, 7000, -8000);
         check(overview.equals(new AtlasRules.Window(0, 0, 20480)), "overview covers the whole world");
         AtlasRules.Window edge = AtlasRules.window(4, 10239, -10239);
@@ -66,7 +82,7 @@ public final class AtlasRulesTest {
             immutable = true;
         }
         check(immutable, "ranked entries are immutable");
-        System.out.println("AtlasRulesTest: 34 checks passed");
+        System.out.println("AtlasRulesTest: 47 checks passed");
     }
     private static void check(boolean value, String message) {
         if (!value) throw new AssertionError(message);

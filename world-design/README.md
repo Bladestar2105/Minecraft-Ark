@@ -1,5 +1,9 @@
 # One-time world building sources
 
+The separate [Jurassic Archipelago test-world tools](jurassic/README.md) build on
+the current dinosaur work without replacing the original world release. Its
+manifest records actual reference coverage and the remaining six-island work.
+
 `renewal.py` generates explicit Minecraft building functions and a manifest for
 the original ARK villages, spawn, habitats and trader camps. It uses only the
 Python standard library. These functions do not run automatically at startup.

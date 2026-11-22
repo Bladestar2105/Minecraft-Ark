@@ -28,7 +28,10 @@ import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
 
 final class DinoAquatic implements Listener {
-    private static final double[] MODEL_SIDES={-5.493,0,5.493},MODEL_UP={-2.318,0,3.5},MODEL_FORWARD={-14.501,0,10.069};
+    private static final ModelBounds.Envelope MODEL=ModelBounds.source("ark_mosasaurus");
+    // Minecraft forward is -source-Z; these same final-model limits also govern wild spawns.
+    private static final double[] MODEL_SIDES={MODEL.minX(),0,MODEL.maxX()},
+            MODEL_UP={MODEL.minY(),0,MODEL.maxY()},MODEL_FORWARD={-MODEL.maxZ(),0,-MODEL.minZ()};
     private static final class Swimmer {
         final Dolphin mob;
         final Goal<Dolphin> wander;

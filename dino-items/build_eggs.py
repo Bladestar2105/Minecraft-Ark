@@ -42,8 +42,12 @@ EGGS = {
         'wllbs', 'wlhhlllbs', 'wlhhllwwlls', 'wlllwpplllbbs',
         'wlhllwwllwppws', 'sllwwllllwwbbd', 'sbppllbwpwwbsd',
         'sbwblppwblbsd', 'dsllwbbwwwsd', 'dsbbbbwsd', 'dsswsd', 'dddd')),
+    'gallimimus': ('Gallimimus', '#d2c09a', '#806e48', '#f3e5c7', (
+        'ls', 'wlls', 'whhls', 'wlhhlbs', 'wlhhllws', 'wllplwlbs',
+        'wlhwllblbs', 'wllpwllbbs', 'sllwlplbbd', 'sblwplwbwd',
+        'sblpwbbwd', 'sbbwlwwd', 'dswwwd', 'dssd', 'dd')),
 }
-CREATIVE_ALIASES = dict(zip(EGGS, ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama')))
+CREATIVE_ALIASES = dict(zip(EGGS, ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama', 'armadillo')))
 
 
 def rgb(value):
@@ -109,9 +113,9 @@ def assets():
     bedrock['textures/item_texture.json'] = encoded_json({'resource_pack_name': 'ark_dino_eggs', 'texture_name': 'atlas.items', 'texture_data': atlas})
     # Stable UUIDs let Bedrock update this pack while keeping the model pack independent.
     bedrock['manifest.json'] = encoded_json({'format_version': 2, 'header': {
-        'name': 'ARK Dinosaur Eggs', 'description': 'Eight original species egg sprites',
-        'uuid': '4b6d5dd8-9250-48cf-bc87-48251cfaf744', 'version': [1, 2, 0], 'min_engine_version': [1, 21, 0]},
-        'modules': [{'type': 'resources', 'uuid': '708d04a5-5dc7-490e-bb47-0a282214ddc2', 'version': [1, 2, 0]}]})
+        'name': 'ARK Dinosaur Eggs', 'description': 'Nine original species egg sprites',
+        'uuid': '4b6d5dd8-9250-48cf-bc87-48251cfaf744', 'version': [1, 3, 0], 'min_engine_version': [1, 21, 0]},
+        'modules': [{'type': 'resources', 'uuid': '708d04a5-5dc7-490e-bb47-0a282214ddc2', 'version': [1, 3, 0]}]})
     return {'java': java, 'bedrock': bedrock, 'geyser': {'format_version': 2, 'items': {'minecraft:sniffer_egg': definitions}}}
 
 
@@ -121,14 +125,14 @@ def build():
     bundled['geyser'] = result['geyser']
     (ROOT / 'dino-items/egg-assets.json').write_text(json.dumps(bundled, indent=2) + '\n')
     (ROOT / 'dino-plugin/src/main/resources/egg-assets.properties').write_text(''.join(name + '=' + base64.b64encode(content).decode() + '\n' for name, content in result['java'].items()))
-    print('Built eight unique egg sprites, 34 Java assets and matching Creative aliases on both editions.')
+    print('Built nine unique egg sprites, 38 Java assets and matching Creative aliases on both editions.')
 
 
 def preview(folder):
     folder.mkdir(parents=True, exist_ok=True)
     scale = 16
-    canvas = [[(39, 45, 36, 255) for _ in range(4 * 288)] for _ in range(2 * 288)]
-    svg = ['<svg xmlns="http://www.w3.org/2000/svg" width="1152" height="640" viewBox="0 0 1152 640"><rect width="1152" height="640" fill="#272d24"/>']
+    canvas = [[(39, 45, 36, 255) for _ in range(4 * 288)] for _ in range(((len(EGGS)+3)//4) * 288)]
+    svg = ['<svg xmlns="http://www.w3.org/2000/svg" width="1152" height="960" viewBox="0 0 1152 960"><rect width="1152" height="960" fill="#272d24"/>']
     for index, (species, (label, *_)) in enumerate(EGGS.items()):
         x0, y0 = (index % 4) * 288 + 16, (index // 4) * 288
         pixels = egg_pixels(species)

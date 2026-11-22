@@ -34,4 +34,4 @@ for folder in sorted((ROOT/'models').iterdir()):
         assert min(heights)>=-.2,(folder.name,leg,'foot penetrates floor',min(heights))
         assert sum(abs(y)<.22 for y in heights)>=50,(folder.name,leg,'stance never plants')
         assert max(heights)>1.1,(folder.name,leg,'swing foot never clears floor')
-print('PASS eight-species locomotion (seven grounded gaits and one aquatic distance clock): sampled stance contact, swing clearance and floor penetration <=0.2 model units')
+print('PASS land/flight and aquatic locomotion: sampled stance contact, swing clearance and floor penetration <=0.2 model units')

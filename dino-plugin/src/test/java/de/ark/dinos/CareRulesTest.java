@@ -5,7 +5,7 @@ public final class CareRulesTest {
 
     public static void main(String[] args) {
         check(CareRules.primary("trex", "BEEF") && CareRules.primary("velociraptor", "CHICKEN"), "Predators eat raw meat");
-        check(CareRules.SPECIES.size()==7 && CareRules.SPECIES.contains("dilophosaurus"), "Creative and breeding catalog includes Dilo");
+        check(CareRules.SPECIES.size()==8 && CareRules.SPECIES.contains("dilophosaurus"), "Creative and breeding catalog includes Dilo");
         check(CareRules.primary("dilophosaurus", "BEEF") && CareRules.finisher("dilophosaurus", "BONE"), "Dilo has carnivore taming recipe");
         check(!CareRules.primary("trex", "COOKED_BEEF") && !CareRules.primary("trex", "WHEAT"), "No cooked or plant predator feed");
         check(CareRules.primary("pteranodon", "COD") && CareRules.primary("pteranodon", "SALMON"), "Pteranodon eats fish");

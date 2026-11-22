@@ -12,6 +12,12 @@ final class WildSpawnRules {
         return population >= 0 && population < limit && nearby >= 0 && nearby < nearbyLimit;
     }
 
+    static String species(String world, String biome, int draw) {
+        if ("jurassic_archipelago".equals(world) && biome != null
+                && (biome.contains("plains") || biome.contains("savanna")) && Math.floorMod(draw, 100) < 65) return "gallimimus";
+        return species(biome, draw);
+    }
+
     static String species(String biome, int draw) {
         if (biome == null) return null;
         String name = biome.toLowerCase(Locale.ROOT);
