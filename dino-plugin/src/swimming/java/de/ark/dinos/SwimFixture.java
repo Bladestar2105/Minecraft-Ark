@@ -62,6 +62,7 @@ public final class SwimFixture extends JavaPlugin implements org.bukkit.event.Li
                 + ";x=" + mob.getX() + ";y=" + mob.getY() + ";z=" + mob.getZ()
                 + ";eye=" + mob.getEyeLocation().getY() + ";air=" + mob.getRemainingAir() + ";maxAir=" + mob.getMaximumAir()
                 + ";water=" + mob.isInWater() + ";lava=" + mob.isInLava() + ";vy=" + mob.getVelocity().getY()
+                + ";onGround=" + mob.isOnGround()
                 + ";gravity=" + mob.hasGravity() + ";tick=" + org.bukkit.Bukkit.getCurrentTick()
                 + ";riderUnderwater=" + mob.getPassengers().stream().anyMatch(rider -> rider instanceof org.bukkit.entity.Player player && player.isUnderWater())
                 + ";riderTop=" + mob.getPassengers().stream().mapToDouble(rider -> rider.getBoundingBox().getMaxY()).max().orElse(Double.NaN);

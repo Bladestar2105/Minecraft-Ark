@@ -2,16 +2,16 @@
   "name": "ark_triceratops",
   "label": "Triceratops",
   "palette": [
-    "#87725a",
-    "#a28b6b",
-    "#b7a488",
-    "#554d3f",
-    "#d5ae67",
-    "#25271f",
-    "#ded1ad",
-    "#76634e"
+    "#986e4f",
+    "#775640",
+    "#b5936d",
+    "#4b3b30",
+    "#c4995c",
+    "#251f1c",
+    "#d1bd99",
+    "#875f47"
   ],
-  "description": "F\u00e4cherf\u00f6rmiger Nackenschild \u00b7 drei H\u00f6rner \u00b7 schwere Schuppenhaut",
+  "description": "Breiter Nackenschild mit gekerbtem Rand \u00b7 zwei lange gebogene Brauenh\u00f6rner und ein Nasenhorn \u00b7 erdbraune Schuppenhaut",
   "ground_parts": [
     "sole_front_left",
     "nail_front_left-0.28",
@@ -37,6 +37,6 @@
     "leg_back_left"
   ],
   "walk_stride_blocks": 0.603235,
-  "cubes": 124,
+  "cubes": 168,
   "bones": 12
 }

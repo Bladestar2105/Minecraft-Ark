@@ -9,6 +9,7 @@ import { spawn, execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, writeFile, copyFile, symlink, cp, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
+import { configureHatchProtection, runHatchChecks } from './egg-hatch-runtime.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const plugin = `${root}dino-plugin/`;
@@ -16,6 +17,8 @@ const javaHome = process.env.JAVA_HOME ?? `${plugin}.tools/jdk-25.0.5+8/Contents
 const cache = process.env.DINO_PAPER_CACHE ?? `${root}output/live-dependency-stack-20261110/private/server`;
 const paperJar = process.env.DINO_PAPER_JAR ?? `${cache}/paper.jar`;
 const output=process.env.DINO_EGG_OUTPUT ?? `${root}output/dino-round4-20261108/placed-eggs/native`;
+const protectedHatches=Boolean(process.env.DINO_WORLDGUARD_JAR);
+const worldName=protectedHatches?'ark':'ark_model_test';
 await mkdir(output, { recursive: true });
 const directory = await mkdtemp(`${output}/egg-smoke-`);
 const report = {startedAt:new Date().toISOString(),fixture:directory,checks:[],limits:[
@@ -82,6 +85,12 @@ class Client extends EventEmitter {
   look(yaw, pitch = 0) { const body = Buffer.alloc(9); body.writeFloatBE(yaw); body.writeFloatBE(pitch, 4); body[8] = 1; this.send(0x20, body); }
   interact(id, sneak = false) { this.send(0x1a, Buffer.concat([vi(id), vi(0), Buffer.from([0, sneak ? 1 : 0])])); }
   useItem() { this.send(0x43,Buffer.concat([vi(0),vi(1),Buffer.alloc(8)])); }
+  useOn(x,y,z) {
+    const hit=Buffer.alloc(23);
+    hit.writeBigUInt64BE((BigInt(x)&0x3ffffffn)<<38n|(BigInt(z)&0x3ffffffn)<<12n|BigInt(y)&0xfffn);
+    hit[8]=1;hit.writeFloatBE(.5,9);hit.writeFloatBE(1,13);hit.writeFloatBE(.5,17);
+    this.send(0x42,Buffer.concat([vi(0),hit,vi(this.sequence=(this.sequence??0)+1)]));
+  }
   close() { clearInterval(this.tick); this.socket.destroy(); }
 }
 function rconPacket(id, type, value) { const text = Buffer.from(value); const out = Buffer.alloc(text.length + 14); out.writeInt32LE(text.length + 10); out.writeInt32LE(id, 4); out.writeInt32LE(type, 8); text.copy(out, 12); return out; }
@@ -115,7 +124,7 @@ async function tame(client,tag,primary,secondary){
 }
 async function start(){
  const offset=log.length;
- server=spawn(`${javaHome}/bin/java`,['-Xms256M','-Xmx1G','-Dterminal.jline=false','-Dterminal.ansi=false','-jar','paper.jar','--nogui'],{cwd:directory,stdio:['pipe','pipe','pipe']});
+ server=spawn(`${javaHome}/bin/java`,['-XX:ActiveProcessorCount=2','-Xms256M','-Xmx1G','-Dterminal.jline=false','-Dterminal.ansi=false','-jar','paper.jar','--nogui'],{cwd:directory,stdio:['pipe','pipe','pipe']});
  (report.serverPids??=[]).push(server.pid);server.stdout.on('data',b=>log+=b);server.stderr.on('data',b=>log+=b);
  await eventually(()=>log.slice(offset).includes('Done (')||(server.exitCode!==null&&assert.fail(log.slice(-5000))),'Paper care fixture boot failed',90000);
 }
@@ -125,6 +134,7 @@ try {
  await mkdir(`${directory}/plugins/ArkDinos`,{recursive:true});await copyFile(paperJar,`${directory}/paper.jar`);
  await copyFile(process.env.DINO_EGG_PLUGIN_JAR??`${plugin}build/ArkDinos-1.2.2.jar`,`${directory}/plugins/ArkDinos.jar`);
  const modelCache=process.env.DINO_MODEL_STACK_CACHE??`${root}output/live-dependency-stack-20261110/private/server`;
+ if(protectedHatches)await configureHatchProtection({directory,modelCache,report,root});
  if(!process.env.DINO_EGG_FALLBACK){
   for(const name of ['bettermodel-3.6.0-paper.jar','packetevents-spigot-2.14.0.jar','floodgate-spigot.jar','geyserutils-spigot-1.0-SNAPSHOT.jar'])await copyFile(`${modelCache}/plugins/${name}`,`${directory}/plugins/${name}`);
   await copyFile(`${plugin}.deps/geyser-spigot-2.12.1-b1298.jar`,`${directory}/plugins/geyser-spigot.jar`);
@@ -132,25 +142,25 @@ try {
   for(const name of ['BetterModel','GeyserModelEngine','Geyser-Spigot','floodgate'])await cp(`${modelCache}/plugins/${name}`,`${directory}/plugins/${name}`,{recursive:true});
   const generated=`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/generated_pack`;
   await rm(generated,{recursive:true,force:true});await rm(`${generated}.zip`,{force:true});
-  const gc=`${directory}/plugins/Geyser-Spigot/config.yml`;await writeFile(gc,(await readFile(gc,'utf8')).replace(/^port: .*/m,`port: ${await freePort()}`));
-  for(const species of ['trex','triceratops','stegosaurus','brachiosaurus','velociraptor','pteranodon','dilophosaurus']){
-   const name='ark_egg_'+species,source=`${root}dino-items/models/${name}`;
-   await copyFile(`${source}/${name}.bbmodel`,`${directory}/plugins/BetterModel/models/${name}.bbmodel`);
-   await cp(source,`${directory}/plugins/Geyser-Spigot/extensions/geysermodelengineextension/input/${name}`,{recursive:true});
-  }
+  const gc=`${directory}/plugins/Geyser-Spigot/config.yml`;
+  const config=await readFile(gc,'utf8'),bedrockPort=await freePort();
+  await writeFile(gc,config.replace(/^bedrock:\n(?:[ \t]+[^\n]*\n|\n)*/m,block=>block.replace(/^  address: .*/m,'  address: 127.0.0.1').replace(/^  port: .*/m,'  port: '+bedrockPort)));
+  execFileSync('python3',['-c','import sys; from pathlib import Path; sys.path.insert(0,sys.argv[1]); from install_plugins import dino_item_files,dino_model_files; root=Path(sys.argv[2]); server=Path(sys.argv[3]); files=dino_item_files(root)+dino_model_files(root); [(p.parent.mkdir(parents=True,exist_ok=True),p.write_bytes(content)) for name,content in files for p in [server/name.removeprefix("data/")]]',root+'scripts',root,directory]);
  }
 
- await writeFile(`${directory}/plugins/ArkDinos/config.yml`,'survival-worlds:\n  - ark_model_test\n  - ark\nprototype-worlds:\n  - ark_model_test\nwild-spawning:\n  enabled: false\n');
+ await writeFile(`${directory}/plugins/ArkDinos/config.yml`,`survival-worlds:\n  - ${worldName}\nprototype-worlds:\n  - ${worldName}\nwild-spawning:\n  enabled: false\n`);
  await mkdir(`${directory}/fixture-classes`);
  execFileSync(`${javaHome}/bin/javac`,['--release','25','-sourcepath','','-cp',`${plugin}.deps/*`,'-d',`${directory}/fixture-classes`,`${plugin}src/care/java/de/ark/dinos/CareFixture.java`]);
  execFileSync(`${javaHome}/bin/jar`,['--create','--file',`${directory}/plugins/CareFixture.jar`,'-C',`${directory}/fixture-classes`,'.','-C',`${plugin}src/care/resources`,'.']);
  await writeFile(`${directory}/eula.txt`,'eula=true\n');
- await writeFile(`${directory}/server.properties`,`server-ip=127.0.0.1\nserver-port=${port}\nonline-mode=false\nlevel-name=ark_model_test\nlevel-type=minecraft:flat\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\ngenerate-structures=false\nview-distance=3\nsimulation-distance=3\nspawn-protection=0\nmax-tick-time=-1\nenable-rcon=true\nrcon.port=${rconPort}\nrcon.password=${password}\nenforce-secure-profile=false\n`);
+ await writeFile(`${directory}/server.properties`,`server-ip=127.0.0.1\nserver-port=${port}\nonline-mode=false\nlevel-name=${worldName}\nlevel-type=minecraft:flat\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1},{"block":"minecraft:dirt","height":2},{"block":"minecraft:grass_block","height":1}],"biome":"minecraft:plains"}\ngenerate-structures=false\nview-distance=3\nsimulation-distance=3\nspawn-protection=0\nmax-tick-time=-1\nenable-rcon=true\nrcon.port=${rconPort}\nrcon.password=${password}\nenforce-secure-profile=false\n`);
  await start();await command('whitelist off');await command('gamerule minecraft:spawn_mobs false');await command('difficulty normal');await command('fill -16 3 -16 32 3 32 stone');
  let alice=new Client('CareOwner'),bob=new Client('CareOther');clients.push(alice,bob);await eventually(()=>alice.joined&&bob.joined,'Care clients did not join',30000);
  await command('gamemode survival @a');await command('effect give @a resistance 9999 4 true');await command('tp @a 0 4 3');await delay(500);
- await eventually(async()=>/Successfully filled/.test(await command('fill -16 3 -16 32 3 32 stone')),'Care fixture platform chunks did not load');
+ await eventually(async()=>{await command('fill -16 3 -16 32 3 32 stone');return /Test passed/i.test(await command('execute if block 16 3 16 minecraft:stone'));},'Care fixture platform chunks did not load');
 
+ if(protectedHatches)await runHatchChecks({alice,bob,command,fields,check,eventually,delay,report});
+ else {
  const species=['trex','triceratops','stegosaurus','brachiosaurus','velociraptor','pteranodon','dilophosaurus'];
  const visual=async x=>fields(await command(`carefixture placed-visual ark_model_test ${x} 4 8`));
  await check('Seven placed nests keep native egg selection and species-specific Java/Bedrock presentation',async()=>{
@@ -219,6 +229,7 @@ try {
   const after=await visual(4);if(!process.env.DINO_EGG_FALLBACK){assert.notEqual(after.uuid,before.uuid);assert.equal(after.bridge,'1');}
   assert.equal(await command('carefixture nest ark_model_test 4 4 8'),nest);assert.match(await command('forceload query'),/No force loaded chunks|No force-loaded chunks/i);return after;
  });
+ }
  report.ok=true;
 } catch(error){report.ok=false;report.error=error.stack;console.error(error.stack);process.exitCode=1;}
 finally {

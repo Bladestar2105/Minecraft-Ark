@@ -1,17 +1,17 @@
 # Species egg graphics
 
-Eight original 16×16 sprites use different shell shapes, colors and markings:
+Eight hand-pixeled 16×16 inventory sprites share their shell and pigment palettes with the hatchery models.
 
 | Species | Shell |
 | --- | --- |
-| T-Rex | Olive green, dark broken slashes |
-| Triceratops | Broad sandstone shell, three brown chevrons |
-| Stegosaurus | Copper red, central diamond plates |
-| Brachiosaurus | Large sage shell, grouped green spots |
-| Velociraptor | Slender ochre shell, diagonal stripes |
-| Pteranodon | Pointed blue shell, dark wing chevrons |
-| Dilophosaurus | Plum shell, paired dark bands |
-| Mosasaurus | Wide teal shell, navy wave bands |
+| T-Rex | Ochre-olive shell with broken umber thumbprints |
+| Triceratops | Broad sandstone shell with cinnamon speckles at the blunt end |
+| Stegosaurus | Copper clay with scalloped rust-colored markings |
+| Brachiosaurus | Broad celadon shell with soft moss-green patches |
+| Velociraptor | Elongated ivory shell with drawn-out brown streaks |
+| Pteranodon | Pointed slate-gray shell with fine marbling |
+| Dilophosaurus | Warm mauve shell with paired wine-colored streaks |
+| Mosasaurus | Wide sea-green spawn icon with dark, broken ripple bands |
 
 Run `python3 dino-items/build_eggs.py` to regenerate the text-only asset bundle and embedded plugin resource, then `python3 dino-items/test_eggs.py` to verify all references. The generator uses the Python standard library. Preview files are written to local `output/` and are not release inputs. The sprites and generator are original project assets; see the repository license.
 
@@ -25,6 +25,8 @@ Bedrock uses Geyser v2 item-model definitions in `plugins/Geyser-Spigot/custom_m
 
 Existing egg stacks refresh their item-model component when players join or open an inventory, preserving quantity, custom names, custom lore and persistent species/owner data. Placed nests remain vanilla blocks; breaking a nest returns an egg with the current item model. These sprites do not override the ordinary vanilla sniffer egg or its block texture.
 
-Placed dinosaur nests also have seven distinct opaque species shells. Run `python3 dino-items/build_placed_eggs.py` and `python3 dino-items/test_placed_eggs.py` to regenerate and check `models/ark_egg_<species>/`. Each folder contains the editable BetterModel model and its matching Bedrock geometry, animation, texture and GeyserModelEngine configuration. The shell encloses Mojang 26.3's native Sniffer Egg mesh by 0.02 pixels on every side. A nonpersistent marker actor carries the model only while its nest is loaded; it has no hitbox, so the original egg remains selectable and retains its collision, protections and incubation data. Breaking, hatching, unloading and disabling remove the presentation; reloads rebuild it from the existing nest. Without the optional model stack the ordinary native egg remains visible and functional. The Mosasaurus creative spawn tool has no nest.
+Placed dinosaur nests have seven species shells. Inclined, opaque facets round the flanks and form a tapered crown. The pigment pattern follows the surface across every part. A fitted inner shell encloses Mojang 26.3's native Sniffer Egg mesh by 0.02 pixels on every side. The wider flanks fit inside one block horizontally. Run `python3 dino-items/build_placed_eggs.py` and `python3 dino-items/test_placed_eggs.py` to regenerate and check the BetterModel models and matching Bedrock geometry, animations, textures and GeyserModelEngine configurations in `models/ark_egg_<species>/`.
+
+A nonpersistent marker actor carries the model while its nest is loaded. The original egg remains selectable and retains its collision, protections and incubation data. Breaking, hatching, unloading and disabling remove the presentation. Reloads rebuild it from the existing nest. Without the optional model stack the ordinary native egg remains visible and functional. The Mosasaurus creative spawn tool has no nest.
 
 When upgrading placed-egg textures with pinned GeyserModelEngine 1.0.9, stop the server and move only `generated_pack/` and `generated_pack.zip` from `plugins/Geyser-Spigot/extensions/geysermodelengineextension/ResourcePack/` into a backup outside that directory before restarting; the generator otherwise reuses existing output PNGs. Keep the input model/texture folders, other packs and mappings in place, then reconnect Bedrock clients to accept the regenerated pack.

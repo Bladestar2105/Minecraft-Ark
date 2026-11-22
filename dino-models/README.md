@@ -1,6 +1,10 @@
 # Original dinosaur assets
 
-Eight original CC0 models: T-Rex, Triceratops, Stegosaurus, Brachiosaurus, Velociraptor, Pteranodon, a Jurassic Park inspired Dilophosaurus and a 24-block Mosasaurus. Dilophosaurus has two head crests, an articulated red/yellow neck fan, an olive striped body, three finger claws and a separate spit pose. Triceratops has two preserved brow horns and a larger central nasal horn, checked as a separate silhouette from front and side. The 2026-11-08 refinement adds tapered anatomy, chamfered body masses, species-specific heads and connected Pteranodon membranes. Editable Blockbench 5 free-format models include embedded 64×64 skin atlases with scale edges, mottling, belly folds, horn streaks and leather veins. No third-party dinosaur geometry or textures.
+Eight original, film-inspired prehistoric animals share editable Blockbench 5 models, embedded 64×64 skin atlases and native Bedrock exports. Sloping sections shape the chest, abdomen and skull of each species.
+
+The umber T-Rex has a broad skull, heavy brows, powerful thighs and short two-fingered arms. The sand-colored Velociraptor has a slim banded muzzle, three grasping fingers per hand and a hooked inner claw on each foot. Triceratops carries two curved brow horns and a shorter nasal horn ahead of its scalloped shield. Stegosaurus has low shoulders, high hips, alternating copper-colored plates and four splayed tail spikes. Brachiosaurus rises over tall forelimbs into a curved neck and rounded nasal crest.
+
+Pteranodon has a tapered toothless beak, swept crest and angular, copper-brown wing membranes. Dilophosaurus opens a yellow, dark-spotted fan with a red margin around its twin crests during its spit pose. The 24-block Mosasaurus has a wedge-shaped snout, paired low back scutes, four paddles and a swept vertical tail fluke. All geometry, markings and animations were made for this project.
 
 Run from the repository root with Python 3 and only its standard library:
 
@@ -12,10 +16,15 @@ rtk proxy python3 dino-models/verify_gait.py
 rtk proxy python3 dino-models/verify_portability.py
 rtk proxy python3 dino-models/test_previews.py
 rtk proxy python3 dino-models/test_model_poses.py
+rtk proxy python3 dino-models/test_riding_surfaces.py
 rtk proxy python3 dino-models/test_mosasaurus.py
+rtk proxy python3 dino-models/test_growth_details.py
+rtk proxy python3 dino-models/test_nametags.py
 ```
 
-The public source is text-only: `models/<id>/` contains `<id>.bbmodel`, `<id>.geo.json`, `<id>.animation.json`, `config.json` and `design.json`, alongside the generation/verification scripts, this README and the CC0 license. Textures are embedded in each BBModel. `build_models.py` deterministically regenerates the model exports and standalone PNGs when needed. `verify_exports.py` validates embedded PNG dimensions, chunk checksums, opacity, sampled material variation, UV bounds and exact source/Bedrock face rectangles; an optional external PNG is compared when present. It retains the six calibrated back heights; the added Raptor jaw joint articulates existing geometry. Dilophosaurus has a calibrated back height of 1.191365 blocks. Asset verifiers do not depend on previews, private spike files, absolute paths or separately published textures.
+The public source is text-only: `models/<id>/` contains `<id>.bbmodel`, `<id>.geo.json`, `<id>.animation.json`, `config.json` and `design.json`, alongside the generation/verification scripts, this README and the CC0 license. Textures are embedded in each BBModel. `build_models.py` deterministically regenerates the model exports and standalone PNGs when needed. `verify_exports.py` validates embedded PNG dimensions, chunk checksums, opacity, sampled material variation, UV bounds and exact source/Bedrock face rectangles. It compares an external PNG when present and checks the calibrated back height of all seven rideable species, including 1.191365 blocks for Dilophosaurus. Asset verifiers do not depend on previews, private spike files, absolute paths or separately published textures.
+
+`test_riding_surfaces.py` measures the exported backs across all seven adult rider positions and the four rear passenger positions. It compares their heights with the original models and checks clearance for the rider's upper body during movement and attacks.
 
 The public installer decodes the embedded textures, prepares both engines and serves the generated Java pack automatically at `/resources/dinos.zip` through the player portal. Configure the public portal URL with `python3 scripts/setup.py --portal-url https://portal.example.org/` and enable required resource packs; the installer sets the Java pack URL and handles the Bedrock pack path. The all-in-one installation needs no separate manual HTTP service. BetterModel 3.6.0 consumes BBModels from `plugins/BetterModel/models/` and generates `plugins/BetterModel/build.zip` for that route.
 
@@ -25,7 +34,7 @@ GeyserModelEngine 1.0.9 input: copy each model's geometry, animation, texture an
 
 `verify_portability.py` copies only the public text asset files to a fresh temporary directory and runs export, animated-bounds and gait verification there, without generating external PNGs. It also proves a mismatched optional PNG is rejected.
 
-The seven land/flight models have idle/walk loops; Pteranodon also has flap/glide, with a culling box height 4 / offsetY 1.3 covering full wing travel. Pteranodon's two outer-wing bones fold the membranes vertically beside the body in both ground animations; flap/glide explicitly open both joints. Folded span is 45 model units versus 131 while gliding. T-Rex has larger curved ivory toe claws and two hooked finger claws on each hand. Brachiosaurus's tail tip reaches within 0.12 model units of the floor without changing its back or feet. `test_model_poses.py` checks transformed geometry, claw size, folding clearance and open flight poses rather than names alone.
+The seven land/flight models have idle/walk loops; Pteranodon also has flap/glide, with a culling box height 4 / offsetY 1.3 covering full wing travel. Pteranodon's two outer-wing bones fold the membranes vertically beside the body in both ground animations; flap/glide explicitly open both joints. Its wings span about 45 model units on the ground and 130 while gliding. T-Rex has curved ivory toe claws and two hooked finger claws on each hand. Brachiosaurus's tail tip reaches within 0.12 model units of the floor without changing its back or feet. `test_model_poses.py` checks transformed geometry, claw size, folding clearance and open flight poses rather than names alone.
 
 Carnivores have exposed pointed upper/lower tooth rows; Triceratops and Stegosaurus have short, narrow cheek teeth set inside their jaw edges behind toothless beaks, hidden in the closed mouth. Brachiosaurus has four slender recessed spoon/peg teeth per jaw. Pteranodon keeps its toothless beak. Independent oriented-box tests check exposed tooth tips and flesh contact between the posed jaw and skull throughout mouth opening.
 

@@ -16,7 +16,7 @@ def rotate(v,rotation):
 def vertices(c):
     p=c['origin'];a,b=c['from'],c['to']
     return [[r[i]+p[i] for i in range(3)] for r in (rotate([x-p[0],y-p[1],z-p[2]],c.get('rotation',[0,0,0])) for x,y,z in [(a[0],a[1],a[2]),(b[0],a[1],a[2]),(b[0],b[1],a[2]),(a[0],b[1],a[2]),(a[0],a[1],b[2]),(b[0],a[1],b[2]),(b[0],b[1],b[2]),(a[0],b[1],b[2])])]
-def png_texture(colors):
+def png_texture(colors,species=None):
     def chunk(kind,b):return struct.pack('>I',len(b))+kind+b+struct.pack('>I',zlib.crc32(kind+b))
     rows=[]
     for y in range(64):
@@ -24,14 +24,25 @@ def png_texture(colors):
         for x in range(64):
             material=x//16+4*(y//32);u,v=x%16,y%32
             rgb=bytes.fromhex(colors[material][1:]);noise=((u*73+v*151+u*v*19)%17)-8
-            # Staggered scale edges, broad mottling and fine pores share a material tile.
-            edge=(v%4==0 or (u+(2 if (v//4)%2 else 0))%5==0)
-            shade=noise*.7+7*math.sin(u*.48+v*.31)-11*edge
-            if material==2:shade=noise*.45+5*(v%5)-9
+            # Broken markings and granular scales read at both mount and close-up distances.
+            mottling=math.sin(u*.55+math.sin(v*.37)*1.5)+math.cos(v*.51+u*.21)
+            edge=(v+(u//4)%2)%4==0 and (u+v)%5!=0
+            shade=noise*.7+5*mottling-5*edge
+            if material in (0,1):
+                if species in ('ark_trex','ark_velociraptor','ark_dilophosaurus'):
+                    stripe=math.cos(u*.70+v*.21+math.sin(v*.32)*1.7)
+                    shade-=(48 if species=='ark_velociraptor' else 32)*max(0,stripe-.12)
+                elif species=='ark_mosasaurus':shade-=20*max(0,mottling-.4)
+                elif species=='ark_triceratops':shade+=7*math.cos(u*1.7+math.sin(v)*1.2)
+                elif species=='ark_brachiosaurus':shade-=8*max(0,math.cos(v*.8+math.sin(u*.4)))
+            elif material==2:shade=noise*.45+4*math.sin(v*1.15+math.sin(u*.45)*1.3)
             elif material==6:shade=noise*.4+9*math.sin(u*1.5)-v*.18
             elif material==4:shade=14 if (u-5)**2+(v-10)**2<12 else noise*.25
             elif material==5:shade=noise*.4
-            elif material==7:shade=noise*.6-12*(u%6==v%6)+7*math.sin(v*.3)
+            elif material==7:
+                shade=noise*.5+7*mottling
+                if species in ('ark_stegosaurus','ark_pteranodon','ark_dilophosaurus'):
+                    shade-=15*max(0,math.cos(u*.95+math.sin(v*.22)+v*.23))
             row.extend(max(0,min(255,round(c+shade))) for c in rgb);row.append(255)
         rows.append(row)
     return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>2I5B',64,64,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(b''.join(rows)))+chunk(b'IEND',b'')
@@ -69,6 +80,20 @@ class Model:
         x,y,z=a;xx,yy,zz=b;inset=(xx-x)*.14;rise=(yy-y)*.16
         self.cube(name,[x+inset,y,z],[xx-inset,yy,zz],bone,color)
         self.cube(name+'_flanks',[x,y+rise,z+.5],[xx,yy-rise,zz-.5],bone,color)
+    def profile(self,name,sections,bone='body',color=0,belly=None):
+        """Build three overlapping, pitched bands between successive (Z, half-width, floor, crown) sections."""
+        for i,(start,end) in enumerate(zip(sections,sections[1:])):
+            za,wa,low_a,high_a=start;zb,wb,low_b,high_b=end
+            height_a,height_b=high_a-low_a,high_b-low_b
+            stem=name if i==0 else f'{name}_{i}'
+            for suffix,fraction,thickness,breadth,material in (
+                    ('',1,.43,.77,color),('_flanks',.80,.60,1,color),
+                    ('_underside',.35,.35,.73,color if belly is None else belly)):
+                ya=low_a+height_a*fraction;yb=low_b+height_b*fraction
+                pitch=-math.atan2(yb-ya,zb-za);length=math.hypot(yb-ya,zb-za)
+                width=(wa+wb)*.5*breadth;depth=(height_a+height_b)*.5*thickness*math.cos(pitch)
+                self.cube(stem+suffix,[-width,ya-depth,za],[width,ya,za+length],bone,material,
+                          (math.degrees(pitch),0,0),[0,ya,za])
     def tail_chain(self,points,widths):
         for i,(a,b,w) in enumerate(zip(points,points[1:],widths)):
             self.beam('tail_segment_'+str(i),a,b,w,w*.8,'tail',0 if i<3 else 1)
@@ -180,7 +205,7 @@ class Model:
             tracks.setdefault('head',rotate_clip([[0,0,0],[0,0,0],[0,0,0]]))
         self.animate('attack',.75,tracks,loop='once')
     def export(self):
-        out=ROOT/'models'/self.name;out.mkdir(parents=True,exist_ok=True);tex=png_texture(self.colors)
+        out=ROOT/'models'/self.name;out.mkdir(parents=True,exist_ok=True);tex=png_texture(self.colors,self.name)
         m=dict(meta=dict(format_version='5.0',model_format='free',box_uv=False),name=self.name,model_identifier=self.name,resolution=dict(width=64,height=64),elements=self.elements+self.colliders,groups=list(self.groups.values()),outliner=[self.nodes['body']],textures=[dict(name=self.name+'.png',id='0',uuid=ident(self.name+'/texture'),width=64,height=64,uv_width=64,uv_height=64,source='data:image/png;base64,'+base64.b64encode(tex).decode())],animations=self.animations)
         (out/(self.name+'.bbmodel')).write_text(json.dumps(m,indent=2)+'\n');(out/(self.name+'.png')).write_bytes(tex)
         # Mirror X and rotation X/Y like Blockbench's official Bedrock codec.
@@ -236,7 +261,7 @@ def digitigrade(m,side,x,hip_y,hip_z,scale=1,sickle=False):
     m.beam('shin_'+side,[x,hip_y*.56,hip_z-3*scale],ankle,2.5*scale,2.6*scale,leg,1)
     base=[x,1.25*scale,hip_z-2*scale]
     m.beam('raised_heel_'+side,ankle,base,1.8*scale,1.8*scale,leg,1)
-    for i,spread in enumerate([-1,0,1]):
+    for i,spread in enumerate([1,0,-1] if sickle and x<0 else [-1,0,1]):
         start=[x+spread*.8*scale,1.15*scale,base[2]-.3*scale]
         end=[x+spread*3.3*scale,.65*scale,base[2]-(7 if spread==0 else 5.8)*scale]
         if sickle and i==0:
@@ -246,7 +271,10 @@ def digitigrade(m,side,x,hip_y,hip_z,scale=1,sickle=False):
         m.beam(f'toe_{side}_{i}_tip',middle,end,.9*scale,.8*scale,leg,3,True)
         claw=[end[0]+spread*.3*scale,end[1]-.15*scale,end[2]-1.4*scale]
         m.beam(f'claw_{side}_{i}',end,claw,.6*scale,.55*scale,leg,6,True)
-        if sickle and i==0:m.tapered('sickle_'+side,claw,[claw[0],claw[1]-2*scale,claw[2]-.35*scale],.55*scale,leg,5,2)
+        if sickle and i==0:
+            hook=[claw[0],claw[1]+2.0*scale,claw[2]-1.45*scale]
+            m.beam('sickle_'+side+'0',claw,hook,1.1*scale,.95*scale,leg,5)
+            m.beam('sickle_'+side+'1',hook,[hook[0],claw[1]-.8*scale,hook[2]-1.5*scale],.65*scale,.55*scale,leg,5)
 
 def quadruped(m,x,front_z,back_z,hip_y,width):
     for side,sx,z in [('front_left',-x,front_z),('back_right',x,back_z),('front_right',x,front_z),('back_left',-x,back_z)]:
@@ -258,19 +286,27 @@ def quadruped(m,x,front_z,back_z,hip_y,width):
         for dx in [-.28,0,.28]:m.cube('nail_'+side+str(dx),[sx+(dx-.09)*width,0,z-width*.6-.25],[sx+(dx+.09)*width,1.2,z-width*.6+.2],name,6,ground=True)
 
 def trex():
-    m=Model('ark_trex','T-Rex',['#68705a','#83896a','#b3ab87','#444c3e','#dbb358','#19241c','#eee1bc','#5a614b'],'Massiger Schädel · schuppige Olivhaut · muskulöse Hüfte · gebogene Elfenbeinkrallen')
-    m.bone('body',[0,23,3]);m.mass('torso',[-7,16,-8],[7,30,12]);m.mass('chest',[-5.8,18,-15],[5.8,28,-4]);m.mass('hips',[-7.5,17,5],[7.5,29,16]);m.mass('belly',[-5.2,15.5,-7],[5.2,20,10],color=2)
-    m.bone('neck',[0,27,-8],'body');m.beam('neck_lower',[0,25,-9],[0,30,-15],8,7,'neck');m.mass('neck',[-4.6,27,-19],[4.6,35,-11],'neck',1)
-    m.bone('head',[0,33,-14],'neck');m.mass('skull',[-7,31,-28],[7,40,-12],'head',1);m.mass('snout',[-5.5,31,-35],[5.5,36.5,-23],'head')
+    m=Model('ark_trex','T-Rex',['#997653','#705940','#c6aa7f','#534536','#e0ac52','#251f1a','#e9d9b1','#68513e'],'Breiter Raubtierschädel mit schweren Brauen · umberbraune Querbänder · kräftige Hüfte und kurze Zweifingerarme')
+    m.bone('body',[0,23,3]);m.mass('torso',[-7,16,-8],[7,30,12])
+    m.mass('hips',[-7.5,17,5],[7.5,29,16])
+    m.profile('ribcage',[(-15,4.2,20.3,26.8),(-9,6.7,15.5,29.1),(-5.4,7.2,15.1,27.7),(-2,7.4,14.7,27.7),(6,7.3,16.1,27.7),(12,6.9,18,29),(17,4.6,20.5,26.8)],belly=2)
+    m.bone('neck',[0,27,-8],'body');m.beam('neck_lower',[0,25,-8],[0,29.2,-15.8],8.8,7,'neck')
+    m.profile('neck',[(-21,4.2,30,36),(-16,5.1,26.6,35.8),(-10,4.5,23.2,30.5)],'neck',0,2)
+    m.bone('head',[0,33,-14],'neck')
+    m.profile('skull',[(-27,5.4,31,36.7),(-23,7,30.8,39.5),(-18,7.4,29.8,40),(-12.3,5.8,30.1,37)],'head')
+    m.profile('snout',[(-36.5,3.7,31,35),(-33.5,5.0,30.9,36.9),(-28.5,5.7,31,36.4),(-24.2,5.6,31.1,37.7)],'head')
     for side in [-1,1]:
-        x=side*6.5;m.cube('brow_'+str(x),[x-.8,36.8,-25],[x+.8,39,-17],'head',3,(0,0,side*12))
-        m.mass('cheek_'+str(side),[side*5.8-1,29.8,-21],[side*5.8+1,35.8,-13],'head')
-        m.cube('nostril_'+str(side),[side*5.5-.2,33.5,-33],[side*5.5+.2,34.3,-31],'head',3)
-    m.eyes(7.1,34,-24,size=2)
-    m.bone('jaw',[0,31,-14],'head');m.mass('jaw',[-5.6,27.5,-34],[5.6,30.5,-13],'jaw');m.cube('mouth',[-5.7,30.4,-33],[5.7,31.05,-14],'head',3)
+        m.beam('brow_'+str(side),[side*6.55,37.1,-26.8],[side*7.28,38.5,-20],2.0,2.2,'head',1)
+        m.beam('cheek_'+str(side),[side*6.8,34.1,-22.7],[side*5.8,30.9,-14.4],2.1,2.6,'head',1)
+        m.beam('neck_tendon_'+str(side),[side*3.9,32,-16],[side*4.0,25.5,-8.8],1.6,2.6,'neck',1)
+        m.cube('nostril_'+str(side),[side*4.42-.16,33.7,-35.2],[side*4.42+.16,34.55,-33.9],'head',5)
+    m.eyes(7.25,35.0,-23.1,size=1.45)
+    m.bone('jaw',[0,31,-14],'head')
+    m.profile('jaw',[(-35.4,3.65,28.8,30.4),(-31.5,5.1,27.4,30.55),(-23,5.4,26.7,30.6),(-17.8,4.9,27.3,31.5),(-13,4.5,29.2,32.4)],'jaw',0,2)
+    m.cube('mouth',[-5.2,30.4,-33],[5.2,31.05,-14],'head',3)
     m.mouth_rows(5,30.9,30.45,[-33+i*2.4 for i in range(8)],[-31.8+i*2.1 for i in range(7)],1.,2.1)
     m.cube('oral_cavity',[-4.8,30.65,-33],[4.8,31.1,-13],'head',5)
-    m.bone('tail',[0,24,11],'body');m.tail_chain([[0,23,11],[0,23,22],[0,23,32],[0,23.5,41],[0,24,49],[0,24.5,56]],[9,7,5,3.2,1.5])
+    m.bone('tail',[0,24,11],'body');m.tail_chain([[0,23.8,11],[0,23.7,22],[0,22.3,32],[0,21.5,41],[0,22.5,49],[0,24.5,56]],[10.1,7.4,5.1,3,1.3])
     for side,x in [('left',-7),('right',7)]:
         digitigrade(m,side,x,22,6)
         for i,spread in enumerate([-1,0,1]):
@@ -279,6 +315,7 @@ def trex():
             m.beam(f'toe_claw_{side}_{i}_root',root,hook,1.15,1.,'leg_'+side,6,True)
             m.beam(f'toe_claw_{side}_{i}_tip',hook,tip,.7,.6,'leg_'+side,6,True)
         m.mass('hip_muscle_'+side,[x-2.8,15,2],[x+2.8,25,10],'leg_'+side)
+        m.beam('calf_'+side,[x,13,2.8],[x,7.5,6],3.1,3.4,'leg_'+side,1)
         m.bone('arm_'+side,[x*.85,26,-9],'body');m.beam('tiny_arm_'+side,[x*.85,26,-10],[x*.85,21,-14],1.8,bone='arm_'+side,color=1);m.beam('hand_'+side,[x*.85,21,-14],[x*.85,21,-17],1.1,bone='arm_'+side,color=3)
         for i,dx in enumerate([-.65,.65]):
             finger=[x*.85+dx,20.5,-18.8];hook=[finger[0],20.6,-20.3];tip=[finger[0],19.8,-21.4]
@@ -288,21 +325,39 @@ def trex():
     return m.finish()
 
 def triceratops():
-    m=Model('ark_triceratops','Triceratops',['#87725a','#a28b6b','#b7a488','#554d3f','#d5ae67','#25271f','#ded1ad','#76634e'],'Fächerförmiger Nackenschild · drei Hörner · schwere Schuppenhaut')
-    m.bone('body',[0,22,2]);m.mass('barrel',[-11,11,-10],[11,29,14]);m.mass('shoulder_mass',[-9,13,-15],[9,28,-4]);m.mass('rump',[-9.5,13,9],[9.5,28,19]);m.mass('back',[-8,27,-10],[8,31,14],color=1);m.mass('belly',[-8,10,-10],[8,15,13],color=2)
+    m=Model('ark_triceratops','Triceratops',['#986e4f','#775640','#b5936d','#4b3b30','#c4995c','#251f1c','#d1bd99','#875f47'],'Breiter Nackenschild mit gekerbtem Rand · zwei lange gebogene Brauenhörner und ein Nasenhorn · erdbraune Schuppenhaut')
+    m.bone('body',[0,22,2])
+    m.profile('barrel',[(-16,6.4,14.9,24.5),(-10,10.1,10.4,29),(-3,11.3,9.3,30.3),(6,11.5,9.5,30.2),(14,9.5,12.3,28),(18.5,7.4,14.5,28),(20.5,5.8,15.4,25.3)],belly=2)
+    m.mass('back',[-8,27,-10],[8,31,14],color=1)
+    m.profile('neck_base',[(-21,4.6,17.3,22.9),(-15,6.5,15.6,25.8),(-10,7.4,14.9,27.1)])
     quadruped(m,8,-9,12,16,5)
-    m.bone('head',[0,21,-13],'body');m.mass('head',[-7,13,-29],[7,25,-15],'head');m.mass('snout',[-4.8,12,-37],[4.8,20,-26],'head',1);m.mass('beak',[-3.4,12,-40],[3.4,17,-35],'head',3)
-    m.cube('frill_lower',[-9,19,-18],[9,28,-14],'head',7);m.cube('frill_top',[-4,27,-17],[4,36,-14],'head',1)
+    m.bone('head',[0,21,-13],'body')
+    m.profile('head',[(-30,4.6,13,20.4),(-25,7,12.8,24),(-19,7.5,12.7,26),(-14,6.4,13,25.7)],'head')
+    m.profile('snout',[(-37,3.25,12.1,17.6),(-33,4.2,12.3,20),(-27,5.3,13,20)],'head')
+    m.profile('beak',[(-40.5,1.9,11.2,14.6),(-38.3,3,12.1,16.4),(-35.4,3.3,13.2,17.2)],'head',3)
+    m.cube('frill_lower',[-8.6,18.8,-18.5],[8.6,28.2,-14.2],'head',7)
+    m.cube('frill_top',[-5.9,25,-17.9],[5.9,36,-14.7],'head',7,(24,0,0),[0,23,-16])
     for side in [-1,1]:
-        for i,angle in enumerate([23,48,70]):
-            m.beam(f'frill_fan_{side}_{i}',[side*3,23,-15.5],[side*(6+3*i),35-3*i,-15.5],5,3,'head',7)
-        for i,(x,y) in enumerate([(5,36),(9,33.8),(12,30.8),(13.5,27)]):
-            m.tapered(f'frill_knob_{side}_{i}',[side*x,y-1,-15.5],[side*(x+.7),y+1.2,-15.5],1.6,'head',6,2)
+        for i,(x,y,top,width) in enumerate([(6.4,23.5,35.2,5.5),(9.7,22.1,32.5,4.6),(12.1,22.7,29.6,3.0)]):
+            m.cube(f'frill_fan_{side}_{i}',[side*x-width/2,y,-18],[side*x+width/2,top,-14.9],'head',7,(24,0,-side*9),[side*x,23,-16])
+        for i,(x,y) in enumerate([(4.3,35.5),(8.2,34.5),(11.2,32.3),(13.1,29.1)]):
+            z=-16+(y-23)*.44;y=23+(y-23)*.91
+            m.beam(f'frill_knob_{side}_{i}',[side*x,y-.8,z],[side*(x+.75),y+.65,z+.3],1.85,1.95,'head',1)
+        m.beam('cheek_fold_'+str(side),[side*6.9,18.5,-23.5],[side*7.3,21,-15.3],1.6,2,'head',1)
     for side in [-1,1]:
-        m.tapered('brow_horn_'+str(side),[side*5,24,-26],[side*7.4,33,-40],3.1,'head',6,4)
+        arc=[[side*5,24,-26],[side*5.7,27.4,-29.8],[side*6.7,30.1,-34.7],[side*7.5,32,-40],[side*8,32.5,-45.8]]
+        widths=[3.85,3.0,2.0,1.05,.28]
+        for i,(a,b,w,tip) in enumerate(zip(arc,arc[1:],widths,widths[1:])):
+            mid=[(v+u)*.5 for v,u in zip(a,b)]
+            m.beam(f'brow_horn_{side}{i}',a,mid,w,bone='head',color=6)
+            m.beam(f'brow_horn_{side}{i}_tip',mid,b,(w+tip)*.5,bone='head',color=6)
         m.growth_detail('growth_brow_horn_'+('left' if side<0 else 'right'),[side*5,24,-26],'head','brow_horn_'+str(side))
-    m.tapered('nose_horn',[0,20,-35],[0,31,-43],3.1,'head',6,4);m.growth_detail('growth_nose_horn',[0,20,-35],'head','nose_horn');m.eyes(7.05,20,-26,size=1.6)
+    arc=[[0,19.5,-35],[0,23.6,-35.9],[0,26.9,-37.7],[0,29.4,-40.4],[0,30.7,-43.4]]
+    for i,(a,b,w) in enumerate(zip(arc,arc[1:],[3.65,2.9,1.9,.9])):m.beam('nose_horn'+str(i),a,b,w,bone='head',color=6)
+    m.growth_detail('growth_nose_horn',[0,20,-35],'head','nose_horn');m.eyes(7.28,20.1,-24.7,size=1.3)
     m.bone('jaw',[0,13,-16],'head');m.mass('lower_jaw',[-6,10.5,-26],[6,12.6,-16],'jaw',1)
+    m.profile('mandible',[(-39.5,1.6,10.7,12.35),(-36,2.6,9.8,12.3),(-31,3.2,9.5,12.3),(-25.3,4.1,10.2,12.5)],'jaw',0,2)
+    for side in [-1,1]:m.beam('jaw_fold_'+str(side),[side*5.5,12.2,-25.6],[side*5.7,14,-17.3],1.45,1.65,'jaw',0)
     m.cube('jaw_hinge',[-4,12,-18],[4,13.6,-15.5],'jaw',1)
     m.cube('oral_cavity',[-6.5,12.7,-26],[6.5,13.05,-16],'head',5)
     m.mouth_rows(4.5,12.95,12.55,[-24.5,-22.5,-20.5],[-24.2,-22.2,-20.2],.36,.42,'grinder')
@@ -310,96 +365,142 @@ def triceratops():
     return m.finish()
 
 def stegosaurus():
-    m=Model('ark_stegosaurus','Stegosaurus',['#69735b','#89927a','#b4ad8f','#444e3c','#dfbb64','#242e21','#dacfad','#986b4d'],'Gewölbter Rücken · versetzte Rückenplatten · vier Schwanzstacheln')
-    m.bone('body',[0,22,0]);m.mass('barrel',[-10,12,-11],[10,27,14]);m.mass('chest',[-8,12,-17],[8,25,-6]);m.mass('hips',[-9,13,8],[9,29,19]);m.mass('back',[-7,24,-11],[7,30,14],color=1);m.mass('belly',[-7,11,-11],[7,16,12],color=2)
+    m=Model('ark_stegosaurus','Stegosaurus',['#788363','#596748','#b6ac86','#4a4e3c','#cda957','#26291e','#d2c3a1','#aa7953'],'Tiefer Kopf unter einem hohen Hüftbogen · versetzte kupferbraune Rückenplatten · vier ausladende Schwanzstacheln')
+    m.bone('body',[0,22,0])
+    m.profile('barrel',[(-18,4.6,14.7,22.6),(-12,8.1,11.1,25.1),(-5,10,10,27.6),(3,10.6,10.7,28.95),(11,10.1,12.3,29),(17,8.9,15.3,29),(21,6.8,17.5,23.4)],belly=2)
+    m.mass('back',[-7,24,-11],[7,30,14],color=1)
     quadruped(m,7.5,-10,12,16,4.4)
-    m.bone('head',[0,18,-14],'body');m.beam('neck',[0,20,-13],[0,14,-27],5,bone='head',color=1);m.cube('head',[-3.5,10,-36],[3.5,17,-26],'head',1);m.cube('beak',[-2.8,10,-39],[2.8,13,-34],'head',3);m.eyes(3.5,14,-31,size=1)
+    for side in [-1,1]:
+        m.beam('haunch_'+str(side),[side*7.5,24.1,13],[side*7.5,14,10.7],5,6,'leg_back_'+('left' if side<0 else 'right'))
+    m.bone('head',[0,18,-14],'body');m.beam('neck',[0,20,-13],[0,14,-27],5.5,5.8,'head',0)
+    m.beam('nuchal_arch',[0,21.8,-14],[0,17.2,-24],4.9,4.45,'head')
+    m.profile('head',[(-36,2.2,10,13.6),(-32,3,10,15.8),(-29,3.5,9.9,17.1),(-25.2,3.2,10,16.9)],'head')
+    m.profile('beak',[(-39.5,1.8,9.5,11.7),(-37.7,2.6,10,13),(-34,2.7,10.3,13.5)],'head',3);m.eyes(3.32,13.8,-30.9,size=1)
     m.bone('jaw',[0,10,-26],'head');m.mass('lower_jaw',[-3.1,7.5,-35],[3.1,9.5,-26],'jaw',1)
+    m.profile('beak_lower',[(-38.8,1.45,8.7,10),(-35,2.2,8.45,10),(-32,2.4,8.55,9.7)],'jaw',3)
     m.cube('jaw_hinge',[-2.2,9,-26.8],[2.2,10.6,-25.5],'jaw',1)
     m.cube('oral_cavity',[-3.2,9.65,-34],[3.2,10.05,-26],'head',5)
     m.mouth_rows(1.8,9.85,9.45,[-30,-28.7,-27.4],[-29.8,-28.5,-27.2],.36,.42,'grinder')
     for side in [-1,1]:
         for i,z in enumerate([-10,-1,8,16]):
-            z+=2.5 if side>0 else 0;high=[8,13,16,11][i];x=side*7.5;base=27 if i<2 else 28
-            root=24.5 if i<2 or (side<0 and i==2) else 26.25
-            m.cube(f'plate_{side}_{i}_base',[x-.65,root,z-1.5],[x+.65,base+high*.35,z+1.5],color=7)
-            m.cube(f'plate_{side}_{i}_middle',[x-.7,base+high*.22,z-3.4],[x+.7,base+high*.76,z+3.4],color=7,rotation=(18 if i<2 else -12,0,0),pivot=[x,base+high*.5,z])
-            m.beam(f'plate_{side}_{i}_top',[x,base+high*.65,z],[x,base+high,z-.8],1.1,3.3,color=7)
+            z+=3.8 if side>0 else 0;high=[7.7,12.4,15.8,10.7][i];x=side*7.5;base=27 if i<2 else 28
+            root=([22.5,24.5,24.5,26.25] if side<0 else [23.3,24.5,26.25,22.4])[i]
+            half=2.55+high*.14
+            # Successive laminae fill an asymmetric leaf; the highest point leans toward the tail.
+            bottom=root
+            for layer,level,front,rear,thickness in [
+                    ('base',.12,-.38,.39,.69),('lower',.32,-.66,.73,.68),('middle',.5,-.96,1,.68),
+                    ('upper',.68,-.83,.88,.61),('crown',.85,-.41,.67,.53),('top',1,.02,.43,.42)]:
+                top=base+high*level
+                m.cube(f'plate_{side}_{i}_{layer}',[x-thickness,bottom,z+front*half],[x+thickness,top,z+rear*half],color=7)
+                bottom=top
             m.growth_detail(f'growth_plate_{"left" if side<0 else "right"}_{i}',[x,root,z],'body',f'plate_{side}_{i}_',(.3,.65))
     m.bone('tail',[0,20,16],'body');m.tail_chain([[0,20,16],[0,17,27],[0,13,37],[0,10,46],[0,9,56]],[6,4.8,3.2,1.6])
     for prefix,bone,sections in [('neck_plate','head',[(-32,16,2.5),(-26,17,3.5),(-21,20,4.5),(-16,23,6)]),
                                  ('tail_plate','tail',[(23,21,8),(29,18,6),(35,15,4),(40,13,2.5)])]:
         for i,(z,base,high) in enumerate(sections):
             x=(-1 if i%2==0 else 1)*(1.3+high*.12)
-            root=19.25 if prefix=='neck_plate' and i==2 else 20.5 if prefix=='tail_plate' and i==0 else base
+            root=15.3 if prefix=='neck_plate' and i==0 else 19.25 if prefix=='neck_plate' and i==2 else 20.5 if prefix=='tail_plate' and i==0 else base
             m.cube(f'{prefix}_{i}_base',[x-.45,root,z-1.2],[x+.45,base+high*.55,z+1.2],bone,7)
             m.beam(f'{prefix}_{i}_top',[x,base+high*.4,z],[x,base+high,z-.4],.75,2.8,bone,7)
             m.growth_detail(f'growth_{prefix}_{i}',[x,root,z],bone,f'{prefix}_{i}_',(.3,.65))
     for side in [-1,1]:
         for z in [42,49]:
-            m.tapered(f'tail_spike_{side}_{z}',[side,11,z],[side*9,17,z+5],1.9,'tail',6,3)
+            m.tapered(f'tail_spike_{side}_{z}',[side,11,z],[side*(10.3 if z==42 else 11.4),15.5 if z==42 else 18.2,z+7],2.25,'tail',6,3)
             root=10.25 if z==49 else 11
             if z==49:next(c for c in m.elements if c['name']==f'tail_spike_{side}_{z}0')['from'][1]=root
             m.growth_detail(f'growth_tail_spike_{"left" if side<0 else "right"}_{z}',[side,root,z],'tail',f'tail_spike_{side}_{z}')
     return m.finish()
 
 def brachiosaurus():
-    m=Model('ark_brachiosaurus','Brachiosaurus',['#7b8071','#969b86','#bcb69b','#535c50','#d8bc77','#273128','#dfd5b3','#666e5d'],'Hoher Schulterbogen · verjüngter Langhals · gefaltete graugrüne Haut')
-    m.bone('body',[0,31,2]);m.mass('barrel',[-11,21,-10],[11,40,16]);m.mass('rump',[-9.5,23,10],[9.5,38,23]);m.mass('shoulders',[-10,29,-15],[10,43,-3],color=1);m.mass('shoulder_hump',[-7,38,-13],[7,44,-5],color=1);m.mass('belly',[-8,20,-11],[8,27,16],color=2)
+    m=Model('ark_brachiosaurus','Brachiosaurus',['#868276','#706e62','#b8a892','#555247','#c6a46a','#2d2921','#d9cfb4','#756f60'],'Hohe Schultern über den Vorderbeinen · gebogener Langhals mit Nasenkuppel · graubraune Hautfalten')
+    m.bone('body',[0,31,2]);m.mass('barrel',[-9.65,22,-7],[9.65,40,16])
+    m.profile('ribcage',[(-16,6.2,27.3,38.3),(-10,10.4,21.8,43.7),(-5,11.1,19.5,39.9),(4,11.8,18.5,39.7),(12,11,20.4,38.5),(19,8.2,24,36.4),(24,4.9,26.5,32.6)],belly=2)
+    m.mass('shoulders',[-10,29,-10],[10,43,-3],color=1)
+    m.mass('shoulder_hump',[-7,38,-11],[7,44,-5],color=1)
     quadruped(m,8,-9,14,26,5)
+    for side in [-1,1]:
+        fore='leg_front_'+('left' if side<0 else 'right')
+        m.beam('shoulder_column_'+str(side),[side*7.5,36.7,-8],[side*8,19,-9.5],5.3,5.9,fore)
+        m.beam('hind_haunch_'+str(side),[side*8,30.5,15.2],[side*8,18.3,11.7],5.6,6.7,'leg_back_'+('left' if side<0 else 'right'))
     m.bone('neck',[0,40,-10],'body')
-    neck_points=[[0,39,-9],[0,48,-13],[0,58,-17],[0,68,-21],[0,77,-25],[0,85,-29]]
-    for i,(a,b,w) in enumerate(zip(neck_points,neck_points[1:],[9.4,8.2,7.1,6.1,5.2])):
-        m.beam('neck_lower' if i==0 else 'neck_upper' if i==4 else 'neck_segment_'+str(i),a,b,w,w*.86,'neck',1 if i>2 else 0)
+    neck_points=[[0,39,-9],[0,48,-13],[0,58.4,-15.5],[0,68.3,-15.9],[0,77.2,-19.9],[0,85.2,-29.2]]
+    for i,(a,b,w) in enumerate(zip(neck_points,neck_points[1:],[9.4,8.8,7.1,5.9,4.9])):
+        m.beam('neck_lower' if i==0 else 'neck_upper' if i==4 else 'neck_segment_'+str(i),a,b,w,w*(.86 if i==0 else .91),'neck')
         m.beam('throat_'+str(i),[a[0],a[1],a[2]-w*.36],[b[0],b[1],b[2]-w*.36],w*.6,w*.22,'neck',2)
-    m.bone('head',[0,84,-29],'neck');m.mass('skull',[-4.6,82,-39],[4.6,90,-27],'head',1);m.mass('muzzle',[-3.8,81,-44],[3.8,86,-35],'head');m.mass('nasal_rise',[-2.7,88,-35],[2.7,93,-29],'head',1)
+    m.bone('head',[0,84,-29],'neck')
+    m.profile('skull',[(-38.5,3.3,82,86.5),(-34.7,4.6,81.5,89.2),(-30.4,4.8,81.3,90),(-26.4,3.1,83,87.5)],'head')
+    m.profile('muzzle',[(-44,2.9,81,84.5),(-41.2,3.7,80.9,85.7),(-35,3.6,81.8,87.1)],'head')
+    m.profile('nasal_rise',[(-37,1.7,85.8,87),(-34.3,2.9,86.8,91.8),(-31.7,2.95,87,93),(-28,1.8,85,88.4)],'head',1)
     m.bone('jaw',[0,81,-29],'head');m.mass('lower_jaw',[-3.5,78.8,-42],[3.5,80.5,-29],'jaw',2);m.eyes(4.6,86,-35,size=1.4)
     m.cube('jaw_hinge',[-2.5,80,-31],[2.5,82.6,-28],'jaw',2)
     m.cube('oral_cavity',[-3.5,80.6,-43.8],[3.5,81.05,-30],'head',5)
     for row,y,z,direction,bone in [('upper',80.9,-43.15,-1,'head'),('lower',80.45,-41.7,1,'jaw')]:
         m.cube('gums_'+row,[-3.4,y-.15,z-.25],[3.4,y+.15,z+.25],bone,3)
         for i,x in enumerate([-2.4,-.8,.8,2.4]):m.tooth(f'tooth_{row}_front_{i}',[x,y,z],[x,y+direction*.85,z-.1],bone,.28,'spatulate')
-    for x in [-2,2]:m.cube('nostril_'+str(x),[x-.7,85,-44.2],[x+.7,86,-43.8],'head',3)
+    for side in [-1,1]:
+        x=side*2.65;m.cube('nostril_'+str(side),[x-.22,89.7,-34.6],[x+.22,90.7,-32.9],'head',5)
     m.bone('tail',[0,30,19],'body');m.tail_chain([[0,30,19],[0,23,30],[0,15,40],[0,8,50],[0,3.2,59],[0,.65,67]],[7.5,6,4.4,2.8,1.4])
     return m.finish()
 
 def velociraptor():
-    m=Model('ark_velociraptor','Velociraptor',['#8b8067','#aa9b7a','#c5b99c','#514b3d','#dabb60','#22291e','#d8cdae','#69614e'],'Waagerechter Körper · S-Hals · schmaler Fang · Sichelkrallen')
-    m.bone('body',[0,18,1]);m.mass('torso',[-4.2,14,-7],[4.2,23,8]);m.mass('chest',[-3.5,15,-11],[3.5,21,-3]);m.mass('hips',[-4.5,15,3],[4.5,23,11]);m.mass('belly',[-3.4,13,-7],[3.4,17,6],color=2);m.cube('back_stripe',[-1.8,22,-7],[1.8,24,8],color=7)
-    m.bone('neck',[0,21,-7],'body');m.beam('neck_lower',[0,20,-7],[0,25,-11],4.5,bone='neck');m.beam('neck',[0,25,-11],[0,29,-17],3.8,bone='neck',color=1)
-    m.bone('head',[0,29,-14],'neck');m.mass('skull',[-3.9,27,-23],[3.9,33,-13],'head',1);m.mass('snout',[-2.5,27,-32],[2.5,30.3,-21],'head')
-    m.bone('jaw',[0,27,-15],'head');m.mass('jaw',[-2.5,25.5,-31],[2.5,27,-15],'jaw',2);m.cube('mouth',[-2.65,26.9,-30],[2.65,27.3,-19],'head',3);m.eyes(3.95,29,-22,size=1.2)
-    for side in [-1,1]:m.beam('brow_'+str(side),[side*3.6,31.4,-22],[side*3.6,32.1,-16],.85,bone='head',color=3)
+    m=Model('ark_velociraptor','Velociraptor',['#b08758','#826645','#d3b98d','#584534','#daa74b','#252017','#e0d0a6','#705237'],'Sandbraune Schuppen mit dunklen Bändern · schmaler Fang und dreifingrige Greifhände · hochgezogene Sichelkrallen')
+    m.bone('body',[0,18,1])
+    m.mass('torso',[-4.2,14,-7],[4.2,23,8]);m.mass('hips',[-4.5,15,3],[4.5,23,11])
+    m.profile('chest',[(-11.6,2.1,17.5,21.4),(-8.5,3.4,14.4,22.4),(-6.4,3.8,14.3,22.7)],belly=2)
+    m.mass('belly',[-3.4,13,-7],[3.4,17,6],color=2)
+    m.cube('back_stripe',[-1.8,22,-7],[1.8,24,8],color=7)
+    m.bone('neck',[0,21,-7],'body');m.beam('neck_lower',[0,19.7,-7],[0,24.3,-10],4.8,4.4,'neck');m.beam('neck',[0,24.3,-10],[0,29,-16.7],3.7,3.5,'neck')
+    m.bone('head',[0,29,-14],'neck')
+    m.profile('skull',[(-24.3,2.6,27.2,30.4),(-21.2,3.8,27,32.6),(-17.6,4.05,26.6,33.4),(-13.4,3.35,26.4,31.7)],'head')
+    m.profile('snout',[(-32.9,1.7,27.0,29.25),(-29.7,2.45,26.95,30),(-25.6,2.55,26.95,29.8),(-22,2.65,27.1,30.7)],'head')
+    m.bone('jaw',[0,27,-15],'head');m.profile('jaw',[(-31.9,1.75,25.8,27),(-27,2.45,25.2,27),(-21,2.65,24.8,26.95),(-15,2.65,25.6,27.7)],'jaw',0,2)
+    m.cube('mouth',[-2.45,26.9,-30],[2.45,27.24,-19],'head',3);m.eyes(3.95,29.35,-20.8,size=1.15)
+    for side in [-1,1]:
+        m.beam('brow_'+str(side),[side*3.4,31.2,-23.1],[side*3.8,32.3,-18.2],1.0,1.3,'head',1)
+        m.beam('eye_mask_'+str(side),[side*3.77,30.4,-19.5],[side*3.48,30.6,-14.9],.72,1.35,'head',7)
+        m.cube('nostril_'+str(side),[side*2.13-.12,28.4,-31.1],[side*2.13+.12,28.9,-30.1],'head',5)
     m.mouth_rows(2.2,26.95,26.9,[-30+i*1.9 for i in range(7)],[-29.2+i*1.8 for i in range(6)],.6,1.5)
     m.cube('oral_cavity',[-2.2,26.8,-30],[2.2,27.05,-15],'head',5)
-    m.bone('tail',[0,19,7],'body');m.tail_chain([[0,19,7],[0,19.6,18],[0,20.1,29],[0,20.7,40],[0,21.3,49],[0,22,57]],[4.4,3.8,2.9,2,1])
+    m.bone('tail',[0,19,7],'body');m.tail_chain([[0,19,7],[0,19.8,18],[0,20.5,29],[0,20.7,40],[0,20.8,49],[0,20.7,57]],[5.2,3.7,2.4,1.55,.85])
     for side,x in [('left',-4.7),('right',4.7)]:
         digitigrade(m,side,x,18,4,.73,True)
         m.mass('thigh_muscle_'+side,[x-2.1,11.5,1],[x+2.1,20,7],'leg_'+side)
         # Start the shoulder at its rotation joint so the rake cannot pull it off the torso.
-        m.bone('arm_'+side,[x,22,-6],'body');m.beam('upper_arm_'+side,[x,22,-6],[x*1.5,16,-9],1.7,bone='arm_'+side,color=1);m.beam('forearm_'+side,[x*1.5,16,-9],[x*1.8,17,-18],1.4,bone='arm_'+side)
+        arm='arm_'+side;m.bone(arm,[x,22,-6],'body')
+        elbow=[x*1.5,16,-9];m.beam('upper_arm_'+side,[x,22,-6],elbow,1.7,bone=arm,color=1)
+        wrist=[x*1.64,17.8,-15.8];m.beam('forearm_'+side,elbow,wrist,1.45,1.55,arm)
+        m.beam('palm_'+side,wrist,[x*1.64,16.7,-18.3],1.55,1.7,arm)
         sign=-1 if x<0 else 1
-        for i,z in enumerate([-11,-13.5,-16]):m.beam(f'feather_{side}_{i}',[x*1.55,16.5,z],[x*1.55+sign*(4-i*.4),15,z+4],1.1,.65,'arm_'+side,7)
-        for dx in [-.5,.5]:m.tapered('hand_claw_'+side+str(dx),[x*1.8+dx,17,-18],[x*1.8+dx,16,-20],.55,'arm_'+side,6,2)
+        for i,(spread,reach) in enumerate([(-1,2.8),(0,4.3),(1,3.3)]):
+            root=[wrist[0]+sign*spread*.55,16.9,-17.8]
+            knuckle=[wrist[0]+sign*spread*1.35,16.1,-18-reach*.65]
+            hook=[knuckle[0],15.7,-18-reach]
+            m.beam(f'finger_{side}_{i}',root,knuckle,.76,.74,arm)
+            m.beam(f'hand_claw_{side}_{i}_root',knuckle,hook,.65,.64,arm,5)
+            m.beam(f'hand_claw_{side}_{i}_tip',hook,[hook[0]-sign*.2,14.45,hook[2]-.6],.40,.4,arm,5)
     return m.finish()
 
 def pteranodon():
-    m=Model('ark_pteranodon','Pteranodon',['#726e60','#938875','#b6ab91','#494a3e','#dab85c','#242a21','#c7b58c','#8b6d56'],'Verbundene ledrige Flughaut · langer Schnabel · schlanker Hinterkopfkamm')
-    m.bone('body',[0,21,1]);m.mass('torso',[-4.3,16,-6],[4.3,26,7]);m.mass('breast',[-3.6,15,-5],[3.6,20,5],color=2)
+    m=Model('ark_pteranodon','Pteranodon',['#827669','#675f58','#c8b192','#554332','#c9a054','#2a2826','#b69168','#996e59'],'Lang ausgestrichener Schnabel und keilförmiger Kamm · geknickte Flügel mit kupferbrauner Flughaut')
+    m.bone('body',[0,21,1]);m.mass('torso',[-4.3,16,-6],[4.3,26,7])
+    m.mass('breast',[-3.6,15,-5],[3.6,20,5],color=2)
     # The skull's three-unit beak jab still needs an overlapping neck connection.
     m.bone('neck',[0,23,-5],'body');m.beam('neck',[0,23,-5],[0,29,-15],4.2,bone='neck',color=1)
-    m.bone('head',[0,29,-14],'neck');m.mass('skull',[-3.1,27,-23],[3.1,33,-12],'head',1)
-    m.tapered('long_beak',[0,28.8,-23],[0,28,-49],4,'head',6,6);m.tapered('lower_beak',[0,27.1,-23],[0,26.9,-46],2.2,'head',2,5)
-    m.tapered('head_crest',[0,32,-20],[0,42,-8],3.7,'head',7,6);m.growth_detail('growth_head_crest',[0,32,-20],'head','head_crest');m.eyes(3.15,29,-20,size=1.3)
+    m.bone('head',[0,29,-14],'neck');m.profile('skull',[(-24.4,2.05,27.1,30.6),(-20.5,3.1,26.9,33),(-16,3.25,27.3,33.6),(-12.4,2.25,28,31.5)],'head')
+    m.profile('long_beak',[(-49,.32,27.85,28.32),(-42,1,27.7,29),(-34,1.65,27.65,29.8),(-26,2.15,27.72,30.5),(-22,2.4,27.85,30.9)],'head',6)
+    m.tapered('lower_beak',[0,27.35,-22],[0,27.65,-47.7],2.12,'head',2,5)
+    m.profile('head_crest',[(-22.1,1.1,30.4,32),(-19,1.6,31.1,35.2),(-15.6,1.4,32.8,37.8),(-12.8,1.1,35.6,40.1),(-9.6,.5,39.2,41.35)],'head',7)
+    m.growth_detail('growth_head_crest',[0,32,-20],'head','head_crest');m.eyes(3.18,29.6,-19.9,size=1.15)
     m.bone('tail',[0,20,7],'body');m.tapered('short_tail',[0,20,7],[0,19,13],2.8,'tail',0,2)
     for side,sign in [('left',-1),('right',1)]:
         wing='wing_'+side;m.bone(wing,[sign*4,23,0],'body')
         outer='wing_tip_'+side;m.bone(outer,[sign*16,23-12*.045,-1],wing)
         # The long outer leading edge is the extended fourth finger, not a bird feather fan.
-        for i,(x1,x2,z1,z2) in enumerate([(4,16,0,-1),(16,31,-1,-8),(31,47,-8,-3),(47,65,-3,5)]):
-            m.beam(f'wing_finger_{side}_{i}',[sign*x1,23-(x1-4)*.045,z1],[sign*x2,23-(x2-4)*.045,z2],1.8 if i<2 else 1.1,bone=wing if i==0 else outer,color=6)
+        profile=[(4,0,9),(16,-1,15),(31,-9.4,15.3),(47,-5.4,10.8),(65,3,3.45)]
+        for i,((x1,z1,_),(x2,z2,_)) in enumerate(zip(profile,profile[1:])):
+            m.beam(f'wing_finger_{side}_{i}',[sign*x1,23-(x1-4)*.045,z1],[sign*x2,23-(x2-4)*.045,z2],[1.8,1.65,1.18,.8][i],bone=wing if i==0 else outer,color=0 if i<2 else 1)
         m.tapered('thumb_'+side,[sign*29,22,-7],[sign*27,23,-12],1.3,outer,6,2)
-        profile=[(4,0,9),(16,-1,15),(31,-8,14),(47,-3,11),(65,5,5.4)]
         for i in range(30):
             x1=4+i*2.03;x2=min(65,x1+2.08);mid=(x1+x2)/2
             a,b=next((a,b) for a,b in zip(profile,profile[1:]) if a[0]<=mid<=b[0]);f=(mid-a[0])/(b[0]-a[0]);front=a[1]*(1-f)+b[1]*f;back=a[2]*(1-f)+b[2]*f;y=22.7-(x1-4)*.045
@@ -424,25 +525,31 @@ def pteranodon():
     return m
 
 def dilophosaurus():
-    m=Model('ark_dilophosaurus','Dilophosaurus',['#526b43','#89904e','#c4b16d','#293c29','#e6bc46','#17251d','#e5d6a4','#a8472d'],
-            'Zwei Kopfkämme · faltbarer rotgelber Halsfächer · olivfarbene Streifenhaut · drei Fingerkrallen')
-    m.bone('body',[0,15,3]);m.mass('torso',[-4.8,10,-5],[4.8,19,8]);m.mass('hips',[-5,11,4],[5,19,12]);m.mass('belly',[-3.4,9.5,-4],[3.4,13,8],color=2)
+    m=Model('ark_dilophosaurus','Dilophosaurus',['#73814a','#566442','#d7bd78','#453b2a','#ecc044','#28251d','#e5d6a4','#ac482f'],
+            'Zwei gewölbte Kopfkämme · scharlachroter Halsfächer mit gelber Zeichnung · olivgrüne Bänderhaut')
+    m.bone('body',[0,15,3])
+    m.mass('torso',[-4.8,10,-5],[4.8,19,8]);m.mass('hips',[-5,11,4],[5,19,12])
+    m.mass('belly',[-3.4,9.5,-4],[3.4,13,8],color=2)
     m.cube('back_stripe',[-2.8,18.8,-4],[2.8,19.2,10],color=1)
     for side,sign in [('left',-1),('right',1)]:
         for i,z in enumerate([-3,1,5,9]):
-            m.beam(f'flank_stripe_{side}_{i}',[sign*4.8,17.8,z],[sign*4.9,12.5,z+1.7],.55,1.5,color=7)
+            m.beam(f'flank_stripe_{side}_{i}',[sign*4.8,17.8,z],[sign*4.9,12.5,z+1.7],.55,1.5,color=1)
     m.bone('neck',[0,18,-5],'body');m.beam('neck_lower',[0,17,-5],[0,23,-11],4.8,4.2,'neck');m.mass('neck_upper',[-2.6,21,-15],[2.6,26,-9],'neck',1)
-    m.bone('head',[0,25,-13],'neck');m.mass('skull',[-3.2,23,-22],[3.2,28.4,-11],'head',1);m.mass('snout',[-2.7,23,-31],[2.7,26.8,-19],'head')
+    m.bone('head',[0,25,-13],'neck')
+    m.profile('skull',[(-23,2.35,23,27.05),(-20.4,3.15,22.9,28),(-16.5,3.5,22.7,28.8),(-11.2,2.8,22.7,27.35)],'head')
+    m.profile('snout',[(-31.3,1.95,23,25.8),(-28.5,2.55,23,26.9),(-25.5,2.45,23.2,26.1),(-21,2.65,23,27.4)],'head')
     m.cube('mouth',[-2.75,22.8,-30],[2.75,23.2,-13],'head',3)
     m.bone('jaw',[0,23,-13],'head');m.mass('lower_jaw',[-2.5,21,-30],[2.5,23,-12],'jaw',2)
-    m.eyes(3.25,25,-19,size=1.2)
+    m.eyes(3.35,25.1,-19.9,size=1.15)
     for side,sign in [('left',-1),('right',1)]:
         x=sign*2.2
-        for i,(a,b) in enumerate([([x,27,-26],[x,31,-23]),([x,31,-23],[x,34,-18]),([x,34,-18],[x,29,-12])]):
-            m.beam(f'crest_{side}_{i}',a,b,.85,3.2,'head',7)
-            m.beam(f'crest_rim_{side}_{i}',[a[0],a[1]+.5,a[2]],[b[0],b[1]+.5,b[2]],.9,.8,'head',2)
+        m.beam('snout_crest_pedestal_'+side,[x,25.6,-26.5],[x,27.5,-21.2],1.3,1.7,'head',1)
+        for i,(a,b) in enumerate([([x,26.45,-26],[x,30.5,-23]),([x,30.5,-23],[x,33.3,-18.9]),([x,33.3,-18.9],[x,32.1,-16]),([x,32.1,-16],[x,28.4,-12.8])]):
+            m.beam(f'crest_{side}_{i}',a,b,1.03,3.15,'head',7)
+            m.beam(f'crest_rim_{side}_{i}',[a[0],a[1]+.65,a[2]],[b[0],b[1]+.65,b[2]],1.08,.82,'head',2)
+        m.cube('crest_'+side+'_web',[x-.42,27.9,-22.6],[x+.42,31.55,-16],'head',7)
         m.growth_detail('growth_crest_'+side,[x,26,-26],'head',('crest_'+side+'_','crest_rim_'+side+'_'))
-        m.cube('nostril_'+side,[sign*2.7-.15,24.5,-29],[sign*2.7+.15,25.1,-27.7],'head',5)
+        m.cube('nostril_'+side,[sign*2.43-.14,24.8,-29.6],[sign*2.43+.14,25.3,-28.4],'head',5)
         digitigrade(m,side,sign*3.9,15.5,6,.61)
         m.mass('thigh_muscle_'+side,[sign*3.9-1.5,10,3],[sign*3.9+1.5,17,9],'leg_'+side)
         arm='arm_'+side;m.bone(arm,[sign*4.2,17.5,-3],'body')
@@ -452,15 +559,18 @@ def dilophosaurus():
             m.beam(f'finger_{side}_{i}',[sign*7+dx,14,-11],[sign*7+dx,13.7,-14],.55,bone=arm,color=3)
             m.tapered(f'hand_claw_{side}_{i}',[sign*7+dx,13.7,-14],[sign*7+dx,12.8,-16],.6,arm,6,3)
         # Each rib starts folded into the same narrow collar; unfolding spreads the fan.
-        pivot=[sign*3.15,24,-17];root='frill_'+side;m.bone(root,pivot,'neck')
+        pivot=[sign*3.15,24,-19.5];root='frill_'+side;m.bone(root,pivot,'neck')
         growth='growth_frill_'+side;m.growth_detail(growth,pivot,root,(),(.3,.65))
         for i,angle in enumerate(range(-75,76,15)):
             rib=f'frill_{side}_rib_{i}';m.bone(rib,pivot,growth)
-            theta=math.radians(angle*.12);end=[pivot[0],pivot[1]+math.sin(theta)*11,pivot[2]+math.cos(theta)*11]
-            m.beam(f'frill_membrane_{side}_{i}',pivot,end,.38,3.2,rib,7 if i%2 else 1)
-            m.beam(f'frill_vein_{side}_{i}',[pivot[0]+sign*.25,pivot[1],pivot[2]],[end[0]+sign*.25,end[1],end[2]],.28,.28,rib,6)
-            edge=[pivot[j]+(end[j]-pivot[j])*.83 for j in range(3)]
-            m.beam(f'frill_rim_{side}_{i}',edge,end,.48,3.25,rib,2)
+            theta=math.radians(angle*.12);radius=10.6+2.45*math.cos(math.radians(angle))+.6*(i%2)
+            def fan_point(distance,face=0):
+                return [pivot[0]+sign*face,pivot[1]+math.sin(theta)*radius*distance,pivot[2]+math.cos(theta)*radius*distance]
+            m.beam(f'frill_membrane_{side}_{i}',pivot,fan_point(1),.42,3.78,rib,4)
+            m.beam(f'frill_vein_{side}_{i}',fan_point(.08,.24),fan_point(.89,.24),.27,.42,rib,7)
+            m.beam(f'frill_rim_{side}_{i}',fan_point(.79),fan_point(1),.56,3.83,rib,7)
+            if i%3!=0:
+                m.beam(f'frill_spot_{side}_{i}',fan_point(.52+(i%2)*.07,.28),fan_point(.71+(i%2)*.06,.28),.24,1.42,rib,3)
     m.bone('tail',[0,16,10],'body');m.tail_chain([[0,16,10],[0,15,19],[0,15,29],[0,15.5,38],[0,16,45]],[4.8,3.4,2.2,1.2])
     m.mouth_rows(2.35,22.95,22.9,[-29.5+i*2.3 for i in range(7)],[-28.35+i*2.3 for i in range(6)],.6,1.5)
     m.cube('oral_cavity',[-2.2,22.8,-30],[2.2,23.05,-13],'head',5)
@@ -475,31 +585,27 @@ def dilophosaurus():
     return m
 
 def mosasaurus():
-    m=Model('ark_mosasaurus','Mosasaurus',['#344e60','#536d7a','#c5c9b6','#263a49','#b8a557','#111e27','#eee5c8','#657b83'],
-            '24 Meter langer Meeresräuber · vier kräftige Ruderflossen · senkrechte Schwanzflosse · dunkler Fleckenrücken und heller Bauch')
-    m.bone('body',[0,24,0]);m.mass('trunk',[-32,0,-36],[32,48,62]);m.mass('shoulders',[-28,2,-65],[28,45,-19]);m.mass('hips',[-28,3,40],[28,43,83])
-    m.mass('pale_belly',[-23,0,-47],[23,14,63],color=2);m.mass('throat',[-18,5,-84],[18,19,-44],color=2)
-    m.mass('back',[-23,39,-44],[23,49,61],color=1)
+    m=Model('ark_mosasaurus','Mosasaurus',['#53686a','#43585a','#afbaab','#3a4543','#b8a468','#172322','#e6d9b7','#6b7772'],
+            '24 Meter langer Meeresräuber · keilförmiger Krokodilschädel · niedrige Rückenschilde und kräftige Ruderflossen')
+    m.bone('body',[0,24,0])
+    m.profile('trunk',[(-68,19.8,9,37.5),(-50,26,3.5,43),(-26,31.5,.7,48.2),(0,33.2,-.2,49.1),(25,32.8,.6,48.3),(48,30.2,2.4,45.9),(68,25,6.7,40.8),(85,17.7,11,34.8)],belly=2)
+    for i,(z,top) in enumerate([(-47,43.7),(-33,46.5),(-18,48.6),(-2,49.2),(14,49),(30,47.9),(45,46.3),(59,43.2),(71,40)]):
+        for sign in [-1,1]:
+            x=sign*(7.3 if i<7 else 5.4)
+            m.beam(f'back_scute_{sign}_{i}',[x,top-.2,z-4],[x,top+1.7,z+4.3],4.5 if i<7 else 3.4,2.8,color=1)
+    m.bone('neck',[0,27,-57],'body');m.profile('neck',[(-95,16.4,12.4,34.8),(-80,21.5,8.8,38.7),(-64,22.2,8.1,40.5),(-55,18.9,10.2,38)],'neck',0,2)
+    m.bone('head',[0,29,-86],'neck')
+    m.profile('skull',[(-115,14.4,17.8,32.7),(-105,19,16,36.3),(-95,23.2,15.4,39.1),(-83,22.6,15.3,38.1),(-77,17.1,17.3,34.8)],'head')
+    m.profile('snout',[(-139,10.8,17.9,28),(-128,12.6,17.8,29.9),(-116,14.7,17.8,32.8),(-106,17.7,17.8,34.7)],'head')
+    m.profile('snout_tip',[(-152,7.7,18,24.5),(-147,10.2,17.9,27.3),(-137,11.2,17.9,28.5)],'head')
     for side,sign in [('left',-1),('right',1)]:
-        for i,(z,width) in enumerate([(-47,25),(-27,29),(-6,31),(16,31),(38,30),(58,27),(73,23)]):
-            x=sign*width
-            m.cube(f'lateral_line_{side}_{i}',[x-1,24,z-8],[x+1,26,z+8],color=7)
-            m.cube(f'flank_mottle_{side}_{i}',[x-1.2,30+(i%2)*3,z-5],[x+1.2,36+(i%2)*3,z+3],color=3)
-        for i,z in enumerate([-38,-16,6,28,50]):
-            m.cube(f'back_mottle_{side}_{i}',[sign*12-4,47,z-5],[sign*12+4,49.2,z+4],color=3 if i%2 else 7)
-    m.bone('neck',[0,27,-57],'body');m.mass('neck',[-21,10,-95],[21,42,-57],'neck');m.mass('neck_belly',[-15,8,-92],[15,20,-59],'neck',2)
-    m.bone('head',[0,29,-86],'neck');m.mass('skull',[-23,16,-113],[23,39,-78],'head',1)
-    m.mass('snout',[-14,18,-143],[14,32,-105],'head');m.mass('snout_tip',[-11,18,-152],[11,29,-134],'head')
-    m.cube('snout_ridge',[-8,31,-137],[8,34,-108],'head',1)
-    for side,sign in [('left',-1),('right',1)]:
-        m.mass('cheek_'+side,[sign*19-3,17,-106],[sign*19+3,32,-83],'head')
-        m.cube('brow_'+side,[sign*22-1.5,32,-106],[sign*22+1.5,37,-93],'head',3)
-        m.cube('nostril_'+side,[sign*10.6-.4,27.5,-146],[sign*10.6+.4,29.2,-142],'head',5)
-        for i,z in enumerate([-119,-129,-139]):
-            m.cube(f'snout_pore_{side}_{i}',[sign*13.8-.25,23,z-.7],[sign*13.8+.25,24,z+.7],'head',3)
-    m.eyes(23.1,29,-102,size=3)
-    m.bone('jaw',[0,16,-83],'head');m.mass('lower_jaw',[-16,8,-114],[16,16,-80],'jaw',1)
-    m.mass('jaw_snout',[-10.5,9,-151],[10.5,16,-108],'jaw',2)
+        m.beam('cheek_'+side,[sign*19.5,28,-104],[sign*20.1,18.8,-83],5.8,6.6,'head',1)
+        m.beam('brow_'+side,[sign*19.5,33.5,-105],[sign*21.5,36.1,-94],4,4.8,'head',1)
+        m.cube('nostril_'+side,[sign*9.7-.6,26.1,-132.5],[sign*9.7+.6,28.15,-128.4],'head',5)
+    m.eyes(21.25,29.6,-102.1,size=2.6)
+    m.bone('jaw',[0,16,-83],'head')
+    m.profile('lower_jaw',[(-114,12.5,8.8,16),(-103,16.7,7,16.1),(-91,18.5,7.3,16.7),(-79.7,14.2,10.3,18.3)],'jaw',0,2)
+    m.profile('jaw_snout',[(-151,7.7,10.4,16),(-142,10.1,9,16),(-127,11.5,8,16),(-109,13.7,8.7,16)],'jaw',0,2)
     m.cube('oral_cavity',[-13,16.4,-148],[13,17.7,-85],'head',5)
     m.cube('tongue',[-7,16.05,-143],[7,16.35,-91],'jaw',3)
     for side,sign in [('left',-1),('right',1)]:
@@ -511,8 +617,8 @@ def mosasaurus():
     for side,sign in [('left',-1),('right',1)]:
         for location,z,length in [('front',-38,57),('back',58,43)]:
             bone=f'flipper_{location}_{side}';pivot=[sign*(25 if location=='front' else 24),16,z];m.bone(bone,pivot,'body')
-            points=[pivot,[sign*(abs(pivot[0])+length*.38),10,z+7],[sign*(abs(pivot[0])+length*.75),7,z+18],[sign*(abs(pivot[0])+length),6,z+30]]
-            for i,(a,b,w) in enumerate(zip(points,points[1:],[15,12,7])):
+            points=[pivot,[sign*(abs(pivot[0])+length*.37),10.7,z+5],[sign*(abs(pivot[0])+length*.76),7.7,z+16],[sign*(abs(pivot[0])+length),6,z+33]]
+            for i,(a,b,w) in enumerate(zip(points,points[1:],[16,15.5,7.2])):
                 m.beam(f'flipper_{location}_{side}{i}',a,b,w,4.2 if i==0 else 3,bone,0 if i==0 else 1)
                 underside_a=[a[0],a[1]-1.5,a[2]+2];underside_b=[b[0],b[1]-1.5,b[2]+2]
                 m.beam(f'flipper_belly_{location}_{side}_{i}',underside_a,underside_b,w*.72,1.5,bone,2)
@@ -530,12 +636,10 @@ def mosasaurus():
                 m.nodes[bone]['children'].remove(cube['uuid']);m.nodes[mesh]['children'].append(cube['uuid'])
             child='tail_mid' if i==1 else 'tail_tip'
             m.nodes[bone]['children'].remove(m.nodes[child]);m.nodes['tail_segment_'+str(i)+'_mesh']['children'].append(m.nodes[child])
-    for name,a,b,color in [
-            ('upper0',[-2.5,18,194],[2.5,36,219],0),('upper1',[-2,35,203],[2,49,226],1),('upper2',[-1.5,48,217],[1.5,56,232],7),
-            ('lower0',[-2.5,0,194],[2.5,19,220],0),('lower1',[-2,-14,204],[2,1,228],1),('lower2',[-1.5,-24,219],[1.5,-13,232],7)]:
-        m.cube('tail_fin_'+name,a,b,'tail_tip',color)
-    m.beam('tail_fin_upper_rib',[0,18,196],[0,55,229],1.5,1.2,'tail_tip',3)
-    m.beam('tail_fin_lower_rib',[0,18,196],[0,-23,229],1.5,1.2,'tail_tip',3)
+    for lobe,points in [('upper',[(18,200),(31,207),(43,217),(54.7,228.2)]),
+                        ('lower',[(18,200),(3,207),(-12,217),(-24,228.6)])]:
+        for i,((y,z),(ey,ez),w,d) in enumerate(zip(points,points[1:],[5,3.8,2.5],[22,16,10])):
+            m.beam(f'tail_fin_{lobe}{i}',[0,y,z],[0,ey,ez],w,d,'tail_tip',0 if i==0 else 1)
     def wave(length,amplitude,phase=0,axis=1):
         return ('rotation',[(length*i/16,[amplitude*math.sin(2*math.pi*(i%16)/16+phase) if j==axis else 0 for j in range(3)]) for i in range(17)])
     idle={'tail':wave(3,1.5),'tail_mid':wave(3,2.5),'tail_tip':wave(3,3.5),'head':wave(3,.6)}

@@ -11,6 +11,14 @@ SPECIES = ('trex', 'triceratops', 'stegosaurus', 'brachiosaurus', 'velociraptor'
 
 
 class EggAssetsTest(unittest.TestCase):
+    def test_bedrock_clients_refresh_the_species_art_under_the_existing_pack_uuid(self):
+        manifest = json.loads(generated_assets()['bedrock']['manifest.json'])
+        header, module = manifest['header'], manifest['modules'][0]
+        self.assertEqual(header['uuid'], '4b6d5dd8-9250-48cf-bc87-48251cfaf744')
+        self.assertEqual(module['uuid'], '708d04a5-5dc7-490e-bb47-0a282214ddc2')
+        self.assertGreater(header['version'], [1, 1, 0])
+        self.assertEqual(header['version'], module['version'])
+
     def test_normal_creative_aliases_use_species_art_and_names_on_both_editions(self):
         aliases = ('bat', 'endermite', 'silverfish', 'vex', 'phantom', 'strider', 'tadpole', 'trader_llama')
         result = generated_assets()

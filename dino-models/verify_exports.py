@@ -113,7 +113,11 @@ for name in sorted(expected):
     if name=='ark_triceratops':assert {'brow_horn_-10','brow_horn_10','nose_horn0','frill_top'}<=names
     if name=='ark_stegosaurus':assert len([n for n in names if n.startswith('plate_') and n.endswith('_top')])==8 and len([n for n in names if n.startswith('tail_spike_')])==12
     if name=='ark_brachiosaurus':assert max(v[1] for v in points)>85 and {'neck_lower','neck_upper'}<=names
-    if name=='ark_velociraptor':assert len([n for n in names if n.startswith('sickle_')])==4 and len([n for n in names if n.startswith('feather_')])==6
+    if name=='ark_velociraptor':
+        assert len([n for n in names if n.startswith('sickle_')])==4
+        for side in ('left','right'):
+            assert {f'finger_{side}_{i}' for i in range(3)}<=names
+            assert {f'hand_claw_{side}_{i}_tip' for i in range(3)}<=names
     if name=='ark_pteranodon':assert len([n for n in names if n.startswith('wing_finger_')])==8 and len([n for n in names if n.startswith('membrane_') and not n.startswith('membrane_trailing')])>=16 and max(v[0] for v in points)-min(v[0] for v in points)>125
     summary.append(dict(name=name,label=design['label'],cubes=len(cubes),bones=len(bones),animations=sorted(expected_anims),rest_ground_y=round(minimum,6),height=round(max(v[1] for v in points),2),sha256=hashlib.sha256((p/(name+'.bbmodel')).read_bytes()).hexdigest()))
 report=dict(ok=True,models=summary,checks=['Eight species with distinctive geometry and finite combat clips','Java/Bedrock cube, bone, texture and animation parity','Valid finite dimensions and references','Seven land/flight rest poses grounded; aquatic fluke may extend below native feet','T-Rex: three separate splayed toes per foot, raised heel, visible curved ivory toe and finger claws','Continuous looping phases, finite body-stable attacks and measured distance-based Bedrock walk clocks','Embedded PNG dimensions, checksums, opaque material variation and face UV bounds; optional external texture parity'],limits=['Asset source checks; actual engine compilation is recorded separately under output/.','Walk cycles compensate foot height and use distance clocks, without inverse kinematics or terrain adaptation.','Asset checks do not exercise gameplay flight, taming, saddles or passenger metadata.','No console client tested.'])

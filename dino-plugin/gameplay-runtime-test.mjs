@@ -183,6 +183,25 @@ try {
       await tp(bob,28,28);
       const state=async tag=>Object.fromEntries((await passengers(tag)).trim().split(';').map(field=>{const at=field.indexOf('=');return[field.slice(0,at),field.slice(at+1)];}));
       const bird=async(tag,x,y,z,stay=0,extra='')=>{await command(`summon sniffer ${x} ${y} ${z} {PersistenceRequired:1b,Tags:["ark_dino","ark_dino_tamed","${tag}"],BukkitValues:{"arkdinos:owner":"${alice.uuid}","arkdinos:stay":${stay}b,"arkdinos:species":"pteranodon"${extra}}}`);await command(`dinofixture load-event ${tag}`);};
+      if(pteraRecovery==='ascent')await check('Following Pteranodon keeps climbing with its rider above the original takeoff height',async()=>{
+        await command('data modify entity @e[tag=follow_bird,limit=1] BukkitValues."arkdinos:stay" set value 0b');
+        await command('fill -3 23 -3 3 23 3 stone');
+        await command('tp @e[tag=follow_mount,limit=1] 0 24 0');
+        await mount(alice,'follow_mount');
+        alice.look(0,0);alice.input(16);await delay(1800);alice.input(0);
+        await eventually(async()=>/phase=4/.test(await command('dinofixture ptera-state follow_bird')),'Follower did not take off below the elevated owner',12000);
+        alice.input(80);
+        await delay(9000);
+        alice.input(0);
+        await delay(300);
+        const follower=await position('follow_bird'),riderPosition=await position('follow_mount');
+        assert.ok(riderPosition[1]>65,'The mounted owner must climb above the previous takeoff limit');
+        assert.ok(riderPosition[1]-follower[1]<6,`Follower stopped climbing while its owner continued: follower=${follower}, mount=${riderPosition}`);
+        assert.match(await command('dinofixture ptera-state follow_bird'),/phase=4/);
+        alice.input(32);await delay(200);alice.input(0);
+        await landed('follow_bird');
+        return {follower,riderPosition};
+      });
       if(pteraRecovery==='shore'||pteraRecovery==='all')await check('Adult Follow Pteranodon leaves water for its owner on dry shore',async()=>{
         await command('fill -12 4 -12 12 4 12 stone');await command('fill -7 4 -7 7 4 7 water');
         await bird('water_shore',0,4,0);await tp(alice,0,20,4);

@@ -18,6 +18,8 @@ PATCHES = {
         ("dino-plugin/upstream-patches/GeyserModelEngineTaskPublicationFix.java", BUNDLED_BRIDGE),
     "quests-mission-availability":
         ("config/quests/upstream-patches/QuestsMissionAvailabilityFix.java", "runtime-dependencies/Quests-5.3.2.jar"),
+    "worldguard-owned-egg-hatch":
+        ("config/worldguard/upstream-patches/WorldGuardOwnedHatchFix.java", "runtime-dependencies/worldguard-bukkit-7.0.21.jar"),
 }
 
 
